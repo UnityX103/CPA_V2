@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { invoke } from '@tauri-apps/api/core';
 import { usePomodoroStore, formatMmSs, type PomodoroPhase } from '../domain/pomodoro';
+import { useHitRegion } from '../domain/passthrough';
 import './PomodoroPanel.css';
 
 type ClockState = 'focus' | 'rest' | 'paused' | 'off';
@@ -21,6 +22,7 @@ function phaseLabel(phase: PomodoroPhase, isRunning: boolean): string {
 export function PomodoroPanel() {
     const state = usePomodoroStore();
     const tickRef = useRef<number | null>(null);
+    const hitRef = useHitRegion('pomodoro-panel');
 
     useEffect(() => {
         let last = performance.now();
@@ -62,7 +64,7 @@ export function PomodoroPanel() {
     };
 
     return (
-        <div className="pomo-panel" data-clock-state={clockState}>
+        <div ref={hitRef} className="pomo-panel" data-clock-state={clockState}>
             <div className="pomo-content">
                 <div className="pomo-header" onPointerDown={onHeaderPointerDown}>
                     <div className="pomo-title">

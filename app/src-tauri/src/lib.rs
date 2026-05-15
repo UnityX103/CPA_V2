@@ -1,5 +1,6 @@
 mod active_app;
 mod key_counter;
+mod passthrough;
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -63,12 +64,20 @@ pub fn run() {
     let key_counter_stop_for_setup = key_counter_stop.clone();
     let key_counter_stop_for_exit = key_counter_stop.clone();
 
+    let hit_store = std::sync::Arc::new(passthrough::HitRegionStore::new());
+    let hit_store_for_setup = hit_store.clone();
+    let hit_store_for_manage = hit_store.clone();
+
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_store::Builder::new().build())
+        .manage::<std::sync::Arc<passthrough::HitRegionStore>>(hit_store_for_manage)
         .setup(move |app| {
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.set_always_on_top(true);
+            }
+            if let Some(window) = app.get_webview_window("main") {
+                passthrough::install(&window, hit_store_for_setup.clone());
             }
             // 1Hz 前台 App 推送：用 AtomicBool 让 App 退出时线程能跳出循环
             // adversarial-review #6 的修复要点；NSWorkspace.frontmostApplication 在
@@ -111,15 +120,21 @@ pub fn run() {
             set_always_on_top,
             get_active_app,
             open_settings_window,
-            close_settings_window
+            close_settings_window,
+            passthrough::register_hit_region,
+            passthrough::unregister_hit_region,
+            passthrough::clear_hit_regions,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application");
 
-    app.run(move |_handle, event| {
+    app.run(move |handle, event| {
         if matches!(event, RunEvent::ExitRequested { .. } | RunEvent::Exit) {
             active_app_stop_for_exit.store(true, Ordering::Relaxed);
             key_counter_stop_for_exit.store(true, Ordering::Relaxed);
+            if let Some(window) = handle.get_webview_window("main") {
+                passthrough::uninstall(&window);
+            }
         }
     });
 }
