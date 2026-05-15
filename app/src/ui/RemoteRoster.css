@@ -1,11 +1,19 @@
+/* RemoteRoster — 远端玩家卡片悬浮列表
+ * Pencil 中没有独立 RemoteRoster 节点；卡片间距对齐 PlayerCard/States hwZs8 的横向 gap (24)
+ * 但桌宠场景下右侧空间有限，纵向叠放使用紧一些的 gap=12 与 PlayerCard 内的 pc-content gap 对齐。
+ */
 .remote-roster {
     position: fixed;
     top: 8px;
     right: 8px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 12px;
     max-height: calc(100vh - 16px);
     overflow-y: auto;
     overflow-x: hidden;
+    padding: 4px;
 }
+
+.remote-roster::-webkit-scrollbar { width: 4px; }
+.remote-roster::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.08); border-radius: 2px; }

@@ -1,11 +1,21 @@
+/* PomodoroPanel ←→ PUI.pen YRqeB
+ * 外壳 233x155, padding 12, radius 24, stroke 1px #EFDCCD, fill #FFFDFBEE
+ * 内容 BTIJv: layout vertical, gap 18, height 121
+ *   ├─ head S3Nbk: horizontal, justify space_between, align center
+ *   └─ contentRow DiaNW: gap 22, vertical padding 16
+ *       ├─ ClockRing nNt9z: 78x78
+ *       ├─ chipsRow p4kgU: vertical, gap 8 (startBtn / skipBtn 各占满列宽)
+ *       └─ pp-pin-btn HApJ0: absolute x=193 y=69, 22x22 round
+ */
+
 .pomo-panel {
     width: 233px;
     height: 155px;
     background: var(--panel-bg);
     border: 1px solid var(--panel-stroke);
-    border-radius: var(--panel-radius);
-    padding: 12px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    border-radius: var(--panel-radius-lg);
+    padding: var(--panel-padding);
+    box-shadow: var(--shadow-panel);
     position: relative;
     box-sizing: border-box;
 }
@@ -13,133 +23,162 @@
 .pomo-content {
     display: flex;
     flex-direction: column;
+    gap: var(--panel-gap);
     height: 100%;
+    position: relative;
 }
 
+/* ----- head ----- */
+
 .pomo-header {
+    position: relative;
     display: flex;
     justify-content: space-between;
     align-items: center;
     -webkit-app-region: drag;
     cursor: grab;
-    padding: 0 2px;
-    margin-bottom: 8px;
 }
 
-.pomo-header:active {
-    cursor: grabbing;
-}
+.pomo-header:active { cursor: grabbing; }
 
 .pomo-title {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 8px;
 }
 
 .pomo-title-text {
-    font-size: 13px;
+    font-size: 20px;
     font-weight: 700;
-    color: var(--text-primary);
-    letter-spacing: 0.5px;
+    color: var(--text-brand-dark);
+    line-height: 1;
+    letter-spacing: 0.2px;
 }
 
+/* 4qNnO pp-settings-btn: absolute x=66 y=3, w=37 h=18, padding [2,0], radius 17,
+ * 内嵌 lucide settings icon (#8c5830) fill_container 后 = 33x14 */
 .pomo-icon-btn {
+    position: absolute;
+    left: 66px;
+    top: 3px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 18px;
+    width: 37px;
     height: 18px;
-    color: var(--text-muted);
-    border-radius: 6px;
+    padding: 2px 0;
+    border-radius: 17px;
+    background: var(--btn-icon-bg);
+    color: #8c5830;
     -webkit-app-region: no-drag;
+    box-sizing: border-box;
 }
 
 .pomo-icon-btn:hover {
-    color: var(--text-primary);
-    background: var(--pill-bg);
+    background: #E8D4BE;
 }
 
+.pomo-icon-btn svg { display: block; }
+
+/* statBadge XcJUF: vertical, gap 1, align end */
 .pomo-streak {
-    font-size: 10px;
-    color: var(--text-subtle);
-    -webkit-app-region: no-drag;
-    line-height: 1.1;
-    text-align: right;
     display: flex;
-    align-items: baseline;
-    gap: 3px;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
+    -webkit-app-region: no-drag;
+}
+
+.pomo-streak-label {
+    font-size: 9px;
+    font-weight: 500;
+    color: var(--stat-label-color);
+    line-height: 1;
 }
 
 .pomo-streak-num {
-    color: var(--btn-primary-bg-idle);
+    font-size: 14px;
     font-weight: 700;
-    font-size: 18px;
+    color: var(--stat-value-color);
     line-height: 1;
+    font-variant-numeric: tabular-nums;
 }
+
+/* ----- contentRow ----- */
 
 .pomo-body {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 22px;
+    padding: 0 16px 0 0;
     flex: 1;
-    padding: 0 2px;
+    position: relative;
 }
 
 .pomo-clock {
     position: relative;
-    width: 72px;
-    height: 72px;
+    width: 78px;
+    height: 78px;
     flex-shrink: 0;
 }
 
-.pomo-clock svg {
-    display: block;
-}
+.pomo-clock svg { display: block; }
 
 .pomo-clock-text {
     position: absolute;
     inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
     pointer-events: none;
-    line-height: 1;
 }
 
 .pomo-clock-time {
-    font-size: 15px;
-    font-weight: 700;
-    letter-spacing: -0.3px;
+    position: absolute;
+    left: 14px;
+    top: 21px;
+    width: 50px;
+    height: 18px;
+    text-align: center;
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--text-brand-dark);
     font-variant-numeric: tabular-nums;
+    line-height: 18px;
+    letter-spacing: -0.3px;
 }
 
 .pomo-clock-sub {
-    font-size: 9px;
-    margin-top: 3px;
+    position: absolute;
+    left: 0;
+    top: 44px;
+    width: 78px;
+    height: 18px;
+    text-align: center;
+    font-size: 13px;
     font-weight: 500;
+    line-height: 18px;
 }
 
 .pomo-actions {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
     flex: 1;
     min-width: 0;
 }
 
+/* Button/Primary (Za5wE) + Button/Secondary (RPLJq) */
 .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    height: 28px;
-    padding: 0 14px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 600;
+    padding: var(--btn-pad-y) var(--btn-pad-x);
+    border-radius: var(--btn-radius);
+    font-family: var(--font-cn);
+    font-size: var(--btn-text-size);
+    font-weight: var(--btn-text-weight);
     transition: filter 0.15s, opacity 0.15s, background-color 0.15s;
     -webkit-app-region: no-drag;
     white-space: nowrap;
+    line-height: 1;
 }
 
 .btn:disabled {
@@ -167,29 +206,31 @@
 }
 
 .btn-secondary:hover:not(:disabled) {
-    background: var(--pill-bg);
+    background: #FFF7EE;
 }
 
+/* pp-pin-btn HApJ0 (cM79C): absolute, 22x22, radius 11 */
 .pomo-pin {
     position: absolute;
-    right: 10px;
-    bottom: 10px;
+    /* contentRow 起点对齐 pp-content 内（去掉 padding 后），HApJ0 在 contentRow 内 x=193 y=69 */
+    right: 16px;
+    bottom: 0;
     width: 22px;
     height: 22px;
-    border-radius: 8px;
+    border-radius: 11px;
+    background: var(--btn-pin-bg);
+    border: 1px solid var(--btn-pin-stroke);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-subtle);
-    background: transparent;
+    color: var(--btn-pin-icon-default);
     -webkit-app-region: no-drag;
 }
 
 .pomo-pin.is-pinned {
-    color: var(--btn-primary-bg-idle);
-    background: var(--pill-bg);
+    color: var(--btn-pin-icon-active);
 }
 
 .pomo-pin:hover {
-    color: var(--text-primary);
+    filter: brightness(0.96);
 }

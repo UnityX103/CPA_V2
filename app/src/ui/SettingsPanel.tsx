@@ -1,5 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useSettingsStore, type SettingsTab, MIN_SCALE, MAX_SCALE } from '../domain/settings';
+import { getCurrentWindow } from '@tauri-apps/api/window';
+import { invoke } from '@tauri-apps/api/core';
+import {
+    useSettingsStore,
+    type SettingsTab,
+    MIN_SCALE,
+    MAX_SCALE,
+} from '../domain/settings';
 import { usePomodoroStore } from '../domain/pomodoro';
 import { useNetworkStore } from '../domain/network';
 import { useBindingKeyStore } from '../domain/bindingKey';
@@ -13,90 +20,139 @@ const TABS: Array<{ id: SettingsTab; label: string }> = [
 ];
 
 export function SettingsPanel() {
-    const { isOpen, activeTab, close, setActiveTab } = useSettingsStore();
-    if (!isOpen) return null;
+    const activeTab = useSettingsStore((s) => s.activeTab);
+    const setActiveTab = useSettingsStore((s) => s.setActiveTab);
+
+    const onClose = () => { void invoke('close_settings_window'); };
+
+    const onHeaderPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+        if (e.button !== 0) return;
+        const target = e.target as HTMLElement;
+        if (target.closest('button')) return;
+        void getCurrentWindow().startDragging().catch(() => {
+            /* drag may fail in non-Tauri/test env; swallow */
+        });
+    };
 
     return (
-        <div className="settings-overlay" onClick={close}>
-            <div className="settings-panel" onClick={(e) => e.stopPropagation()}>
-                <div className="settings-head">
-                    <h2 className="settings-title">设置</h2>
-                    <button className="settings-close" onClick={close} aria-label="关闭">×</button>
-                </div>
-                <div className="settings-body">
-                    <nav className="settings-nav">
-                        {TABS.map((t) => (
-                            <button
-                                key={t.id}
-                                className={`settings-tab ${activeTab === t.id ? 'active' : ''}`}
-                                onClick={() => setActiveTab(t.id)}
-                            >
-                                {t.label}
-                            </button>
-                        ))}
-                    </nav>
-                    <div className="settings-content">
-                        {activeTab === 'pomodoro' && <PomodoroTab />}
-                        {activeTab === 'online' && <OnlineTab />}
-                        {activeTab === 'pet' && <PetTab />}
-                        {activeTab === 'global' && <GlobalTab />}
-                    </div>
+        <div
+            className="settings-panel"
+            role="dialog"
+            aria-label="设置"
+        >
+            <div className="settings-head" onPointerDown={onHeaderPointerDown}>
+                <h2 className="settings-title">设置</h2>
+                <div className="settings-head-spacer" />
+                <button className="settings-close" onClick={onClose} aria-label="关闭">
+                    <CloseIcon />
+                </button>
+            </div>
+            <div className="settings-body">
+                <nav className="settings-nav">
+                    {TABS.map((t) => (
+                        <button
+                            key={t.id}
+                            className={`settings-tab ${activeTab === t.id ? 'active' : ''}`}
+                            onClick={() => setActiveTab(t.id)}
+                        >
+                            {t.label}
+                        </button>
+                    ))}
+                </nav>
+                <div className="settings-content">
+                    {activeTab === 'pomodoro' && <PomodoroTab />}
+                    {activeTab === 'online' && <OnlineTab />}
+                    {activeTab === 'pet' && <PetTab />}
+                    {activeTab === 'global' && <GlobalTab />}
                 </div>
             </div>
         </div>
     );
 }
+
+/* ============================================================
+ * Pomodoro Settings (gs1Tv)
+ * ============================================================ */
 
 function PomodoroTab() {
     const pomo = usePomodoroStore();
     const [focusMin, setFocusMin] = useState(Math.round(pomo.focusDurationSeconds / 60));
     const [breakMin, setBreakMin] = useState(Math.round(pomo.breakDurationSeconds / 60));
-    const [rounds, setRounds] = useState(pomo.totalRounds);
-    const [autoStart, setAutoStart] = useState(pomo.autoStartBreak);
 
     useEffect(() => {
         setFocusMin(Math.round(pomo.focusDurationSeconds / 60));
         setBreakMin(Math.round(pomo.breakDurationSeconds / 60));
-        setRounds(pomo.totalRounds);
-    }, [pomo.focusDurationSeconds, pomo.breakDurationSeconds, pomo.totalRounds]);
+    }, [pomo.focusDurationSeconds, pomo.breakDurationSeconds]);
 
     const dirty =
         focusMin * 60 !== pomo.focusDurationSeconds ||
-        breakMin * 60 !== pomo.breakDurationSeconds ||
-        rounds !== pomo.totalRounds ||
-        autoStart !== pomo.autoStartBreak;
+        breakMin * 60 !== pomo.breakDurationSeconds;
 
     const apply = () => {
-        pomo.applySettings(focusMin * 60, breakMin * 60, rounds, true);
-        usePomodoroStore.setState({ autoStartBreak: autoStart });
+        pomo.applySettings(focusMin * 60, breakMin * 60, pomo.totalRounds, true);
     };
 
     return (
-        <div className="tab-pane">
+        <>
             <div className="apply-row">
-                <button className="btn btn-primary apply-btn" disabled={!dirty} onClick={apply}>应用</button>
+                <button className="btn btn-primary apply-btn" disabled={!dirty} onClick={apply}>
+                    应用
+                </button>
             </div>
-            <div className="card">
-                <div className="card-row">
-                    <label>专注时长</label>
-                    <NumberInput value={focusMin} onChange={setFocusMin} min={1} max={120} suffix="分钟" />
-                </div>
-                <div className="card-row">
-                    <label>休息时长</label>
-                    <NumberInput value={breakMin} onChange={setBreakMin} min={0} max={60} suffix="分钟" />
-                </div>
-                <div className="card-row">
-                    <label>总轮次</label>
-                    <NumberInput value={rounds} onChange={setRounds} min={1} max={12} />
-                </div>
-                <div className="card-row">
-                    <label>休息自动开始</label>
-                    <Toggle checked={autoStart} onChange={setAutoStart} />
+            <div className="settings-content-scroll">
+                <div className="tab-pane has-apply">
+                    {/* pomoGrid aIr3d */}
+                    <div className="card card-grid">
+                        <div className="card">
+                            <span className="card-label">专注时长</span>
+                            <NumberSuffix value={focusMin} onChange={setFocusMin} min={1} max={120} suffix="分钟" />
+                        </div>
+                        <div className="card card-break">
+                            <span className="card-label">休息时长</span>
+                            <NumberSuffix
+                                value={breakMin} onChange={setBreakMin} min={0} max={60} suffix="分钟"
+                                variant="warning"
+                            />
+                        </div>
+                    </div>
+
+                    {/* pomoFooter JpJcn */}
+                    <div className="pomo-footer">
+                        {/* pomoNotif aCOWE: 结束提示音 → 状态值文字（链接色） */}
+                        <div className="card pomo-row">
+                            <span className="pomo-row-label">结束提示音</span>
+                            <span className="pomo-row-value pomo-row-value-link">柔和铃声</span>
+                        </div>
+
+                        {/* pomoEndAction I6SsL5: 计时结束提示 → Dropdown */}
+                        <div className="card pomo-row">
+                            <span className="pomo-row-label">计时结束提示</span>
+                            <button className="dropdown dropdown-fit" type="button">
+                                <span className="dropdown-value">弹窗到顶部</span>
+                                <ChevronDownIcon className="dropdown-chevron" />
+                            </button>
+                        </div>
+
+                        {/* pomoVideoPath WSnlp: enabled:false → 设计稿收起，不渲染 */}
+
+                        {/* pomoVideoCustom Jvg0I: 自定义视频文件 → 状态文字 + 文件夹图标 */}
+                        <div className="card pomo-row">
+                            <span className="pomo-row-label">自定义视频文件</span>
+                            <span className="pomo-row-right">
+                                <span className="pomo-row-value pomo-row-value-muted">未选择</span>
+                                <FolderIcon />
+                            </span>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+        </>
     );
 }
+
+/* ============================================================
+ * Online Settings (8Le5R)
+ * ============================================================ */
 
 function OnlineTab() {
     const net = useNetworkStore();
@@ -104,158 +160,258 @@ function OnlineTab() {
     const [code, setCode] = useState(net.roomCode);
 
     const isJoined = net.status === 'joined';
+    // reconnecting is shown inline as a banner inside the joined-room card (see onlReconnectBanner).
+    // connecting is shown as a full-card overlay (3aoUs onlBusyOverlay) during the initial join.
+    const reconnecting = net.status === 'reconnecting';
+    const connecting = net.status === 'connecting';
 
     return (
-        <div className="tab-pane">
-            <div className="card">
-                <div className="card-row">
-                    <label>自动联网</label>
+        <div className="settings-content-scroll online-tab-root">
+            <div className="tab-pane">
+                {/* onlAutoRow FUrip */}
+                <div className="card pomo-row">
+                    <span className="pomo-row-label">自动联网</span>
                     <Toggle checked={net.autoConnect} onChange={net.setAutoConnect} />
                 </div>
-            </div>
-            <div className="card">
-                <div className="card-row">
-                    <label>玩家名称</label>
-                    <input
-                        className="text-input"
-                        value={name}
-                        onChange={(e) => setName(e.currentTarget.value)}
-                        onBlur={() => net.setPlayerName(name)}
-                    />
-                </div>
-                <div className="card-row">
-                    <label>房间号</label>
-                    <input
-                        className="text-input"
-                        value={code}
-                        onChange={(e) => setCode(e.currentTarget.value.toUpperCase())}
-                        placeholder="留空则自动生成"
-                        disabled={isJoined}
-                    />
-                </div>
-                <div className="card-actions">
-                    {!isJoined && (
-                        <>
-                            <button className="btn btn-primary" onClick={() => net.createRoom(code)}>
-                                创建房间
-                            </button>
-                            <button
-                                className="btn btn-secondary"
-                                onClick={() => net.joinRoom(code)}
-                                disabled={!code}
-                            >
-                                加入房间
-                            </button>
-                        </>
-                    )}
-                    {isJoined && (
-                        <>
-                            <span className="status-text">
-                                ROOM-{net.roomCode} · {Object.keys(net.players).length} 位成员
-                            </span>
-                            <button className="btn btn-secondary" onClick={net.leaveRoom}>
+
+                {!isJoined && (
+                    <>
+                        {/* onlJoinCard ArRDI */}
+                        <div className="card">
+                            <span className="card-title">加入房间</span>
+                            <div className="card card-row-stack" style={{ background: 'transparent', padding: 0 }}>
+                                <span className="card-label">用户名</span>
+                                <input
+                                    className="text-input"
+                                    value={name}
+                                    onChange={(e) => setName(e.currentTarget.value)}
+                                    onBlur={() => net.setPlayerName(name)}
+                                    placeholder="我的昵称"
+                                />
+                            </div>
+                            <div className="card card-row-stack" style={{ background: 'transparent', padding: 0 }}>
+                                <span className="card-label">房间号</span>
+                                <input
+                                    className="text-input"
+                                    value={code}
+                                    onChange={(e) => setCode(e.currentTarget.value.toUpperCase())}
+                                    placeholder="ROOM-001"
+                                />
+                            </div>
+                            <div className="card-actions" style={{ width: '100%' }}>
+                                <button
+                                    className="btn btn-secondary btn-block"
+                                    onClick={() => net.createRoom(code)}
+                                >
+                                    创建房间
+                                </button>
+                                <button
+                                    className="btn btn-primary btn-block"
+                                    onClick={() => net.joinRoom(code)}
+                                    disabled={!code}
+                                >
+                                    加入房间
+                                </button>
+                            </div>
+                            {net.lastError && <div className="error-text">{net.lastError}</div>}
+                        </div>
+
+                        {/* onlHistCard E3S4e */}
+                        <div className="card">
+                            <span className="card-title">历史房间</span>
+                            <div className="history-list">
+                                <button type="button" className="history-item" disabled>
+                                    <span className="history-name">尚无历史</span>
+                                    <span className="history-spacer" />
+                                </button>
+                            </div>
+                        </div>
+                    </>
+                )}
+
+                {isJoined && (
+                    <div className="card card-room">
+                        {reconnecting && (
+                            <div className="online-reconnect">正在重新连接…</div>
+                        )}
+                        <div className="online-room-head">
+                            <div className="online-room-info">
+                                <span className="online-room-name">ROOM-{net.roomCode}</span>
+                                <span className="online-room-sub">
+                                    {Object.keys(net.players).length} 位成员
+                                </span>
+                            </div>
+                            <button className="btn btn-secondary btn-fit" onClick={net.leaveRoom}>
                                 退出房间
                             </button>
-                        </>
-                    )}
-                </div>
-                {net.lastError && <div className="error-text">{net.lastError}</div>}
+                        </div>
+                        <div className="member-list">
+                            {Object.values(net.players).map((p) => {
+                                const isSelf = p.playerId === net.playerId;
+                                const status = phaseToText(p.state?.pomodoro.phase, p.state?.pomodoro.isRunning ?? false);
+                                return (
+                                    <div key={p.playerId} className="member-item">
+                                        <span className={`member-dot ${status.idle ? 'member-dot-idle' : ''}`} />
+                                        <span className={`member-name ${isSelf ? 'member-name-self' : ''}`}>
+                                            {p.playerName}{isSelf ? '（我）' : ''}
+                                        </span>
+                                        <span className={`member-status ${status.cls}`}>{status.label}</span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
             </div>
+
+            {/* onlBusyOverlay 3aoUs — absolute, shown during connecting */}
+            {connecting && (
+                <div className="online-busy-overlay">
+                    <span className="online-busy-text">正在加入房间…</span>
+                </div>
+            )}
         </div>
     );
 }
+
+function phaseToText(phase: number | undefined, isRunning: boolean): { label: string; cls: string; idle: boolean } {
+    if (phase === undefined || !isRunning) {
+        if (phase === 2) return { label: '已完成', cls: '', idle: false };
+        return { label: '未开始', cls: 'member-status-idle', idle: true };
+    }
+    if (phase === 1) return { label: '休息中', cls: 'member-status-rest', idle: false };
+    return { label: '专注中', cls: '', idle: false };
+}
+
+/* ============================================================
+ * Pet Settings (v2ZgA) — 设计稿为占位，保持空容器
+ * ============================================================ */
 
 function PetTab() {
     return (
-        <div className="tab-pane">
-            <div className="card">
-                <div className="card-row">
-                    <label>桌面宠物显示（未实现）</label>
+        <div className="settings-content-scroll">
+            <div className="tab-pane">
+                <div className="card">
+                    <span className="card-label">桌宠形态</span>
+                    <div className="card-empty">尚未实现 — 设计稿 v2ZgA 仅占 70px 占位。</div>
                 </div>
             </div>
         </div>
     );
 }
+
+/* ============================================================
+ * Global Settings (Pdj9C)
+ * ============================================================ */
 
 function GlobalTab() {
     const settings = useSettingsStore();
     const bk = useBindingKeyStore();
+    const [globalEnabled, setGlobalEnabled] = useState(true);
+
+    const scalePercent = Math.round(settings.uiScale * 100);
+    const minPct = Math.round(MIN_SCALE * 100);
+    const maxPct = Math.round(MAX_SCALE * 100);
 
     return (
-        <div className="tab-pane">
-            <div className="card">
-                <div className="card-row">
-                    <label>UI 缩放</label>
-                    <NumberInput
-                        value={Math.round(settings.uiScale * 100)}
-                        onChange={(v) => settings.setUiScale(v / 100)}
-                        min={Math.round(MIN_SCALE * 100)}
-                        max={Math.round(MAX_SCALE * 100)}
-                        suffix="%"
-                    />
+        <div className="settings-content-scroll">
+            <div className="tab-pane">
+                {/* gspScale arfmO */}
+                <div className="card">
+                    <span className="card-label">界面缩放</span>
+                    <div className="slider-row">
+                        <Slider
+                            value={scalePercent}
+                            min={minPct}
+                            max={maxPct}
+                            onChange={(v) => settings.setUiScale(v / 100)}
+                        />
+                        <span className="slider-value">{(scalePercent / 100).toFixed(1)}×</span>
+                    </div>
                 </div>
-                <div className="card-row">
-                    <label>目标显示器</label>
-                    <NumberInput
-                        value={settings.targetMonitorIndex}
-                        onChange={settings.setTargetMonitor}
-                        min={0}
-                        max={4}
-                    />
-                </div>
-            </div>
-            <div className="card">
-                <div className="card-row">
-                    <label>按键绑定（需「辅助功能」权限）</label>
-                    <button className="btn btn-secondary" onClick={() => bk.addEntry()}>
-                        添加按键
+
+                {/* gspDisplay v1Cfj */}
+                <div className="card">
+                    <span className="card-label">目标显示器</span>
+                    <button
+                        className="dropdown"
+                        onClick={() =>
+                            settings.setTargetMonitor((settings.targetMonitorIndex + 1) % 4)
+                        }
+                    >
+                        <span className="dropdown-value">显示器 {settings.targetMonitorIndex + 1}</span>
+                        <ChevronDownIcon className="dropdown-chevron" />
                     </button>
                 </div>
-                {bk.entries.length === 0 && (
-                    <div className="card-empty">未添加按键。添加后按一下要绑定的键即可。</div>
-                )}
-                {bk.entries.map((entry) => (
-                    <div key={entry.id} className="bk-row">
-                        <button
-                            className={`bk-listener ${bk.capturingId === entry.id ? 'listening' : ''}`}
-                            onClick={() => bk.beginCapture(entry.id)}
-                            title="点击重新捕获"
-                        >
-                            {bk.capturingId === entry.id ? '请按下要绑定的键…' : entry.label}
-                            <span className="bk-count">{entry.pressCount}</span>
-                        </button>
-                        <button
-                            className={`bk-icon-btn ${bk.syncedKeyId === entry.id ? 'active' : ''}`}
-                            onClick={() => bk.setSynced(bk.syncedKeyId === entry.id ? null : entry.id)}
-                            title={bk.syncedKeyId === entry.id ? '取消同步' : '同步到房间'}
-                        >
-                            ⇄
-                        </button>
-                        <button
-                            className="bk-icon-btn"
-                            onClick={() => bk.removeEntry(entry.id)}
-                            title="删除"
-                        >
-                            ×
-                        </button>
+
+                {/* gspBindingKey yjJtt */}
+                <div className="card">
+                    <div className="card-row">
+                        <span className="card-label">按键计数</span>
+                        <Toggle checked={globalEnabled} onChange={setGlobalEnabled} />
                     </div>
-                ))}
+                    <p className="bk-desc">
+                        添加按键监听绑定；启用某一项后弹出独立的输入计数面板；最多 1 个标记为同步到远端。
+                    </p>
+                    {bk.entries.length > 0 && (
+                        <div className="member-list" style={{ gap: 8 }}>
+                            {bk.entries.map((entry) => (
+                                <div key={entry.id} className="bk-row">
+                                    <button
+                                        className={`bk-listener ${bk.capturingId === entry.id ? 'listening' : ''}`}
+                                        onClick={() => bk.beginCapture(entry.id)}
+                                        title="点击重新捕获"
+                                    >
+                                        {bk.capturingId === entry.id ? '请按下要绑定的键…' : entry.label}
+                                        {bk.capturingId !== entry.id && (
+                                            <span className="bk-count">{entry.pressCount}</span>
+                                        )}
+                                    </button>
+                                    <button
+                                        className={`bk-icon-btn ${bk.syncedKeyId === entry.id ? 'active' : ''}`}
+                                        onClick={() =>
+                                            bk.setSynced(bk.syncedKeyId === entry.id ? null : entry.id)
+                                        }
+                                        title={bk.syncedKeyId === entry.id ? '取消同步' : '同步到房间'}
+                                    >
+                                        ⇄
+                                    </button>
+                                    <button
+                                        className="bk-icon-btn"
+                                        onClick={() => bk.removeEntry(entry.id)}
+                                        title="删除"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    <button className="bk-add" onClick={() => bk.addEntry()}>
+                        <PlusIcon /> 添加按键
+                    </button>
+                </div>
             </div>
         </div>
     );
 }
 
-interface NumberInputProps {
+/* ============================================================
+ * Form controls
+ * ============================================================ */
+
+interface NumSuffixProps {
     value: number;
     onChange: (v: number) => void;
     min: number;
     max: number;
-    suffix?: string;
+    suffix: string;
+    variant?: 'default' | 'warning';
 }
 
-function NumberInput({ value, onChange, min, max, suffix }: NumberInputProps) {
+function NumberSuffix({ value, onChange, min, max, suffix, variant }: NumSuffixProps) {
     return (
-        <div className="num-input">
+        <div className={`num-input ${variant === 'warning' ? 'input-suffix-warning' : ''}`}>
             <input
                 type="number"
                 value={value}
@@ -263,7 +419,7 @@ function NumberInput({ value, onChange, min, max, suffix }: NumberInputProps) {
                 max={max}
                 onChange={(e) => onChange(Number(e.currentTarget.value))}
             />
-            {suffix && <span className="num-suffix">{suffix}</span>}
+            <span className="num-suffix">{suffix}</span>
         </div>
     );
 }
@@ -278,5 +434,65 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
         >
             <span className="toggle-knob" />
         </button>
+    );
+}
+
+interface SliderProps {
+    value: number;
+    min: number;
+    max: number;
+    onChange: (v: number) => void;
+}
+
+function Slider({ value, min, max, onChange }: SliderProps) {
+    const ratio = Math.max(0, Math.min(1, (value - min) / (max - min)));
+    const onClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const r = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        onChange(Math.round(min + r * (max - min)));
+    };
+    return (
+        <div className="slider" onClick={onClick} role="slider" aria-valuenow={value} aria-valuemin={min} aria-valuemax={max}>
+            <div className="slider-fill" style={{ width: `calc((100% - 2px) * ${ratio})` }} />
+            <div className="slider-thumb" style={{ left: `calc(${ratio * 100}%)` }} />
+        </div>
+    );
+}
+
+/* ============================================================
+ * Inline icons
+ * ============================================================ */
+
+function CloseIcon() {
+    return (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 6 6 18M6 6l12 12" />
+        </svg>
+    );
+}
+
+function ChevronDownIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m6 9 6 6 6-6" />
+        </svg>
+    );
+}
+
+function PlusIcon() {
+    return (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 12h14M12 5v14" />
+        </svg>
+    );
+}
+
+function FolderIcon() {
+    /* lucide `folder` — Pencil YQwLD: 16×16. Color comes from parent via currentColor;
+     * see .pomo-row-right (color: var(--text-secondary)) */
+    return (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />
+        </svg>
     );
 }

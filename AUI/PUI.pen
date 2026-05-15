@@ -3889,7 +3889,12 @@
                   "ref": "gs1Tv",
                   "width": "fill_container",
                   "name": "contentArea",
-                  "padding": 16
+                  "padding": 16,
+                  "descendants": {
+                    "aIr3d": {
+                      "name": "pomoGrid"
+                    }
+                  }
                 },
                 {
                   "id": "EkvuW",

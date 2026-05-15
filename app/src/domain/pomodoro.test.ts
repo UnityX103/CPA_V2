@@ -1,5 +1,7 @@
-import { describe, expect, it, beforeEach } from 'vitest';
-import { usePomodoroStore } from './pomodoro';
+import { describe, expect, it, beforeEach, vi } from 'vitest';
+import { usePomodoroStore, createPomodoroStore } from './pomodoro';
+import * as dispatchMod from './bridge/dispatch';
+import { BRIDGE_VERSION } from './bridge/protocol';
 
 function reset() {
     usePomodoroStore.setState({
@@ -53,5 +55,19 @@ describe('PomodoroTimerSystem.tick', () => {
         usePomodoroStore.getState().tick(10);
         expect(usePomodoroStore.getState().currentPhase).toBe('completed');
         expect(usePomodoroStore.getState().remainingSeconds).toBe(0);
+    });
+});
+
+describe('createPomodoroStore — settings-window mode', () => {
+    it('applySettings dispatches instead of mutating local state', () => {
+        const spy = vi.spyOn(dispatchMod, 'dispatch').mockResolvedValue();
+        const store = createPomodoroStore({ isSettingsWindow: true });
+        const before = store.getState().focusDurationSeconds;
+        store.getState().applySettings(900, 180, 5, true);
+        expect(store.getState().focusDurationSeconds).toBe(before);
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({
+            v: BRIDGE_VERSION, store: 'pomodoro', action: 'applySettings', args: [900, 180, 5, true],
+        }));
+        spy.mockRestore();
     });
 });

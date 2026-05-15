@@ -1,74 +1,177 @@
+/* PlayerCard ←→ PUI.pen drqFB
+ * 外壳 153x94, padding 14, radius 20, fill #FFFDFBF2, stroke #EFDCCD, clip true
+ * pc-content-stack D3ZIc: vertical, gap 12
+ *   ├─ head tyyE3: horizontal, gap 10
+ *   │   ├─ nameCol MHhxc: vertical, gap 4 (name + phaseBadge)
+ *   │   └─ timeRow oCExj: justify end (KeyCounterPill h31Sl)
+ *   ├─ divider cnbrI: 1px #F3E3D3
+ *   └─ footer cwbeK: horizontal, gap 6 (icon + appName)
+ * pin btn epxz9: absolute x=110 y=50, 22x22
+ */
+
 .pc-card {
-    width: 153px;
-    background: #FFFDFBF2;
+    position: relative;
+    width: var(--pc-w);
+    background: var(--panel-bg-strong);
     border: 1px solid var(--panel-stroke);
-    border-radius: 20px;
-    padding: 14px;
+    border-radius: var(--panel-radius-md);
+    padding: var(--pc-padding);
     overflow: hidden;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+    box-shadow: var(--shadow-card);
+    box-sizing: border-box;
 }
 
 .pc-content {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: var(--pc-gap);
+    position: relative;
 }
 
 .pc-row {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 6px;
+    gap: 10px;
+    width: 100%;
 }
 
-.pc-row-head .pc-name {
-    font-size: 12px;
-    color: var(--text-primary);
-    font-weight: 600;
+.pc-row-head {
+    align-items: flex-start;
+}
+
+.pc-name-col {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+}
+
+.pc-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-brand-dark);
+    line-height: 1;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
+/* phaseBadge UPUHf — fill 与 phase 联动通过 inline style 设置 */
+.pc-phase-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    overflow: hidden;
+    align-self: flex-start;
+    line-height: 1;
+}
+
+.pc-phase-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #FFFFFF;
+    flex-shrink: 0;
+}
+
+.pc-phase-text {
+    font-size: 10px;
+    font-weight: 700;
+    color: #FFFFFF;
+    font-family: var(--font-cn);
+    line-height: 1;
+}
+
+/* timeRow oCExj — KeyCounterPill */
+.pc-time-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-shrink: 0;
+}
+
+/* KeyCounterPill h31Sl */
 .pc-pill {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    background: var(--pill-bg);
-    color: var(--text-subtle);
-    border: 1px solid var(--pill-stroke);
+    gap: var(--pill-gap);
+    padding: var(--pill-pad-y) var(--pill-pad-x);
     border-radius: 999px;
-    padding: 2px 6px;
-    font-size: 10px;
+    background: var(--pill-bg);
+    border: 1px solid var(--pill-stroke);
+    line-height: 1;
+}
+
+.pc-pill-key {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1px 4px;
+    border-radius: var(--pill-key-radius);
+    background: var(--pill-key-bg);
+    border: 1px solid var(--pill-key-stroke);
+    font-size: var(--pill-key-size);
+    font-weight: 700;
+    color: var(--pill-key-color);
+    line-height: 1;
 }
 
 .pc-pill-count {
-    color: var(--btn-primary-bg-idle);
-    font-weight: 600;
-}
-
-.pc-badge {
-    display: inline-flex;
-    align-items: center;
-    color: white;
-    font-size: 10px;
-    font-weight: 600;
-    padding: 2px 8px;
-    border-radius: 999px;
-}
-
-.pc-time {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-primary);
+    font-size: var(--pill-count-size);
+    font-weight: 700;
+    color: var(--pill-count-color);
     font-variant-numeric: tabular-nums;
+    line-height: 1;
 }
 
-.pc-row-app .pc-app-name {
-    font-size: 11px;
-    color: var(--text-muted);
+/* divider cnbrI */
+.pc-divider {
+    height: 1px;
+    width: 100%;
+    background: var(--pc-divider);
+}
+
+/* footer cwbeK */
+.pc-footer {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+}
+
+.pc-foot-icon {
+    width: 13px;
+    height: 13px;
+    color: var(--pc-foot-icon);
+    flex-shrink: 0;
+    display: inline-flex;
+}
+
+.pc-foot-text {
+    font-size: var(--pc-foot-text-size);
+    font-weight: 500;
+    color: var(--pc-foot-text);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    width: 100%;
+}
+
+/* pin btn epxz9: absolute x=110 y=50 within content stack 125x66 */
+.pc-pin {
+    position: absolute;
+    right: 1px;       /* 125 - 22 - 14(padding 已扣除) → 内容内右侧贴边 */
+    top: 50px;
+    width: 22px;
+    height: 22px;
+    border-radius: 11px;
+    background: var(--btn-pin-bg-card);
+    border: 1px solid var(--btn-pin-stroke);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--btn-pin-icon-card);
+    z-index: 1;
 }

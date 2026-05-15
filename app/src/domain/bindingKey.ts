@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
-import { create } from 'zustand';
+import { create, type StoreApi, type UseBoundStore } from 'zustand';
 import { listen } from '@tauri-apps/api/event';
+import { dispatch } from './bridge/dispatch';
+import { BRIDGE_VERSION } from './bridge/protocol';
 
 export interface BindingKeyEntry {
     id: string;
@@ -46,61 +48,99 @@ export function labelForKeyCode(keyCode: number): string {
     return KEYCODE_LABELS[keyCode] ?? `Key#${keyCode}`;
 }
 
-export const useBindingKeyStore = create<BindingKeyState & BindingKeyActions>((set, get) => ({
-    entries: [],
-    syncedKeyId: null,
-    capturingId: null,
+export type BindingKeyStore = UseBoundStore<StoreApi<BindingKeyState & BindingKeyActions>>;
 
-    addEntry: () => {
-        const id = newId();
-        const entry: BindingKeyEntry = {
-            id,
-            label: '未绑定',
-            keyCode: -1,
-            pressCount: 0,
-            enabled: true,
-        };
-        set((s) => ({ entries: [...s.entries, entry], capturingId: id }));
-        return id;
-    },
-    removeEntry: (id) => {
-        set((s) => ({
-            entries: s.entries.filter((e) => e.id !== id),
-            syncedKeyId: s.syncedKeyId === id ? null : s.syncedKeyId,
-            capturingId: s.capturingId === id ? null : s.capturingId,
-        }));
-    },
-    setEnabled: (id, enabled) => {
-        set((s) => ({
-            entries: s.entries.map((e) => (e.id === id ? { ...e, enabled } : e)),
-        }));
-    },
-    setSynced: (id) => set({ syncedKeyId: id }),
-    beginCapture: (id) => set({ capturingId: id }),
-    cancelCapture: () => set({ capturingId: null }),
-    completeCapture: (keyCode, label) => {
-        const id = get().capturingId;
-        if (!id) return;
-        set((s) => ({
-            entries: s.entries.map((e) =>
-                e.id === id ? { ...e, keyCode, label, pressCount: 0 } : e,
-            ),
+export function createBindingKeyStore(opts: { isSettingsWindow: boolean }): BindingKeyStore {
+    if (opts.isSettingsWindow) {
+        return create<BindingKeyState & BindingKeyActions>(() => ({
+            entries: [],
+            syncedKeyId: null,
             capturingId: null,
+            addEntry: () => {
+                void dispatch({ v: BRIDGE_VERSION, store: 'bindingKey', action: 'addEntry', args: [] });
+                return '';
+            },
+            removeEntry: (id) => {
+                void dispatch({ v: BRIDGE_VERSION, store: 'bindingKey', action: 'removeEntry', args: [id] });
+            },
+            setEnabled: () => {},
+            setSynced: (id) => {
+                void dispatch({ v: BRIDGE_VERSION, store: 'bindingKey', action: 'setSynced', args: [id] });
+            },
+            beginCapture: (id) => {
+                void dispatch({ v: BRIDGE_VERSION, store: 'bindingKey', action: 'beginCapture', args: [id] });
+            },
+            cancelCapture: () => {},
+            completeCapture: () => {},
+            incrementByKeyCode: () => {},
+            resetCount: () => {},
         }));
-    },
-    incrementByKeyCode: (keyCode) => {
-        set((s) => ({
-            entries: s.entries.map((e) =>
-                e.keyCode === keyCode && e.enabled ? { ...e, pressCount: e.pressCount + 1 } : e,
-            ),
-        }));
-    },
-    resetCount: (id) => {
-        set((s) => ({
-            entries: s.entries.map((e) => (e.id === id ? { ...e, pressCount: 0 } : e)),
-        }));
-    },
-}));
+    }
+    return create<BindingKeyState & BindingKeyActions>((set, get) => ({
+        entries: [],
+        syncedKeyId: null,
+        capturingId: null,
+
+        addEntry: () => {
+            const id = newId();
+            const entry: BindingKeyEntry = {
+                id,
+                label: '未绑定',
+                keyCode: -1,
+                pressCount: 0,
+                enabled: true,
+            };
+            set((s) => ({ entries: [...s.entries, entry], capturingId: id }));
+            return id;
+        },
+        removeEntry: (id) => {
+            set((s) => ({
+                entries: s.entries.filter((e) => e.id !== id),
+                syncedKeyId: s.syncedKeyId === id ? null : s.syncedKeyId,
+                capturingId: s.capturingId === id ? null : s.capturingId,
+            }));
+        },
+        setEnabled: (id, enabled) => {
+            set((s) => ({
+                entries: s.entries.map((e) => (e.id === id ? { ...e, enabled } : e)),
+            }));
+        },
+        setSynced: (id) => set({ syncedKeyId: id }),
+        beginCapture: (id) => set({ capturingId: id }),
+        cancelCapture: () => set({ capturingId: null }),
+        completeCapture: (keyCode, label) => {
+            const id = get().capturingId;
+            if (!id) return;
+            set((s) => ({
+                entries: s.entries.map((e) =>
+                    e.id === id ? { ...e, keyCode, label, pressCount: 0 } : e,
+                ),
+                capturingId: null,
+            }));
+        },
+        incrementByKeyCode: (keyCode) => {
+            set((s) => ({
+                entries: s.entries.map((e) =>
+                    e.keyCode === keyCode && e.enabled ? { ...e, pressCount: e.pressCount + 1 } : e,
+                ),
+            }));
+        },
+        resetCount: (id) => {
+            set((s) => ({
+                entries: s.entries.map((e) => (e.id === id ? { ...e, pressCount: 0 } : e)),
+            }));
+        },
+    }));
+}
+
+function detectIsSettingsWindow(): boolean {
+    if (typeof window === 'undefined') return false;
+    return new URLSearchParams(window.location.search).get('window') === 'settings';
+}
+
+export const useBindingKeyStore: BindingKeyStore = createBindingKeyStore({
+    isSettingsWindow: detectIsSettingsWindow(),
+});
 
 export function useBindingKeyListener() {
     useEffect(() => {

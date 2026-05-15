@@ -1,42 +1,218 @@
-/* Pencil 设计稿 PUI.pen 设计 token 同步 */
+/* Pencil 设计稿 PUI.pen 设计 token 同步 — 与 PUI.pen 的变量 / 重复出现的色板逐项对齐。
+ * 数值取自具体 reusable 节点：
+ *   panel = pomodoroPanel(YRqeB) / PlayerCard(drqFB) / InputCounterPanel(ZmuFh)
+ *   settings = Unified Settings Panel(vnYnS) + 子面板(gs1Tv/8Le5R/v2ZgA/Pdj9C)
+ *   button/input/dialog = Component Library(ce62U) 中的 reusable 组件
+ */
 :root {
-    --panel-bg: #FFFDFBEE;
-    --panel-stroke: #EFDCCD;
-    --panel-radius: 24px;
-    --panel-padding: 12px;
-    --panel-gap: 18px;
+    /* === 字体 === */
+    --font-cn: "MaokenAssortedSans", "PingFang SC", "Hiragino Sans GB", -apple-system, BlinkMacSystemFont, sans-serif;
 
+    /* === 桌宠面板（PomodoroPanel / PlayerCard / InputCounterPanel） === */
+    --panel-bg: #FFFDFBEE;          /* PomodoroPanel YRqeB.fill */
+    --panel-bg-strong: #FFFDFBF2;   /* PlayerCard / InputCounterPanel */
+    --panel-stroke: #EFDCCD;        /* 三个面板共用 stroke */
+    --panel-radius-lg: 24px;        /* PomodoroPanel cornerRadius */
+    --panel-radius-md: 20px;        /* PlayerCard / InputCounterPanel cornerRadius */
+    --panel-padding: 12px;          /* YRqeB.padding */
+    --panel-gap: 18px;              /* pp-content gap */
+
+    /* === Settings 面板 (Unified Settings Panel vnYnS) === */
+    --settings-bg: #FFFFFF;
+    --settings-stroke: #F1E5D8;
+    --settings-radius: 20px;
+    --settings-padding: 20px;
+    --settings-gap: 16px;
+    --settings-sidebar-w: 71px;
+    --settings-sidebar-bg: #F6F7F8;
+    --settings-sidebar-radius: 5px;
+    --settings-sidebar-pad-y: 8px;
+    --settings-tab-pad-y: 10px;
+    --settings-tab-pad-x: 14px;
+    --settings-content-pad: 16px;
+    --settings-card-bg: #F6F7F8;       /* gspScale / pomoWork / onlAutoRow 等卡片 */
+    --settings-card-radius: 16px;
+    --settings-card-padding: 16px;
+    --settings-card-gap: 10px;          /* pomoFooter gap */
+    --settings-card-gap-tight: 12px;    /* pomoGrid / onlJoinCard gap */
+    --settings-row-pad-y: 14px;
+    --settings-row-pad-x: 16px;
+
+    /* 番茄钟休息时长强调色（pomoBreak/pomoBreakLabel/pomoBreakInput.stroke） */
+    --break-card-bg: #FFF7D9;
+    --break-card-stroke: #F3D28B;
+    --break-label-color: #D97706;
+    --break-suffix-color: #A16207;
+
+    /* 联机房间卡片（onlRoomCard EK2CF）— 已加入态 */
+    --online-room-bg: #F0FDF4;
+    --online-room-stroke: #BBF7D0;
+
+    /* 重连提示横幅（rjTse） */
+    --online-reconnect-bg: #FFF4CC;
+    --online-reconnect-text: #8A6D00;
+
+    /* === 输入控件（Input/Text brmHc / Input/Dropdown Frjkw / Input/TextSuffix 0cT2B） === */
+    --input-bg: rgba(255, 255, 255, 0.8);
+    --input-stroke: #E5E7EB;
+    --input-radius: 12px;
+    --input-pad-y: 12px;
+    --input-pad-x: 14px;
+    --input-text: #1A1A1A;
+    --input-placeholder: #9CA3AF;
+    --input-suffix-color: #6B7280;
+    --input-text-size: 14px;
+    --input-num-size: 24px;
+    --input-num-weight: 800;
+
+    /* === 按钮（Button/Primary Za5wE / Button/Secondary RPLJq / Button/Tab JZ0T6 / Button/Icon G6VSO / Button/Pin cM79C / Button/Close UAbZg / Button/Copy j9CVE） === */
+    --btn-radius: 999px;
+    --btn-pad-y: 7px;
+    --btn-pad-x: 12px;
+    --btn-width: 120px;            /* Primary/Secondary 默认 width */
+    --btn-text-size: 12px;
+    --btn-text-weight: 700;
+
+    --btn-primary-bg-idle: #D15F3D;     /* timerState=idle */
+    --btn-primary-bg-running: #E8824A;  /* timerState=running */
+    --btn-primary-text: #FFFFFF;
+
+    --btn-secondary-bg: #FFFFFF;
+    --btn-secondary-stroke: #E8C4A8;
+    --btn-secondary-text: #A28B79;
+
+    --btn-tab-bg: #FFF1EE;             /* JZ0T6.fill */
+    --btn-tab-text: #D15F3D;
+    --btn-tab-pad-y: 6px;
+    --btn-tab-pad-x: 12px;
+    --btn-tab-text-size: 11px;
+
+    --btn-icon-bg: #F0E0D0;            /* G6VSO.fill */
+    --btn-icon-icon: #A28B79;
+    --btn-icon-size: 22px;
+    --btn-icon-radius: 11px;
+
+    --btn-pin-bg: #F5D7C3;             /* PomodoroPanel pp-pin-btn */
+    --btn-pin-bg-card: #E9D5C3;        /* PlayerCard pc-pin-btn */
+    --btn-pin-stroke: #E7C6AF;
+    --btn-pin-icon-active: #D15F3D;
+    --btn-pin-icon-card: #7A5F4D;
+    --btn-pin-icon-default: #8F7766;
+
+    --btn-close-icon: #A28B79;
+    --btn-close-pad: 6px;
+
+    --btn-copy-bg: #F0E0D0;
+    --btn-copy-text: #A28B79;
+    --btn-copy-w: 56px;
+    --btn-copy-pad-y: 6px;
+
+    /* === Toggle Switch (NGo9f) === */
+    --toggle-w: 44px;
+    --toggle-h: 24px;
+    --toggle-pad: 2px;
+    --toggle-knob: 20px;
+    --toggle-on-bg: #22C55E;
+    --toggle-off-bg: #B5A49A;
+    --toggle-knob-bg: #FFFFFF;
+
+    /* === Slider (YwCv6 Input/Slider) === */
+    --slider-h: 24px;
+    --slider-radius: 12px;
+    --slider-track-bg: rgba(255, 255, 255, 0.8);
+    --slider-track-stroke: #E5E7EB;
+    --slider-fill: #66B8FF;
+    --slider-thumb: 24px;
+
+    /* === Confirm Dialog (bfMCZ) === */
+    --dialog-w: 420px;
+    --dialog-radius: 20px;
+    --dialog-padding: 24px;
+    --dialog-gap: 16px;
+    --dialog-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    --dialog-countdown-color: #D97706;
+    --dialog-body-color: #4B5563;
+
+    /* === KeyCounterPill (h31Sl) === */
     --pill-bg: #FFF3EA;
     --pill-stroke: #EFDCCD;
-    --pill-text: #B5A49A;
+    --pill-pad-y: 4px;
+    --pill-pad-x: 8px;
+    --pill-gap: 5px;
+    --pill-key-bg: #FFFFFF;
+    --pill-key-stroke: #EFDCCD;
+    --pill-key-radius: 3px;
+    --pill-key-color: #5B4636;
+    --pill-key-size: 9px;
+    --pill-count-color: #A28B79;
+    --pill-count-size: 11px;
 
+    /* === RoomMemberItem (ixVy7) / RoomHistoryItem (bSMet) === */
+    --row-bg: rgba(255, 255, 255, 0.8);
+    --row-stroke: #E5E7EB;
+    --row-radius: 10px;
+    --row-pad-y: 10px;
+    --row-pad-x: 12px;
+    --row-gap: 10px;
+    --row-dot-online: #4ADE80;
+    --row-status-focus: #6366F1;
+    --row-status-rest: #D97706;
+    --row-status-idle: #9CA3AF;
+
+    /* === BindingKeyRow (RU5zF) === */
+    --bk-listener-h: 36px;
+    --bk-listener-radius: 12px;
+    --bk-listener-pad-y: 10px;
+    --bk-listener-pad-x: 14px;
+    --bk-icon-btn-size: 36px;
+    --bk-icon-btn-radius: 18px;
+    --bk-listening-bg: #FFF1EE;
+    --bk-listening-stroke: #D15F3D;
+    --bk-synced-stroke: #D15F3D;
+
+    /* === Player Card 字体 / 底部图标 === */
+    --pc-w: 153px;
+    --pc-padding: 14px;
+    --pc-gap: 12px;
+    --pc-divider: #F3E3D3;
+    --pc-foot-icon: #B5A49A;
+    --pc-foot-text: #A28B79;
+    --pc-foot-text-size: 11px;
+    --pc-name-size: 13px;
+    --pc-name-color: #1A1A1A;
+
+    /* === 文字色阶 === */
     --text-primary: #1A1A1A;
+    --text-brand-dark: #5B4636;     /* PomodoroPanel 标题 / pillKey */
+    --text-secondary: #6B7280;
     --text-muted: #9CA3AF;
     --text-subtle: #B5A49A;
     --text-link: #6366F1;
+    --text-warm: #A28B79;
+    --text-warning: #D97706;
+    --text-success: #34A853;
+    --text-paused: #E08C10;
 
-    --btn-primary-bg-idle: #D15F3D;
-    --btn-primary-bg-running: #E8824A;
-    --btn-primary-text: #FFFFFF;
-    --btn-secondary-bg: transparent;
-    --btn-secondary-stroke: #EFDCCD;
-    --btn-secondary-text: #5B4636;
-
+    /* === ClockRing 状态主题 (与 PUI.pen variables 一一对应) === */
     --clock-focus-label: #D15F3D;
     --clock-focus-ring-bg: #FFE5D9;
     --clock-focus-ring-progress: #D15F3D;
-
     --clock-rest-label: #34A853;
     --clock-rest-ring-bg: #C8EDD5;
     --clock-rest-ring-progress: #34A853;
-
     --clock-off-label: #B5A49A;
     --clock-off-ring-bg: #E0D9D3;
     --clock-off-ring-progress: #E0D9D3;
-
     --clock-paused-label: #E08C10;
     --clock-paused-ring-bg: #FFF0D4;
     --clock-paused-ring-progress: #F5A623;
 
-    --font-cn: "MaokenAssortedSans", "PingFang SC", "Hiragino Sans GB", -apple-system, BlinkMacSystemFont, sans-serif;
+    /* === 头部统计徽章（statBadge XcJUF） === */
+    --stat-label-color: #A28B79;
+    --stat-value-color: #D15F3D;
+
+    /* === 阴影 === */
+    --shadow-panel: 0 4px 16px rgba(0, 0, 0, 0.04);
+    --shadow-card: 0 2px 10px rgba(0, 0, 0, 0.04);
+    --shadow-dialog: 0 8px 32px rgba(0, 0, 0, 0.20);
 }

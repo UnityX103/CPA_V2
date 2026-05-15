@@ -4,7 +4,7 @@ mod key_counter;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
-use tauri::{Emitter, Manager, RunEvent, WebviewWindow};
+use tauri::{Emitter, Manager, RunEvent, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 
 #[tauri::command]
 fn set_click_through(window: WebviewWindow, ignore: bool) -> Result<(), String> {
@@ -19,6 +19,38 @@ fn set_always_on_top(window: WebviewWindow, on_top: bool) -> Result<(), String> 
 #[tauri::command]
 fn get_active_app() -> Option<active_app::ActiveAppInfo> {
     active_app::current_active_app()
+}
+
+#[tauri::command]
+async fn open_settings_window(app: tauri::AppHandle) -> Result<(), String> {
+    if let Some(w) = app.get_webview_window("settings") {
+        w.show().map_err(|e| e.to_string())?;
+        w.set_focus().map_err(|e| e.to_string())?;
+        return Ok(());
+    }
+    let url = WebviewUrl::App("index.html?window=settings".into());
+    WebviewWindowBuilder::new(&app, "settings", url)
+        .title("设置")
+        .inner_size(460.0, 440.0)
+        .resizable(false)
+        .transparent(true)
+        .decorations(false)
+        .always_on_top(true)
+        .shadow(false)
+        .skip_taskbar(true)
+        .visible(true)
+        .center()
+        .build()
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+async fn close_settings_window(app: tauri::AppHandle) -> Result<(), String> {
+    if let Some(w) = app.get_webview_window("settings") {
+        w.hide().map_err(|e| e.to_string())?;
+    }
+    Ok(())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -77,7 +109,9 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             set_click_through,
             set_always_on_top,
-            get_active_app
+            get_active_app,
+            open_settings_window,
+            close_settings_window
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application");

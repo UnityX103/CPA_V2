@@ -1,5 +1,7 @@
 import { describe, expect, it, beforeEach, vi } from 'vitest';
-import { useNetworkStore } from './network';
+import { useNetworkStore, createNetworkStore } from './network';
+import * as dispatchMod from './bridge/dispatch';
+import { BRIDGE_VERSION } from './bridge/protocol';
 
 class FakeWebSocket {
     static OPEN = 1;
@@ -86,5 +88,35 @@ describe('NetworkSystem 接收校验', () => {
         // （onmessage 已经在内部 if(players[id]) 守门，所以这里只校验初始没有 ghost）
         expect(useNetworkStore.getState().players['ghost']).toBeUndefined();
         expect(ghostMsg.playerId).toBe('ghost'); // touch 变量避免 unused 警告
+    });
+});
+
+describe('createNetworkStore — settings-window mode', () => {
+    it('joinRoom dispatches instead of opening a socket', async () => {
+        const spy = vi.spyOn(dispatchMod, 'dispatch').mockResolvedValue();
+        const store = createNetworkStore({ isSettingsWindow: true });
+        await store.getState().joinRoom('ROOM-XYZ');
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({
+            v: BRIDGE_VERSION, store: 'network', action: 'joinRoom', args: ['ROOM-XYZ'],
+        }));
+        // status is not advanced locally — only the dispatch fires
+        expect(store.getState().status).toBe('idle');
+        spy.mockRestore();
+    });
+
+    it('createRoom, leaveRoom, setAutoConnect, setPlayerName all dispatch', async () => {
+        const spy = vi.spyOn(dispatchMod, 'dispatch').mockResolvedValue();
+        const store = createNetworkStore({ isSettingsWindow: true });
+
+        await store.getState().createRoom('R1');
+        store.getState().leaveRoom();
+        store.getState().setAutoConnect(true);
+        store.getState().setPlayerName('alice');
+
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({ v: BRIDGE_VERSION, store: 'network', action: 'createRoom',     args: ['R1'] }));
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({ v: BRIDGE_VERSION, store: 'network', action: 'leaveRoom',      args: [] }));
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({ v: BRIDGE_VERSION, store: 'network', action: 'setAutoConnect', args: [true] }));
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({ v: BRIDGE_VERSION, store: 'network', action: 'setPlayerName',  args: ['alice'] }));
+        spy.mockRestore();
     });
 });

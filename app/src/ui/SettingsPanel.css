@@ -1,111 +1,194 @@
-.settings-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.18);
+/* SettingsPanel ←→ PUI.pen vnYnS (Unified Settings Panel) + 子面板
+ * 外壳: 460x440（设计稿 vnYnS 是 460x394，+46px 高度让 Pomodoro/Global tab 不滚动；
+ *        WSnlp 视频文件行按设计 enabled:false 直接不渲染。）
+ * padding 20, gap 16, radius 20, fill #FFFFFF, stroke 1px #F1E5D8
+ * head 8QyVE: title (font 18/700) + closeBtn UAbZg
+ * body 3kLAl: sidebar(71) + content
+ *   sidebar qvEam: padding [8,0], radius 5, bg #F6F7F8
+ *     tabs: padding [10,14], active fill #FFFFFF
+ *   content NCXdZ: vertical, contentArea 2RdBk(padding 16) + uspApply EkvuW(absolute, w349 h38)
+ *
+ * 子面板共用：cardSection radius 16, padding 16, bg #F6F7F8
+ * 番茄钟特例 pomoBreak: bg #FFF7D9, label #D97706
+ * 联机房间 onlRoomCard: bg #F0FDF4, stroke #BBF7D0
+ * 重连横幅 onlReconnectBanner: bg #FFF4CC, text #8A6D00
+ */
+
+.settings-panel {
+    position: relative;
+    width: 460px;
+    height: 440px;
+    background: var(--settings-bg);
+    border: 1px solid var(--settings-stroke);
+    border-radius: var(--settings-radius);
+    padding: var(--settings-padding);
     display: flex;
-    align-items: center;
-    justify-content: center;
+    flex-direction: column;
+    gap: var(--settings-gap);
+    box-shadow: var(--shadow-dialog);
+    box-sizing: border-box;
     z-index: 100;
 }
 
-.settings-panel {
-    width: 460px;
-    max-height: 80vh;
-    background: #FFFFFF;
-    border: 1px solid #F1E5D8;
-    border-radius: 20px;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
-}
+/* ----- head ----- */
 
 .settings-head {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: 0;
+    cursor: grab;
+    -webkit-app-region: drag;
 }
+
+.settings-head:active { cursor: grabbing; }
 
 .settings-title {
     font-size: 18px;
     font-weight: 700;
     margin: 0;
-    color: var(--text-primary);
+    color: var(--text-brand-dark);
+    line-height: 1;
+    flex: 0 0 auto;
 }
 
+.settings-head-spacer { flex: 1; }
+
+/* Button/Close UAbZg: padding 6, transparent bg, icon 18px #A28B79 */
 .settings-close {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    color: var(--text-muted);
-    font-size: 18px;
-    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 6px;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--btn-close-icon);
+    box-sizing: border-box;
+    -webkit-app-region: no-drag;
 }
 
 .settings-close:hover {
     background: var(--pill-bg);
-    color: var(--text-primary);
+    color: var(--text-brand-dark);
 }
+
+.settings-close svg { display: block; }
+
+/* ----- body ----- */
 
 .settings-body {
     display: flex;
-    gap: 16px;
+    gap: 0;
+    flex: 1;
     overflow: hidden;
 }
 
+/* sidebar qvEam */
 .settings-nav {
-    width: 64px;
+    width: var(--settings-sidebar-w);
+    background: var(--settings-sidebar-bg);
+    border-radius: var(--settings-sidebar-radius);
+    padding: var(--settings-sidebar-pad-y) 0;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 0;
+    flex-shrink: 0;
 }
 
+/* tab frame: padding [10,14], fill_container width; active = #FFFFFF */
 .settings-tab {
-    text-align: left;
-    padding: 8px 10px;
-    border-radius: 8px;
-    color: var(--text-muted);
+    width: 100%;
+    padding: var(--settings-tab-pad-y) var(--settings-tab-pad-x);
+    color: var(--text-warm);
+    font-family: var(--font-cn);
     font-size: 13px;
     font-weight: 500;
+    text-align: left;
+    background: transparent;
+    line-height: 1;
+    box-sizing: border-box;
 }
 
 .settings-tab.active {
-    background: var(--pill-bg);
-    color: var(--btn-primary-bg-idle);
-    font-weight: 600;
+    background: var(--settings-bg);
+    color: var(--text-brand-dark);
+    font-weight: 700;
 }
 
+/* content NCXdZ: vertical, contentArea wraps the active sub-panel; padding 16 (2RdBk.padding) */
 .settings-content {
+    position: relative;
+    flex: 1;
+    padding: 16px;
+    overflow: hidden;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+.settings-content-scroll {
     flex: 1;
     overflow-y: auto;
     padding-right: 4px;
 }
 
+.settings-content-scroll::-webkit-scrollbar { width: 6px; }
+.settings-content-scroll::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.08); border-radius: 3px; }
+
 .tab-pane {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: var(--settings-gap);
 }
 
+/* ----- uspApply EkvuW: absolute, w 349, h 38, justify end ----- */
 .apply-row {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: 38px;
+    padding: 0 16px;
     display: flex;
+    align-items: center;
     justify-content: flex-end;
+    background: var(--settings-bg);
+    z-index: 2;
+    pointer-events: none;
 }
+
+.apply-row .btn { pointer-events: auto; }
 
 .apply-btn {
-    height: 30px;
-    min-width: 64px;
+    width: 120px;
+    height: 38px;
+    font-size: 14px;
 }
 
+/* 当 apply 行存在时，把第一个 card 顶部留出空间避免被 apply 按钮遮住 */
+.tab-pane.has-apply { padding-top: 46px; }
+
+/* ===== 卡片基础 (gspScale / pomoWork / onlAutoRow ...) ===== */
+
 .card {
-    background: #F6F7F8;
-    border-radius: 16px;
-    padding: 16px;
+    background: var(--settings-card-bg);
+    border-radius: var(--settings-card-radius);
+    padding: var(--settings-card-padding);
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: var(--settings-card-gap);
 }
+
+.card-tight { gap: 6px; }
+.card-grid {
+    flex-direction: row;
+    gap: var(--settings-card-gap-tight);
+    background: transparent;
+    padding: 0;
+}
+
+.card-grid > .card { flex: 1; }
 
 .card-row {
     display: flex;
@@ -114,103 +197,341 @@
     gap: 8px;
 }
 
-.card-row label {
-    font-size: 13px;
-    color: var(--text-primary);
+.card-row-stack {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
 }
 
-.card-actions {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
-
-.status-text {
+.card-label {
+    font-family: var(--font-cn);
     font-size: 12px;
+    font-weight: 600;
     color: var(--text-muted);
-    flex: 1;
+    line-height: 1;
 }
 
-.error-text {
-    color: var(--btn-primary-bg-idle);
-    font-size: 12px;
+.card-title {
+    font-family: var(--font-cn);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
 }
 
-.num-input {
+/* ===== 番茄钟休息卡（pomoBreak）变体 ===== */
+
+.card-break {
+    background: var(--break-card-bg);
+}
+
+.card-break .card-label { color: var(--break-label-color); }
+
+/* TextSuffix Input 0cT2B 内的 break 变体：黄色 stroke + 黄色 suffix */
+.input-suffix-warning {
+    border-color: var(--break-card-stroke);
+    background: rgba(255, 255, 255, 0.72);
+}
+
+.input-suffix-warning .num-suffix { color: var(--break-suffix-color); }
+
+/* ===== 表单控件: Input/TextSuffix 0cT2B / Input/Text brmHc / Input/Dropdown Frjkw ===== */
+
+.text-input,
+.num-input,
+.dropdown {
     display: flex;
     align-items: center;
-    gap: 4px;
-    background: #FFFFFF;
-    border: 1px solid #E5E7EB;
-    border-radius: 12px;
-    padding: 4px 8px;
-}
-
-.num-input input {
-    width: 56px;
-    border: none;
-    outline: none;
-    background: transparent;
-    text-align: right;
-    font-size: 13px;
-    color: var(--text-primary);
-    font-family: inherit;
-}
-
-.num-suffix {
-    font-size: 11px;
-    color: var(--text-muted);
+    background: var(--input-bg);
+    border: 1px solid var(--input-stroke);
+    border-radius: var(--input-radius);
+    padding: var(--input-pad-y) var(--input-pad-x);
+    font-family: var(--font-cn);
+    color: var(--input-text);
+    box-sizing: border-box;
 }
 
 .text-input {
-    flex: 1;
-    background: #FFFFFF;
-    border: 1px solid #E5E7EB;
-    border-radius: 12px;
-    padding: 6px 10px;
-    font-size: 13px;
-    color: var(--text-primary);
-    font-family: inherit;
+    width: 100%;
+    font-size: var(--input-text-size);
+    font-weight: 500;
     outline: none;
 }
 
-.text-input:focus {
-    border-color: var(--btn-primary-bg-idle);
+.text-input::placeholder { color: var(--input-placeholder); }
+.text-input:focus { border-color: var(--btn-primary-bg-idle); }
+
+.num-input {
+    justify-content: space-between;
+    width: 100%;
 }
+
+.num-input input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: var(--input-num-size);
+    font-weight: var(--input-num-weight);
+    color: var(--input-text);
+    min-width: 0;
+}
+
+.num-input input::-webkit-outer-spin-button,
+.num-input input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.num-input input { -moz-appearance: textfield; }
+
+.num-suffix {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--input-suffix-color);
+    margin-left: 8px;
+}
+
+.dropdown {
+    justify-content: space-between;
+    cursor: pointer;
+    width: 100%;
+}
+
+.dropdown-value {
+    font-size: var(--input-text-size);
+    font-weight: 500;
+    color: var(--input-text);
+}
+
+.dropdown-chevron {
+    width: 18px;
+    height: 18px;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+    margin-left: 8px;
+}
+
+/* ===== Toggle Switch NGo9f ===== */
 
 .toggle {
-    width: 36px;
-    height: 20px;
+    width: var(--toggle-w);
+    height: var(--toggle-h);
     border-radius: 999px;
-    background: #E5E7EB;
+    background: var(--toggle-off-bg);
     position: relative;
     transition: background-color 0.2s;
+    padding: var(--toggle-pad);
+    box-sizing: border-box;
+    flex-shrink: 0;
 }
 
-.toggle.on {
-    background: #34A853;
-}
+.toggle.on { background: var(--toggle-on-bg); }
 
 .toggle-knob {
     position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 16px;
-    height: 16px;
+    top: var(--toggle-pad);
+    left: var(--toggle-pad);
+    width: var(--toggle-knob);
+    height: var(--toggle-knob);
     border-radius: 50%;
-    background: white;
+    background: var(--toggle-knob-bg);
     transition: transform 0.2s;
 }
 
 .toggle.on .toggle-knob {
-    transform: translateX(16px);
+    transform: translateX(calc(var(--toggle-w) - var(--toggle-knob) - var(--toggle-pad) * 2));
 }
 
-.card-empty {
-    font-size: 12px;
-    color: var(--text-muted);
-    padding: 4px 0;
+/* ===== Slider YwCv6 ===== */
+
+.slider {
+    position: relative;
+    width: 100%;
+    height: var(--slider-h);
+    border-radius: var(--slider-radius);
+    background: var(--slider-track-bg);
+    border: 1px solid var(--slider-track-stroke);
+    box-sizing: border-box;
+    cursor: pointer;
 }
+
+.slider-fill {
+    position: absolute;
+    top: 1px;
+    left: 1px;
+    bottom: 1px;
+    border-radius: 12px;
+    background: var(--slider-fill);
+}
+
+.slider-thumb {
+    position: absolute;
+    top: -1px;
+    width: var(--slider-thumb);
+    height: var(--slider-thumb);
+    border-radius: 50%;
+    background: #FFFFFF;
+    border: 2px solid var(--slider-fill);
+    box-sizing: border-box;
+    transform: translateX(-50%);
+}
+
+.slider-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
+
+.slider-value {
+    width: 48px;
+    text-align: right;
+    font-family: var(--font-cn);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    flex-shrink: 0;
+}
+
+/* ===== 按钮 (复用 PomodoroPanel.css 中的 .btn / .btn-primary / .btn-secondary) ===== */
+
+.btn-block { width: 100%; }
+.btn-fit { width: auto; }
+
+/* ===== 联机房间卡（已加入态）EK2CF ===== */
+
+.card-room {
+    background: var(--online-room-bg);
+    border: 1px solid var(--online-room-stroke);
+    gap: var(--settings-card-gap-tight);
+}
+
+.online-reconnect {
+    background: var(--online-reconnect-bg);
+    color: var(--online-reconnect-text);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    text-align: center;
+}
+
+.online-room-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.online-room-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.online-room-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+.online-room-sub {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1;
+}
+
+/* RoomMemberItem ixVy7: padding [10,12], radius 10, bg rgba(white,.8), gap 10 */
+.member-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.member-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--row-bg);
+    border: 1px solid var(--row-stroke);
+    border-radius: 10px;
+}
+
+.member-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--row-dot-online);
+    flex-shrink: 0;
+}
+
+.member-dot-idle { background: #D1D5DB; }
+
+.member-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.member-name-self { font-weight: 700; }
+
+.member-status {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--row-status-focus);
+    flex-shrink: 0;
+}
+
+.member-status-rest { color: var(--row-status-rest); }
+.member-status-idle { color: var(--row-status-idle); }
+
+/* ===== 历史房间卡 E3S4e + RoomHistoryItem bSMet ===== */
+
+.history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.history-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--row-bg);
+    border: 1px solid var(--row-stroke);
+    border-radius: 10px;
+    width: 100%;
+    text-align: left;
+}
+
+.history-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.history-spacer { flex: 1; }
+
+.history-time {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.history-icon {
+    width: 14px;
+    height: 14px;
+    color: var(--text-link);
+    flex-shrink: 0;
+}
+
+/* ===== BindingKeyRow RU5zF ===== */
 
 .bk-row {
     display: flex;
@@ -223,41 +544,44 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 36px;
-    padding: 0 14px;
-    border-radius: 12px;
-    background: #FFFFFFCC;
-    border: 1px solid #E5E7EB;
+    height: var(--bk-listener-h);
+    padding: var(--bk-listener-pad-y) var(--bk-listener-pad-x);
+    border-radius: var(--bk-listener-radius);
+    background: var(--row-bg);
+    border: 1px solid var(--row-stroke);
     color: var(--text-primary);
+    font-family: var(--font-cn);
     font-size: 13px;
-    font-family: inherit;
+    font-weight: 500;
+    box-sizing: border-box;
 }
 
 .bk-listener.listening {
-    background: #FFF1EE;
-    border: 2px solid var(--btn-primary-bg-idle);
+    background: var(--bk-listening-bg);
+    border: 2px solid var(--bk-listening-stroke);
     justify-content: center;
     color: var(--btn-primary-bg-idle);
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .bk-count {
     color: var(--btn-primary-bg-idle);
-    font-weight: 600;
+    font-weight: 700;
     font-variant-numeric: tabular-nums;
 }
 
 .bk-icon-btn {
-    width: 36px;
-    height: 36px;
-    border-radius: 18px;
-    background: #FFFFFFCC;
-    border: 1px solid #E5E7EB;
+    width: var(--bk-icon-btn-size);
+    height: var(--bk-icon-btn-size);
+    border-radius: var(--bk-icon-btn-radius);
+    background: var(--row-bg);
+    border: 1px solid var(--row-stroke);
     color: var(--text-muted);
     font-size: 14px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
 
 .bk-icon-btn:hover {
@@ -268,5 +592,128 @@
 .bk-icon-btn.active {
     color: var(--btn-primary-bg-idle);
     background: var(--pill-bg);
-    border-color: var(--btn-primary-bg-idle);
+    border: 1.5px solid var(--bk-synced-stroke);
+}
+
+/* "添加按键" dashed btn — yjJtt YQ4ou */
+.bk-add {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    height: 36px;
+    border-radius: 12px;
+    border: 1px solid #D1D5DB;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: var(--font-cn);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.bk-add:hover {
+    color: var(--text-primary);
+    border-color: var(--text-secondary);
+}
+
+.bk-desc {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+/* ===== 错误 / 状态文字 ===== */
+
+.error-text {
+    color: var(--btn-primary-bg-idle);
+    font-size: 12px;
+}
+
+.status-text {
+    font-size: 12px;
+    color: var(--text-secondary);
+    flex: 1;
+}
+
+.card-empty {
+    font-size: 12px;
+    color: var(--text-muted);
+    padding: 4px 0;
+}
+
+.card-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+/* ===== pomoFooter JpJcn: vertical, gap 10 ===== */
+.pomo-footer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--settings-card-gap); /* 10 */
+}
+
+/* row variant of .card: alignItems center, justifyContent space_between, padding [14,16] */
+.pomo-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--settings-row-pad-y) var(--settings-row-pad-x);
+    gap: 8px;
+}
+
+.pomo-row.is-disabled { opacity: 0.5; pointer-events: none; }
+
+.pomo-row-label {
+    font-family: var(--font-cn);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+.pomo-row-value {
+    font-family: var(--font-cn);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.pomo-row-value-link  { color: var(--text-link); }
+.pomo-row-value-muted { color: var(--text-muted); }
+
+.pomo-row-right {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary);
+}
+
+/* Frjkw 的 fit-content 变体 — pomoEndAction / pomoVideoPath 用的窄 dropdown */
+.dropdown-fit { width: auto; }
+
+/* online tab root must position the overlay */
+.online-tab-root { position: relative; }
+
+/* 3aoUs onlBusyOverlay: absolute, fill #FFFFFFD9, radius 16, center text 14/700 */
+.online-busy-overlay {
+    position: absolute;
+    inset: 0;
+    background: #FFFFFFD9;
+    border-radius: var(--settings-card-radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}
+
+.online-busy-text {
+    font-family: var(--font-cn);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
 }
