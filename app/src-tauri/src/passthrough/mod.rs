@@ -73,6 +73,19 @@ pub fn clear_hit_regions(state: State<'_, std::sync::Arc<HitRegionStore>>) {
     state.clear();
 }
 
+/// 计算 window 在 monitor 上水平 + 垂直居中时的左上角原点（logical pixel）。
+/// 不对结果做 clamp —— 若 window 比 monitor 大，结果可能小于 monitor 起点，
+/// OS 自行处理（多数情况下会自动移到可见区）。
+pub fn compute_centered_origin(
+    monitor_pos: (i32, i32),
+    monitor_size: (u32, u32),
+    window_size: (u32, u32),
+) -> (i32, i32) {
+    let x = monitor_pos.0 + (monitor_size.0 as i32 - window_size.0 as i32) / 2;
+    let y = monitor_pos.1 + (monitor_size.1 as i32 - window_size.1 as i32) / 2;
+    (x, y)
+}
+
 /// 在主窗口上安装平台原生 hit-test 钩子。在 setup() 内调用一次；失败仅打日志。
 pub fn install(window: &WebviewWindow, store: std::sync::Arc<HitRegionStore>) {
     #[cfg(target_os = "macos")]
@@ -91,6 +104,17 @@ pub fn uninstall(window: &WebviewWindow) {
     windows::uninstall_impl(window);
     #[cfg(not(any(target_os = "macos", target_os = "windows")))]
     stub::uninstall_impl(window);
+}
+
+/// 给一个 webview 窗口装上「接受 first-mouse」原生 hook（只解决首次点击不送 mouseDown
+/// 的问题，不带 hit-test 透传逻辑）。用于设置窗口等不参与穿透的子窗。
+pub fn install_first_mouse_only(window: &WebviewWindow) {
+    #[cfg(target_os = "macos")]
+    macos::install_first_mouse_only_impl(window);
+    #[cfg(target_os = "windows")]
+    windows::install_first_mouse_only_impl(window);
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
+    stub::install_first_mouse_only_impl(window);
 }
 
 #[cfg(test)]
@@ -155,5 +179,41 @@ mod tests {
         s.clear();
         assert!(!s.hit_test(5.0, 5.0));
         assert!(!s.hit_test(105.0, 105.0));
+    }
+
+    #[test]
+    fn centered_origin_on_primary_monitor() {
+        // Primary monitor at (0, 0), size 1920×1080; window 460×440 → (730, 320)
+        assert_eq!(
+            compute_centered_origin((0, 0), (1920, 1080), (460, 440)),
+            (730, 320),
+        );
+    }
+
+    #[test]
+    fn centered_origin_on_secondary_monitor() {
+        // Secondary monitor at (1920, 0), size 2560×1440; window 460×440 → (2970, 500)
+        assert_eq!(
+            compute_centered_origin((1920, 0), (2560, 1440), (460, 440)),
+            (2970, 500),
+        );
+    }
+
+    #[test]
+    fn centered_origin_negative_monitor() {
+        // Mac multi-monitor: secondary above-left at (-1280, -800), size 1280×800
+        assert_eq!(
+            compute_centered_origin((-1280, -800), (1280, 800), (460, 440)),
+            (-870, -620),
+        );
+    }
+
+    #[test]
+    fn centered_origin_window_bigger_than_monitor() {
+        // Edge case: window taller than monitor → y < monitor_pos.y; acceptable, OS will clamp.
+        assert_eq!(
+            compute_centered_origin((0, 0), (400, 300), (460, 440)),
+            (-30, -70),
+        );
     }
 }

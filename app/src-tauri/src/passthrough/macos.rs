@@ -36,6 +36,14 @@ define_class!(
     struct PassthroughView;
 
     impl PassthroughView {
+        /// 重写 acceptsFirstMouse: 返回 YES，让窗口非活动时第一次 mouseDown 也直接
+        /// 送入 contentView，避免首次点击只被用来激活窗口、用户感觉「需要先点一下
+        /// 再才能拖」。NSEvent 参数允许为 nil（系统判定时不带事件上下文）。
+        #[unsafe(method(acceptsFirstMouse:))]
+        fn accepts_first_mouse(&self, _event: *mut AnyObject) -> bool {
+            true
+        }
+
         /// 重写 hitTest:
         /// - 若点命中 store 中的某个区域 → 把命中委派给第一个子视图（WKWebView 容器），
         ///   让事件正常流入 React。
@@ -119,4 +127,58 @@ pub fn install_impl(window: &WebviewWindow, store: Arc<HitRegionStore>) {
 pub fn uninstall_impl(_window: &WebviewWindow) {
     // 进程退出时 NSWindow 释放 CPAPassthroughView → ivar 随之析构。
     // 运行时卸载支持留待 spec §6 后续补充（需重写 dealloc 回收 Arc）。
+}
+
+// ---------- first-mouse-only 子类（用于不参与穿透的子窗口，例如设置窗口）----------
+
+define_class!(
+    // SAFETY: 同 PassthroughView，主线程 only；ivars = () 是 objc2 0.6 要求
+    // `set_ivars(())` 才能把 `Allocated<T>` 转成 `PartialInit<T>` 走 super init 路径。
+    #[unsafe(super = NSView)]
+    #[thread_kind = MainThreadOnly]
+    #[name = "CPAFirstMouseView"]
+    #[ivars = ()]
+    struct FirstMouseView;
+
+    impl FirstMouseView {
+        /// 唯一职责：让窗口非活动时也直接接收第一次 mouseDown。
+        /// `hitTest:` 不重写 → AppKit 默认实现 → 命中自身或子视图（WKWebView）。
+        #[unsafe(method(acceptsFirstMouse:))]
+        fn accepts_first_mouse(&self, _event: *mut AnyObject) -> bool {
+            true
+        }
+    }
+);
+
+pub fn install_first_mouse_only_impl(window: &WebviewWindow) {
+    let ns_window_ptr = match window.ns_window() {
+        Ok(ptr) => ptr as *mut NSWindow,
+        Err(e) => {
+            eprintln!("[passthrough/macos] ns_window() returned Err on first-mouse-only install: {e}; skipping");
+            return;
+        }
+    };
+    let mtm = unsafe { MainThreadMarker::new_unchecked() };
+    let ns_window: &NSWindow = unsafe { &*ns_window_ptr };
+
+    let old_content: Retained<NSView> = match ns_window.contentView() {
+        Some(v) => v,
+        None => {
+            eprintln!("[passthrough/macos] window has no contentView on first-mouse-only install; skipping");
+            return;
+        }
+    };
+    let frame = old_content.frame();
+
+    let this = FirstMouseView::alloc(mtm).set_ivars(());
+    let view: Retained<FirstMouseView> =
+        unsafe { msg_send![super(this), initWithFrame: frame] };
+
+    old_content.removeFromSuperview();
+    view.addSubview(&old_content);
+    old_content.setAutoresizingMask(
+        NSAutoresizingMaskOptions::ViewWidthSizable
+            | NSAutoresizingMaskOptions::ViewHeightSizable,
+    );
+    ns_window.setContentView(Some(&*view));
 }

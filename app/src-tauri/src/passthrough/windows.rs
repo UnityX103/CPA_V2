@@ -11,7 +11,9 @@ use windows::Win32::UI::Controls::{
     DefSubclassProc, RemoveWindowSubclass, SetWindowSubclass,
 };
 use windows::Win32::UI::HiDpi::GetDpiForWindow;
-use windows::Win32::UI::WindowsAndMessaging::{HTCLIENT, HTTRANSPARENT, WM_NCHITTEST};
+use windows::Win32::UI::WindowsAndMessaging::{
+    HTCLIENT, HTTRANSPARENT, MA_ACTIVATE, WM_MOUSEACTIVATE, WM_NCHITTEST,
+};
 
 const SUBCLASS_ID: usize = 0xCA0_FA11; // arbitrary, just must be stable & unique
 
@@ -23,7 +25,15 @@ unsafe extern "system" fn subclass_proc(
     _id_subclass: usize,
     ref_data: usize,
 ) -> LRESULT {
-    if msg == WM_NCHITTEST {
+    // WM_MOUSEACTIVATE：未激活窗口收到鼠标按下时由 OS 询问该不该激活、是否吞掉首事件。
+    // 返回 MA_ACTIVATE = 激活窗口并将事件正常派发；避免首次点击只被用来激活而拖动失效。
+    // 默认 DefWindowProc 多数情况下也返回 MA_ACTIVATE，这里显式声明做防御性。
+    if msg == WM_MOUSEACTIVATE {
+        return LRESULT(MA_ACTIVATE as isize);
+    }
+
+    // ref_data == 0 表示「first-mouse-only」安装路径，没有 store，跳过 hit-test 分支。
+    if msg == WM_NCHITTEST && ref_data != 0 {
         let store = unsafe { &*(ref_data as *const HitRegionStore) };
         // LPARAM 低 16 位 = screen X，高 16 位 = screen Y；都是 i16。
         let raw = lparam.0 as isize;
@@ -74,4 +84,24 @@ pub fn uninstall_impl(window: &WebviewWindow) {
     // ref_data 拿不回来；只能在 install 时另存一份指针。这里简化：直接 remove，
     // Arc 在 install 路径 leak 后由进程退出收回（与 macOS 当前同策略，文档化）。
     unsafe { let _ = RemoveWindowSubclass(hwnd, Some(subclass_proc), SUBCLASS_ID); };
+}
+
+/// 给一个 webview 窗口装上仅处理 WM_MOUSEACTIVATE 的 subclass。复用 `subclass_proc`，
+/// 通过 `ref_data = 0` 让 WM_NCHITTEST 分支降级到 DefSubclassProc。用于设置窗口等
+/// 不需要 hit-test 穿透的子窗。
+pub fn install_first_mouse_only_impl(window: &WebviewWindow) {
+    let hwnd = match window.hwnd() {
+        Ok(h) => HWND(h.0 as *mut _),
+        Err(_) => {
+            eprintln!("[passthrough/windows] hwnd() returned Err on first-mouse-only install; skipping");
+            return;
+        }
+    };
+    let ok = unsafe {
+        SetWindowSubclass(hwnd, Some(subclass_proc), SUBCLASS_ID, 0)
+    }
+    .as_bool();
+    if !ok {
+        eprintln!("[passthrough/windows] SetWindowSubclass failed on first-mouse-only install");
+    }
 }
