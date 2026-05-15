@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, cleanup } from '@testing-library/react';
-import React from 'react';
 
 const invokeMock = vi.fn();
 vi.mock('@tauri-apps/api/core', () => ({
@@ -9,8 +8,7 @@ vi.mock('@tauri-apps/api/core', () => ({
 
 // Stub ResizeObserver and MutationObserver which are not available in jsdom.
 class FakeResizeObserver {
-    private cb: ResizeObserverCallback;
-    constructor(cb: ResizeObserverCallback) { this.cb = cb; }
+    constructor(_cb: ResizeObserverCallback) {}
     observe() {}
     unobserve() {}
     disconnect() {}
@@ -18,8 +16,7 @@ class FakeResizeObserver {
 vi.stubGlobal('ResizeObserver', FakeResizeObserver);
 
 class FakeMutationObserver {
-    private cb: MutationCallback;
-    constructor(cb: MutationCallback) { this.cb = cb; }
+    constructor(_cb: MutationCallback) {}
     observe() {}
     disconnect() {}
     takeRecords() { return []; }
