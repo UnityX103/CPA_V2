@@ -1,0 +1,21 @@
+# Tauri / Rust
+app/src-tauri/target/
+app/src-tauri/gen/
+
+# Node
+node_modules/
+dist/
+.next/
+
+# OS
+.DS_Store
+*.log
+build.log
+
+# Editor
+.vscode/
+.idea/
+
+# Server has its own git repo — track via submodule later if desired
+Server/.git/
+Server/node_modules/

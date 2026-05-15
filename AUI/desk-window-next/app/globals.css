@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: "MaokenAssortedSans";
+  src: url("/MaokenAssortedSans.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  color-scheme: light;
+  --page-bg: #f6ede5;
+  --page-fg: #5b4636;
+  --font-maoken: "MaokenAssortedSans", "PingFang SC", "Helvetica Neue", sans-serif;
+  --font-bricolage: "Bricolage Grotesque", "Avenir Next", "PingFang SC", "Helvetica Neue", sans-serif;
+  --font-dm-sans: "DM Sans", "PingFang SC", "Helvetica Neue", sans-serif;
+  --font-inter: "Inter", "PingFang SC", "Helvetica Neue", sans-serif;
+
+  /* clock design tokens */
+  --clock-ring-bg-focus: #ffe5d9;
+  --clock-ring-bg-rest: #c8edd5;
+  --clock-ring-bg-off: #e0d9d3;
+  --clock-ring-bg-paused: #fff0d4;
+
+  --clock-ring-progress-focus: #d15f3d;
+  --clock-ring-progress-rest: #34a853;
+  --clock-ring-progress-off: #e0d9d3;
+  --clock-ring-progress-paused: #f5a623;
+
+  --clock-label-color-focus: #d15f3d;
+  --clock-label-color-rest: #34a853;
+  --clock-label-color-off: #b5a49a;
+  --clock-label-color-paused: #e08c10;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at top, #fffdfa 0%, #f9f2eb 40%, transparent 72%),
+    linear-gradient(180deg, #fffaf5 0%, var(--page-bg) 100%);
+  color: var(--page-fg);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.desk-window-stage {
+  width: 613px;
+  height: 330px;
+}
+
+.desk-window-wrap {
+  width: 613px;
+  height: 330px;
+  transform-origin: top left;
+}
+
+@media (max-width: 645px) {
+  .desk-window-stage {
+    width: calc(100vw - 32px);
+    height: calc((100vw - 32px) * 330 / 613);
+  }
+
+  .desk-window-wrap {
+    transform: scale(calc((100vw - 32px) / 613));
+  }
+}

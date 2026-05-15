@@ -1,0 +1,42 @@
+/* Pencil 设计稿 PUI.pen 设计 token 同步 */
+:root {
+    --panel-bg: #FFFDFBEE;
+    --panel-stroke: #EFDCCD;
+    --panel-radius: 24px;
+    --panel-padding: 12px;
+    --panel-gap: 18px;
+
+    --pill-bg: #FFF3EA;
+    --pill-stroke: #EFDCCD;
+    --pill-text: #B5A49A;
+
+    --text-primary: #1A1A1A;
+    --text-muted: #9CA3AF;
+    --text-subtle: #B5A49A;
+    --text-link: #6366F1;
+
+    --btn-primary-bg-idle: #D15F3D;
+    --btn-primary-bg-running: #E8824A;
+    --btn-primary-text: #FFFFFF;
+    --btn-secondary-bg: transparent;
+    --btn-secondary-stroke: #EFDCCD;
+    --btn-secondary-text: #5B4636;
+
+    --clock-focus-label: #D15F3D;
+    --clock-focus-ring-bg: #FFE5D9;
+    --clock-focus-ring-progress: #D15F3D;
+
+    --clock-rest-label: #34A853;
+    --clock-rest-ring-bg: #C8EDD5;
+    --clock-rest-ring-progress: #34A853;
+
+    --clock-off-label: #B5A49A;
+    --clock-off-ring-bg: #E0D9D3;
+    --clock-off-ring-progress: #E0D9D3;
+
+    --clock-paused-label: #E08C10;
+    --clock-paused-ring-bg: #FFF0D4;
+    --clock-paused-ring-progress: #F5A623;
+
+    --font-cn: "MaokenAssortedSans", "PingFang SC", "Hiragino Sans GB", -apple-system, BlinkMacSystemFont, sans-serif;
+}

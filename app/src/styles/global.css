@@ -1,0 +1,39 @@
+@import url('./tokens.css');
+
+* {
+    box-sizing: border-box;
+}
+
+html, body, #root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background: transparent !important;
+    font-family: var(--font-cn);
+    color: var(--text-primary);
+    user-select: none;
+    -webkit-user-select: none;
+    overflow: hidden;
+}
+
+button {
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    background: none;
+    padding: 0;
+}
+
+button:focus-visible {
+    outline: 2px solid var(--btn-primary-bg-idle);
+    outline-offset: 2px;
+}
+
+.app-root {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 8px;
+}

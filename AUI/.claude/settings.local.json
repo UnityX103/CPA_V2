@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bash /Users/xpy/Desktop/NanZhai/CPA/.claude/skills/pencil-autosave/save.sh)"
+    ]
+  }
+}

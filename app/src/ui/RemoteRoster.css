@@ -1,0 +1,11 @@
+.remote-roster {
+    position: fixed;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: calc(100vh - 16px);
+    overflow-y: auto;
+    overflow-x: hidden;
+}

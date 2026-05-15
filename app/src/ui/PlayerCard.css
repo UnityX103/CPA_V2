@@ -1,0 +1,74 @@
+.pc-card {
+    width: 153px;
+    background: #FFFDFBF2;
+    border: 1px solid var(--panel-stroke);
+    border-radius: 20px;
+    padding: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+}
+
+.pc-content {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.pc-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+}
+
+.pc-row-head .pc-name {
+    font-size: 12px;
+    color: var(--text-primary);
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pc-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--pill-bg);
+    color: var(--text-subtle);
+    border: 1px solid var(--pill-stroke);
+    border-radius: 999px;
+    padding: 2px 6px;
+    font-size: 10px;
+}
+
+.pc-pill-count {
+    color: var(--btn-primary-bg-idle);
+    font-weight: 600;
+}
+
+.pc-badge {
+    display: inline-flex;
+    align-items: center;
+    color: white;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+}
+
+.pc-time {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+.pc-row-app .pc-app-name {
+    font-size: 11px;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+}
