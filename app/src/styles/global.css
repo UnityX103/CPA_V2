@@ -1,5 +1,12 @@
 @import url('./tokens.css');
 
+@font-face {
+    font-family: 'MaokenAssortedSans';
+    src: url('/fonts/MaokenAssortedSans.ttf') format('truetype');
+    font-weight: 100 900;
+    font-display: swap;
+}
+
 * {
     box-sizing: border-box;
 }
