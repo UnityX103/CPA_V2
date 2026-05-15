@@ -59,17 +59,17 @@ impl HitRegionStore {
 }
 
 #[tauri::command]
-pub fn register_hit_region(state: State<HitRegionStore>, id: String, rect: Rect) {
+pub fn register_hit_region(state: State<'_, std::sync::Arc<HitRegionStore>>, id: String, rect: Rect) {
     state.upsert(id, rect);
 }
 
 #[tauri::command]
-pub fn unregister_hit_region(state: State<HitRegionStore>, id: String) {
+pub fn unregister_hit_region(state: State<'_, std::sync::Arc<HitRegionStore>>, id: String) {
     state.remove(&id);
 }
 
 #[tauri::command]
-pub fn clear_hit_regions(state: State<HitRegionStore>) {
+pub fn clear_hit_regions(state: State<'_, std::sync::Arc<HitRegionStore>>) {
     state.clear();
 }
 
