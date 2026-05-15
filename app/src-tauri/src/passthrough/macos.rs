@@ -13,8 +13,10 @@ use std::ptr::null_mut;
 use std::sync::Arc;
 use tauri::WebviewWindow;
 
-/// Instance variable：指向共享 store 的 raw pointer（Arc 克隆转移所有权到 view）。
-/// view dealloc 时通过 Arc::from_raw 释放（目前进程退出时 OS 回收；见 spec §6）。
+/// Instance variable：指向共享 store 的 raw pointer（`Arc::into_raw` 转移所有权到 view）。
+/// **此 Arc 故意泄漏**：进程退出时 OS 回收内存，无 `from_raw` 配对调用。
+/// 如未来要支持运行时卸载/重装，需要在此结构上挂一个自定义 `dealloc` 实现，
+/// 在那里执行 `Arc::from_raw(self.store)` 收回引用计数。见 spec §6。
 struct PassthroughIvars {
     store: *const HitRegionStore,
 }
@@ -41,9 +43,13 @@ define_class!(
         #[unsafe(method(hitTest:))]
         fn hit_test(&self, point: NSPoint) -> *mut AnyObject {
             let store = unsafe { &*self.ivars().store };
-            // `point` 在 super-view 坐标系（即 self 的父视图坐标）。
+            // `point` 在 super-view 坐标系（NSWindow.frameView）。
             // AppKit 使用左下原点；我们的 store 使用左上原点（CSS/DOM）。
             // 用 self.bounds().size.height 翻转 Y 轴。
+            //
+            // 隐含假设：作为 contentView，self.frame.origin 在 frameView 中为 (0,0)。
+            // 这是 NSWindow.contentView 的实际行为；若未来 macOS 版本改成非零原点
+            // （例如新的 titlebar 布局），此处需要先做 convertPoint:fromView:nil。
             let bounds: NSRect = unsafe { msg_send![self, bounds] };
             let x = point.x;
             let y = bounds.size.height - point.y;
