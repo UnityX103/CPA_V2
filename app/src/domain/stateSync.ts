@@ -2,12 +2,17 @@ import { useEffect } from 'react';
 import { usePomodoroStore, type PomodoroPhase } from './pomodoro';
 import { useNetworkStore, type RemoteState } from './network';
 import { useActiveAppStore } from './activeApp';
+import { useBindingKeyStore } from './bindingKey';
 
 const PHASE_TO_INT: Record<PomodoroPhase, number> = { focus: 0, break: 1, completed: 2 };
 
 function buildRemoteState(): RemoteState {
     const p = usePomodoroStore.getState();
     const active = useActiveAppStore.getState().current;
+    const bk = useBindingKeyStore.getState();
+    const synced = bk.syncedKeyId
+        ? bk.entries.find((e) => e.id === bk.syncedKeyId && e.enabled)
+        : undefined;
     return {
         pomodoro: {
             phase: PHASE_TO_INT[p.currentPhase],
@@ -19,7 +24,11 @@ function buildRemoteState(): RemoteState {
         activeApp: active
             ? { name: active.name, bundleId: active.bundle_id }
             : null,
-        bindingKey: null,
+        // 只把被标记同步的那条 entry 推到房间；未选时整个字段为 null，
+        // 协议层与对端 PlayerCard 都已按 null 隐藏 KeyCounterPill
+        bindingKey: synced
+            ? { keyLabel: synced.label, pressCount: synced.pressCount }
+            : null,
     };
 }
 

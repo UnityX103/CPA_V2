@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSettingsStore, type SettingsTab, MIN_SCALE, MAX_SCALE } from '../domain/settings';
 import { usePomodoroStore } from '../domain/pomodoro';
 import { useNetworkStore } from '../domain/network';
+import { useBindingKeyStore } from '../domain/bindingKey';
 import './SettingsPanel.css';
 
 const TABS: Array<{ id: SettingsTab; label: string }> = [
@@ -178,6 +179,8 @@ function PetTab() {
 
 function GlobalTab() {
     const settings = useSettingsStore();
+    const bk = useBindingKeyStore();
+
     return (
         <div className="tab-pane">
             <div className="card">
@@ -200,6 +203,43 @@ function GlobalTab() {
                         max={4}
                     />
                 </div>
+            </div>
+            <div className="card">
+                <div className="card-row">
+                    <label>按键绑定（需「辅助功能」权限）</label>
+                    <button className="btn btn-secondary" onClick={() => bk.addEntry()}>
+                        添加按键
+                    </button>
+                </div>
+                {bk.entries.length === 0 && (
+                    <div className="card-empty">未添加按键。添加后按一下要绑定的键即可。</div>
+                )}
+                {bk.entries.map((entry) => (
+                    <div key={entry.id} className="bk-row">
+                        <button
+                            className={`bk-listener ${bk.capturingId === entry.id ? 'listening' : ''}`}
+                            onClick={() => bk.beginCapture(entry.id)}
+                            title="点击重新捕获"
+                        >
+                            {bk.capturingId === entry.id ? '请按下要绑定的键…' : entry.label}
+                            <span className="bk-count">{entry.pressCount}</span>
+                        </button>
+                        <button
+                            className={`bk-icon-btn ${bk.syncedKeyId === entry.id ? 'active' : ''}`}
+                            onClick={() => bk.setSynced(bk.syncedKeyId === entry.id ? null : entry.id)}
+                            title={bk.syncedKeyId === entry.id ? '取消同步' : '同步到房间'}
+                        >
+                            ⇄
+                        </button>
+                        <button
+                            className="bk-icon-btn"
+                            onClick={() => bk.removeEntry(entry.id)}
+                            title="删除"
+                        >
+                            ×
+                        </button>
+                    </div>
+                ))}
             </div>
         </div>
     );

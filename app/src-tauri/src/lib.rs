@@ -1,4 +1,5 @@
 mod active_app;
+mod key_counter;
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -25,6 +26,10 @@ pub fn run() {
     let active_app_stop = Arc::new(AtomicBool::new(false));
     let active_app_stop_for_setup = active_app_stop.clone();
     let active_app_stop_for_exit = active_app_stop.clone();
+
+    let key_counter_stop = Arc::new(AtomicBool::new(false));
+    let key_counter_stop_for_setup = key_counter_stop.clone();
+    let key_counter_stop_for_exit = key_counter_stop.clone();
 
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
@@ -60,6 +65,13 @@ pub fn run() {
                     }
                 }
             });
+
+            // 全局按键监听：CGEventTap → 主线程 emit；用户必须授予辅助功能权限
+            let key_handle = app.handle().clone();
+            key_counter::spawn_listener(key_counter_stop_for_setup.clone(), move |keycode| {
+                let _ = key_handle.emit("key-pressed", keycode);
+            });
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -73,6 +85,7 @@ pub fn run() {
     app.run(move |_handle, event| {
         if matches!(event, RunEvent::ExitRequested { .. } | RunEvent::Exit) {
             active_app_stop_for_exit.store(true, Ordering::Relaxed);
+            key_counter_stop_for_exit.store(true, Ordering::Relaxed);
         }
     });
 }
