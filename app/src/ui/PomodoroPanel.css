@@ -1,11 +1,11 @@
 .pomo-panel {
     width: 233px;
-    min-height: 155px;
+    height: 155px;
     background: var(--panel-bg);
     border: 1px solid var(--panel-stroke);
     border-radius: var(--panel-radius);
-    padding: var(--panel-padding);
-    box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    padding: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
     position: relative;
     box-sizing: border-box;
 }
@@ -13,7 +13,6 @@
 .pomo-content {
     display: flex;
     flex-direction: column;
-    gap: 10px;
     height: 100%;
 }
 
@@ -23,6 +22,8 @@
     align-items: center;
     -webkit-app-region: drag;
     cursor: grab;
+    padding: 0 2px;
+    margin-bottom: 8px;
 }
 
 .pomo-header:active {
@@ -36,9 +37,10 @@
 }
 
 .pomo-title-text {
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 13px;
+    font-weight: 700;
     color: var(--text-primary);
+    letter-spacing: 0.5px;
 }
 
 .pomo-icon-btn {
@@ -58,15 +60,21 @@
 }
 
 .pomo-streak {
-    font-size: 11px;
+    font-size: 10px;
     color: var(--text-subtle);
     -webkit-app-region: no-drag;
+    line-height: 1.1;
+    text-align: right;
+    display: flex;
+    align-items: baseline;
+    gap: 3px;
 }
 
 .pomo-streak-num {
     color: var(--btn-primary-bg-idle);
-    font-weight: 600;
-    margin: 0 2px;
+    font-weight: 700;
+    font-size: 18px;
+    line-height: 1;
 }
 
 .pomo-body {
@@ -74,12 +82,13 @@
     align-items: center;
     gap: 12px;
     flex: 1;
+    padding: 0 2px;
 }
 
 .pomo-clock {
     position: relative;
-    width: 78px;
-    height: 78px;
+    width: 72px;
+    height: 72px;
     flex-shrink: 0;
 }
 
@@ -95,19 +104,20 @@
     align-items: center;
     justify-content: center;
     pointer-events: none;
+    line-height: 1;
 }
 
 .pomo-clock-time {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
-    line-height: 1;
-    letter-spacing: -0.5px;
+    letter-spacing: -0.3px;
+    font-variant-numeric: tabular-nums;
 }
 
 .pomo-clock-sub {
     font-size: 9px;
-    margin-top: 2px;
-    opacity: 0.85;
+    margin-top: 3px;
+    font-weight: 500;
 }
 
 .pomo-actions {
@@ -122,12 +132,14 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    height: 30px;
+    height: 28px;
     padding: 0 14px;
     border-radius: 999px;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
-    transition: background-color 0.15s, color 0.15s, opacity 0.15s;
+    transition: filter 0.15s, opacity 0.15s, background-color 0.15s;
+    -webkit-app-region: no-drag;
+    white-space: nowrap;
 }
 
 .btn:disabled {
@@ -160,16 +172,17 @@
 
 .pomo-pin {
     position: absolute;
-    right: 12px;
-    bottom: 12px;
+    right: 10px;
+    bottom: 10px;
     width: 22px;
     height: 22px;
     border-radius: 8px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-muted);
+    color: var(--text-subtle);
     background: transparent;
+    -webkit-app-region: no-drag;
 }
 
 .pomo-pin.is-pinned {
