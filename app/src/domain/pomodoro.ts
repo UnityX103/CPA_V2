@@ -34,7 +34,8 @@ export const usePomodoroStore = create<PomodoroState & PomodoroActions>((set, ge
 
     function advancePhase(state: PomodoroState): Partial<PomodoroState> {
         if (state.currentPhase === 'focus') {
-            accumulator = state.autoStartBreak ? accumulator : 0;
+            // 阶段切换时一律清零 accumulator，避免新阶段第一秒被吞掉（adversarial-review #7）
+            accumulator = 0;
             return {
                 currentPhase: 'break',
                 remainingSeconds: state.breakDurationSeconds,

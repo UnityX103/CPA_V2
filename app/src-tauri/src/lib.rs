@@ -1,7 +1,9 @@
 mod active_app;
 
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use std::time::Duration;
-use tauri::{Emitter, Manager, WebviewWindow};
+use tauri::{Emitter, Manager, RunEvent, WebviewWindow};
 
 #[tauri::command]
 fn set_click_through(window: WebviewWindow, ignore: bool) -> Result<(), String> {
@@ -20,18 +22,25 @@ fn get_active_app() -> Option<active_app::ActiveAppInfo> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let active_app_stop = Arc::new(AtomicBool::new(false));
+    let active_app_stop_for_setup = active_app_stop.clone();
+    let active_app_stop_for_exit = active_app_stop.clone();
+
+    let app = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_store::Builder::new().build())
-        .setup(|app| {
+        .setup(move |app| {
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.set_always_on_top(true);
             }
-            // 1Hz 推送当前前台 App
+            // 1Hz 前台 App 推送：用 AtomicBool 让 App 退出时线程能跳出循环
+            // adversarial-review #6 的修复要点；NSWorkspace.frontmostApplication 在
+            // 后台线程访问目前在实测上稳定，但仍标注为「需要后续移到主线程」
             let handle = app.handle().clone();
+            let stop = active_app_stop_for_setup.clone();
             std::thread::spawn(move || {
                 let mut last: Option<active_app::ActiveAppInfo> = None;
-                loop {
+                while !stop.load(Ordering::Relaxed) {
                     let current = active_app::current_active_app();
                     let changed = match (&current, &last) {
                         (Some(a), Some(b)) => a.name != b.name || a.bundle_id != b.bundle_id,
@@ -42,7 +51,13 @@ pub fn run() {
                         let _ = handle.emit("active-app-changed", &current);
                         last = current;
                     }
-                    std::thread::sleep(Duration::from_secs(1));
+                    // 拆成 10×100ms：让 stop 信号最多 100ms 内被观察到
+                    for _ in 0..10 {
+                        if stop.load(Ordering::Relaxed) {
+                            return;
+                        }
+                        std::thread::sleep(Duration::from_millis(100));
+                    }
                 }
             });
             Ok(())
@@ -52,6 +67,12 @@ pub fn run() {
             set_always_on_top,
             get_active_app
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application");
+
+    app.run(move |_handle, event| {
+        if matches!(event, RunEvent::ExitRequested { .. } | RunEvent::Exit) {
+            active_app_stop_for_exit.store(true, Ordering::Relaxed);
+        }
+    });
 }
