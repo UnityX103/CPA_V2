@@ -1,5 +1,6 @@
 mod active_app;
 mod key_counter;
+mod passthrough;
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
