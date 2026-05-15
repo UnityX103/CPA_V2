@@ -19,7 +19,9 @@ pub fn spawn_listener<F>(stop: Arc<AtomicBool>, on_key: F)
 where
     F: Fn(i64) + Send + Sync + 'static,
 {
-    use core_foundation::runloop::{kCFRunLoopCommonModes, CFRunLoop, CFRunLoopRunInMode};
+    use core_foundation::runloop::{
+        kCFRunLoopCommonModes, kCFRunLoopDefaultMode, CFRunLoop, CFRunLoopRunInMode,
+    };
     use core_graphics::event::{
         CGEvent, CGEventTap, CGEventTapLocation, CGEventTapOptions,
         CGEventTapPlacement, CGEventType, CallbackResult, EventField,
@@ -55,15 +57,17 @@ where
 
         unsafe {
             let run_loop = CFRunLoop::get_current();
+            // source 加到 commonModes 让 default/event-tracking 模式都能收到
             run_loop.add_source(&loop_source, kCFRunLoopCommonModes);
             tap.enable();
         }
 
-        // 100ms 唤醒一次轮询 stop 信号
+        // 100ms 唤醒一次轮询 stop 信号；CFRunLoopRunInMode 必须传具体模式（非 commonModes 这种 meta-mode），
+        // 否则会抛 _CFRunLoopError_RunCalledWithInvalidMode
         while !stop.load(Ordering::Relaxed) {
             unsafe {
                 let _ = CFRunLoopRunInMode(
-                    kCFRunLoopCommonModes,
+                    kCFRunLoopDefaultMode,
                     0.1,
                     0,
                 );
