@@ -1,12 +1,12 @@
 export interface BuiltinPomodoroVideo {
-    id: string;
-    name: string;
-    url: string;
+    readonly id: string;
+    readonly name: string;
+    readonly url: string;
 }
 
 export const DEFAULT_BUILTIN_POMODORO_VIDEO_ID = 'qianqian';
 
-export const BUILTIN_POMODORO_VIDEOS: BuiltinPomodoroVideo[] = [
+export const BUILTIN_POMODORO_VIDEOS: readonly BuiltinPomodoroVideo[] = [
     {
         id: DEFAULT_BUILTIN_POMODORO_VIDEO_ID,
         name: '千千',

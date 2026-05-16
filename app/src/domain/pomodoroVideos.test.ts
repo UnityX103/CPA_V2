@@ -8,14 +8,16 @@ import {
 describe('pomodoro video registry', () => {
     it('registers 千千 as the default bundled video', () => {
         expect(DEFAULT_BUILTIN_POMODORO_VIDEO_ID).toBe('qianqian');
-        expect(BUILTIN_POMODORO_VIDEOS).toEqual([
-            {
-                id: 'qianqian',
-                name: '千千',
-                url: '/videos/ms1.webm',
-            },
-        ]);
-        expect(getBuiltinPomodoroVideo('qianqian')?.name).toBe('千千');
+
+        const qianqian = getBuiltinPomodoroVideo('qianqian');
+        expect(qianqian?.name).toBe('千千');
+        expect(qianqian?.url).toBe('/videos/ms1.webm');
         expect(getBuiltinPomodoroVideo('missing')).toBeNull();
+    });
+
+    it('keeps built-in video ids unique', () => {
+        const ids = BUILTIN_POMODORO_VIDEOS.map((video) => video.id);
+
+        expect(new Set(ids).size).toBe(ids.length);
     });
 });
