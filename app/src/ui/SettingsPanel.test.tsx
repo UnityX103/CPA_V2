@@ -178,7 +178,7 @@ describe('SettingsPanel geometry', () => {
 });
 
 describe('PomodoroTab parity with gs1Tv', () => {
-    it('renders pomoGrid + 3 visible pomoFooter rows (WSnlp collapsed per design)', () => {
+    it('renders pomoGrid + visible pomoFooter rows (WSnlp collapsed per design)', () => {
         render(<SettingsPanel />);
         // pomoGrid: work + break cards (label text)
         expect(screen.getByText('专注时长')).toBeTruthy();
