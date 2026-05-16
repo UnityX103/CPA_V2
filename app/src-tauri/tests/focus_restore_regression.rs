@@ -53,13 +53,14 @@ fn focus_restorer_fires_after_main_window_move() {
         "trigger桩 did not complete (observer wait period was cut short). stderr:\n{stderr_buf}"
     );
 
-    // Load-bearing: the focus restorer fired in response to NSWindowDidMoveNotification.
-    // On Commit C (no install_focus_restorer wired), this marker is absent → test FAILS.
-    // On Commit D (observer installed), this marker is emitted → test PASSES.
+    // Load-bearing: the focus restorer successfully refocused settings in response to
+    // NSWindowDidMoveNotification. On Commit C (no install_focus_restorer wired), this
+    // marker is absent → test FAILS. On Commit D+ (observer installed + set_focus
+    // succeeds), this marker is emitted → test PASSES.
     assert!(
-        stderr_buf.contains("[focus_restorer] fired"),
-        "focus restorer observer did not fire on main window move — regression net hot. \
-         stderr:\n{stderr_buf}"
+        stderr_buf.contains("[focus_restorer] focus restored to settings"),
+        "focus restorer did not successfully refocus settings — set_focus either was \
+         not called or failed. regression net hot. stderr:\n{stderr_buf}"
     );
 }
 

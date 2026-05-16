@@ -117,8 +117,10 @@ pub fn install_focus_restorer_impl(main_window: &WebviewWindow, app: tauri::AppH
         if let tauri::WindowEvent::Moved(_) = event {
             if let Some(settings) = app.get_webview_window("settings") {
                 if settings.is_visible().unwrap_or(false) {
-                    eprintln!("[focus_restorer] fired (main moved, settings visible → set_focus)");
-                    let _ = settings.set_focus();
+                    match settings.set_focus() {
+                        Ok(()) => eprintln!("[focus_restorer] focus restored to settings"),
+                        Err(e) => eprintln!("[focus_restorer] set_focus failed: {e}"),
+                    }
                 }
             }
         }
