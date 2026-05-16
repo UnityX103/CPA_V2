@@ -6,7 +6,7 @@
 use serde::Serialize;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 
 #[cfg(target_os = "macos")]
 mod macos;
@@ -139,4 +139,59 @@ pub fn start_watcher(
 #[derive(Clone, Copy, Debug, Serialize)]
 struct AccessibilityChangedPayload {
     granted: bool,
+}
+
+/// 防抖：同一时刻只允许一次 prompt 飞行；第二次点击直接 Ok(()) 返回，避免 restore 任务堆叠
+/// 与 always_on_top 抖动。请求结束（granted=true 翻转或 30s 超时）后重置为 false。
+static PROMPT_IN_FLIGHT: AtomicBool = AtomicBool::new(false);
+
+#[tauri::command]
+pub async fn request_accessibility_permission(app: AppHandle) -> Result<(), String> {
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = app;
+        return Ok(());
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        if PROMPT_IN_FLIGHT.swap(true, Ordering::AcqRel) {
+            return Ok(());
+        }
+
+        // 让位：set_always_on_top(false) + NSApp.deactivate()。失败不致命，仍继续 prompt。
+        if let Some(main) = app.get_webview_window("main") {
+            if let Err(e) = main.set_always_on_top(false) {
+                eprintln!("[accessibility] set_always_on_top(false) 失败：{e}");
+            }
+        }
+        // run_on_main_thread 保证 prompt + deactivate 都在主线程执行
+        let _ = app.run_on_main_thread(|| {
+            macos::deactivate_app();
+            macos::prompt();
+        });
+
+        // 30s 倒计时 或 granted 翻转，先到先恢复
+        let restore_app = app.clone();
+        tauri::async_runtime::spawn(async move {
+            let deadline = std::time::Instant::now() + Duration::from_secs(30);
+            loop {
+                if current_status().granted {
+                    break;
+                }
+                if std::time::Instant::now() >= deadline {
+                    break;
+                }
+                tokio::time::sleep(Duration::from_millis(200)).await;
+            }
+            if let Some(main) = restore_app.get_webview_window("main") {
+                if let Err(e) = main.set_always_on_top(true) {
+                    eprintln!("[accessibility] set_always_on_top(true) 恢复失败：{e}");
+                }
+            }
+            PROMPT_IN_FLIGHT.store(false, Ordering::Release);
+        });
+
+        Ok(())
+    }
 }

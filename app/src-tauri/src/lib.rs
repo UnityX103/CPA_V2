@@ -178,6 +178,7 @@ pub fn run() {
             accessibility::accessibility_status,
             accessibility::open_accessibility_settings,
             accessibility::key_counter_listening,
+            accessibility::request_accessibility_permission,
             passthrough::register_hit_region,
             passthrough::unregister_hit_region,
             passthrough::clear_hit_regions,
