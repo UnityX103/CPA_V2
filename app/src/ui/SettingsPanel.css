@@ -1,6 +1,6 @@
 /* SettingsPanel ←→ PUI.pen vnYnS (Unified Settings Panel) + 子面板
- * 外壳: 460x440（设计稿 vnYnS 是 460x394，+46px 高度让 Pomodoro/Global tab 不滚动；
- *        WSnlp 视频文件行按设计 enabled:false 直接不渲染。）
+ * 外壳: 固定 460x440，内容在固定宽度内纵向滚动；
+ *        WSnlp 视频文件行按设计 enabled:false 直接不渲染。
  * padding 20, gap 16, radius 20, fill #FFFFFF, stroke 1px #F1E5D8
  * head 8QyVE: title (font 18/700) + closeBtn UAbZg
  * body 3kLAl: sidebar(71) + content
@@ -28,6 +28,7 @@
     box-shadow: var(--shadow-dialog);
     box-sizing: border-box;
     z-index: 100;
+    min-width: 0;
 }
 
 /* ----- head ----- */
@@ -81,6 +82,7 @@
     display: flex;
     gap: 0;
     flex: 1;
+    min-height: 0;
     overflow: hidden;
 }
 
@@ -120,6 +122,8 @@
 .settings-content {
     position: relative;
     flex: 1;
+    min-width: 0;
+    min-height: 0;
     padding: 16px;
     overflow: hidden;
     box-sizing: border-box;
@@ -129,8 +133,12 @@
 
 .settings-content-scroll {
     flex: 1;
+    min-height: 0;
+    width: 100%;
+    max-width: 100%;
     overflow-y: auto;
     padding-right: 4px;
+    box-sizing: border-box;
 }
 
 .settings-content-scroll::-webkit-scrollbar { width: 6px; }
@@ -140,6 +148,8 @@
     display: flex;
     flex-direction: column;
     gap: var(--settings-gap);
+    width: 100%;
+    max-width: 100%;
 }
 
 /* ----- uspApply EkvuW: absolute, w 349, h 38, justify end ----- */
@@ -178,17 +188,19 @@
     display: flex;
     flex-direction: column;
     gap: var(--settings-card-gap);
+    min-width: 0;
 }
 
 .card-tight { gap: 6px; }
 .card-grid {
     flex-direction: row;
+    flex-wrap: wrap;
     gap: var(--settings-card-gap-tight);
     background: transparent;
     padding: 0;
 }
 
-.card-grid > .card { flex: 1; }
+.card-grid > .card { flex: 1 1 140px; }
 
 .card-row {
     display: flex;
@@ -299,6 +311,10 @@
     font-size: var(--input-text-size);
     font-weight: 500;
     color: var(--input-text);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .dropdown-chevron {
@@ -418,6 +434,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
     width: 100%;
 }
 
@@ -425,6 +443,7 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
+    min-width: 0;
 }
 
 .online-room-name {
@@ -647,6 +666,7 @@
     display: flex;
     gap: 8px;
     align-items: center;
+    flex-wrap: wrap;
 }
 
 /* ===== pomoFooter JpJcn: vertical, gap 10 ===== */
@@ -663,6 +683,7 @@
     justify-content: space-between;
     padding: var(--settings-row-pad-y) var(--settings-row-pad-x);
     gap: 8px;
+    flex-wrap: wrap;
 }
 
 .pomo-row.is-disabled { opacity: 0.5; pointer-events: none; }

@@ -9,6 +9,13 @@ import { useNetworkStore } from '../domain/network';
 import { useBindingKeyStore } from '../domain/bindingKey';
 import { SettingsPanel } from './SettingsPanel';
 
+function cssRule(css: string, selector: string): string {
+    const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const ruleMatch = css.match(new RegExp(`${escaped}\\s*\\{[^}]*\\}`));
+    expect(ruleMatch, `${selector} rule not found`).toBeTruthy();
+    return ruleMatch![0];
+}
+
 const { startDragging, invokeMock, listenMock } = vi.hoisted(() => ({
     startDragging: vi.fn(),
     invokeMock: vi.fn(),
@@ -68,14 +75,40 @@ describe('SettingsPanel close button', () => {
 });
 
 describe('SettingsPanel geometry', () => {
-    it('CSS pins the 460 × 440 shell (vnYnS 460×394 + 46px to fit Pomodoro tab without scroll, WSnlp collapsed per design)', () => {
-        const here = path.dirname(fileURLToPath(import.meta.url));
+    const here = path.dirname(fileURLToPath(import.meta.url));
+
+    it('CSS keeps the shell at the fixed design width and height', () => {
         const css = readFileSync(path.join(here, 'SettingsPanel.css'), 'utf8');
-        const ruleMatch = css.match(/\.settings-panel\s*\{[^}]*\}/);
-        expect(ruleMatch, '.settings-panel rule not found').toBeTruthy();
-        const rule = ruleMatch![0];
+        const rule = cssRule(css, '.settings-panel');
         expect(rule).toMatch(/width:\s*460px\s*;/);
         expect(rule).toMatch(/height:\s*440px\s*;/);
+        expect(rule).not.toMatch(/width:\s*100%\s*;/);
+        expect(rule).not.toMatch(/min-height:\s*100%\s*;/);
+    });
+
+    it('scrolls tab content inside the fixed shell instead of growing the shell', () => {
+        const css = readFileSync(path.join(here, 'SettingsPanel.css'), 'utf8');
+        expect(cssRule(css, '.settings-body')).toMatch(/min-height:\s*0\s*;/);
+        const contentRule = cssRule(css, '.settings-content');
+        expect(contentRule).toMatch(/min-height:\s*0\s*;/);
+        expect(contentRule).toMatch(/overflow:\s*hidden\s*;/);
+        const scrollRule = cssRule(css, '.settings-content-scroll');
+        expect(scrollRule).toMatch(/flex:\s*1\s*;/);
+        expect(scrollRule).toMatch(/min-height:\s*0\s*;/);
+        expect(scrollRule).toMatch(/width:\s*100%\s*;/);
+        expect(scrollRule).toMatch(/max-width:\s*100%\s*;/);
+        expect(scrollRule).toMatch(/overflow-y:\s*auto\s*;/);
+        const tabPaneRule = cssRule(css, '.tab-pane');
+        expect(tabPaneRule).toMatch(/width:\s*100%\s*;/);
+        expect(tabPaneRule).toMatch(/max-width:\s*100%\s*;/);
+    });
+
+    it('settings window keeps its fixed shell size instead of being resizable', () => {
+        const libRs = readFileSync(path.join(here, '../../src-tauri/src/lib.rs'), 'utf8');
+        expect(libRs).toMatch(/\.inner_size\(\s*SETTINGS_W,\s*SETTINGS_H\s*\)/);
+        expect(libRs).toMatch(/\.resizable\(false\)/);
+        expect(libRs).not.toMatch(/\.resizable\(true\)/);
+        expect(libRs).not.toMatch(/\.min_inner_size\(/);
     });
 });
 
