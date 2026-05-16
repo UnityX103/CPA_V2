@@ -51,23 +51,14 @@ fn settings_center_position(app: &tauri::AppHandle) -> Result<PhysicalPosition<i
     Ok(PhysicalPosition::new(x, y))
 }
 
-#[tauri::command]
-async fn open_settings_window(app: tauri::AppHandle) -> Result<(), String> {
-    if let Some(w) = app.get_webview_window("settings") {
-        // 已存在的设置窗口：复用 → 重新对齐到主窗口所在屏中心 → 显示 → 抢焦点。
-        // first-mouse subclass 是一次性安装，无需重装。
-        if let Ok(pos) = settings_center_position(&app) {
-            let _ = w.set_position(pos);
-        }
-        w.show().map_err(|e| e.to_string())?;
-        w.set_focus().map_err(|e| e.to_string())?;
-        return Ok(());
-    }
-
-    // 首次创建：先 invisible 建窗 → 计算位置 → 装 first-mouse hook → show。
-    // 顺序保证用户看到的是已经摆好的窗口，避免闪烁。
+/// 在 setup() 内同步构建（隐藏的）设置窗口并装好 first-mouse hook。
+/// 调用者必须在主线程（典型上下文：`setup` 闭包内）。失败仅 eprintln，
+/// 让主流程能继续；用户点齿轮时 open_settings_window_impl 会返回明确 Err。
+fn build_settings_window_hidden(
+    app: &tauri::AppHandle,
+) -> Result<tauri::WebviewWindow, tauri::Error> {
     let url = WebviewUrl::App("index.html?window=settings".into());
-    let w = WebviewWindowBuilder::new(&app, "settings", url)
+    let w = WebviewWindowBuilder::new(app, "settings", url)
         .title("设置")
         .inner_size(SETTINGS_W, SETTINGS_H)
         .resizable(false)
@@ -77,16 +68,41 @@ async fn open_settings_window(app: tauri::AppHandle) -> Result<(), String> {
         .shadow(false)
         .skip_taskbar(true)
         .visible(false)
-        .build()
-        .map_err(|e| e.to_string())?;
+        .build()?;
+    passthrough::install_first_mouse_only(&w);
 
+    // 拦截关闭事件：macOS Cmd-W / 应用菜单 / 任何 performClose: 路径默认会真正销毁
+    // NSWindow，之后 get_webview_window("settings") 永远返回 None，齿轮按钮变成死按钮。
+    // prevent_close + hide 让窗口对象在 Tauri 的窗口管理器里永生，open_settings_window_impl
+    // 始终能拿到。
+    let w_for_hide = w.clone();
+    w.on_window_event(move |event| {
+        if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+            api.prevent_close();
+            let _ = w_for_hide.hide();
+        }
+    });
+
+    Ok(w)
+}
+
+pub(crate) async fn open_settings_window_impl(
+    app: tauri::AppHandle,
+) -> Result<(), String> {
+    let w = app
+        .get_webview_window("settings")
+        .ok_or_else(|| "settings window not built — setup() probably failed; check stderr".to_string())?;
     if let Ok(pos) = settings_center_position(&app) {
         let _ = w.set_position(pos);
     }
-    passthrough::install_first_mouse_only(&w);
     w.show().map_err(|e| e.to_string())?;
     w.set_focus().map_err(|e| e.to_string())?;
     Ok(())
+}
+
+#[tauri::command]
+async fn open_settings_window(app: tauri::AppHandle) -> Result<(), String> {
+    open_settings_window_impl(app).await
 }
 
 #[tauri::command]
@@ -128,6 +144,16 @@ pub fn run() {
             if let Some(window) = app.get_webview_window("main") {
                 passthrough::install(&window, hit_store_for_setup.clone());
             }
+            // 在主线程构建隐藏的设置窗口 + 装 first-mouse hook。点齿轮时只做
+            // 重定位 + show + focus（Tauri-marshaled，线程安全）。失败仅打日志。
+            if let Err(e) = build_settings_window_hidden(app.handle()) {
+                eprintln!("[setup] build_settings_window_hidden failed: {e}");
+            }
+            // Focus restorer: 主窗口拖/resize 末尾把 key 还回 settings (若可见)。
+            // 配合 build_settings_window_hidden 一起完成 settings 窗口的 lifecycle 闭环。
+            if let Some(window) = app.get_webview_window("main") {
+                passthrough::install_focus_restorer(&window, app.handle().clone());
+            }
             // 1Hz 前台 App 推送：用 AtomicBool 让 App 退出时线程能跳出循环
             // adversarial-review #6 的修复要点；NSWorkspace.frontmostApplication 在
             // 后台线程访问目前在实测上稳定，但仍标注为「需要后续移到主线程」
@@ -166,6 +192,90 @@ pub fn run() {
                 listener_handle_for_setup.clone(),
                 accessibility_stop_for_setup.clone(),
             );
+
+            // E2E 触发桩：仅在集成测试通过 CPA_E2E_TRIGGER_SETTINGS=1 启动二进制时进入。
+            // 复现"在 tokio worker 上直接调 install_first_mouse_only"这条 pre-fix 崩溃路径。
+            // 故意不依赖 open_settings_window_impl —— 那条路在 Commit B 后已绕开 AppKit；
+            // 此桩测的是"若未来有人再误把 AppKit 调用拿到非主线程"的失效模式：
+            //   pre-fix (new_unchecked)  → WebKit BREAKPOINT → 整个进程 SIGTRAP
+            //   post-fix (new().expect) → tokio 任务 panic 被截获 → 进程存活
+            if std::env::var("CPA_E2E_TRIGGER_SETTINGS").is_ok() {
+                let handle = app.handle().clone();
+                tauri::async_runtime::spawn(async move {
+                    let url = WebviewUrl::App("index.html?window=settings-e2e".into());
+                    match WebviewWindowBuilder::new(&handle, "settings-e2e", url)
+                        .visible(false)
+                        .build()
+                    {
+                        Ok(w) => {
+                            // Marker BEFORE the install call — install panics via .expect() on
+                            // tokio worker post-fix, so anything after the call is unreachable.
+                            // Test harness asserts this marker appears in stderr; absence means
+                            // the trigger桩 short-circuited before exercising the crash path.
+                            eprintln!("[e2e stub] reached install_first_mouse_only call site");
+                            passthrough::install_first_mouse_only(&w);
+                        }
+                        Err(e) => eprintln!(
+                            "[e2e stub] WebviewWindowBuilder::build failed; \
+                             regression net is not hot, test will pass vacuously: {e}"
+                        ),
+                    }
+                });
+            }
+
+            // Focus-restore E2E 触发桩：仅在集成测试通过 CPA_E2E_TRIGGER_FOCUS_RESTORE=1
+            // 启动二进制时进入。
+            //
+            // 注：macOS 不会让 cargo-test 派生的子进程拿前台焦点（is_focused() 在 bg
+            // 进程里永远 false），所以测试不能用 is_focused 验证状态转移。改为让 fix
+            // 在 observer 回调内 eprintln 一个 marker，集成测试以 marker 出现/缺失为信号。
+            //
+            // 桩职责很轻：show settings（observer 需要 settings 可见才动作） → 程序性地
+            // 移动主窗口 1 像素（触发 NSWindowDidMoveNotification）→ 给 observer 留时间
+            // 跑回调。tests/focus_restore_regression.rs 解析 stderr。
+            if std::env::var("CPA_E2E_TRIGGER_FOCUS_RESTORE").is_ok() {
+                let handle = app.handle().clone();
+                tauri::async_runtime::spawn(async move {
+                    std::thread::sleep(Duration::from_millis(1500));
+                    eprintln!("[e2e focus] setup-complete");
+
+                    let Some(main) = handle.get_webview_window("main") else {
+                        eprintln!("[e2e focus] main window not found; aborting");
+                        return;
+                    };
+                    let Some(settings) = handle.get_webview_window("settings") else {
+                        eprintln!("[e2e focus] settings window not found; aborting");
+                        return;
+                    };
+
+                    // observer 只在 settings 可见时还焦；先让 settings 可见
+                    let _ = settings.show();
+                    std::thread::sleep(Duration::from_millis(200));
+                    eprintln!("[e2e focus] settings-shown");
+
+                    // 程序性移动主窗口，然后手动 post NSWindowDidMoveNotification。
+                    // Tao 的 set_position 底层调用 setFrameTopLeftPoint:，该方法不触发
+                    // NSWindowDelegate.windowDidMove:，因此 Tauri 不派发 WindowEvent::Moved。
+                    // 我们的 install_focus_restorer_impl 监听 NSNotificationCenter，
+                    // 所以手动 post 是触发 observer 的可靠方式。
+                    if let Ok(pos) = main.outer_position() {
+                        let _ = main.set_position(PhysicalPosition::new(pos.x + 1, pos.y));
+                    }
+                    // Post NSWindowDidMoveNotification so the observer fires.
+                    // This dispatches to the main thread asynchronously (via dispatch_async_f),
+                    // so we wait 300ms before logging main-moved to give the main queue
+                    // time to process the notification and run the observer block.
+                    #[cfg(target_os = "macos")]
+                    passthrough::post_did_move_notification_for_testing(&main);
+                    #[cfg(target_os = "macos")]
+                    std::thread::sleep(Duration::from_millis(300));
+                    eprintln!("[e2e focus] main-moved");
+
+                    // 给 observer 回调留时间跑（500ms 足够）
+                    std::thread::sleep(Duration::from_millis(500));
+                    eprintln!("[e2e focus] done");
+                });
+            }
 
             Ok(())
         })
