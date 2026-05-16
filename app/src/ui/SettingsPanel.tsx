@@ -20,16 +20,31 @@ const TABS: Array<{ id: SettingsTab; label: string }> = [
     { id: 'global', label: '全局' },
 ];
 
+const NO_WINDOW_DRAG_SELECTOR = [
+    'button',
+    'input',
+    'select',
+    'textarea',
+    'a',
+    '[role="button"]',
+    '[role="slider"]',
+    '[data-no-window-drag]',
+].join(',');
+
+function isInteractiveDragTarget(target: EventTarget | null): boolean {
+    if (!(target instanceof HTMLElement)) return true;
+    return target.closest(NO_WINDOW_DRAG_SELECTOR) !== null;
+}
+
 export function SettingsPanel() {
     const activeTab = useSettingsStore((s) => s.activeTab);
     const setActiveTab = useSettingsStore((s) => s.setActiveTab);
 
     const onClose = () => { void invoke('close_settings_window'); };
 
-    const onHeaderPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    const onPanelPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
         if (e.button !== 0) return;
-        const target = e.target as HTMLElement;
-        if (target.closest('button')) return;
+        if (isInteractiveDragTarget(e.target)) return;
         void getCurrentWindow().startDragging().catch(() => {
             /* drag may fail in non-Tauri/test env; swallow */
         });
@@ -40,8 +55,9 @@ export function SettingsPanel() {
             className="settings-panel"
             role="dialog"
             aria-label="设置"
+            onPointerDown={onPanelPointerDown}
         >
-            <div className="settings-head" onPointerDown={onHeaderPointerDown}>
+            <div className="settings-head">
                 <h2 className="settings-title">设置</h2>
                 <div className="settings-head-spacer" />
                 <button className="settings-close" onClick={onClose} aria-label="关闭">
