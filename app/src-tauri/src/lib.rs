@@ -29,6 +29,27 @@ const SETTINGS_H: f64 = 440.0;
 
 /// 计算设置窗口在主窗口所在 monitor 的中心位置（物理像素）。
 /// 多显示器下保证设置窗弹在用户当前屏，而非系统主屏。
+fn settings_center_position(app: &tauri::AppHandle) -> Result<PhysicalPosition<i32>, String> {
+    let main = app
+        .get_webview_window("main")
+        .ok_or_else(|| "main window not found".to_string())?;
+    let monitor = main
+        .current_monitor()
+        .map_err(|e| e.to_string())?
+        .ok_or_else(|| "main window has no current_monitor".to_string())?;
+    let mpos = monitor.position();
+    let msize = monitor.size();
+    let scale = monitor.scale_factor();
+    let win_w = (SETTINGS_W * scale).round() as u32;
+    let win_h = (SETTINGS_H * scale).round() as u32;
+    let (x, y) = passthrough::compute_centered_origin(
+        (mpos.x, mpos.y),
+        (msize.width, msize.height),
+        (win_w, win_h),
+    );
+    Ok(PhysicalPosition::new(x, y))
+}
+
 /// 在 setup() 内同步构建（隐藏的）设置窗口并装好 first-mouse hook。
 /// 调用者必须在主线程（典型上下文：`setup` 闭包内）。失败仅 eprintln，
 /// 让主流程能继续；用户点齿轮时 open_settings_window_impl 会返回明确 Err。
@@ -49,27 +70,6 @@ fn build_settings_window_hidden(
         .build()?;
     passthrough::install_first_mouse_only(&w);
     Ok(w)
-}
-
-fn settings_center_position(app: &tauri::AppHandle) -> Result<PhysicalPosition<i32>, String> {
-    let main = app
-        .get_webview_window("main")
-        .ok_or_else(|| "main window not found".to_string())?;
-    let monitor = main
-        .current_monitor()
-        .map_err(|e| e.to_string())?
-        .ok_or_else(|| "main window has no current_monitor".to_string())?;
-    let mpos = monitor.position();
-    let msize = monitor.size();
-    let scale = monitor.scale_factor();
-    let win_w = (SETTINGS_W * scale).round() as u32;
-    let win_h = (SETTINGS_H * scale).round() as u32;
-    let (x, y) = passthrough::compute_centered_origin(
-        (mpos.x, mpos.y),
-        (msize.width, msize.height),
-        (win_w, win_h),
-    );
-    Ok(PhysicalPosition::new(x, y))
 }
 
 pub(crate) async fn open_settings_window_impl(
