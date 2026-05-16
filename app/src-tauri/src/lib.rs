@@ -154,7 +154,7 @@ pub fn run() {
 
             // 按键监听由 accessibility 模块按权限状态启停 —— 启动时若已授权立即起，否则等用户授权后由 watcher 自动起。
             if accessibility::current_status().granted {
-                listener_handle_for_setup.ensure_running(&app.handle());
+                listener_handle_for_setup.ensure_running(app.handle());
             }
 
             Ok(())

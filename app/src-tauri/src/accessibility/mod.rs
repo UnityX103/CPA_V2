@@ -29,20 +29,30 @@ impl ListenerHandle {
 
     /// Spawn a listener if not already running. Idempotent.
     pub fn ensure_running(&self, app: &AppHandle) {
-        let mut guard = self.inner.lock().unwrap();
-        if guard.is_some() {
-            return;
-        }
-        let stop = Arc::new(AtomicBool::new(false));
-        let stop_for_listener = stop.clone();
+        // Phase 1: commit the new stop flag inside the lock and release before spawning.
+        let stop = {
+            let mut guard = self.inner.lock().unwrap();
+            if guard.is_some() {
+                return;
+            }
+            let stop = Arc::new(AtomicBool::new(false));
+            *guard = Some(stop.clone());
+            stop
+        };
+        // Phase 2: spawn outside the lock so a long thread-spawn or future re-entry
+        // through the same handle cannot deadlock against this Mutex.
         let app_handle = app.clone();
-        crate::key_counter::spawn_listener(stop_for_listener, move |keycode| {
+        crate::key_counter::spawn_listener(stop, move |keycode| {
             let _ = app_handle.emit("key-pressed", keycode);
         });
-        *guard = Some(stop);
     }
 
     /// Signal the running listener to stop (no-op if not running).
+    /// `is_running()` returns false immediately, but the listener thread may
+    /// remain alive for up to ~100ms (the CGEventTap polling slice). Callers
+    /// that re-spawn via `ensure_running` right after `stop()` can briefly
+    /// have two ListenOnly taps installed; both emit `key-pressed`, so any
+    /// keys pressed in that window may double-count.
     pub fn stop(&self) {
         let mut guard = self.inner.lock().unwrap();
         if let Some(stop) = guard.take() {
