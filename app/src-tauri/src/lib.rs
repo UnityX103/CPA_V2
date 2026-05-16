@@ -2,6 +2,7 @@ mod accessibility;
 mod active_app;
 mod key_counter;
 mod passthrough;
+mod video_files;
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -136,7 +137,10 @@ pub fn run() {
     let hit_store_for_manage = hit_store.clone();
 
     let app = tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_persisted_scope::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .manage::<std::sync::Arc<passthrough::HitRegionStore>>(hit_store_for_manage)
         .manage::<std::sync::Arc<accessibility::ListenerHandle>>(listener_handle_for_manage)
@@ -295,6 +299,7 @@ pub fn run() {
             passthrough::register_hit_region,
             passthrough::unregister_hit_region,
             passthrough::clear_hit_regions,
+            video_files::validate_custom_video_path,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application");
