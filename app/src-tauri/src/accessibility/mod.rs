@@ -150,7 +150,7 @@ struct AccessibilityChangedPayload {
 static PROMPT_IN_FLIGHT: AtomicBool = AtomicBool::new(false);
 static MAIN_PIN_GENERATION: AtomicU64 = AtomicU64::new(0);
 
-pub(crate) fn mark_main_pin_command() -> u64 {
+pub(crate) fn mark_main_pin_succeeded() -> u64 {
     MAIN_PIN_GENERATION.fetch_add(1, Ordering::AcqRel) + 1
 }
 
@@ -211,16 +211,22 @@ pub async fn request_accessibility_permission(app: AppHandle) -> Result<(), Stri
                 }
                 tokio::time::sleep(Duration::from_millis(200)).await;
             }
-            if main_pin_generation() == pin_generation {
-                if let Some(main) = restore_app.get_webview_window("main") {
-                    if let Err(e) = main.set_always_on_top(was_main_on_top) {
-                        eprintln!(
-                            "[accessibility] set_always_on_top({was_main_on_top}) 恢复失败：{e}"
-                        );
+            let restore_app_for_main = restore_app.clone();
+            if let Err(e) = restore_app.run_on_main_thread(move || {
+                if main_pin_generation() == pin_generation {
+                    if let Some(main) = restore_app_for_main.get_webview_window("main") {
+                        if let Err(e) = main.set_always_on_top(was_main_on_top) {
+                            eprintln!(
+                                "[accessibility] set_always_on_top({was_main_on_top}) 恢复失败：{e}"
+                            );
+                        }
                     }
                 }
+                PROMPT_IN_FLIGHT.store(false, Ordering::Release);
+            }) {
+                eprintln!("[accessibility] restore enqueue failed: {e}");
+                PROMPT_IN_FLIGHT.store(false, Ordering::Release);
             }
-            PROMPT_IN_FLIGHT.store(false, Ordering::Release);
         });
 
         Ok(())

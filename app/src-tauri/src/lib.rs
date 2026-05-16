@@ -20,13 +20,17 @@ fn set_main_window_pinned(app: tauri::AppHandle, on_top: bool) -> Result<(), Str
     let main = app
         .get_webview_window("main")
         .ok_or_else(|| "main window not found".to_string())?;
-    accessibility::mark_main_pin_command();
+    let (tx, rx) = std::sync::mpsc::channel();
     app.run_on_main_thread(move || {
-        if let Err(e) = main.set_always_on_top(on_top) {
-            eprintln!("[window] set_always_on_top({on_top}) failed: {e}");
+        let result = main.set_always_on_top(on_top).map_err(|e| e.to_string());
+        if result.is_ok() {
+            accessibility::mark_main_pin_succeeded();
         }
+        let _ = tx.send(result);
     })
-    .map_err(|e| e.to_string())
+    .map_err(|e| e.to_string())?;
+    rx.recv()
+        .map_err(|e| format!("main window pin command did not complete: {e}"))?
 }
 
 #[tauri::command]
