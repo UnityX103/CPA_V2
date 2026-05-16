@@ -3,14 +3,37 @@ import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import { useSettingsStore } from '../settings';
 import { usePomodoroStore } from '../pomodoro';
-import { useNetworkStore } from '../network';
-import { useBindingKeyStore } from '../bindingKey';
+import { useNetworkStore, type RemotePlayer } from '../network';
+import { useBindingKeyStore, type BindingKeyEntry } from '../bindingKey';
 import {
     BRIDGE_VERSION,
     EVT_STATE,
     EVT_STATE_REQUEST,
     type BridgeSnapshot,
 } from './protocol';
+
+function clonePlayer(player: RemotePlayer): RemotePlayer {
+    return {
+        ...player,
+        state: player.state
+            ? {
+                pomodoro: { ...player.state.pomodoro },
+                activeApp: player.state.activeApp ? { ...player.state.activeApp } : null,
+                bindingKey: player.state.bindingKey ? { ...player.state.bindingKey } : null,
+            }
+            : null,
+    };
+}
+
+function clonePlayers(players: Record<string, RemotePlayer>): Record<string, RemotePlayer> {
+    return Object.fromEntries(
+        Object.entries(players).map(([id, player]) => [id, clonePlayer(player)]),
+    );
+}
+
+function cloneEntries(entries: BindingKeyEntry[]): BindingKeyEntry[] {
+    return entries.map((entry) => ({ ...entry }));
+}
 
 export function applySnapshotToMirrors(snap: BridgeSnapshot): void {
     if (snap.v !== BRIDGE_VERSION) {
@@ -25,7 +48,7 @@ export function applySnapshotToMirrors(snap: BridgeSnapshot): void {
         breakDurationSeconds: snap.pomodoro.breakDurationSeconds,
         totalRounds: snap.pomodoro.totalRounds,
         endActionMode: snap.pomodoro.endActionMode,
-        endActionVideo: snap.pomodoro.endActionVideo,
+        endActionVideo: { ...snap.pomodoro.endActionVideo },
     });
     useNetworkStore.setState({
         autoConnect: snap.network.autoConnect,
@@ -33,11 +56,11 @@ export function applySnapshotToMirrors(snap: BridgeSnapshot): void {
         playerId: snap.network.playerId,
         roomCode: snap.network.roomCode,
         status: snap.network.status,
-        players: snap.network.players,
+        players: clonePlayers(snap.network.players),
         lastError: snap.network.lastError,
     });
     useBindingKeyStore.setState({
-        entries: snap.bindingKey.entries,
+        entries: cloneEntries(snap.bindingKey.entries),
         capturingId: snap.bindingKey.capturingId,
         syncedKeyId: snap.bindingKey.syncedKeyId,
     });

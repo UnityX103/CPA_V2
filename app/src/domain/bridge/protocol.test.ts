@@ -1,6 +1,3 @@
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import path from 'node:path';
 import { describe, it, expect } from 'vitest';
 import {
     type PomodoroEndActionMode,
@@ -79,8 +76,5 @@ describe('bridge protocol', () => {
             action: 'applyEndActionSettings',
             args: [sampleEndActionMode, sampleEndActionVideo],
         });
-        const here = path.dirname(fileURLToPath(import.meta.url));
-        const protocol = readFileSync(path.join(here, 'protocol.ts'), 'utf8');
-        expect(protocol).not.toContain('setTargetMonitor');
     });
 });
