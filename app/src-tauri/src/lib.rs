@@ -27,6 +27,8 @@ fn get_active_app() -> Option<active_app::ActiveAppInfo> {
 
 const SETTINGS_W: f64 = 460.0;
 const SETTINGS_H: f64 = 440.0;
+const SETTINGS_MIN_W: f64 = 360.0;
+const SETTINGS_MIN_H: f64 = 320.0;
 
 /// 计算设置窗口在主窗口所在 monitor 的中心位置（物理像素）。
 /// 多显示器下保证设置窗弹在用户当前屏，而非系统主屏。
@@ -61,7 +63,8 @@ fn build_settings_window_hidden(
     let w = WebviewWindowBuilder::new(app, "settings", url)
         .title("设置")
         .inner_size(SETTINGS_W, SETTINGS_H)
-        .resizable(false)
+        .min_inner_size(SETTINGS_MIN_W, SETTINGS_MIN_H)
+        .resizable(true)
         .transparent(true)
         .decorations(false)
         .always_on_top(true)

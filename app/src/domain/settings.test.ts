@@ -9,7 +9,6 @@ beforeEach(() => {
     useSettingsStore.setState({
         activeTab: 'pomodoro',
         uiScale: 1.0,
-        targetMonitorIndex: 0,
     });
 });
 
@@ -29,9 +28,10 @@ describe('useSettingsStore', () => {
         expect(useSettingsStore.getState().uiScale).toBe(MAX_SCALE);
     });
 
-    it('setTargetMonitor never goes below 0', () => {
-        useSettingsStore.getState().setTargetMonitor(-3);
-        expect(useSettingsStore.getState().targetMonitorIndex).toBe(0);
+    it('does not expose obsolete target monitor state or actions', () => {
+        const state = useSettingsStore.getState();
+        expect('targetMonitorIndex' in state).toBe(false);
+        expect('setTargetMonitor' in state).toBe(false);
     });
 });
 
@@ -48,18 +48,6 @@ describe('createSettingsStore — settings-window mode', () => {
         spy.mockRestore();
     });
 
-    it('setTargetMonitor dispatches instead of mutating local state', async () => {
-        const spy = vi.spyOn(dispatchMod, 'dispatch').mockResolvedValue();
-        const store = createSettingsStore({ isSettingsWindow: true });
-        const before = store.getState().targetMonitorIndex;
-        store.getState().setTargetMonitor(2);
-        expect(store.getState().targetMonitorIndex).toBe(before);
-        expect(spy).toHaveBeenCalledWith(expect.objectContaining({
-            v: BRIDGE_VERSION, store: 'settings', action: 'setTargetMonitor', args: [2],
-        }));
-        spy.mockRestore();
-    });
-
     it('setActiveTab is local in settings-window mode (no dispatch)', () => {
         const spy = vi.spyOn(dispatchMod, 'dispatch').mockResolvedValue();
         const store = createSettingsStore({ isSettingsWindow: true });
@@ -67,5 +55,11 @@ describe('createSettingsStore — settings-window mode', () => {
         expect(store.getState().activeTab).toBe('global');
         expect(spy).not.toHaveBeenCalled();
         spy.mockRestore();
+    });
+
+    it('does not expose target monitor dispatch from the settings window store', () => {
+        const store = createSettingsStore({ isSettingsWindow: true });
+        expect('targetMonitorIndex' in store.getState()).toBe(false);
+        expect('setTargetMonitor' in store.getState()).toBe(false);
     });
 });

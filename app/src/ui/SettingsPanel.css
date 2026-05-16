@@ -1,5 +1,5 @@
 /* SettingsPanel ←→ PUI.pen vnYnS (Unified Settings Panel) + 子面板
- * 外壳: 固定 460x440，内容在固定宽度内纵向滚动；
+ * 外壳: 初始窗口 460x440，内容随 settings window 宽度/高度自适应；
  *        WSnlp 视频文件行按设计 enabled:false 直接不渲染。
  * padding 20, gap 16, radius 20, fill #FFFFFF, stroke 1px #F1E5D8
  * head 8QyVE: title (font 18/700) + closeBtn UAbZg
@@ -16,8 +16,8 @@
 
 .settings-panel {
     position: relative;
-    width: 460px;
-    height: 440px;
+    width: 100%;
+    min-height: 100%;
     background: var(--settings-bg);
     border: 1px solid var(--settings-stroke);
     border-radius: var(--settings-radius);
@@ -766,3 +766,35 @@
     cursor: pointer;
 }
 .bk-perm-banner button:hover { opacity: 0.85; }
+
+@media (max-width: 420px) {
+    .settings-panel {
+        padding: 14px;
+        gap: 12px;
+    }
+
+    .settings-body {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .settings-nav {
+        width: 100%;
+        flex-direction: row;
+        overflow-x: auto;
+        padding: 0;
+    }
+
+    .settings-tab {
+        flex: 1 0 auto;
+        text-align: center;
+    }
+
+    .settings-content {
+        padding: 0;
+    }
+
+    .apply-row {
+        padding: 0;
+    }
+}

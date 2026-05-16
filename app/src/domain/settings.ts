@@ -7,13 +7,11 @@ export type SettingsTab = 'pomodoro' | 'online' | 'pet' | 'global';
 export interface SettingsState {
     activeTab: SettingsTab;
     uiScale: number;
-    targetMonitorIndex: number;
 }
 
 interface SettingsActions {
     setActiveTab: (tab: SettingsTab) => void;
     setUiScale: (scale: number) => void;
-    setTargetMonitor: (index: number) => void;
 }
 
 export const MIN_SCALE = 0.5;
@@ -26,23 +24,17 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
         return create<SettingsState & SettingsActions>((set) => ({
             activeTab: 'pomodoro',
             uiScale: 1.0,
-            targetMonitorIndex: 0,
             setActiveTab: (tab) => set({ activeTab: tab }),
             setUiScale: (scale) => {
                 void dispatch({ v: BRIDGE_VERSION, store: 'settings', action: 'setUiScale', args: [scale] });
-            },
-            setTargetMonitor: (index) => {
-                void dispatch({ v: BRIDGE_VERSION, store: 'settings', action: 'setTargetMonitor', args: [index] });
             },
         }));
     }
     return create<SettingsState & SettingsActions>((set) => ({
         activeTab: 'pomodoro',
         uiScale: 1.0,
-        targetMonitorIndex: 0,
         setActiveTab: (tab) => set({ activeTab: tab }),
         setUiScale: (scale) => set({ uiScale: Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale)) }),
-        setTargetMonitor: (index) => set({ targetMonitorIndex: Math.max(0, index) }),
     }));
 }
 

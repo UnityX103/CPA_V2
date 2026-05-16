@@ -360,20 +360,6 @@ function GlobalTab() {
                     </div>
                 </div>
 
-                {/* gspDisplay v1Cfj */}
-                <div className="card">
-                    <span className="card-label">目标显示器</span>
-                    <button
-                        className="dropdown"
-                        onClick={() =>
-                            settings.setTargetMonitor((settings.targetMonitorIndex + 1) % 4)
-                        }
-                    >
-                        <span className="dropdown-value">显示器 {settings.targetMonitorIndex + 1}</span>
-                        <ChevronDownIcon className="dropdown-chevron" />
-                    </button>
-                </div>
-
                 {/* gspBindingKey yjJtt */}
                 <div className="card">
                     {!bk.permissionGranted && (
