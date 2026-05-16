@@ -219,8 +219,9 @@ pub fn post_did_move_notification_for_testing_impl(window: &WebviewWindow) {
     });
 }
 
-/// 监听主窗口的 NSWindowDidMoveNotification —— 用户拖动或程序性 postNotification
-/// 触发后，若 settings 可见 → set_focus 把 key 还回去。
+/// 监听主窗口的 NSWindowDidMoveNotification 和 NSWindowDidEndLiveResizeNotification
+/// —— 用户拖动、程序性 postNotification 或调整窗口大小结束后，若 settings 可见
+/// → set_focus 把 key 还回去。
 ///
 /// 使用 NSNotificationCenter addObserverForName:object:queue:usingBlock: 而非
 /// Tauri on_window_event(Moved)：Tao 的 `set_outer_position` 通过
@@ -229,10 +230,10 @@ pub fn post_did_move_notification_for_testing_impl(window: &WebviewWindow) {
 /// postNotification 时同步调用 observer，两种移动路径都能覆盖（只要调用方自行
 /// post 通知，或使用触发通知的 setFrame:display: 移动方式）。
 ///
-/// 死循环规避：observer 只对 NSWindowDidMoveNotification 触发，不对 BecomeKey 触发，
-/// 所以主窗口被普通 click 激活不会触发还焦。
+/// 死循环规避：observer 只对 NSWindowDidMoveNotification / NSWindowDidEndLiveResizeNotification
+/// 触发，不对 BecomeKey 触发，所以主窗口被普通 click 激活不会触发还焦。
 pub fn install_focus_restorer_impl(main_window: &WebviewWindow, app: tauri::AppHandle) {
-    use objc2_app_kit::NSWindowDidMoveNotification;
+    use objc2_app_kit::{NSWindowDidEndLiveResizeNotification, NSWindowDidMoveNotification};
     use objc2_foundation::{NSNotificationCenter, NSOperationQueue};
     use block2::RcBlock;
     use objc2_foundation::NSNotification;
@@ -264,7 +265,11 @@ pub fn install_focus_restorer_impl(main_window: &WebviewWindow, app: tauri::AppH
         let center = NSNotificationCenter::defaultCenter();
         // addObserverForName:object:queue:usingBlock: — queue:nil → synchronous
         // delivery on the posting thread (safe: Tauri set_focus is thread-safe).
-        let _token = center.addObserverForName_object_queue_usingBlock(
+        //
+        // Both tokens are intentionally leaked (Box::leak semantics via Retained::into_raw):
+        // the observers live for the process lifetime. If future code needs removal,
+        // store the tokens and call removeObserver:.
+        let _move_token = center.addObserverForName_object_queue_usingBlock(
             Some(NSWindowDidMoveNotification),
             // SAFETY: ns_window_obj is the NSWindow AnyObject; we narrow the notification
             // to this specific window so we don't fire for other windows.
@@ -272,9 +277,14 @@ pub fn install_focus_restorer_impl(main_window: &WebviewWindow, app: tauri::AppH
             None::<&NSOperationQueue>,
             &*block,
         );
-        // _token is intentionally leaked (Box::leak semantics via Retained::into_raw):
-        // the observer lives for the process lifetime. If future code needs removal,
-        // store the token and call removeObserver:.
-        std::mem::forget(_token);
+        std::mem::forget(_move_token);
+
+        let _resize_token = center.addObserverForName_object_queue_usingBlock(
+            Some(NSWindowDidEndLiveResizeNotification),
+            Some(&*ns_window_obj),
+            None::<&NSOperationQueue>,
+            &*block,
+        );
+        std::mem::forget(_resize_token);
     }
 }

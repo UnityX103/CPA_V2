@@ -106,21 +106,26 @@ pub fn install_first_mouse_only_impl(window: &WebviewWindow) {
     }
 }
 
-/// 监听主窗口的 Tauri WindowEvent::Moved —— 用户拖动或程序性 set_position 后触发。
+/// 监听主窗口的 Tauri WindowEvent::Moved 和 WindowEvent::Resized ——
+/// 用户拖动、程序性 set_position 或调整大小结束后触发。
 /// 回调里若 settings 可见 → set_focus 把 key 还回去。
 ///
 /// 原计划使用第二个 WM_EXITSIZEMOVE subclass（SUBCLASS_ID 0xCA0_FA12），但
 /// SetWindowPos 等程序性移动不触发 WM_EXITSIZEMOVE；改为 Tauri on_window_event
 /// 与 macOS 路径一致，覆盖用户拖动和程序性移动两种路径。
+/// Resized 事件覆盖用户调整大小结束后的同路径焦点丢失问题。
 pub fn install_focus_restorer_impl(main_window: &WebviewWindow, app: tauri::AppHandle) {
     main_window.on_window_event(move |event| {
-        if let tauri::WindowEvent::Moved(_) = event {
-            if let Some(settings) = app.get_webview_window("settings") {
-                if settings.is_visible().unwrap_or(false) {
-                    match settings.set_focus() {
-                        Ok(()) => eprintln!("[focus_restorer] focus restored to settings"),
-                        Err(e) => eprintln!("[focus_restorer] set_focus failed: {e}"),
-                    }
+        let triggered = matches!(event, tauri::WindowEvent::Moved(_))
+            || matches!(event, tauri::WindowEvent::Resized(_));
+        if !triggered {
+            return;
+        }
+        if let Some(settings) = app.get_webview_window("settings") {
+            if settings.is_visible().unwrap_or(false) {
+                match settings.set_focus() {
+                    Ok(()) => eprintln!("[focus_restorer] focus restored to settings"),
+                    Err(e) => eprintln!("[focus_restorer] set_focus failed: {e}"),
                 }
             }
         }
