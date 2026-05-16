@@ -6,8 +6,8 @@
 //! 停止信号。
 //!
 //! 安全前提：用户必须在「系统设置 → 隐私与安全 → 辅助功能」里授予此 App。
-//! 没有权限时 `CGEventTap::new` 仍会成功但事件不会送达；前端通过 1Hz 探测能否拿到
-//! 任何事件来判断是否需要弹引导。
+//! 没有权限时 `CGEventTap::new` 直接返回 Err；本模块不主动检测权限，
+//! 由 `accessibility` 模块在权限翻转时调用 `spawn_listener`。
 
 #[cfg(target_os = "macos")]
 use std::sync::atomic::{AtomicBool, Ordering};
