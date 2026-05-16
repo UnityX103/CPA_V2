@@ -27,6 +27,14 @@ describe('createBindingKeyStore — settings-window mode', () => {
         expect(spy).toHaveBeenCalledWith(expect.objectContaining({ v: BRIDGE_VERSION, store: 'bindingKey', action: 'beginCapture', args: ['bk-3'] }));
         spy.mockRestore();
     });
+
+    it('setPermission updates local state (not a no-op) so the banner can react in the settings window', () => {
+        const store = createBindingKeyStore({ isSettingsWindow: true });
+        expect(store.getState().permissionGranted).toBe(true);
+        store.getState().setPermission(false, 'macos');
+        expect(store.getState().permissionGranted).toBe(false);
+        expect(store.getState().platform).toBe('macos');
+    });
 });
 
 describe('createBindingKeyStore — permission state', () => {

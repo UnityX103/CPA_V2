@@ -61,7 +61,7 @@ export type BindingKeyStore = UseBoundStore<StoreApi<BindingKeyState & BindingKe
 
 export function createBindingKeyStore(opts: { isSettingsWindow: boolean }): BindingKeyStore {
     if (opts.isSettingsWindow) {
-        return create<BindingKeyState & BindingKeyActions>(() => ({
+        return create<BindingKeyState & BindingKeyActions>((set) => ({
             entries: [],
             syncedKeyId: null,
             capturingId: null,
@@ -85,7 +85,8 @@ export function createBindingKeyStore(opts: { isSettingsWindow: boolean }): Bind
             completeCapture: () => {},
             incrementByKeyCode: () => {},
             resetCount: () => {},
-            setPermission: () => {},
+            setPermission: (granted, platform) =>
+                set({ permissionGranted: granted, platform }),
         }));
     }
     return create<BindingKeyState & BindingKeyActions>((set, get) => ({
