@@ -206,6 +206,48 @@ pub fn run() {
                 });
             }
 
+            // Focus-restore E2E 触发桩：仅在集成测试通过 CPA_E2E_TRIGGER_FOCUS_RESTORE=1
+            // 启动二进制时进入。
+            //
+            // 注：macOS 不会让 cargo-test 派生的子进程拿前台焦点（is_focused() 在 bg
+            // 进程里永远 false），所以测试不能用 is_focused 验证状态转移。改为让 fix
+            // 在 observer 回调内 eprintln 一个 marker，集成测试以 marker 出现/缺失为信号。
+            //
+            // 桩职责很轻：show settings（observer 需要 settings 可见才动作） → 程序性地
+            // 移动主窗口 1 像素（触发 NSWindowDidMoveNotification）→ 给 observer 留时间
+            // 跑回调。tests/focus_restore_regression.rs 解析 stderr。
+            if std::env::var("CPA_E2E_TRIGGER_FOCUS_RESTORE").is_ok() {
+                let handle = app.handle().clone();
+                tauri::async_runtime::spawn(async move {
+                    std::thread::sleep(Duration::from_millis(1500));
+                    eprintln!("[e2e focus] setup-complete");
+
+                    let Some(main) = handle.get_webview_window("main") else {
+                        eprintln!("[e2e focus] main window not found; aborting");
+                        return;
+                    };
+                    let Some(settings) = handle.get_webview_window("settings") else {
+                        eprintln!("[e2e focus] settings window not found; aborting");
+                        return;
+                    };
+
+                    // observer 只在 settings 可见时还焦；先让 settings 可见
+                    let _ = settings.show();
+                    std::thread::sleep(Duration::from_millis(200));
+                    eprintln!("[e2e focus] settings-shown");
+
+                    // 程序性移动主窗口 → 触发 NSWindowDidMoveNotification on main
+                    if let Ok(pos) = main.outer_position() {
+                        let _ = main.set_position(PhysicalPosition::new(pos.x + 1, pos.y));
+                    }
+                    eprintln!("[e2e focus] main-moved");
+
+                    // 给 observer 回调留时间跑（500ms 足够）
+                    std::thread::sleep(Duration::from_millis(500));
+                    eprintln!("[e2e focus] done");
+                });
+            }
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
