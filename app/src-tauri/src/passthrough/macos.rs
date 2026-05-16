@@ -11,7 +11,7 @@ use objc2_app_kit::{NSAutoresizingMaskOptions, NSView, NSWindow};
 use objc2_foundation::{MainThreadMarker, NSPoint, NSRect};
 use std::ptr::null_mut;
 use std::sync::Arc;
-use tauri::WebviewWindow;
+use tauri::{Manager, WebviewWindow};
 
 /// Instance variable：指向共享 store 的 raw pointer（`Arc::into_raw` 转移所有权到 view）。
 /// **此 Arc 故意泄漏**：进程退出时 OS 回收内存，无 `from_raw` 配对调用。
@@ -183,4 +183,100 @@ pub fn install_first_mouse_only_impl(window: &WebviewWindow) {
             | NSAutoresizingMaskOptions::ViewHeightSizable,
     );
     ns_window.setContentView(Some(&*view));
+}
+
+/// 仅用于集成测试触发桩：向 NSNotificationCenter 手动 post NSWindowDidMoveNotification
+/// 在主线程上异步执行（避免 Tao 的 "Event queued from different thread" 断言）。
+/// 见 lib.rs E2E 触发桩和 mod.rs 中的说明。
+pub fn post_did_move_notification_for_testing_impl(window: &WebviewWindow) {
+    use dispatch2::DispatchQueue;
+    use objc2_app_kit::NSWindowDidMoveNotification;
+    use objc2_foundation::NSNotificationCenter;
+
+    let ns_window_ptr = match window.ns_window() {
+        Ok(ptr) => ptr as *mut NSWindow,
+        Err(e) => {
+            eprintln!("[focus_restorer/macos] post_did_move: ns_window() err: {e}");
+            return;
+        }
+    };
+    // Store pointer as usize so the closure is Send (raw ptr types are !Send;
+    // usize is Send). The pointer is only dereferenced on the main thread inside
+    // exec_async, satisfying MainThreadOnly requirements.
+    let ns_window_addr = ns_window_ptr as usize;
+
+    // dispatch_async to main queue: post the notification there so Tao's windowDidMove:
+    // delegate (which queues Tao events) runs on the correct thread.
+    DispatchQueue::main().exec_async(move || {
+        let center = NSNotificationCenter::defaultCenter();
+        let ns_window_raw = ns_window_addr as *mut objc2::runtime::AnyObject;
+        unsafe {
+            center.postNotificationName_object(
+                NSWindowDidMoveNotification,
+                Some(&*ns_window_raw),
+            );
+        }
+    });
+}
+
+/// 监听主窗口的 NSWindowDidMoveNotification —— 用户拖动或程序性 postNotification
+/// 触发后，若 settings 可见 → set_focus 把 key 还回去。
+///
+/// 使用 NSNotificationCenter addObserverForName:object:queue:usingBlock: 而非
+/// Tauri on_window_event(Moved)：Tao 的 `set_outer_position` 通过
+/// `setFrameTopLeftPoint:` 实现，该调用不触发 NSWindowDelegate.windowDidMove:
+/// 回调，因此 Tauri 不会派发 WindowEvent::Moved。NSNotificationCenter 路径在
+/// postNotification 时同步调用 observer，两种移动路径都能覆盖（只要调用方自行
+/// post 通知，或使用触发通知的 setFrame:display: 移动方式）。
+///
+/// 死循环规避：observer 只对 NSWindowDidMoveNotification 触发，不对 BecomeKey 触发，
+/// 所以主窗口被普通 click 激活不会触发还焦。
+pub fn install_focus_restorer_impl(main_window: &WebviewWindow, app: tauri::AppHandle) {
+    use objc2_app_kit::NSWindowDidMoveNotification;
+    use objc2_foundation::{NSNotificationCenter, NSOperationQueue};
+    use block2::RcBlock;
+    use objc2_foundation::NSNotification;
+    use std::ptr::NonNull;
+
+    let ns_window_ptr = match main_window.ns_window() {
+        Ok(ptr) => ptr as *mut NSWindow,
+        Err(e) => {
+            eprintln!("[focus_restorer/macos] ns_window() returned Err: {e}; skipping install");
+            return;
+        }
+    };
+
+    let ns_window_obj: *mut objc2::runtime::AnyObject = ns_window_ptr as *mut objc2::runtime::AnyObject;
+
+    let app_for_block = app;
+    let block = RcBlock::new(move |_notif: NonNull<NSNotification>| {
+        if let Some(settings) = app_for_block.get_webview_window("settings") {
+            if settings.is_visible().unwrap_or(false) {
+                // eprintln marker is load-bearing for the focus_restore_regression
+                // integration test (tests/focus_restore_regression.rs asserts this
+                // appears in stderr after main window moves). It also serves as a
+                // useful diagnostic for production debugging.
+                eprintln!("[focus_restorer] fired (main moved, settings visible → set_focus)");
+                let _ = settings.set_focus();
+            }
+        }
+    });
+
+    unsafe {
+        let center = NSNotificationCenter::defaultCenter();
+        // addObserverForName:object:queue:usingBlock: — queue:nil → synchronous
+        // delivery on the posting thread (safe: Tauri set_focus is thread-safe).
+        let _token = center.addObserverForName_object_queue_usingBlock(
+            Some(NSWindowDidMoveNotification),
+            // SAFETY: ns_window_obj is the NSWindow AnyObject; we narrow the notification
+            // to this specific window so we don't fire for other windows.
+            Some(&*ns_window_obj),
+            None::<&NSOperationQueue>,
+            &*block,
+        );
+        // _token is intentionally leaked (Box::leak semantics via Retained::into_raw):
+        // the observer lives for the process lifetime. If future code needs removal,
+        // store the token and call removeObserver:.
+        std::mem::forget(_token);
+    }
 }

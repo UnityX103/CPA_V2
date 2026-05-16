@@ -117,6 +117,29 @@ pub fn install_first_mouse_only(window: &WebviewWindow) {
     stub::install_first_mouse_only_impl(window);
 }
 
+/// 在主窗口上安装"用户拖/resize 结束后把 key 还给 settings 的"原生监听。
+/// macOS: NSWindowDidMoveNotification observer。Windows: WM_EXITSIZEMOVE subclass。
+/// Stub: no-op。同 install() 当前策略：失败仅打日志，不阻断启动。
+pub fn install_focus_restorer(main_window: &WebviewWindow, app: tauri::AppHandle) {
+    #[cfg(target_os = "macos")]
+    macos::install_focus_restorer_impl(main_window, app);
+    #[cfg(target_os = "windows")]
+    windows::install_focus_restorer_impl(main_window, app);
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
+    stub::install_focus_restorer_impl(main_window, app);
+}
+
+/// 仅用于集成测试触发桩：向 NSNotificationCenter 手动 post NSWindowDidMoveNotification，
+/// 使得 install_focus_restorer 装的 observer 能在测试里可靠触发。
+/// 背景：Tao 的 set_position 用 setFrameTopLeftPoint: 实现，该调用不触发
+/// NSWindowDelegate.windowDidMove:，因此 Tauri 不派发 WindowEvent::Moved，
+/// 且 NSNotificationCenter 也不自动 post NSWindowDidMoveNotification。
+/// 在 production 中用户拖动窗口时 AppKit 会自动 post 该通知；此函数只在 E2E 测试路径被调用。
+#[cfg(target_os = "macos")]
+pub fn post_did_move_notification_for_testing(window: &WebviewWindow) {
+    macos::post_did_move_notification_for_testing_impl(window);
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
