@@ -20,6 +20,7 @@ fn set_main_window_pinned(app: tauri::AppHandle, on_top: bool) -> Result<(), Str
     let main = app
         .get_webview_window("main")
         .ok_or_else(|| "main window not found".to_string())?;
+    accessibility::mark_main_pin_command();
     main.set_always_on_top(on_top).map_err(|e| e.to_string())
 }
 

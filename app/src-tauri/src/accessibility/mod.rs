@@ -4,7 +4,7 @@
 //! 详细设计见 docs/superpowers/specs/2026-05-16-key-counter-accessibility-permission-design.md。
 
 use serde::Serialize;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Emitter, Manager};
 
@@ -148,6 +148,15 @@ struct AccessibilityChangedPayload {
 /// 防抖：同一时刻只允许一次 prompt 飞行；第二次点击直接 Ok(()) 返回，避免 restore 任务堆叠
 /// 与 always_on_top 抖动。请求结束（granted=true 翻转或 30s 超时）后重置为 false。
 static PROMPT_IN_FLIGHT: AtomicBool = AtomicBool::new(false);
+static MAIN_PIN_GENERATION: AtomicU64 = AtomicU64::new(0);
+
+pub(crate) fn mark_main_pin_command() -> u64 {
+    MAIN_PIN_GENERATION.fetch_add(1, Ordering::AcqRel) + 1
+}
+
+fn main_pin_generation() -> u64 {
+    MAIN_PIN_GENERATION.load(Ordering::Acquire)
+}
 
 #[tauri::command]
 pub async fn request_accessibility_permission(app: AppHandle) -> Result<(), String> {
@@ -170,8 +179,9 @@ pub async fn request_accessibility_permission(app: AppHandle) -> Result<(), Stri
         } else {
             false
         };
+        let pin_generation = main_pin_generation();
         let app_for_yield = app.clone();
-        let _ = app.run_on_main_thread(move || {
+        if let Err(e) = app.run_on_main_thread(move || {
             if let Some(main) = app_for_yield.get_webview_window("main") {
                 if let Err(e) = main.set_always_on_top(false) {
                     eprintln!("[accessibility] set_always_on_top(false) 失败：{e}");
@@ -179,7 +189,10 @@ pub async fn request_accessibility_permission(app: AppHandle) -> Result<(), Stri
             }
             macos::deactivate_app();
             macos::prompt();
-        });
+        }) {
+            PROMPT_IN_FLIGHT.store(false, Ordering::Release);
+            return Err(e.to_string());
+        }
 
         // 30s 倒计时 或 granted 翻转，先到先恢复
         let restore_app = app.clone();
@@ -196,11 +209,13 @@ pub async fn request_accessibility_permission(app: AppHandle) -> Result<(), Stri
                 }
                 tokio::time::sleep(Duration::from_millis(200)).await;
             }
-            if let Some(main) = restore_app.get_webview_window("main") {
-                if let Err(e) = main.set_always_on_top(was_main_on_top) {
-                    eprintln!(
-                        "[accessibility] set_always_on_top({was_main_on_top}) 恢复失败：{e}"
-                    );
+            if main_pin_generation() == pin_generation {
+                if let Some(main) = restore_app.get_webview_window("main") {
+                    if let Err(e) = main.set_always_on_top(was_main_on_top) {
+                        eprintln!(
+                            "[accessibility] set_always_on_top({was_main_on_top}) 恢复失败：{e}"
+                        );
+                    }
                 }
             }
             PROMPT_IN_FLIGHT.store(false, Ordering::Release);
