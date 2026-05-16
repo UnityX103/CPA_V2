@@ -3,6 +3,10 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { describe, it, expect } from 'vitest';
 import {
+    type PomodoroEndActionMode,
+    type PomodoroEndActionVideo,
+} from '../pomodoro';
+import {
     BRIDGE_VERSION,
     EVT_DISPATCH,
     EVT_STATE,
@@ -10,6 +14,13 @@ import {
     type BridgeSnapshot,
     type DispatchPayload,
 } from './protocol';
+
+const sampleEndActionMode: PomodoroEndActionMode = 'playVideo';
+const sampleEndActionVideo: PomodoroEndActionVideo = {
+    sourceKind: 'custom',
+    builtinVideoId: 'builtin-rain',
+    customVideoPath: '/tmp/focus-finished.mp4',
+};
 
 describe('bridge protocol', () => {
     it('defines stable event names', () => {
@@ -26,7 +37,13 @@ describe('bridge protocol', () => {
         const snap: BridgeSnapshot = {
             v: 1,
             settings: { uiScale: 1.5 },
-            pomodoro: { focusDurationSeconds: 1500, breakDurationSeconds: 300, totalRounds: 4 },
+            pomodoro: {
+                focusDurationSeconds: 1500,
+                breakDurationSeconds: 300,
+                totalRounds: 4,
+                endActionMode: sampleEndActionMode,
+                endActionVideo: sampleEndActionVideo,
+            },
             network: {
                 autoConnect: false, playerName: 'me', playerId: 'p-1',
                 roomCode: 'R1', status: 'idle',
@@ -35,6 +52,8 @@ describe('bridge protocol', () => {
             bindingKey: { entries: [], capturingId: null, syncedKeyId: null },
         };
         expect(snap.v).toBe(1);
+        expect(snap.pomodoro.endActionMode).toBe(sampleEndActionMode);
+        expect(snap.pomodoro.endActionVideo).toEqual(sampleEndActionVideo);
         expect('targetMonitorIndex' in snap.settings).toBe(false);
     });
 
@@ -42,6 +61,7 @@ describe('bridge protocol', () => {
         const samples: DispatchPayload[] = [
             { v: 1, store: 'settings',   action: 'setUiScale',     args: [1.5] },
             { v: 1, store: 'pomodoro',   action: 'applySettings',  args: [1500, 300, 4, true] },
+            { v: 1, store: 'pomodoro',   action: 'applyEndActionSettings', args: [sampleEndActionMode, sampleEndActionVideo] },
             { v: 1, store: 'network',    action: 'createRoom',     args: ['R1'] },
             { v: 1, store: 'network',    action: 'joinRoom',       args: ['R1'] },
             { v: 1, store: 'network',    action: 'leaveRoom',      args: [] },
@@ -52,7 +72,13 @@ describe('bridge protocol', () => {
             { v: 1, store: 'bindingKey', action: 'setSynced',      args: [null] },
             { v: 1, store: 'bindingKey', action: 'addEntry',       args: [] },
         ];
-        expect(samples).toHaveLength(11);
+        expect(samples).toHaveLength(12);
+        expect(samples[2]).toEqual({
+            v: 1,
+            store: 'pomodoro',
+            action: 'applyEndActionSettings',
+            args: [sampleEndActionMode, sampleEndActionVideo],
+        });
         const here = path.dirname(fileURLToPath(import.meta.url));
         const protocol = readFileSync(path.join(here, 'protocol.ts'), 'utf8');
         expect(protocol).not.toContain('setTargetMonitor');

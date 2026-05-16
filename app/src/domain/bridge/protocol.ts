@@ -1,5 +1,6 @@
 import type { BindingKeyEntry } from '../bindingKey';
 import type { ConnectionStatus, RemotePlayer } from '../network';
+import type { PomodoroEndActionMode, PomodoroEndActionVideo } from '../pomodoro';
 
 export const EVT_STATE_REQUEST = 'app:state:request';
 export const EVT_STATE = 'app:state';
@@ -15,6 +16,8 @@ export interface BridgeSnapshot {
         focusDurationSeconds: number;
         breakDurationSeconds: number;
         totalRounds: number;
+        endActionMode: PomodoroEndActionMode;
+        endActionVideo: PomodoroEndActionVideo;
     };
     network: {
         autoConnect: boolean;
@@ -35,6 +38,7 @@ export interface BridgeSnapshot {
 export type DispatchPayload =
     | { v: typeof BRIDGE_VERSION; store: 'settings';   action: 'setUiScale'; args: [number] }
     | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'applySettings'; args: [number, number, number, boolean] }
+    | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'applyEndActionSettings'; args: [PomodoroEndActionMode, PomodoroEndActionVideo] }
     | { v: typeof BRIDGE_VERSION; store: 'network';    action: 'createRoom' | 'joinRoom'; args: [string] }
     | { v: typeof BRIDGE_VERSION; store: 'network';    action: 'leaveRoom'; args: [] }
     | { v: typeof BRIDGE_VERSION; store: 'network';    action: 'setAutoConnect'; args: [boolean] }

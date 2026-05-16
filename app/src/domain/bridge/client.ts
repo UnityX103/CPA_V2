@@ -24,6 +24,8 @@ export function applySnapshotToMirrors(snap: BridgeSnapshot): void {
         focusDurationSeconds: snap.pomodoro.focusDurationSeconds,
         breakDurationSeconds: snap.pomodoro.breakDurationSeconds,
         totalRounds: snap.pomodoro.totalRounds,
+        endActionMode: snap.pomodoro.endActionMode,
+        endActionVideo: snap.pomodoro.endActionVideo,
     });
     useNetworkStore.setState({
         autoConnect: snap.network.autoConnect,

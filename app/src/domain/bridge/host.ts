@@ -26,6 +26,8 @@ export function buildSnapshot(): BridgeSnapshot {
             focusDurationSeconds: p.focusDurationSeconds,
             breakDurationSeconds: p.breakDurationSeconds,
             totalRounds: p.totalRounds,
+            endActionMode: p.endActionMode,
+            endActionVideo: p.endActionVideo,
         },
         network: {
             autoConnect: n.autoConnect,
@@ -58,6 +60,9 @@ export function applyDispatch(payload: DispatchPayload): void {
         case 'pomodoro': {
             if (payload.action === 'applySettings') {
                 usePomodoroStore.getState().applySettings(...payload.args);
+            }
+            if (payload.action === 'applyEndActionSettings') {
+                usePomodoroStore.getState().applyEndActionSettings(...payload.args);
             }
             return;
         }
@@ -95,8 +100,22 @@ async function sendSnapshot(): Promise<void> {
     }
 }
 
-function pomoSig(s: { focusDurationSeconds: number; breakDurationSeconds: number; totalRounds: number }): string {
-    return `${s.focusDurationSeconds}|${s.breakDurationSeconds}|${s.totalRounds}`;
+function pomoSig(s: {
+    focusDurationSeconds: number;
+    breakDurationSeconds: number;
+    totalRounds: number;
+    endActionMode: string;
+    endActionVideo: { sourceKind: string; builtinVideoId: string; customVideoPath: string };
+}): string {
+    return [
+        s.focusDurationSeconds,
+        s.breakDurationSeconds,
+        s.totalRounds,
+        s.endActionMode,
+        s.endActionVideo.sourceKind,
+        s.endActionVideo.builtinVideoId,
+        s.endActionVideo.customVideoPath,
+    ].join('|');
 }
 
 export function useBridgeHost(): void {
