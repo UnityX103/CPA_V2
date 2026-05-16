@@ -89,9 +89,24 @@ pub fn accessibility_status() -> AccessibilityStatus {
 
 #[tauri::command]
 #[allow(unreachable_code)]
-pub fn open_accessibility_settings() -> Result<(), String> {
+pub fn open_accessibility_settings(app: AppHandle) -> Result<(), String> {
+    #[cfg(not(target_os = "macos"))]
+    let _ = &app;
+
     #[cfg(target_os = "macos")]
-    return macos::open_settings();
+    {
+        let app_for_yield = app.clone();
+        app.run_on_main_thread(move || {
+            set_permission_windows_always_on_top(&app_for_yield, false);
+            macos::deactivate_app();
+            if let Err(e) = macos::open_settings() {
+                eprintln!("[accessibility] open settings failed: {e}");
+            }
+        })
+        .map_err(|e| e.to_string())?;
+        restore_permission_windows_when_done(app);
+        return Ok(());
+    }
     #[cfg(target_os = "windows")]
     return windows::open_settings();
     #[cfg(not(any(target_os = "macos", target_os = "windows")))]
@@ -104,6 +119,40 @@ pub fn key_counter_listening(handle: tauri::State<'_, Arc<ListenerHandle>>) -> b
 }
 
 use std::time::Duration;
+
+#[cfg(target_os = "macos")]
+const PERMISSION_UI_WINDOW_LABELS: &[&str] = &["main", "settings"];
+
+#[cfg(target_os = "macos")]
+fn set_permission_windows_always_on_top(app: &AppHandle, on_top: bool) {
+    for label in PERMISSION_UI_WINDOW_LABELS {
+        if let Some(window) = app.get_webview_window(label) {
+            if let Err(e) = window.set_always_on_top(on_top) {
+                eprintln!("[accessibility] set_always_on_top({on_top}) for {label} failed: {e}");
+            }
+        }
+    }
+}
+
+#[cfg(target_os = "macos")]
+fn restore_permission_windows_when_done(app: AppHandle) {
+    tauri::async_runtime::spawn(async move {
+        let deadline = std::time::Instant::now() + Duration::from_secs(30);
+        loop {
+            // AXIsProcessTrusted is thread-safe (no state mutation, no UI interaction);
+            // safe to poll from this tokio worker thread.
+            if current_status().granted {
+                break;
+            }
+            if std::time::Instant::now() >= deadline {
+                break;
+            }
+            tokio::time::sleep(Duration::from_millis(200)).await;
+        }
+        set_permission_windows_always_on_top(&app, true);
+        PROMPT_IN_FLIGHT.store(false, Ordering::Release);
+    });
+}
 
 /// Spawn the 1Hz watcher thread. Emits `accessibility-permission-changed`
 /// on every state flip and starts/stops the listener through `handle`.
@@ -164,41 +213,29 @@ pub async fn request_accessibility_permission(app: AppHandle) -> Result<(), Stri
         }
 
         // 让位 + prompt 全部在同一 run_on_main_thread 闭包内执行，保证顺序：
-        // set_always_on_top(false) → deactivate → prompt，避免依赖跨 dispatcher 的 FIFO 假设。
+        // main/settings set_always_on_top(false) → deactivate → prompt，
+        // 避免权限弹窗或系统设置被当前置顶窗口挡住。
         let app_for_yield = app.clone();
         let _ = app.run_on_main_thread(move || {
-            if let Some(main) = app_for_yield.get_webview_window("main") {
-                if let Err(e) = main.set_always_on_top(false) {
-                    eprintln!("[accessibility] set_always_on_top(false) 失败：{e}");
-                }
-            }
+            set_permission_windows_always_on_top(&app_for_yield, false);
             macos::deactivate_app();
             macos::prompt();
         });
 
         // 30s 倒计时 或 granted 翻转，先到先恢复
-        let restore_app = app.clone();
-        tauri::async_runtime::spawn(async move {
-            let deadline = std::time::Instant::now() + Duration::from_secs(30);
-            loop {
-                // AXIsProcessTrusted is thread-safe (no state mutation, no UI interaction);
-                // safe to poll from this tokio worker thread.
-                if current_status().granted {
-                    break;
-                }
-                if std::time::Instant::now() >= deadline {
-                    break;
-                }
-                tokio::time::sleep(Duration::from_millis(200)).await;
-            }
-            if let Some(main) = restore_app.get_webview_window("main") {
-                if let Err(e) = main.set_always_on_top(true) {
-                    eprintln!("[accessibility] set_always_on_top(true) 恢复失败：{e}");
-                }
-            }
-            PROMPT_IN_FLIGHT.store(false, Ordering::Release);
-        });
+        restore_permission_windows_when_done(app);
 
         Ok(())
+    }
+}
+
+#[cfg(all(test, target_os = "macos"))]
+mod tests {
+    use super::PERMISSION_UI_WINDOW_LABELS;
+
+    #[test]
+    fn permission_ui_yield_covers_settings_window() {
+        assert!(PERMISSION_UI_WINDOW_LABELS.contains(&"main"));
+        assert!(PERMISSION_UI_WINDOW_LABELS.contains(&"settings"));
     }
 }
