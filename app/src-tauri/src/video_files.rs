@@ -50,8 +50,33 @@ mod tests {
     use std::path::Path;
 
     #[test]
-    fn accepts_existing_absolute_webm_path() {
-        let dir = std::env::temp_dir().join(format!("cpa-video-files-test-{}", std::process::id()));
+    fn accepts_existing_absolute_lowercase_webm_path() {
+        let dir = std::env::temp_dir().join(format!(
+            "cpa-video-files-lowercase-test-{}",
+            std::process::id()
+        ));
+        fs::create_dir_all(&dir).expect("create temp dir");
+        let path = dir.join("completion.webm");
+        fs::write(&path, b"webm").expect("write temp webm");
+
+        assert_eq!(
+            validate_webm_path(&path),
+            CustomVideoValidation {
+                ok: true,
+                message: None
+            }
+        );
+
+        let _ = fs::remove_file(path);
+        let _ = fs::remove_dir(dir);
+    }
+
+    #[test]
+    fn accepts_existing_absolute_uppercase_webm_path() {
+        let dir = std::env::temp_dir().join(format!(
+            "cpa-video-files-uppercase-test-{}",
+            std::process::id()
+        ));
         fs::create_dir_all(&dir).expect("create temp dir");
         let path = dir.join("completion.WEBM");
         fs::write(&path, b"webm").expect("write temp webm");
