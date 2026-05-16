@@ -15,8 +15,9 @@
 fn settings_window_e2e_path_does_not_sigtrap() {
     use std::collections::HashSet;
     use std::fs;
+    use std::io::Read;
     use std::path::PathBuf;
-    use std::process::Command;
+    use std::process::{Command, Stdio};
     use std::thread;
     use std::time::Duration;
 
@@ -39,8 +40,12 @@ fn settings_window_e2e_path_does_not_sigtrap() {
 
     let mut child = Command::new(env!("CARGO_BIN_EXE_app"))
         .env("CPA_E2E_TRIGGER_SETTINGS", "1")
+        .stderr(Stdio::piped())
         .spawn()
         .expect("spawn target/debug/app");
+
+    // Take stderr handle before the sleep so the pipe is hooked up immediately.
+    let mut stderr = child.stderr.take().expect("stderr piped");
 
     // 5s is the empirically-derived budget: tokio worker spawn + WebViewBuilder::build
     // + install_first_mouse_only + WKWebView KVO chain typically completes in <2s on
@@ -61,7 +66,10 @@ fn settings_window_e2e_path_does_not_sigtrap() {
 
     // Cleanup before assertions so a failing assert still leaves no zombie.
     let _ = child.kill();
+    // Wait for the child to exit so the stderr pipe gets EOF, then drain it.
     let _ = child.wait();
+    let mut stderr_buf = String::new();
+    let _ = stderr.read_to_string(&mut stderr_buf);
 
     assert!(
         alive,
@@ -71,6 +79,11 @@ fn settings_window_e2e_path_does_not_sigtrap() {
     assert!(
         new_reports.is_empty(),
         "new crash reports appeared during test: {new_reports:?}"
+    );
+    assert!(
+        stderr_buf.contains("reached install_first_mouse_only call site"),
+        "trigger桩 did not reach install_first_mouse_only — regression net is cold. \
+         stderr was:\n{stderr_buf}"
     );
 }
 

@@ -190,7 +190,14 @@ pub fn run() {
                         .visible(false)
                         .build()
                     {
-                        Ok(w) => passthrough::install_first_mouse_only(&w),
+                        Ok(w) => {
+                            // Marker BEFORE the install call — install panics via .expect() on
+                            // tokio worker post-fix, so anything after the call is unreachable.
+                            // Test harness asserts this marker appears in stderr; absence means
+                            // the trigger桩 short-circuited before exercising the crash path.
+                            eprintln!("[e2e stub] reached install_first_mouse_only call site");
+                            passthrough::install_first_mouse_only(&w);
+                        }
                         Err(e) => eprintln!(
                             "[e2e stub] WebviewWindowBuilder::build failed; \
                              regression net is not hot, test will pass vacuously: {e}"
