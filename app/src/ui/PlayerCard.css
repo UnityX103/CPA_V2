@@ -159,10 +159,12 @@
     white-space: nowrap;
 }
 
-/* pin btn epxz9: absolute x=110 y=50 within content stack 125x66 */
+/* pin btn epxz9: design absolute (110, 50) inside D3ZIc (pc-content-stack 125×66).
+ * Pin right edge 132 > stack width 125 → design intentionally overflows the content stack into
+ * the card padding zone; drqFB's clip:true (.pc-card overflow:hidden) keeps it inside card box. */
 .pc-pin {
     position: absolute;
-    right: 1px;       /* 125 - 22 - 14(padding 已扣除) → 内容内右侧贴边 */
+    left: 110px;
     top: 50px;
     width: 22px;
     height: 22px;

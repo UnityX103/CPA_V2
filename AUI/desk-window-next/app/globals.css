@@ -12,12 +12,9 @@
   color-scheme: light;
   --page-bg: #f6ede5;
   --page-fg: #5b4636;
-  --font-maoken: "MaokenAssortedSans", "PingFang SC", "Helvetica Neue", sans-serif;
-  --font-bricolage: "Bricolage Grotesque", "Avenir Next", "PingFang SC", "Helvetica Neue", sans-serif;
-  --font-dm-sans: "DM Sans", "PingFang SC", "Helvetica Neue", sans-serif;
-  --font-inter: "Inter", "PingFang SC", "Helvetica Neue", sans-serif;
+  --font-maoken: "MaokenAssortedSans", "PingFang SC", "Hiragino Sans GB", -apple-system, BlinkMacSystemFont, sans-serif;
 
-  /* clock design tokens */
+  /* === Clock state vars (parity with PUI.pen variables) === */
   --clock-ring-bg-focus: #ffe5d9;
   --clock-ring-bg-rest: #c8edd5;
   --clock-ring-bg-off: #e0d9d3;
@@ -45,30 +42,24 @@ body {
     radial-gradient(circle at top, #fffdfa 0%, #f9f2eb 40%, transparent 72%),
     linear-gradient(180deg, #fffaf5 0%, var(--page-bg) 100%);
   color: var(--page-fg);
+  font-family: var(--font-maoken);
 }
 
 * {
   box-sizing: border-box;
 }
 
-.desk-window-stage {
-  width: 613px;
-  height: 330px;
+/* Preview stage — renders components at exact design pixel size on neutral canvas */
+.preview-stage {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+  padding: 40px;
+  align-items: flex-start;
+  justify-content: center;
 }
 
-.desk-window-wrap {
-  width: 613px;
-  height: 330px;
-  transform-origin: top left;
-}
-
-@media (max-width: 645px) {
-  .desk-window-stage {
-    width: calc(100vw - 32px);
-    height: calc((100vw - 32px) * 330 / 613);
-  }
-
-  .desk-window-wrap {
-    transform: scale(calc((100vw - 32px) / 613));
-  }
+.preview-frame {
+  display: inline-block;
+  background: transparent;
 }

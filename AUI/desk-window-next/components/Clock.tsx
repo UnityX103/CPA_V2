@@ -1,101 +1,65 @@
+"use client";
+
+/**
+ * Clock — pixel-exact port of Pencil node `nNt9z` (cont - clock - component).
+ *
+ * Pencil structure (group, 78×78):
+ *   mMujP  clock-ring-track:    ellipse 78×78, innerRadius 0.77, fill $clock-ring-bg
+ *   wL5fP  clock-state-label:   text 78×18 at (0, 44), 13px medium MaokenAssortedSans, $clock-label-color
+ *   mo62i  clock-time-value:    text 50×18 at (14, 21), 17px medium MaokenAssortedSans, #5B4636
+ *   CeG66  clock-ring-progress: ellipse 78×78, innerRadius 0.77, fill $clock-ring-progress,
+ *                                startAngle 90, sweepAngle -270 (i.e. preview shows 75% sweep CW from 12)
+ *
+ * Ring math:
+ *   outerR = 39, innerR = 39 × 0.77 ≈ 30.03 → strokeWidth ≈ 8.97
+ *   SVG stroke center radius = (outerR + innerR) / 2 ≈ 34.5
+ */
+
 export type ClockState = "focus" | "rest" | "off" | "paused";
 
-export type ClockTheme = {
-  label: string;
-  labelColor: string;
-  valueColor: string;
-  ringBackground: string;
-  ringForeground: string;
-  /** default progress for this state (0–1) */
-  defaultProgress: number;
+const STATE_LABELS: Record<ClockState, string> = {
+  focus: "专注中",
+  rest: "休息中",
+  off: "未开始",
+  paused: "暂停中"
 };
 
-export const CLOCK_THEMES: Record<ClockState, ClockTheme> = {
-  focus: {
-    label: "专注中",
-    labelColor: "var(--clock-label-color-focus)",
-    valueColor: "#5B4636",
-    ringBackground: "var(--clock-ring-bg-focus)",
-    ringForeground: "var(--clock-ring-progress-focus)",
-    defaultProgress: 0.75
-  },
-  rest: {
-    label: "休息中",
-    labelColor: "var(--clock-label-color-rest)",
-    valueColor: "#1D6B35",
-    ringBackground: "var(--clock-ring-bg-rest)",
-    ringForeground: "var(--clock-ring-progress-rest)",
-    defaultProgress: 0.75
-  },
-  off: {
-    label: "未开始",
-    labelColor: "var(--clock-label-color-off)",
-    valueColor: "#5B4636",
-    ringBackground: "var(--clock-ring-bg-off)",
-    ringForeground: "var(--clock-ring-progress-off)",
-    defaultProgress: 0
-  },
-  paused: {
-    label: "暂停中",
-    labelColor: "var(--clock-label-color-paused)",
-    valueColor: "#5B4636",
-    ringBackground: "var(--clock-ring-bg-paused)",
-    ringForeground: "var(--clock-ring-progress-paused)",
-    defaultProgress: 0.5
-  }
-};
+const DESIGN_SIZE = 78;
+const INNER_RATIO = 0.77;
 
 export type ClockProps = {
   state?: ClockState;
   time?: string;
-  label?: string;
-  /** Progress ratio 0–1. Defaults to ClockTheme.defaultProgress. */
+  /** progress 0..1; default 0.75 matches the Pencil preview sweep (-270°) */
   progress?: number;
   size?: number;
   className?: string;
 };
 
-// Design constants derived from the Pencil component (104×104 canvas):
-//   outerRadius = 52, innerRadius = 52 × 0.77 ≈ 40
-//   strokeWidth = outerRadius − innerRadius ≈ 12
-//   ringRadius   = (outerRadius + innerRadius) / 2 ≈ 46
-const DESIGN_SIZE = 104;
-const INNER_RATIO = 0.77;
-
 export function Clock({
   state = "focus",
   time = "24:18",
-  label,
-  progress,
+  progress = 0.75,
   size = DESIGN_SIZE,
   className
 }: ClockProps) {
-  const theme = CLOCK_THEMES[state];
-  const resolvedProgress = Math.max(0, Math.min(1, progress ?? theme.defaultProgress));
-
   const scale = size / DESIGN_SIZE;
-  const cx = DESIGN_SIZE / 2;              // 52
-  const cy = DESIGN_SIZE / 2;              // 52
-  const outerR = cx;                        // 52
-  const innerR = outerR * INNER_RATIO;      // ≈ 40
-  const strokeWidth = outerR - innerR;      // ≈ 12
-  const ringR = (outerR + innerR) / 2;      // ≈ 46
+  const center = DESIGN_SIZE / 2;
+  const outerR = center;
+  const innerR = outerR * INNER_RATIO;
+  const strokeWidth = outerR - innerR;
+  const strokeR = (outerR + innerR) / 2;
 
-  const circumference = 2 * Math.PI * ringR;
-  const dashOffset = circumference * (1 - resolvedProgress);
-
-  // Inner circle inset (fills the hollow centre with page background)
-  const innerInset = Math.round(size * INNER_RATIO * 0.5) * 2; // diameter in px
-  const innerDiameter = Math.round(innerR * 2 * scale);
-  const innerOffset = Math.round((size - innerDiameter) / 2);
+  const circumference = 2 * Math.PI * strokeR;
+  const safeProgress = Math.max(0, Math.min(1, progress));
+  const dashOffset = circumference * (1 - safeProgress);
 
   return (
     <div
       className={["relative shrink-0", className].filter(Boolean).join(" ")}
       style={{ width: size, height: size }}
-      aria-label={label ?? theme.label}
+      aria-label={`${STATE_LABELS[state]} ${time}`}
     >
-      {/* SVG ring */}
       <svg
         width={size}
         height={size}
@@ -103,63 +67,68 @@ export function Clock({
         className="absolute inset-0"
         aria-hidden="true"
       >
-        {/* track */}
+        {/* mMujP — ring track */}
         <circle
-          cx={cx}
-          cy={cy}
-          r={ringR}
+          cx={center}
+          cy={center}
+          r={strokeR}
           fill="none"
-          stroke={theme.ringBackground}
+          stroke={`var(--clock-ring-bg-${state})`}
           strokeWidth={strokeWidth}
         />
-        {/* progress arc — starts at 12 o'clock, goes clockwise */}
-        {resolvedProgress > 0 && (
+        {/* CeG66 — progress arc, starts at 12 o'clock, CW */}
+        {safeProgress > 0 && (
           <circle
-            cx={cx}
-            cy={cy}
-            r={ringR}
+            cx={center}
+            cy={center}
+            r={strokeR}
             fill="none"
-            stroke={theme.ringForeground}
+            stroke={`var(--clock-ring-progress-${state})`}
             strokeWidth={strokeWidth}
             strokeDasharray={circumference}
             strokeDashoffset={dashOffset}
             strokeLinecap="round"
-            transform={`rotate(-90 ${cx} ${cy})`}
+            transform={`rotate(-90 ${center} ${center})`}
           />
         )}
       </svg>
 
-      {/* Inner "hole" — uses page background so it feels transparent */}
+      {/* mo62i — time text: 50×18 at design (14, 21) */}
       <div
-        className="absolute rounded-full bg-[#FFFEFD]"
         style={{
-          width: innerDiameter,
-          height: innerDiameter,
-          top: innerOffset,
-          left: innerOffset
+          position: "absolute",
+          left: 14 * scale,
+          top: 21 * scale,
+          width: 50 * scale,
+          height: 18 * scale,
+          textAlign: "center",
+          lineHeight: `${18 * scale}px`,
+          fontFamily: "var(--font-maoken)",
+          fontSize: 17 * scale,
+          fontWeight: 500,
+          color: "#5B4636"
         }}
-      />
+      >
+        {time}
+      </div>
 
-      {/* Text content */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center gap-[5px]">
-        <span
-          className="font-[family:var(--font-maoken)] font-medium leading-none"
-          style={{
-            fontSize: Math.round(25 * scale),
-            color: theme.valueColor
-          }}
-        >
-          {time}
-        </span>
-        <span
-          className="font-[family:var(--font-maoken)] font-medium leading-none"
-          style={{
-            fontSize: Math.round(13 * scale),
-            color: theme.labelColor
-          }}
-        >
-          {label ?? theme.label}
-        </span>
+      {/* wL5fP — state label: 78×18 at design (0, 44) */}
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          top: 44 * scale,
+          width: 78 * scale,
+          height: 18 * scale,
+          textAlign: "center",
+          lineHeight: `${18 * scale}px`,
+          fontFamily: "var(--font-maoken)",
+          fontSize: 13 * scale,
+          fontWeight: 500,
+          color: `var(--clock-label-color-${state})`
+        }}
+      >
+        {STATE_LABELS[state]}
       </div>
     </div>
   );
