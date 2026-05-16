@@ -17,6 +17,7 @@
 .settings-panel {
     position: relative;
     width: 100%;
+    height: 100%;
     min-height: 100%;
     background: var(--settings-bg);
     border: 1px solid var(--settings-stroke);

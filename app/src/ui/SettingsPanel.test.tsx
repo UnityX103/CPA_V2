@@ -16,6 +16,12 @@ function cssRule(css: string, selector: string): string {
     return ruleMatch![0];
 }
 
+function cssDecl(rule: string, property: string): string | null {
+    const escaped = property.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const match = rule.match(new RegExp(`(?:^|[;{]\\s*)${escaped}\\s*:\\s*([^;]+)`));
+    return match ? match[1].trim() : null;
+}
+
 const { startDragging, invokeMock, listenMock } = vi.hoisted(() => ({
     startDragging: vi.fn(),
     invokeMock: vi.fn(),
@@ -77,11 +83,12 @@ describe('SettingsPanel close button', () => {
 describe('SettingsPanel geometry', () => {
     const here = path.dirname(fileURLToPath(import.meta.url));
 
-    it('CSS lets the shell adapt to window width and stretch with window height', () => {
+    it('CSS lets the shell adapt to window width and stay bounded by window height', () => {
         const css = readFileSync(path.join(here, 'SettingsPanel.css'), 'utf8');
         const rule = cssRule(css, '.settings-panel');
         expect(rule).toMatch(/width:\s*100%\s*;/);
         expect(rule).not.toMatch(/width:\s*\d+px\s*;/);
+        expect(cssDecl(rule, 'height')).toBe('100%');
         expect(rule).toMatch(/min-height:\s*100%\s*;/);
         expect(rule).not.toMatch(/height:\s*\d+px\s*;/);
     });
