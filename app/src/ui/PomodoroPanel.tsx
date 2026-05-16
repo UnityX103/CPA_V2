@@ -38,6 +38,13 @@ export function PomodoroPanel() {
         return () => cancelAnimationFrame(rafId);
     }, []);
 
+    useEffect(() => {
+        void invoke('set_main_window_pinned', { onTop: state.isPinned })
+            .catch((error) => {
+                console.error('[pin] set_main_window_pinned failed', error);
+            });
+    }, [state.isPinned]);
+
     const totalSeconds =
         state.currentPhase === 'break'
             ? state.breakDurationSeconds
