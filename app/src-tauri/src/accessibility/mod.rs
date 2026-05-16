@@ -182,9 +182,11 @@ pub async fn request_accessibility_permission(app: AppHandle) -> Result<(), Stri
         let pin_generation = main_pin_generation();
         let app_for_yield = app.clone();
         if let Err(e) = app.run_on_main_thread(move || {
-            if let Some(main) = app_for_yield.get_webview_window("main") {
-                if let Err(e) = main.set_always_on_top(false) {
-                    eprintln!("[accessibility] set_always_on_top(false) 失败：{e}");
+            if main_pin_generation() == pin_generation {
+                if let Some(main) = app_for_yield.get_webview_window("main") {
+                    if let Err(e) = main.set_always_on_top(false) {
+                        eprintln!("[accessibility] set_always_on_top(false) 失败：{e}");
+                    }
                 }
             }
             macos::deactivate_app();
