@@ -155,6 +155,25 @@ pub fn run() {
                 let _ = key_handle.emit("key-pressed", keycode);
             });
 
+            // E2E 触发桩：仅在集成测试通过 CPA_E2E_TRIGGER_SETTINGS=1 启动二进制时进入。
+            // 复现"在 tokio worker 上直接调 install_first_mouse_only"这条 pre-fix 崩溃路径。
+            // 故意不依赖 open_settings_window_impl —— 那条路在 Commit B 后已绕开 AppKit；
+            // 此桩测的是"若未来有人再误把 AppKit 调用拿到非主线程"的失效模式：
+            //   pre-fix (new_unchecked)  → WebKit BREAKPOINT → 整个进程 SIGTRAP
+            //   post-fix (new().expect) → tokio 任务 panic 被截获 → 进程存活
+            if std::env::var("CPA_E2E_TRIGGER_SETTINGS").is_ok() {
+                let handle = app.handle().clone();
+                tauri::async_runtime::spawn(async move {
+                    let url = WebviewUrl::App("index.html?window=settings-e2e".into());
+                    if let Ok(w) = WebviewWindowBuilder::new(&handle, "settings-e2e", url)
+                        .visible(false)
+                        .build()
+                    {
+                        passthrough::install_first_mouse_only(&w);
+                    }
+                });
+            }
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
