@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { invoke } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
 import {
     useSettingsStore,
     type SettingsTab,
@@ -309,6 +310,35 @@ function GlobalTab() {
     const bk = useBindingKeyStore();
     const [globalEnabled, setGlobalEnabled] = useState(true);
 
+    // Settings window doesn't run useBindingKeyListener, so we fetch
+    // accessibility_status directly here and subscribe to the broadcast
+    // event so the banner reflects the real permission state.
+    useEffect(() => {
+        let cancelled = false;
+        const perm = invoke<{ granted: boolean; platform: 'macos' | 'windows' | 'other' }>('accessibility_status');
+        // invoke() returns undefined in non-Tauri / jsdom test env — guard before chaining
+        if (perm && typeof perm.then === 'function') {
+            perm.then((s) => {
+                if (cancelled) return;
+                useBindingKeyStore.getState().setPermission(s.granted, s.platform);
+            }).catch(() => { /* non-Tauri env (vitest jsdom) — swallow */ });
+        }
+
+        let unlisten = () => {};
+        listen<{ granted: boolean; platform: 'macos' | 'windows' | 'other' }>('accessibility-permission-changed', (e) => {
+            const { granted, platform } = e.payload;
+            useBindingKeyStore.getState().setPermission(granted, platform);
+        }).then((u) => {
+            if (cancelled) u();
+            else unlisten = u;
+        }).catch(() => { /* swallow */ });
+
+        return () => {
+            cancelled = true;
+            unlisten();
+        };
+    }, []);
+
     const scalePercent = Math.round(settings.uiScale * 100);
     const minPct = Math.round(MIN_SCALE * 100);
     const maxPct = Math.round(MAX_SCALE * 100);
@@ -346,6 +376,17 @@ function GlobalTab() {
 
                 {/* gspBindingKey yjJtt */}
                 <div className="card">
+                    {!bk.permissionGranted && (
+                        <div className="bk-perm-banner" role="status">
+                            <span className="bk-perm-msg">需要辅助功能权限才能统计按键</span>
+                            <button onClick={() => { void invoke('request_accessibility_permission'); }}>
+                                申请权限
+                            </button>
+                            <button onClick={() => { void invoke('open_accessibility_settings'); }}>
+                                打开系统设置
+                            </button>
+                        </div>
+                    )}
                     <div className="card-row">
                         <span className="card-label">按键计数</span>
                         <Toggle checked={globalEnabled} onChange={setGlobalEnabled} />

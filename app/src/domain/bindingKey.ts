@@ -1,8 +1,14 @@
 import { useEffect } from 'react';
 import { create, type StoreApi, type UseBoundStore } from 'zustand';
 import { listen } from '@tauri-apps/api/event';
+import { invoke } from '@tauri-apps/api/core';
 import { dispatch } from './bridge/dispatch';
 import { BRIDGE_VERSION } from './bridge/protocol';
+
+interface AccessibilityStatus {
+    granted: boolean;
+    platform: 'macos' | 'windows' | 'other';
+}
 
 export interface BindingKeyEntry {
     id: string;
@@ -16,6 +22,8 @@ interface BindingKeyState {
     entries: BindingKeyEntry[];
     syncedKeyId: string | null;
     capturingId: string | null;
+    permissionGranted: boolean;
+    platform: 'macos' | 'windows' | 'other' | null;
 }
 
 interface BindingKeyActions {
@@ -28,6 +36,7 @@ interface BindingKeyActions {
     completeCapture: (keyCode: number, label: string) => void;
     incrementByKeyCode: (keyCode: number) => void;
     resetCount: (id: string) => void;
+    setPermission: (granted: boolean, platform: 'macos' | 'windows' | 'other') => void;
 }
 
 let nextId = 0;
@@ -52,10 +61,12 @@ export type BindingKeyStore = UseBoundStore<StoreApi<BindingKeyState & BindingKe
 
 export function createBindingKeyStore(opts: { isSettingsWindow: boolean }): BindingKeyStore {
     if (opts.isSettingsWindow) {
-        return create<BindingKeyState & BindingKeyActions>(() => ({
+        return create<BindingKeyState & BindingKeyActions>((set) => ({
             entries: [],
             syncedKeyId: null,
             capturingId: null,
+            permissionGranted: true,
+            platform: null,
             addEntry: () => {
                 void dispatch({ v: BRIDGE_VERSION, store: 'bindingKey', action: 'addEntry', args: [] });
                 return '';
@@ -74,12 +85,16 @@ export function createBindingKeyStore(opts: { isSettingsWindow: boolean }): Bind
             completeCapture: () => {},
             incrementByKeyCode: () => {},
             resetCount: () => {},
+            setPermission: (granted, platform) =>
+                set({ permissionGranted: granted, platform }),
         }));
     }
     return create<BindingKeyState & BindingKeyActions>((set, get) => ({
         entries: [],
         syncedKeyId: null,
         capturingId: null,
+        permissionGranted: true,
+        platform: null,
 
         addEntry: () => {
             const id = newId();
@@ -130,6 +145,7 @@ export function createBindingKeyStore(opts: { isSettingsWindow: boolean }): Bind
                 entries: s.entries.map((e) => (e.id === id ? { ...e, pressCount: 0 } : e)),
             }));
         },
+        setPermission: (granted, platform) => set({ permissionGranted: granted, platform }),
     }));
 }
 
@@ -144,19 +160,39 @@ export const useBindingKeyStore: BindingKeyStore = createBindingKeyStore({
 
 export function useBindingKeyListener() {
     useEffect(() => {
-        let unlisten = () => {};
+        let unlistenKey = () => {};
+        let cancelled = false;
+
+        // 启动时拉一次状态；后续翻转走 accessibility-permission-changed 事件
+        invoke<AccessibilityStatus>('accessibility_status').then((s) => {
+            if (cancelled) return;
+            useBindingKeyStore.getState().setPermission(s.granted, s.platform);
+        }).catch(() => { /* 非 Tauri 环境（vitest jsdom）下静默 */ });
+
         listen<number>('key-pressed', (event) => {
             const store = useBindingKeyStore.getState();
             const keyCode = Number(event.payload);
             if (store.capturingId) {
-                // 捕获模式：绑定按下的键
                 store.completeCapture(keyCode, labelForKeyCode(keyCode));
             } else {
                 store.incrementByKeyCode(keyCode);
             }
         }).then((un) => {
-            unlisten = un;
+            unlistenKey = un;
         });
-        return () => unlisten();
+
+        let unlistenPerm = () => {};
+        listen<{ granted: boolean; platform: 'macos' | 'windows' | 'other' }>('accessibility-permission-changed', (event) => {
+            const { granted, platform } = event.payload;
+            useBindingKeyStore.getState().setPermission(granted, platform);
+        }).then((un) => {
+            unlistenPerm = un;
+        });
+
+        return () => {
+            cancelled = true;
+            unlistenKey();
+            unlistenPerm();
+        };
     }, []);
 }

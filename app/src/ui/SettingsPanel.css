@@ -717,3 +717,31 @@
     color: var(--text-primary);
     line-height: 1;
 }
+
+/* ===== Accessibility 权限 banner（gspBindingKey 内） ===== */
+.bk-perm-banner {
+    background: var(--online-reconnect-bg);
+    color: var(--online-reconnect-text);
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 12px;
+}
+.bk-perm-banner .bk-perm-msg {
+    flex: 1 1 auto;
+    min-width: 160px;
+}
+.bk-perm-banner button {
+    background: transparent;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    padding: 4px 10px;
+    color: inherit;
+    font-size: 12px;
+    cursor: pointer;
+}
+.bk-perm-banner button:hover { opacity: 0.85; }
