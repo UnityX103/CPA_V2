@@ -88,6 +88,17 @@ pub fn accessibility_status() -> AccessibilityStatus {
 }
 
 #[tauri::command]
+#[allow(unreachable_code)]
+pub fn open_accessibility_settings() -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    return macos::open_settings();
+    #[cfg(target_os = "windows")]
+    return windows::open_settings();
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
+    return stub::open_settings();
+}
+
+#[tauri::command]
 pub fn key_counter_listening(handle: tauri::State<'_, Arc<ListenerHandle>>) -> bool {
     handle.is_running()
 }

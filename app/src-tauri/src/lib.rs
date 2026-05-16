@@ -176,6 +176,7 @@ pub fn run() {
             open_settings_window,
             close_settings_window,
             accessibility::accessibility_status,
+            accessibility::open_accessibility_settings,
             accessibility::key_counter_listening,
             passthrough::register_hit_region,
             passthrough::unregister_hit_region,

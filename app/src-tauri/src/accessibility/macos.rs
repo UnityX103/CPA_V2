@@ -17,3 +17,11 @@ pub fn is_trusted() -> bool {
     // Safety: 无副作用，无参数；被 framework 标注为线程安全。
     unsafe { AXIsProcessTrusted() != 0 }
 }
+
+pub fn open_settings() -> Result<(), String> {
+    std::process::Command::new("open")
+        .arg("x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")
+        .spawn()
+        .map_err(|e| format!("open failed: {e}"))?;
+    Ok(())
+}
