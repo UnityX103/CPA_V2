@@ -1,3 +1,4 @@
+mod accessibility;
 mod active_app;
 mod key_counter;
 mod passthrough;
@@ -163,6 +164,7 @@ pub fn run() {
             get_active_app,
             open_settings_window,
             close_settings_window,
+            accessibility::accessibility_status,
             passthrough::register_hit_region,
             passthrough::unregister_hit_region,
             passthrough::clear_hit_regions,
