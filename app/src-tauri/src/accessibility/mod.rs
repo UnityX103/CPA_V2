@@ -153,7 +153,7 @@ static PROMPT_IN_FLIGHT: AtomicBool = AtomicBool::new(false);
 pub async fn request_accessibility_permission(app: AppHandle) -> Result<(), String> {
     #[cfg(not(target_os = "macos"))]
     {
-        let _ = app;
+        drop(app);
         return Ok(());
     }
 
@@ -165,6 +165,11 @@ pub async fn request_accessibility_permission(app: AppHandle) -> Result<(), Stri
 
         // 让位 + prompt 全部在同一 run_on_main_thread 闭包内执行，保证顺序：
         // set_always_on_top(false) → deactivate → prompt，避免依赖跨 dispatcher 的 FIFO 假设。
+        let was_main_on_top = if let Some(main) = app.get_webview_window("main") {
+            main.is_always_on_top().unwrap_or(false)
+        } else {
+            false
+        };
         let app_for_yield = app.clone();
         let _ = app.run_on_main_thread(move || {
             if let Some(main) = app_for_yield.get_webview_window("main") {
@@ -192,8 +197,10 @@ pub async fn request_accessibility_permission(app: AppHandle) -> Result<(), Stri
                 tokio::time::sleep(Duration::from_millis(200)).await;
             }
             if let Some(main) = restore_app.get_webview_window("main") {
-                if let Err(e) = main.set_always_on_top(true) {
-                    eprintln!("[accessibility] set_always_on_top(true) 恢复失败：{e}");
+                if let Err(e) = main.set_always_on_top(was_main_on_top) {
+                    eprintln!(
+                        "[accessibility] set_always_on_top({was_main_on_top}) 恢复失败：{e}"
+                    );
                 }
             }
             PROMPT_IN_FLIGHT.store(false, Ordering::Release);

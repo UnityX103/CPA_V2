@@ -16,8 +16,11 @@ fn set_click_through(window: WebviewWindow, ignore: bool) -> Result<(), String> 
 }
 
 #[tauri::command]
-fn set_always_on_top(window: WebviewWindow, on_top: bool) -> Result<(), String> {
-    window.set_always_on_top(on_top).map_err(|e| e.to_string())
+fn set_main_window_pinned(app: tauri::AppHandle, on_top: bool) -> Result<(), String> {
+    let main = app
+        .get_webview_window("main")
+        .ok_or_else(|| "main window not found".to_string())?;
+    main.set_always_on_top(on_top).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -67,7 +70,6 @@ fn build_settings_window_hidden(
         .resizable(true)
         .transparent(true)
         .decorations(false)
-        .always_on_top(true)
         .shadow(false)
         .skip_taskbar(true)
         .visible(false)
@@ -141,9 +143,6 @@ pub fn run() {
         .manage::<std::sync::Arc<passthrough::HitRegionStore>>(hit_store_for_manage)
         .manage::<std::sync::Arc<accessibility::ListenerHandle>>(listener_handle_for_manage)
         .setup(move |app| {
-            if let Some(window) = app.get_webview_window("main") {
-                let _ = window.set_always_on_top(true);
-            }
             if let Some(window) = app.get_webview_window("main") {
                 passthrough::install(&window, hit_store_for_setup.clone());
             }
@@ -284,7 +283,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             set_click_through,
-            set_always_on_top,
+            set_main_window_pinned,
             get_active_app,
             open_settings_window,
             close_settings_window,
