@@ -6,6 +6,25 @@ import { useNetworkStore } from '../network';
 import { useBindingKeyStore } from '../bindingKey';
 import { BRIDGE_VERSION, type BridgeSnapshot } from './protocol';
 
+const sampleRemoteState = {
+    pomodoro: {
+        phase: 1,
+        remainingSeconds: 42,
+        currentRound: 2,
+        totalRounds: 4,
+        isRunning: true,
+    },
+    activeApp: {
+        name: 'Focus App',
+        bundleId: 'com.example.focus',
+        iconId: 'icon-focus',
+    },
+    bindingKey: {
+        keyLabel: 'A',
+        pressCount: 7,
+    },
+};
+
 function makeSample(): BridgeSnapshot {
     return {
         v: BRIDGE_VERSION,
@@ -31,7 +50,7 @@ function makeSample(): BridgeSnapshot {
                 'p-1': {
                     playerId: 'p-1',
                     playerName: 'Player One',
-                    state: null,
+                    state: sampleRemoteState,
                 },
             },
             lastError: null,
@@ -99,16 +118,26 @@ describe('applySnapshotToMirrors', () => {
         expect(useNetworkStore.getState().players).toEqual(sample.network.players);
         expect(useNetworkStore.getState().players).not.toBe(sample.network.players);
         expect(useNetworkStore.getState().players['p-1']).not.toBe(sample.network.players['p-1']);
+        expect(useNetworkStore.getState().players['p-1'].state).not.toBe(sample.network.players['p-1'].state);
+        expect(useNetworkStore.getState().players['p-1'].state?.pomodoro).not.toBe(sample.network.players['p-1'].state?.pomodoro);
+        expect(useNetworkStore.getState().players['p-1'].state?.activeApp).not.toBe(sample.network.players['p-1'].state?.activeApp);
+        expect(useNetworkStore.getState().players['p-1'].state?.bindingKey).not.toBe(sample.network.players['p-1'].state?.bindingKey);
         expect(useBindingKeyStore.getState().entries).toEqual(sample.bindingKey.entries);
         expect(useBindingKeyStore.getState().entries).not.toBe(sample.bindingKey.entries);
         expect(useBindingKeyStore.getState().entries[0]).not.toBe(sample.bindingKey.entries[0]);
 
         sample.pomodoro.endActionVideo.customVideoPath = '/mutated.mp4';
         sample.network.players['p-1'].playerName = 'Mutated';
+        sample.network.players['p-1'].state!.pomodoro.remainingSeconds = 1;
+        sample.network.players['p-1'].state!.activeApp!.name = 'Mutated App';
+        sample.network.players['p-1'].state!.bindingKey!.pressCount = 99;
         sample.bindingKey.entries[0].label = 'Mutated';
 
         expect(usePomodoroStore.getState().endActionVideo.customVideoPath).toBe('/Users/xpy/Videos/focus-complete.mp4');
         expect(useNetworkStore.getState().players['p-1'].playerName).toBe('Player One');
+        expect(useNetworkStore.getState().players['p-1'].state?.pomodoro.remainingSeconds).toBe(42);
+        expect(useNetworkStore.getState().players['p-1'].state?.activeApp?.name).toBe('Focus App');
+        expect(useNetworkStore.getState().players['p-1'].state?.bindingKey?.pressCount).toBe(7);
         expect(useBindingKeyStore.getState().entries[0].label).toBe('A');
     });
 

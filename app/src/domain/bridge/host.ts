@@ -134,7 +134,7 @@ export function pomoSig(s: {
     endActionMode: string;
     endActionVideo: { sourceKind: string; builtinVideoId: string; customVideoPath: string };
 }): string {
-    return [
+    return JSON.stringify([
         s.focusDurationSeconds,
         s.breakDurationSeconds,
         s.totalRounds,
@@ -142,7 +142,7 @@ export function pomoSig(s: {
         s.endActionVideo.sourceKind,
         s.endActionVideo.builtinVideoId,
         s.endActionVideo.customVideoPath,
-    ].join('|');
+    ]);
 }
 
 export function networkSig(s: {

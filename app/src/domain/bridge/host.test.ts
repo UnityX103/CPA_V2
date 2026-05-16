@@ -19,6 +19,25 @@ const sampleEndActionVideo = {
     customVideoPath: '/Users/xpy/Videos/focus-complete.mp4',
 };
 
+const sampleRemoteState = {
+    pomodoro: {
+        phase: 1,
+        remainingSeconds: 42,
+        currentRound: 2,
+        totalRounds: 4,
+        isRunning: true,
+    },
+    activeApp: {
+        name: 'Focus App',
+        bundleId: 'com.example.focus',
+        iconId: 'icon-focus',
+    },
+    bindingKey: {
+        keyLabel: 'A',
+        pressCount: 7,
+    },
+};
+
 beforeEach(() => {
     useSettingsStore.setState({ uiScale: 1.0, activeTab: 'pomodoro' });
     usePomodoroStore.getState().applyEndActionSettings('playVideo', {
@@ -66,7 +85,7 @@ describe('buildSnapshot', () => {
                 'p-1': {
                     playerId: 'p-1',
                     playerName: 'Player One',
-                    state: null,
+                    state: sampleRemoteState,
                 },
             },
         });
@@ -87,16 +106,26 @@ describe('buildSnapshot', () => {
         expect(snap.network.players).toEqual(useNetworkStore.getState().players);
         expect(snap.network.players).not.toBe(useNetworkStore.getState().players);
         expect(snap.network.players['p-1']).not.toBe(useNetworkStore.getState().players['p-1']);
+        expect(snap.network.players['p-1'].state).not.toBe(useNetworkStore.getState().players['p-1'].state);
+        expect(snap.network.players['p-1'].state?.pomodoro).not.toBe(useNetworkStore.getState().players['p-1'].state?.pomodoro);
+        expect(snap.network.players['p-1'].state?.activeApp).not.toBe(useNetworkStore.getState().players['p-1'].state?.activeApp);
+        expect(snap.network.players['p-1'].state?.bindingKey).not.toBe(useNetworkStore.getState().players['p-1'].state?.bindingKey);
         expect(snap.bindingKey.entries).toEqual(useBindingKeyStore.getState().entries);
         expect(snap.bindingKey.entries).not.toBe(useBindingKeyStore.getState().entries);
         expect(snap.bindingKey.entries[0]).not.toBe(useBindingKeyStore.getState().entries[0]);
 
         snap.pomodoro.endActionVideo.customVideoPath = '/mutated.mp4';
         snap.network.players['p-1'].playerName = 'Mutated';
+        snap.network.players['p-1'].state!.pomodoro.remainingSeconds = 1;
+        snap.network.players['p-1'].state!.activeApp!.name = 'Mutated App';
+        snap.network.players['p-1'].state!.bindingKey!.pressCount = 99;
         snap.bindingKey.entries[0].label = 'Mutated';
 
         expect(usePomodoroStore.getState().endActionVideo.customVideoPath).toBe('/Users/xpy/Videos/focus-complete.mp4');
         expect(useNetworkStore.getState().players['p-1'].playerName).toBe('Player One');
+        expect(useNetworkStore.getState().players['p-1'].state?.pomodoro.remainingSeconds).toBe(42);
+        expect(useNetworkStore.getState().players['p-1'].state?.activeApp?.name).toBe('Focus App');
+        expect(useNetworkStore.getState().players['p-1'].state?.bindingKey?.pressCount).toBe(7);
         expect(useBindingKeyStore.getState().entries[0].label).toBe('A');
     });
 
@@ -152,6 +181,29 @@ describe('bridge host subscription signatures', () => {
         expect(pomoSig(base)).not.toBe(pomoSig({
             ...base,
             endActionVideo: { ...sampleEndActionVideo, customVideoPath: '/other.mp4' },
+        }));
+    });
+
+    it('pomoSig avoids delimiter collisions in end-action video fields', () => {
+        const base = {
+            ...usePomodoroStore.getState(),
+            endActionMode: 'playVideo' as const,
+        };
+
+        expect(pomoSig({
+            ...base,
+            endActionVideo: {
+                sourceKind: 'custom',
+                builtinVideoId: 'id|path',
+                customVideoPath: 'tail',
+            },
+        })).not.toBe(pomoSig({
+            ...base,
+            endActionVideo: {
+                sourceKind: 'custom',
+                builtinVideoId: 'id',
+                customVideoPath: 'path|tail',
+            },
         }));
     });
 
