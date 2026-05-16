@@ -180,9 +180,19 @@ export function useBindingKeyListener() {
             unlistenKey = un;
         });
 
+        let unlistenPerm = () => {};
+        listen<{ granted: boolean }>('accessibility-permission-changed', (event) => {
+            const { granted } = event.payload;
+            const platform = useBindingKeyStore.getState().platform ?? 'macos';
+            useBindingKeyStore.getState().setPermission(granted, platform);
+        }).then((un) => {
+            unlistenPerm = un;
+        });
+
         return () => {
             cancelled = true;
             unlistenKey();
+            unlistenPerm();
         };
     }, []);
 }
