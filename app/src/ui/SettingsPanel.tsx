@@ -11,6 +11,7 @@ import {
 import { usePomodoroStore } from '../domain/pomodoro';
 import { useNetworkStore } from '../domain/network';
 import { useBindingKeyStore } from '../domain/bindingKey';
+import { shouldStartWindowDrag } from './windowDrag';
 import './SettingsPanel.css';
 
 const TABS: Array<{ id: SettingsTab; label: string }> = [
@@ -20,22 +21,6 @@ const TABS: Array<{ id: SettingsTab; label: string }> = [
     { id: 'global', label: '全局' },
 ];
 
-const NO_WINDOW_DRAG_SELECTOR = [
-    'button',
-    'input',
-    'select',
-    'textarea',
-    'a',
-    '[role="button"]',
-    '[role="slider"]',
-    '[data-no-window-drag]',
-].join(',');
-
-function isInteractiveDragTarget(target: EventTarget | null): boolean {
-    if (!(target instanceof HTMLElement)) return true;
-    return target.closest(NO_WINDOW_DRAG_SELECTOR) !== null;
-}
-
 export function SettingsPanel() {
     const activeTab = useSettingsStore((s) => s.activeTab);
     const setActiveTab = useSettingsStore((s) => s.setActiveTab);
@@ -43,8 +28,7 @@ export function SettingsPanel() {
     const onClose = () => { void invoke('close_settings_window'); };
 
     const onPanelPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-        if (e.button !== 0) return;
-        if (isInteractiveDragTarget(e.target)) return;
+        if (!shouldStartWindowDrag(e.button, e.target)) return;
         void getCurrentWindow().startDragging().catch(() => {
             /* drag may fail in non-Tauri/test env; swallow */
         });

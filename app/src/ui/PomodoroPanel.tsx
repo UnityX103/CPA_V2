@@ -3,6 +3,7 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 import { invoke } from '@tauri-apps/api/core';
 import { usePomodoroStore, formatMmSs, type PomodoroPhase } from '../domain/pomodoro';
 import { useHitRegion } from '../domain/passthrough';
+import { shouldStartWindowDrag } from './windowDrag';
 import './PomodoroPanel.css';
 
 type ClockState = 'focus' | 'rest' | 'paused' | 'off';
@@ -58,15 +59,22 @@ export function PomodoroPanel() {
     const onSkipClick = () => usePomodoroStore.getState().skip();
     const onTogglePin = () => usePomodoroStore.getState().togglePin();
 
-    const onHeaderPointerDown = async (e: React.PointerEvent) => {
-        if (e.button !== 0) return;
-        try { await getCurrentWindow().startDragging(); } catch {}
+    const onPanelPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+        if (!shouldStartWindowDrag(e.button, e.target)) return;
+        void getCurrentWindow().startDragging().catch(() => {
+            /* drag may fail in non-Tauri/test env; swallow */
+        });
     };
 
     return (
-        <div ref={hitRef} className="pomo-panel" data-clock-state={clockState}>
+        <div
+            ref={hitRef}
+            className="pomo-panel"
+            data-clock-state={clockState}
+            onPointerDown={onPanelPointerDown}
+        >
             <div className="pomo-content">
-                <div className="pomo-header" onPointerDown={onHeaderPointerDown}>
+                <div className="pomo-header">
                     <div className="pomo-title">
                         <span className="pomo-title-text">番茄钟</span>
                         <button
