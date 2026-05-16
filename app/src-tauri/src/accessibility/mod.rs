@@ -159,14 +159,15 @@ pub async fn request_accessibility_permission(app: AppHandle) -> Result<(), Stri
             return Ok(());
         }
 
-        // 让位：set_always_on_top(false) + NSApp.deactivate()。失败不致命，仍继续 prompt。
-        if let Some(main) = app.get_webview_window("main") {
-            if let Err(e) = main.set_always_on_top(false) {
-                eprintln!("[accessibility] set_always_on_top(false) 失败：{e}");
+        // 让位 + prompt 全部在同一 run_on_main_thread 闭包内执行，保证顺序：
+        // set_always_on_top(false) → deactivate → prompt，避免依赖跨 dispatcher 的 FIFO 假设。
+        let app_for_yield = app.clone();
+        let _ = app.run_on_main_thread(move || {
+            if let Some(main) = app_for_yield.get_webview_window("main") {
+                if let Err(e) = main.set_always_on_top(false) {
+                    eprintln!("[accessibility] set_always_on_top(false) 失败：{e}");
+                }
             }
-        }
-        // run_on_main_thread 保证 prompt + deactivate 都在主线程执行
-        let _ = app.run_on_main_thread(|| {
             macos::deactivate_app();
             macos::prompt();
         });
@@ -176,6 +177,8 @@ pub async fn request_accessibility_permission(app: AppHandle) -> Result<(), Stri
         tauri::async_runtime::spawn(async move {
             let deadline = std::time::Instant::now() + Duration::from_secs(30);
             loop {
+                // AXIsProcessTrusted is thread-safe (no state mutation, no UI interaction);
+                // safe to poll from this tokio worker thread.
                 if current_status().granted {
                     break;
                 }
