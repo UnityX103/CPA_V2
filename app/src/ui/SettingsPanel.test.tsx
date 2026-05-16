@@ -98,6 +98,16 @@ describe('SettingsPanel drag', () => {
         });
         expect(startDragging).not.toHaveBeenCalled();
     });
+
+    it('clicking the scale slider does NOT trigger drag', async () => {
+        useSettingsStore.setState({ activeTab: 'global' });
+        render(<SettingsPanel />);
+        const slider = screen.getByRole('slider');
+        await act(async () => {
+            fireEvent.pointerDown(slider, { button: 0 });
+        });
+        expect(startDragging).not.toHaveBeenCalled();
+    });
 });
 
 describe('SettingsPanel close button', () => {

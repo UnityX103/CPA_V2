@@ -27,6 +27,7 @@ const NO_WINDOW_DRAG_SELECTOR = [
     'textarea',
     'a',
     '[role="button"]',
+    '[role="slider"]',
     '[data-no-window-drag]',
 ].join(',');
 
