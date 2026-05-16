@@ -122,15 +122,18 @@ pub fn start_watcher(
                 }
                 std::thread::sleep(Duration::from_millis(100));
             }
-            let now = current_status().granted;
-            if now != last {
-                let _ = app.emit("accessibility-permission-changed", AccessibilityChangedPayload { granted: now });
-                if now {
+            let status = current_status();
+            if status.granted != last {
+                let _ = app.emit("accessibility-permission-changed", AccessibilityChangedPayload {
+                    granted: status.granted,
+                    platform: status.platform,
+                });
+                if status.granted {
                     handle.ensure_running(&app);
                 } else {
                     handle.stop();
                 }
-                last = now;
+                last = status.granted;
             }
         }
     });
@@ -139,6 +142,7 @@ pub fn start_watcher(
 #[derive(Clone, Copy, Debug, Serialize)]
 struct AccessibilityChangedPayload {
     granted: bool,
+    platform: &'static str,
 }
 
 /// 防抖：同一时刻只允许一次 prompt 飞行；第二次点击直接 Ok(()) 返回，避免 restore 任务堆叠

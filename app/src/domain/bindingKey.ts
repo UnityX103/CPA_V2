@@ -182,9 +182,8 @@ export function useBindingKeyListener() {
         });
 
         let unlistenPerm = () => {};
-        listen<{ granted: boolean }>('accessibility-permission-changed', (event) => {
-            const { granted } = event.payload;
-            const platform = useBindingKeyStore.getState().platform ?? 'macos';
+        listen<{ granted: boolean; platform: 'macos' | 'windows' | 'other' }>('accessibility-permission-changed', (event) => {
+            const { granted, platform } = event.payload;
             useBindingKeyStore.getState().setPermission(granted, platform);
         }).then((un) => {
             unlistenPerm = un;

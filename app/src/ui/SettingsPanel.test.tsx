@@ -6,6 +6,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, cleanup, act } from '@testing-library/react';
 import { useSettingsStore } from '../domain/settings';
 import { useNetworkStore } from '../domain/network';
+import { useBindingKeyStore } from '../domain/bindingKey';
 import { SettingsPanel } from './SettingsPanel';
 
 const { startDragging, invokeMock, listenMock } = vi.hoisted(() => ({
@@ -137,6 +138,19 @@ describe('GlobalTab parity with Pdj9C', () => {
         expect(screen.getByText('界面缩放')).toBeTruthy();
         expect(screen.getByText('目标显示器')).toBeTruthy();
         expect(screen.getByText('按键计数')).toBeTruthy();
+    });
+
+    it('shows accessibility permission banner when permissionGranted is false', async () => {
+        invokeMock.mockResolvedValue({ granted: false, platform: 'macos' });
+        useBindingKeyStore.setState({ permissionGranted: false, platform: 'macos' });
+
+        await act(async () => {
+            render(<SettingsPanel />);
+        });
+
+        expect(screen.getByText('需要辅助功能权限才能统计按键')).toBeTruthy();
+        expect(screen.getByRole('button', { name: '申请权限' })).toBeTruthy();
+        expect(screen.getByRole('button', { name: '打开系统设置' })).toBeTruthy();
     });
 });
 

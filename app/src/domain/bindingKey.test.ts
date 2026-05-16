@@ -84,11 +84,11 @@ describe('useBindingKeyListener — permission event', () => {
         expect(useBindingKeyStore.getState().permissionGranted).toBe(true);
 
         // Simulate event flip false
-        handlers['accessibility-permission-changed']({ payload: { granted: false } });
+        handlers['accessibility-permission-changed']({ payload: { granted: false, platform: 'macos' } });
         expect(useBindingKeyStore.getState().permissionGranted).toBe(false);
 
         // And back true
-        handlers['accessibility-permission-changed']({ payload: { granted: true } });
+        handlers['accessibility-permission-changed']({ payload: { granted: true, platform: 'macos' } });
         expect(useBindingKeyStore.getState().permissionGranted).toBe(true);
     });
 });

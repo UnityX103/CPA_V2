@@ -325,9 +325,9 @@ function GlobalTab() {
         }
 
         let unlisten = () => {};
-        listen<{ granted: boolean }>('accessibility-permission-changed', (e) => {
-            const platform = useBindingKeyStore.getState().platform ?? 'macos';
-            useBindingKeyStore.getState().setPermission(e.payload.granted, platform);
+        listen<{ granted: boolean; platform: 'macos' | 'windows' | 'other' }>('accessibility-permission-changed', (e) => {
+            const { granted, platform } = e.payload;
+            useBindingKeyStore.getState().setPermission(granted, platform);
         }).then((u) => {
             if (cancelled) u();
             else unlisten = u;
