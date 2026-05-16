@@ -147,12 +147,6 @@ pub fn run() {
             if let Some(window) = app.get_webview_window("main") {
                 passthrough::install_focus_restorer(&window, app.handle().clone());
             }
-            // DEBUG: listen to settings window events for diagnostics
-            if let Some(sw) = app.get_webview_window("settings") {
-                sw.on_window_event(move |ev| {
-                    eprintln!("[diag/settings] event: {:?}", ev);
-                });
-            }
             // 1Hz 前台 App 推送：用 AtomicBool 让 App 退出时线程能跳出循环
             // adversarial-review #6 的修复要点；NSWorkspace.frontmostApplication 在
             // 后台线程访问目前在实测上稳定，但仍标注为「需要后续移到主线程」
