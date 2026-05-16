@@ -62,6 +62,42 @@ describe('SettingsPanel drag', () => {
         });
         expect(startDragging).not.toHaveBeenCalled();
     });
+
+    it('content empty area pointer down triggers native window drag', async () => {
+        render(<SettingsPanel />);
+        const content = screen.getByRole('dialog', { name: '设置' }).querySelector('.settings-content')!;
+        await act(async () => {
+            fireEvent.pointerDown(content, { button: 0 });
+        });
+        expect(startDragging).toHaveBeenCalledTimes(1);
+    });
+
+    it('right-clicking empty content does NOT trigger drag', async () => {
+        render(<SettingsPanel />);
+        const content = screen.getByRole('dialog', { name: '设置' }).querySelector('.settings-content')!;
+        await act(async () => {
+            fireEvent.pointerDown(content, { button: 2 });
+        });
+        expect(startDragging).not.toHaveBeenCalled();
+    });
+
+    it('clicking a settings tab does NOT trigger drag', async () => {
+        render(<SettingsPanel />);
+        const tab = screen.getByRole('button', { name: '联机' });
+        await act(async () => {
+            fireEvent.pointerDown(tab, { button: 0 });
+        });
+        expect(startDragging).not.toHaveBeenCalled();
+    });
+
+    it('clicking an input does NOT trigger drag', async () => {
+        render(<SettingsPanel />);
+        const input = screen.getAllByRole('spinbutton')[0];
+        await act(async () => {
+            fireEvent.pointerDown(input, { button: 0 });
+        });
+        expect(startDragging).not.toHaveBeenCalled();
+    });
 });
 
 describe('SettingsPanel close button', () => {
