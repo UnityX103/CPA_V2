@@ -165,11 +165,15 @@ pub fn run() {
                 let handle = app.handle().clone();
                 tauri::async_runtime::spawn(async move {
                     let url = WebviewUrl::App("index.html?window=settings-e2e".into());
-                    if let Ok(w) = WebviewWindowBuilder::new(&handle, "settings-e2e", url)
+                    match WebviewWindowBuilder::new(&handle, "settings-e2e", url)
                         .visible(false)
                         .build()
                     {
-                        passthrough::install_first_mouse_only(&w);
+                        Ok(w) => passthrough::install_first_mouse_only(&w),
+                        Err(e) => eprintln!(
+                            "[e2e stub] WebviewWindowBuilder::build failed; \
+                             regression net is not hot, test will pass vacuously: {e}"
+                        ),
                     }
                 });
             }
