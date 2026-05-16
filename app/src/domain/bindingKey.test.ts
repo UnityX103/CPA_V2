@@ -28,3 +28,18 @@ describe('createBindingKeyStore — settings-window mode', () => {
         spy.mockRestore();
     });
 });
+
+describe('createBindingKeyStore — permission state', () => {
+    it('defaults permissionGranted to true and platform to null before fetch', () => {
+        const store = createBindingKeyStore({ isSettingsWindow: false });
+        expect(store.getState().permissionGranted).toBe(true);
+        expect(store.getState().platform).toBe(null);
+    });
+
+    it('setPermission updates both fields', () => {
+        const store = createBindingKeyStore({ isSettingsWindow: false });
+        store.getState().setPermission(false, 'macos');
+        expect(store.getState().permissionGranted).toBe(false);
+        expect(store.getState().platform).toBe('macos');
+    });
+});
