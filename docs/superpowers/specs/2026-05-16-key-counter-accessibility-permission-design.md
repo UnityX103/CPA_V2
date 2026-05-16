@@ -158,7 +158,7 @@ listen('key-pressed') → 既有逻辑不变（线程没起来时事件天然不
 
 1. `granted=false` 初始 → banner 渲染、按键事件被丢弃（incrementByKeyCode 不触发）。
 2. `accessibility-permission-changed { granted:true }` → banner 消失。
-3. `granted=true → false` → banner 重新渲染；后续 `key-pressed` 事件来了也不计数（listener 已停，但 mock 防回归）。
+3. `granted=true → false` → banner 重新渲染。（注：实际运行中 listener 停了就不会再有 `key-pressed`；测试只验证 banner 状态，不模拟"幽灵事件"。）
 
 **Rust 侧**：不写单测（`AX*` API 在 CI 上无法稳定模拟）；在 `app/src-tauri/src/accessibility/macos.rs` 顶端写一段 `# 手动验证步骤` 注释（启动 → 撤销权限 → 看 banner 出现 → 点"申请权限"看让位是否生效 → 重新授权看 banner 消失且 listener 自动起）。
 
@@ -166,6 +166,7 @@ listen('key-pressed') → 既有逻辑不变（线程没起来时事件天然不
 
 - **dev 模式 bundleId 漂移**：`tauri dev` 下 bundleId 与正式包不同，TCC 条目独立；用户可能要在 dev / release 各授权一次。banner 文案不特殊处理。
 - **首次让位与 prompt 之间的竞态**：理论上 `set_always_on_top(false)` 还没返回时 prompt 就弹了 —— 实测 macOS prompt 是同步的，且发生在主线程顺序之后；标注为"如复现再优化"。
+- **重复点击"申请权限"**：`request_accessibility_permission` 内部用一个 `AtomicBool` `prompt_in_flight` 防抖 —— 已在 flight 时直接返回 `Ok(())`，避免 restore_task 堆叠和 always-on-top 反复抖动。
 - **被遮挡的不是 prompt 而是设置面板**：用户在 `打开系统设置` 路径下进入 Settings.app 时，置顶 overlay 仍可能视觉遮挡 —— 本 spec 不在 `open_accessibility_settings` 路径上让位（用户本来就要切换到 Settings.app，自然失焦）；如果实测仍有问题再加。
 
 ## 实施顺序
