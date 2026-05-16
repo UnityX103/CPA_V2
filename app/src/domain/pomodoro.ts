@@ -226,16 +226,18 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
                 const state = get();
                 if (!state.isRunning || state.currentPhase === 'completed') return;
                 accumulator += deltaSeconds;
-                while (accumulator >= 1) {
-                    accumulator -= 1;
-                    const next = state.remainingSeconds - 1;
-                    if (next > 0) {
-                        set({ remainingSeconds: next });
-                        return;
-                    }
-                    set({ remainingSeconds: 0, ...advancePhase(get(), 'timer') });
+
+                const elapsedWholeSeconds = Math.floor(accumulator);
+                if (elapsedWholeSeconds < 1) return;
+
+                if (elapsedWholeSeconds < state.remainingSeconds) {
+                    accumulator -= elapsedWholeSeconds;
+                    set({ remainingSeconds: state.remainingSeconds - elapsedWholeSeconds });
                     return;
                 }
+
+                accumulator = 0;
+                set({ ...advancePhase(state, 'timer') });
             },
         };
     });
