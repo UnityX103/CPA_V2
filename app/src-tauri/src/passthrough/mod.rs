@@ -216,4 +216,24 @@ mod tests {
             (-30, -70),
         );
     }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn main_thread_marker_returns_none_off_thread() {
+        use objc2_foundation::MainThreadMarker;
+        // cargo test 的测试线程并非 AppKit 主线程；objc2 应返回 None,
+        // 这是 install_*_impl 里 `.expect("…")` 防御能在真实多线程下触发的前提。
+        let from_test_thread = MainThreadMarker::new();
+        assert!(
+            from_test_thread.is_none(),
+            "cargo test thread should not register as AppKit main thread"
+        );
+
+        // 进一步：显式 spawn 一个线程，确认 spawn 出的线程亦非主线程。
+        let handle = std::thread::spawn(|| MainThreadMarker::new().is_none());
+        assert!(
+            handle.join().expect("thread joined"),
+            "spawned thread must not see itself as main thread"
+        );
+    }
 }

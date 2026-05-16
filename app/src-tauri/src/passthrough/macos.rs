@@ -92,7 +92,8 @@ pub fn install_impl(window: &WebviewWindow, store: Arc<HitRegionStore>) {
         }
     };
     // Safety: NSWindow 必须在主线程访问；Tauri 的 setup() 在主线程运行。
-    let mtm = unsafe { MainThreadMarker::new_unchecked() };
+    let mtm = MainThreadMarker::new()
+        .expect("passthrough macos install_* must run on main thread");
     let ns_window: &NSWindow = unsafe { &*ns_window_ptr };
 
     let old_content: Retained<NSView> = match ns_window.contentView() {
@@ -158,7 +159,8 @@ pub fn install_first_mouse_only_impl(window: &WebviewWindow) {
             return;
         }
     };
-    let mtm = unsafe { MainThreadMarker::new_unchecked() };
+    let mtm = MainThreadMarker::new()
+        .expect("passthrough macos install_* must run on main thread");
     let ns_window: &NSWindow = unsafe { &*ns_window_ptr };
 
     let old_content: Retained<NSView> = match ns_window.contentView() {

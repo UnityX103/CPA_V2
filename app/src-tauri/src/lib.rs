@@ -29,6 +29,28 @@ const SETTINGS_H: f64 = 440.0;
 
 /// 计算设置窗口在主窗口所在 monitor 的中心位置（物理像素）。
 /// 多显示器下保证设置窗弹在用户当前屏，而非系统主屏。
+/// 在 setup() 内同步构建（隐藏的）设置窗口并装好 first-mouse hook。
+/// 调用者必须在主线程（典型上下文：`setup` 闭包内）。失败仅 eprintln，
+/// 让主流程能继续；用户点齿轮时 open_settings_window_impl 会返回明确 Err。
+fn build_settings_window_hidden(
+    app: &tauri::AppHandle,
+) -> Result<tauri::WebviewWindow, tauri::Error> {
+    let url = WebviewUrl::App("index.html?window=settings".into());
+    let w = WebviewWindowBuilder::new(app, "settings", url)
+        .title("设置")
+        .inner_size(SETTINGS_W, SETTINGS_H)
+        .resizable(false)
+        .transparent(true)
+        .decorations(false)
+        .always_on_top(true)
+        .shadow(false)
+        .skip_taskbar(true)
+        .visible(false)
+        .build()?;
+    passthrough::install_first_mouse_only(&w);
+    Ok(w)
+}
+
 fn settings_center_position(app: &tauri::AppHandle) -> Result<PhysicalPosition<i32>, String> {
     let main = app
         .get_webview_window("main")
@@ -50,42 +72,23 @@ fn settings_center_position(app: &tauri::AppHandle) -> Result<PhysicalPosition<i
     Ok(PhysicalPosition::new(x, y))
 }
 
-#[tauri::command]
-async fn open_settings_window(app: tauri::AppHandle) -> Result<(), String> {
-    if let Some(w) = app.get_webview_window("settings") {
-        // 已存在的设置窗口：复用 → 重新对齐到主窗口所在屏中心 → 显示 → 抢焦点。
-        // first-mouse subclass 是一次性安装，无需重装。
-        if let Ok(pos) = settings_center_position(&app) {
-            let _ = w.set_position(pos);
-        }
-        w.show().map_err(|e| e.to_string())?;
-        w.set_focus().map_err(|e| e.to_string())?;
-        return Ok(());
-    }
-
-    // 首次创建：先 invisible 建窗 → 计算位置 → 装 first-mouse hook → show。
-    // 顺序保证用户看到的是已经摆好的窗口，避免闪烁。
-    let url = WebviewUrl::App("index.html?window=settings".into());
-    let w = WebviewWindowBuilder::new(&app, "settings", url)
-        .title("设置")
-        .inner_size(SETTINGS_W, SETTINGS_H)
-        .resizable(false)
-        .transparent(true)
-        .decorations(false)
-        .always_on_top(true)
-        .shadow(false)
-        .skip_taskbar(true)
-        .visible(false)
-        .build()
-        .map_err(|e| e.to_string())?;
-
+pub(crate) async fn open_settings_window_impl(
+    app: tauri::AppHandle,
+) -> Result<(), String> {
+    let w = app
+        .get_webview_window("settings")
+        .ok_or_else(|| "settings window not built — setup() probably failed; check stderr".to_string())?;
     if let Ok(pos) = settings_center_position(&app) {
         let _ = w.set_position(pos);
     }
-    passthrough::install_first_mouse_only(&w);
     w.show().map_err(|e| e.to_string())?;
     w.set_focus().map_err(|e| e.to_string())?;
     Ok(())
+}
+
+#[tauri::command]
+async fn open_settings_window(app: tauri::AppHandle) -> Result<(), String> {
+    open_settings_window_impl(app).await
 }
 
 #[tauri::command]
@@ -120,6 +123,11 @@ pub fn run() {
             }
             if let Some(window) = app.get_webview_window("main") {
                 passthrough::install(&window, hit_store_for_setup.clone());
+            }
+            // 在主线程构建隐藏的设置窗口 + 装 first-mouse hook。点齿轮时只做
+            // 重定位 + show + focus（Tauri-marshaled，线程安全）。失败仅打日志。
+            if let Err(e) = build_settings_window_hidden(app.handle()) {
+                eprintln!("[setup] build_settings_window_hidden failed: {e}");
             }
             // 1Hz 前台 App 推送：用 AtomicBool 让 App 退出时线程能跳出循环
             // adversarial-review #6 的修复要点；NSWorkspace.frontmostApplication 在
