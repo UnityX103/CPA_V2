@@ -103,9 +103,10 @@ pub fn run() {
     let active_app_stop_for_setup = active_app_stop.clone();
     let active_app_stop_for_exit = active_app_stop.clone();
 
-    let key_counter_stop = Arc::new(AtomicBool::new(false));
-    let key_counter_stop_for_setup = key_counter_stop.clone();
-    let key_counter_stop_for_exit = key_counter_stop.clone();
+    let listener_handle = Arc::new(accessibility::ListenerHandle::default());
+    let listener_handle_for_setup = listener_handle.clone();
+    let listener_handle_for_manage = listener_handle.clone();
+    let listener_handle_for_exit = listener_handle.clone();
 
     let hit_store = std::sync::Arc::new(passthrough::HitRegionStore::new());
     let hit_store_for_setup = hit_store.clone();
@@ -115,6 +116,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .manage::<std::sync::Arc<passthrough::HitRegionStore>>(hit_store_for_manage)
+        .manage::<std::sync::Arc<accessibility::ListenerHandle>>(listener_handle_for_manage)
         .setup(move |app| {
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.set_always_on_top(true);
@@ -150,11 +152,10 @@ pub fn run() {
                 }
             });
 
-            // 全局按键监听：CGEventTap → 主线程 emit；用户必须授予辅助功能权限
-            let key_handle = app.handle().clone();
-            key_counter::spawn_listener(key_counter_stop_for_setup.clone(), move |keycode| {
-                let _ = key_handle.emit("key-pressed", keycode);
-            });
+            // 按键监听由 accessibility 模块按权限状态启停 —— 启动时若已授权立即起，否则等用户授权后由 watcher 自动起。
+            if accessibility::current_status().granted {
+                listener_handle_for_setup.ensure_running(&app.handle());
+            }
 
             Ok(())
         })
@@ -165,6 +166,7 @@ pub fn run() {
             open_settings_window,
             close_settings_window,
             accessibility::accessibility_status,
+            accessibility::key_counter_listening,
             passthrough::register_hit_region,
             passthrough::unregister_hit_region,
             passthrough::clear_hit_regions,
@@ -175,7 +177,7 @@ pub fn run() {
     app.run(move |handle, event| {
         if matches!(event, RunEvent::ExitRequested { .. } | RunEvent::Exit) {
             active_app_stop_for_exit.store(true, Ordering::Relaxed);
-            key_counter_stop_for_exit.store(true, Ordering::Relaxed);
+            listener_handle_for_exit.stop();
             if let Some(window) = handle.get_webview_window("main") {
                 passthrough::uninstall(&window);
             }
