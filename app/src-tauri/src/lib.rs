@@ -69,6 +69,19 @@ fn build_settings_window_hidden(
         .visible(false)
         .build()?;
     passthrough::install_first_mouse_only(&w);
+
+    // 拦截关闭事件：macOS Cmd-W / 应用菜单 / 任何 performClose: 路径默认会真正销毁
+    // NSWindow，之后 get_webview_window("settings") 永远返回 None，齿轮按钮变成死按钮。
+    // prevent_close + hide 让窗口对象在 Tauri 的窗口管理器里永生，open_settings_window_impl
+    // 始终能拿到。
+    let w_for_hide = w.clone();
+    w.on_window_event(move |event| {
+        if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+            api.prevent_close();
+            let _ = w_for_hide.hide();
+        }
+    });
+
     Ok(w)
 }
 
