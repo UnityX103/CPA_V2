@@ -103,6 +103,10 @@ pub fn run() {
     let active_app_stop_for_setup = active_app_stop.clone();
     let active_app_stop_for_exit = active_app_stop.clone();
 
+    let accessibility_stop = Arc::new(AtomicBool::new(false));
+    let accessibility_stop_for_setup = accessibility_stop.clone();
+    let accessibility_stop_for_exit = accessibility_stop.clone();
+
     let listener_handle = Arc::new(accessibility::ListenerHandle::default());
     let listener_handle_for_setup = listener_handle.clone();
     let listener_handle_for_manage = listener_handle.clone();
@@ -156,6 +160,12 @@ pub fn run() {
             if accessibility::current_status().granted {
                 listener_handle_for_setup.ensure_running(app.handle());
             }
+            // 1Hz 权限轮询：状态翻转时 emit + 启停 listener；ExitRequested 通过 stop 信号退出
+            accessibility::start_watcher(
+                app.handle().clone(),
+                listener_handle_for_setup.clone(),
+                accessibility_stop_for_setup.clone(),
+            );
 
             Ok(())
         })
@@ -177,6 +187,7 @@ pub fn run() {
     app.run(move |handle, event| {
         if matches!(event, RunEvent::ExitRequested { .. } | RunEvent::Exit) {
             active_app_stop_for_exit.store(true, Ordering::Relaxed);
+            accessibility_stop_for_exit.store(true, Ordering::Relaxed);
             listener_handle_for_exit.stop();
             if let Some(window) = handle.get_webview_window("main") {
                 passthrough::uninstall(&window);

@@ -91,3 +91,41 @@ pub fn accessibility_status() -> AccessibilityStatus {
 pub fn key_counter_listening(handle: tauri::State<'_, Arc<ListenerHandle>>) -> bool {
     handle.is_running()
 }
+
+use std::time::Duration;
+
+/// Spawn the 1Hz watcher thread. Emits `accessibility-permission-changed`
+/// on every state flip and starts/stops the listener through `handle`.
+pub fn start_watcher(
+    app: AppHandle,
+    handle: Arc<ListenerHandle>,
+    stop: Arc<AtomicBool>,
+) {
+    std::thread::spawn(move || {
+        let mut last = current_status().granted;
+        loop {
+            // 拆成 10×100ms：让 stop 信号最多 100ms 内被观察到（沿用 active_app 同款模式）
+            for _ in 0..10 {
+                if stop.load(Ordering::Relaxed) {
+                    return;
+                }
+                std::thread::sleep(Duration::from_millis(100));
+            }
+            let now = current_status().granted;
+            if now != last {
+                let _ = app.emit("accessibility-permission-changed", AccessibilityChangedPayload { granted: now });
+                if now {
+                    handle.ensure_running(&app);
+                } else {
+                    handle.stop();
+                }
+                last = now;
+            }
+        }
+    });
+}
+
+#[derive(Clone, Copy, Debug, Serialize)]
+struct AccessibilityChangedPayload {
+    granted: bool,
+}
