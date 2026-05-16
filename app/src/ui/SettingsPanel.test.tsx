@@ -8,9 +8,10 @@ import { useSettingsStore } from '../domain/settings';
 import { useNetworkStore } from '../domain/network';
 import { SettingsPanel } from './SettingsPanel';
 
-const { startDragging, invokeMock } = vi.hoisted(() => ({
+const { startDragging, invokeMock, listenMock } = vi.hoisted(() => ({
     startDragging: vi.fn(),
     invokeMock: vi.fn(),
+    listenMock: vi.fn(() => Promise.resolve(() => {})),
 }));
 
 vi.mock('@tauri-apps/api/window', () => ({
@@ -23,10 +24,14 @@ vi.mock('@tauri-apps/api/window', () => ({
 }));
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: invokeMock }));
+vi.mock('@tauri-apps/api/event', () => ({ listen: listenMock }));
 
 beforeEach(() => {
     startDragging.mockReset();
     invokeMock.mockReset();
+    invokeMock.mockResolvedValue({ granted: true, platform: 'macos' });
+    listenMock.mockReset();
+    listenMock.mockResolvedValue(() => {});
     useSettingsStore.setState({ activeTab: 'pomodoro' });
     cleanup();
 });
