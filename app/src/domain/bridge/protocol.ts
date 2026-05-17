@@ -1,4 +1,5 @@
 import type { BindingKeyEntry } from '../bindingKey';
+import type { DangerousChange } from '../settings';
 import type { ConnectionStatus, RemotePlayer } from '../network';
 
 export const EVT_STATE_REQUEST = 'app:state:request';
@@ -10,6 +11,8 @@ export interface BridgeSnapshot {
     v: typeof BRIDGE_VERSION;
     settings: {
         uiScale: number;
+        committedUiScale: number;
+        dangerousChange: DangerousChange | null;
     };
     pomodoro: {
         focusDurationSeconds: number;

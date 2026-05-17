@@ -19,6 +19,8 @@ export function applySnapshotToMirrors(snap: BridgeSnapshot): void {
     }
     useSettingsStore.setState({
         uiScale: snap.settings.uiScale,
+        committedUiScale: snap.settings.committedUiScale,
+        dangerousChange: snap.settings.dangerousChange,
     });
     usePomodoroStore.setState({
         focusDurationSeconds: snap.pomodoro.focusDurationSeconds,

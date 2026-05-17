@@ -8,7 +8,17 @@ import { BRIDGE_VERSION, type BridgeSnapshot } from './protocol';
 
 const SAMPLE: BridgeSnapshot = {
     v: BRIDGE_VERSION,
-    settings: { uiScale: 2.0 },
+    settings: {
+        uiScale: 2.0,
+        committedUiScale: 1.0,
+        dangerousChange: {
+            id: 'scale-pending',
+            kind: 'uiScale',
+            previousValue: 1.0,
+            nextValue: 2.0,
+            expiresAt: 12345,
+        },
+    },
     pomodoro: { focusDurationSeconds: 600, breakDurationSeconds: 120, totalRounds: 6 },
     network: {
         autoConnect: true, playerName: 'host', playerId: 'p-host',
@@ -19,13 +29,20 @@ const SAMPLE: BridgeSnapshot = {
 };
 
 beforeEach(() => {
-    useSettingsStore.setState({ uiScale: 1.0, activeTab: 'pomodoro' });
+    useSettingsStore.setState({
+        uiScale: 1.0,
+        committedUiScale: 1.0,
+        dangerousChange: null,
+        activeTab: 'pomodoro',
+    });
 });
 
 describe('applySnapshotToMirrors', () => {
     it('writes every snapshot section into the corresponding store', () => {
         applySnapshotToMirrors(SAMPLE);
         expect(useSettingsStore.getState().uiScale).toBe(2.0);
+        expect(useSettingsStore.getState().committedUiScale).toBe(1.0);
+        expect(useSettingsStore.getState().dangerousChange?.id).toBe('scale-pending');
         expect('targetMonitorIndex' in useSettingsStore.getState()).toBe(false);
         expect(usePomodoroStore.getState().focusDurationSeconds).toBe(600);
         expect(usePomodoroStore.getState().breakDurationSeconds).toBe(120);

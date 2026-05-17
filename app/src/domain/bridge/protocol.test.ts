@@ -25,7 +25,7 @@ describe('bridge protocol', () => {
     it('BridgeSnapshot accepts a fully-populated payload', () => {
         const snap: BridgeSnapshot = {
             v: 1,
-            settings: { uiScale: 1.5 },
+            settings: { uiScale: 1.5, committedUiScale: 1.0, dangerousChange: null },
             pomodoro: { focusDurationSeconds: 1500, breakDurationSeconds: 300, totalRounds: 4 },
             network: {
                 autoConnect: false, playerName: 'me', playerId: 'p-1',
@@ -41,6 +41,9 @@ describe('bridge protocol', () => {
     it('DispatchPayload accepts every action shape', () => {
         const samples: DispatchPayload[] = [
             { v: 1, store: 'settings',   action: 'setUiScale',     args: [1.5] },
+            { v: 1, store: 'settings',   action: 'previewDangerousUiScale', args: [1.5] },
+            { v: 1, store: 'settings',   action: 'applyDangerousChange', args: ['pending-id'] },
+            { v: 1, store: 'settings',   action: 'revertDangerousChange', args: ['pending-id'] },
             { v: 1, store: 'pomodoro',   action: 'applySettings',  args: [1500, 300, 4, true] },
             { v: 1, store: 'network',    action: 'createRoom',     args: ['R1'] },
             { v: 1, store: 'network',    action: 'joinRoom',       args: ['R1'] },
@@ -52,7 +55,7 @@ describe('bridge protocol', () => {
             { v: 1, store: 'bindingKey', action: 'setSynced',      args: [null] },
             { v: 1, store: 'bindingKey', action: 'addEntry',       args: [] },
         ];
-        expect(samples).toHaveLength(11);
+        expect(samples).toHaveLength(14);
         const here = path.dirname(fileURLToPath(import.meta.url));
         const protocol = readFileSync(path.join(here, 'protocol.ts'), 'utf8');
         expect(protocol).not.toContain('setTargetMonitor');

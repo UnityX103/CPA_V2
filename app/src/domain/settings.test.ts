@@ -125,6 +125,36 @@ describe('createSettingsStore — settings-window mode', () => {
         spy.mockRestore();
     });
 
+    it('dangerous actions dispatch instead of mutating local state', () => {
+        const spy = vi.spyOn(dispatchMod, 'dispatch').mockResolvedValue();
+        const store = createSettingsStore({ isSettingsWindow: true });
+
+        store.getState().previewDangerousUiScale(1.75);
+        store.getState().applyDangerousChange('pending-id');
+        store.getState().revertDangerousChange('pending-id');
+
+        expect(store.getState().uiScale).toBe(1.0);
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({
+            v: BRIDGE_VERSION,
+            store: 'settings',
+            action: 'previewDangerousUiScale',
+            args: [1.75],
+        }));
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({
+            v: BRIDGE_VERSION,
+            store: 'settings',
+            action: 'applyDangerousChange',
+            args: ['pending-id'],
+        }));
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({
+            v: BRIDGE_VERSION,
+            store: 'settings',
+            action: 'revertDangerousChange',
+            args: ['pending-id'],
+        }));
+        spy.mockRestore();
+    });
+
     it('setActiveTab is local in settings-window mode (no dispatch)', () => {
         const spy = vi.spyOn(dispatchMod, 'dispatch').mockResolvedValue();
         const store = createSettingsStore({ isSettingsWindow: true });
