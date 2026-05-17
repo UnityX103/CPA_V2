@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
@@ -90,13 +90,53 @@ function PomodoroTab() {
     const [breakMin, setBreakMin] = useState(Math.round(pomo.breakDurationSeconds / 60));
     const [endActionMode, setEndActionMode] = useState<PomodoroEndActionMode>(pomo.endActionMode);
     const [endActionVideo, setEndActionVideo] = useState<PomodoroEndActionVideo>({ ...pomo.endActionVideo });
+    const committedRef = useRef({
+        focusDurationSeconds: pomo.focusDurationSeconds,
+        breakDurationSeconds: pomo.breakDurationSeconds,
+        endActionMode: pomo.endActionMode,
+        endActionVideo: { ...pomo.endActionVideo },
+    });
 
     useEffect(() => {
-        setFocusMin(Math.round(pomo.focusDurationSeconds / 60));
-        setBreakMin(Math.round(pomo.breakDurationSeconds / 60));
-        setEndActionMode(pomo.endActionMode);
-        setEndActionVideo({ ...pomo.endActionVideo });
-    }, [pomo.focusDurationSeconds, pomo.breakDurationSeconds, pomo.endActionMode, pomo.endActionVideo]);
+        const previous = committedRef.current;
+        const durationDraftDirty =
+            focusMin * 60 !== previous.focusDurationSeconds ||
+            breakMin * 60 !== previous.breakDurationSeconds;
+        const endActionDraftDirty =
+            endActionMode !== previous.endActionMode ||
+            !sameEndActionVideo(endActionVideo, previous.endActionVideo);
+
+        if (!durationDraftDirty) {
+            setFocusMin(Math.round(pomo.focusDurationSeconds / 60));
+            setBreakMin(Math.round(pomo.breakDurationSeconds / 60));
+        }
+        if (!endActionDraftDirty) {
+            setEndActionMode(pomo.endActionMode);
+            setEndActionVideo((current) =>
+                sameEndActionVideo(current, pomo.endActionVideo)
+                    ? current
+                    : { ...pomo.endActionVideo }
+            );
+        }
+
+        committedRef.current = {
+            focusDurationSeconds: pomo.focusDurationSeconds,
+            breakDurationSeconds: pomo.breakDurationSeconds,
+            endActionMode: pomo.endActionMode,
+            endActionVideo: { ...pomo.endActionVideo },
+        };
+    }, [
+        pomo.focusDurationSeconds,
+        pomo.breakDurationSeconds,
+        pomo.endActionMode,
+        pomo.endActionVideo.sourceKind,
+        pomo.endActionVideo.builtinVideoId,
+        pomo.endActionVideo.customVideoPath,
+        focusMin,
+        breakMin,
+        endActionMode,
+        endActionVideo,
+    ]);
 
     const dirty =
         focusMin * 60 !== pomo.focusDurationSeconds ||
@@ -105,8 +145,21 @@ function PomodoroTab() {
         !sameEndActionVideo(endActionVideo, pomo.endActionVideo);
 
     const apply = () => {
-        pomo.applySettings(focusMin * 60, breakMin * 60, pomo.totalRounds, true);
-        pomo.applyEndActionSettings(endActionMode, endActionVideo);
+        const focusSeconds = focusMin * 60;
+        const breakSeconds = breakMin * 60;
+        const durationChanged =
+            focusSeconds !== pomo.focusDurationSeconds ||
+            breakSeconds !== pomo.breakDurationSeconds;
+        const endActionChanged =
+            endActionMode !== pomo.endActionMode ||
+            !sameEndActionVideo(endActionVideo, pomo.endActionVideo);
+
+        if (durationChanged) {
+            pomo.applySettings(focusSeconds, breakSeconds, pomo.totalRounds, true);
+        }
+        if (endActionChanged) {
+            pomo.applyEndActionSettings(endActionMode, endActionVideo);
+        }
     };
 
     const selectedVideoOption = endActionVideo.sourceKind === 'custom'

@@ -185,6 +185,57 @@ describe('PomodoroTab end action settings', () => {
         });
     });
 
+    it('applying only the end action does not reset a running timer', () => {
+        usePomodoroStore.setState({
+            remainingSeconds: 1234,
+            currentPhase: 'focus',
+            isRunning: true,
+        });
+        render(<SettingsPanel />);
+
+        fireEvent.change(screen.getByLabelText('计时结束提示'), { target: { value: 'topWindow' } });
+        fireEvent.click(screen.getByRole('button', { name: '应用' }));
+
+        const state = usePomodoroStore.getState();
+        expect(state.endActionMode).toBe('topWindow');
+        expect(state.remainingSeconds).toBe(1234);
+        expect(state.currentPhase).toBe('focus');
+        expect(state.isRunning).toBe(true);
+    });
+
+    it('keeps unsaved video draft when the mirrored store replaces the video object reference', () => {
+        render(<SettingsPanel />);
+
+        fireEvent.change(screen.getByLabelText('视频选项'), { target: { value: 'custom' } });
+        expect(screen.getByLabelText('视频选项')).toHaveProperty('value', 'custom');
+
+        act(() => {
+            const current = usePomodoroStore.getState().endActionVideo;
+            usePomodoroStore.setState({ endActionVideo: { ...current } });
+        });
+
+        expect(screen.getByLabelText('视频选项')).toHaveProperty('value', 'custom');
+        expect(screen.getByRole('button', { name: '应用' })).toHaveProperty('disabled', false);
+    });
+
+    it('syncs clean end action drafts when the committed store value changes', () => {
+        render(<SettingsPanel />);
+
+        act(() => {
+            usePomodoroStore.setState({
+                endActionMode: 'topWindow',
+                endActionVideo: {
+                    sourceKind: 'builtin',
+                    builtinVideoId: 'qianqian',
+                    customVideoPath: '',
+                },
+            });
+        });
+
+        expect(screen.getByLabelText('计时结束提示')).toHaveProperty('value', 'topWindow');
+        expect(screen.getByRole('button', { name: '应用' })).toHaveProperty('disabled', true);
+    });
+
     it('selecting a custom webm shows the basename and applies the custom video', async () => {
         pickCustomWebmPathMock.mockResolvedValue('/Users/xpy/Videos/custom.webm');
         render(<SettingsPanel />);
