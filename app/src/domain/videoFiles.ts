@@ -1,7 +1,7 @@
 import { convertFileSrc, invoke } from '@tauri-apps/api/core';
 import { message, open } from '@tauri-apps/plugin-dialog';
 
-export interface CustomVideoPathValidation {
+export interface CustomVideoValidation {
     readonly ok: boolean;
     readonly message: string | null;
 }
@@ -16,8 +16,8 @@ export async function pickCustomWebmPath(): Promise<string | null> {
     return typeof selected === 'string' ? selected : null;
 }
 
-export async function validateCustomVideoPath(path: string): Promise<CustomVideoPathValidation> {
-    return invoke<CustomVideoPathValidation>('validate_custom_video_path', { path });
+export async function validateCustomVideoPath(path: string): Promise<CustomVideoValidation> {
+    return invoke<CustomVideoValidation>('validate_custom_video_path', { path });
 }
 
 export function customVideoSrc(path: string): string {
