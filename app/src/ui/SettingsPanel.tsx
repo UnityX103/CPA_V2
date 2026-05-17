@@ -235,6 +235,8 @@ function PomodoroTab({ onApplyStateChange }: {
     const selectedVideoOption = endActionVideo.sourceKind === 'custom'
         ? 'custom'
         : endActionVideo.builtinVideoId;
+    const showVideoOptions = endActionMode === 'playVideo';
+    const showCustomVideoRow = showVideoOptions && endActionVideo.sourceKind === 'custom';
 
     const customVideoName = endActionVideo.customVideoPath
         ? pathBasename(endActionVideo.customVideoPath)
@@ -315,7 +317,7 @@ function PomodoroTab({ onApplyStateChange }: {
                         </div>
 
                         {/* pomoVideoPath WSnlp: enabled:false → 设计稿收起，不渲染 */}
-                        {endActionMode === 'playVideo' && (
+                        {showVideoOptions && (
                             <div className="card pomo-row">
                                 <span className="pomo-row-label">视频选项</span>
                                 <select
@@ -333,20 +335,22 @@ function PomodoroTab({ onApplyStateChange }: {
                         )}
 
                         {/* pomoVideoCustom Jvg0I: 自定义视频文件 → 状态文字 + 文件夹图标 */}
-                        <button
-                            className="card pomo-row pomo-row-button"
-                            type="button"
-                            aria-label="选择自定义视频"
-                            onClick={() => { void chooseCustomVideo(); }}
-                        >
-                            <span className="pomo-row-label">自定义视频文件</span>
-                            <span className="pomo-row-right">
-                                <span className={`pomo-row-value ${endActionVideo.customVideoPath ? 'pomo-row-value-link' : 'pomo-row-value-muted'}`}>
-                                    {customVideoName}
+                        {showCustomVideoRow && (
+                            <button
+                                className="card pomo-row pomo-row-button"
+                                type="button"
+                                aria-label="选择自定义视频"
+                                onClick={() => { void chooseCustomVideo(); }}
+                            >
+                                <span className="pomo-row-label">自定义视频文件</span>
+                                <span className="pomo-row-right">
+                                    <span className={`pomo-row-value ${endActionVideo.customVideoPath ? 'pomo-row-value-link' : 'pomo-row-value-muted'}`}>
+                                        {customVideoName}
+                                    </span>
+                                    <FolderIcon />
                                 </span>
-                                <FolderIcon />
-                            </span>
-                        </button>
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>

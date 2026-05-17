@@ -4200,8 +4200,8 @@
       "type": "ref",
       "ref": "gs1Tv",
       "name": "Pomodoro Settings Panel / Video Mode",
-      "x": 2393,
-      "y": 337,
+      "x": 2354,
+      "y": 286,
       "descendants": {
         "Tp1bH/d5bpi": {
           "content": "播放视频"

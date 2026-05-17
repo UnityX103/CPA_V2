@@ -261,7 +261,7 @@ describe('SettingsPanel geometry', () => {
 });
 
 describe('PomodoroTab parity with gs1Tv', () => {
-    it('renders pomoGrid + visible pomoFooter rows (WSnlp collapsed per design)', () => {
+    it('renders pomoGrid + visible pomoFooter rows while custom video stays hidden by default', () => {
         render(<SettingsPanel />);
         // pomoGrid: work + break cards (label text)
         expect(screen.getByText('专注时长')).toBeTruthy();
@@ -270,7 +270,7 @@ describe('PomodoroTab parity with gs1Tv', () => {
         expect(screen.getByText('结束提示音')).toBeTruthy();
         expect(screen.getByText('计时结束提示')).toBeTruthy();
         expect(screen.queryByText('视频文件')).toBeNull();
-        expect(screen.getByText('自定义视频文件')).toBeTruthy();
+        expect(screen.queryByText('自定义视频文件')).toBeNull();
     });
 
     it('renders 自动开始休息 while omitting obsolete 总轮次', () => {
@@ -362,6 +362,7 @@ describe('PomodoroTab end action settings', () => {
         render(<SettingsPanel />);
 
         fireEvent.change(screen.getByLabelText('视频选项'), { target: { value: 'custom' } });
+        expect(screen.getByText('自定义视频文件')).toBeTruthy();
         const apply = screen.getByRole('button', { name: '应用' });
         expect(apply).toHaveProperty('disabled', true);
 
@@ -402,6 +403,7 @@ describe('PomodoroTab end action settings', () => {
         pickCustomWebmPathMock.mockResolvedValue('/Users/xpy/Videos/custom.webm');
         render(<SettingsPanel />);
 
+        fireEvent.change(screen.getByLabelText('视频选项'), { target: { value: 'custom' } });
         await act(async () => {
             fireEvent.click(screen.getByRole('button', { name: '选择自定义视频' }));
         });
@@ -418,16 +420,28 @@ describe('PomodoroTab end action settings', () => {
         });
     });
 
-    it('canceling the custom picker leaves the draft clean', async () => {
+    it('canceling the custom picker keeps the custom draft dirty but incomplete', async () => {
         render(<SettingsPanel />);
 
+        fireEvent.change(screen.getByLabelText('视频选项'), { target: { value: 'custom' } });
         await act(async () => {
             fireEvent.click(screen.getByRole('button', { name: '选择自定义视频' }));
         });
 
-        expect(screen.queryByRole('button', { name: '应用' })).toBeNull();
+        expect(screen.getByRole('button', { name: '应用' })).toHaveProperty('disabled', true);
         expect(screen.getByText('未选择')).toBeTruthy();
         expect(usePomodoroStore.getState().endActionVideo.customVideoPath).toBe('');
+    });
+
+    it('hides the custom video row again when switching back to a bundled video', () => {
+        render(<SettingsPanel />);
+
+        fireEvent.change(screen.getByLabelText('视频选项'), { target: { value: 'custom' } });
+        expect(screen.getByText('自定义视频文件')).toBeTruthy();
+
+        fireEvent.change(screen.getByLabelText('视频选项'), { target: { value: 'qianqian' } });
+
+        expect(screen.queryByText('自定义视频文件')).toBeNull();
     });
 });
 
