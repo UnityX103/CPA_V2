@@ -3,8 +3,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { usePomodoroStore, type PomodoroEndEvent } from '../domain/pomodoro';
 import { PomodoroEndActionLayer } from './PomodoroEndActionLayer';
 
-const { resolvePomodoroEndActionMock } = vi.hoisted(() => ({
+const { invokeMock, resolvePomodoroEndActionMock } = vi.hoisted(() => ({
+    invokeMock: vi.fn(),
     resolvePomodoroEndActionMock: vi.fn(),
+}));
+
+vi.mock('@tauri-apps/api/core', () => ({
+    invoke: invokeMock,
 }));
 
 vi.mock('../domain/pomodoroEndAction', () => ({
@@ -18,6 +23,22 @@ vi.mock('../domain/videoFiles', () => ({
 }));
 
 type EndActionResult = { kind: 'topWindow' } | { kind: 'video'; title: string; src: string };
+
+class FakeResizeObserver {
+    constructor(_cb: ResizeObserverCallback) {}
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+}
+vi.stubGlobal('ResizeObserver', FakeResizeObserver);
+
+class FakeMutationObserver {
+    constructor(_cb: MutationCallback) {}
+    observe() {}
+    disconnect() {}
+    takeRecords() { return []; }
+}
+vi.stubGlobal('MutationObserver', FakeMutationObserver);
 
 function deferred<T>() {
     let resolve!: (value: T) => void;
@@ -38,6 +59,7 @@ function endEvent(id: number, overrides: Partial<PomodoroEndEvent> = {}): Pomodo
 }
 
 beforeEach(() => {
+    invokeMock.mockReset();
     resolvePomodoroEndActionMock.mockReset();
     usePomodoroStore.setState({
         lastEndEvent: null,
@@ -259,6 +281,28 @@ describe('PomodoroEndActionLayer', () => {
         fireEvent.click(screen.getByRole('button', { name: '关闭视频' }));
 
         expect(screen.queryByLabelText('播放 千千')).toBeNull();
+    });
+
+    it('registers the video overlay as a native hit region while visible', async () => {
+        resolvePomodoroEndActionMock.mockResolvedValue({
+            kind: 'video',
+            title: '千千',
+            src: '/videos/ms1.webm',
+        });
+        render(<PomodoroEndActionLayer />);
+
+        await act(async () => {
+            usePomodoroStore.setState({ lastEndEvent: endEvent(1) });
+        });
+        expect(await screen.findByLabelText('播放 千千')).toBeTruthy();
+
+        const registerCall = invokeMock.mock.calls.find(([command]) => command === 'register_hit_region');
+        expect(registerCall?.[1].id).toMatch(/^pomodoro-end-video-\d+$/);
+
+        fireEvent.click(screen.getByRole('button', { name: '关闭视频' }));
+
+        const unregisterCall = invokeMock.mock.calls.find(([command]) => command === 'unregister_hit_region');
+        expect(unregisterCall?.[1]).toEqual({ id: registerCall?.[1].id });
     });
 
     it('closes the video overlay with Escape', async () => {

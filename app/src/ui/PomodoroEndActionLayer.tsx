@@ -6,6 +6,7 @@ import {
     showCustomVideoMissingMessage,
     validateCustomVideoPath,
 } from '../domain/videoFiles';
+import { useHitRegion } from '../domain/passthrough';
 import './PomodoroEndActionLayer.css';
 
 interface VideoOverlayState {
@@ -26,6 +27,7 @@ export function PomodoroEndActionLayer() {
     const latestRequestSeq = useRef(0);
     const disposed = useRef(false);
     const popupTimeout = useRef<number | null>(null);
+    const videoHitRef = useHitRegion('pomodoro-end-video');
 
     useEffect(() => {
         disposed.current = false;
@@ -106,6 +108,7 @@ export function PomodoroEndActionLayer() {
             )}
             {video && (
                 <div
+                    ref={videoHitRef}
                     className="pomo-video-backdrop"
                     role="dialog"
                     aria-modal="true"
