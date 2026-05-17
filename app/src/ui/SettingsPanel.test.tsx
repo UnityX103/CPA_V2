@@ -264,6 +264,43 @@ describe('GlobalTab parity with Pdj9C', () => {
         expect(screen.getByRole('button', { name: '打开系统设置' })).toBeTruthy();
     });
 
+    it('scale slider previews continuously while dragging', async () => {
+        useSettingsStore.setState({
+            activeTab: 'global',
+            uiScale: 1.0,
+            committedUiScale: 1.0,
+            dangerousChange: null,
+        });
+        const previewSpy = vi.spyOn(useSettingsStore.getState(), 'previewDangerousUiScale');
+
+        render(<SettingsPanel />);
+        const slider = screen.getByRole('slider');
+        vi.spyOn(slider, 'getBoundingClientRect').mockReturnValue({
+            x: 0,
+            y: 0,
+            left: 0,
+            top: 0,
+            right: 200,
+            bottom: 24,
+            width: 200,
+            height: 24,
+            toJSON: () => ({}),
+        } as DOMRect);
+        slider.setPointerCapture = vi.fn();
+        slider.releasePointerCapture = vi.fn();
+
+        await act(async () => {
+            fireEvent.pointerDown(slider, { pointerId: 1, button: 0, clientX: 100 });
+            fireEvent.pointerMove(slider, { pointerId: 1, clientX: 160 });
+            fireEvent.pointerUp(slider, { pointerId: 1, clientX: 160 });
+        });
+
+        expect(previewSpy).toHaveBeenCalledWith(1.75);
+        expect(previewSpy).toHaveBeenCalledWith(2.5);
+        expect(slider.setPointerCapture).toHaveBeenCalledWith(1);
+        expect(slider.releasePointerCapture).toHaveBeenCalledWith(1);
+    });
+
     it('shows a blocking dangerous-change dialog when a scale preview is pending', () => {
         useSettingsStore.setState({
             activeTab: 'global',

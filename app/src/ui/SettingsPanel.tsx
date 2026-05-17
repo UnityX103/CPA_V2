@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
@@ -354,7 +354,7 @@ function GlobalTab() {
                             value={scalePercent}
                             min={minPct}
                             max={maxPct}
-                            onChange={(v) => settings.setUiScale(v / 100)}
+                            onChange={(v) => settings.previewDangerousUiScale(v / 100)}
                         />
                         <span className="slider-value">{(scalePercent / 100).toFixed(1)}×</span>
                     </div>
@@ -472,14 +472,52 @@ interface SliderProps {
 }
 
 function Slider({ value, min, max, onChange }: SliderProps) {
+    const draggingPointerIdRef = useRef<number | null>(null);
+    const [isDragging, setIsDragging] = useState(false);
     const ratio = Math.max(0, Math.min(1, (value - min) / (max - min)));
-    const onClick = (e: React.MouseEvent<HTMLDivElement>) => {
-        const rect = e.currentTarget.getBoundingClientRect();
-        const r = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-        onChange(Math.round(min + r * (max - min)));
+
+    const valueFromClientX = (element: HTMLDivElement, clientX: number): number => {
+        const rect = element.getBoundingClientRect();
+        const r = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+        return Math.round(min + r * (max - min));
     };
+
+    const updateFromPointer = (e: React.PointerEvent<HTMLDivElement>) => {
+        onChange(valueFromClientX(e.currentTarget, e.clientX));
+    };
+
+    const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+        if (e.button !== 0) return;
+        e.currentTarget.setPointerCapture?.(e.pointerId);
+        draggingPointerIdRef.current = e.pointerId;
+        setIsDragging(true);
+        updateFromPointer(e);
+    };
+
+    const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+        if (draggingPointerIdRef.current !== e.pointerId) return;
+        updateFromPointer(e);
+    };
+
+    const stopDragging = (e: React.PointerEvent<HTMLDivElement>) => {
+        if (draggingPointerIdRef.current !== e.pointerId) return;
+        e.currentTarget.releasePointerCapture?.(e.pointerId);
+        draggingPointerIdRef.current = null;
+        setIsDragging(false);
+    };
+
     return (
-        <div className="slider" onClick={onClick} role="slider" aria-valuenow={value} aria-valuemin={min} aria-valuemax={max}>
+        <div
+            className={`slider ${isDragging ? 'dragging' : ''}`}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={stopDragging}
+            onPointerCancel={stopDragging}
+            role="slider"
+            aria-valuenow={value}
+            aria-valuemin={min}
+            aria-valuemax={max}
+        >
             <div className="slider-fill" style={{ width: `calc((100% - 2px) * ${ratio})` }} />
             <div className="slider-thumb" style={{ left: `calc(${ratio * 100}%)` }} />
         </div>

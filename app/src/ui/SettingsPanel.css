@@ -370,6 +370,10 @@
     cursor: pointer;
 }
 
+.slider.dragging {
+    cursor: grabbing;
+}
+
 .slider-fill {
     position: absolute;
     top: 1px;
