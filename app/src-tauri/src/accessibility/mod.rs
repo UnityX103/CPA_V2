@@ -158,6 +158,22 @@ fn main_pin_generation() -> u64 {
     MAIN_PIN_GENERATION.load(Ordering::Acquire)
 }
 
+fn snapshot_main_pin_state(app: &AppHandle) -> (u64, bool) {
+    loop {
+        let before = main_pin_generation();
+        let was_main_on_top = if let Some(main) = app.get_webview_window("main") {
+            main.is_always_on_top().unwrap_or(false)
+        } else {
+            false
+        };
+        let after = main_pin_generation();
+        if before == after {
+            return (before, was_main_on_top);
+        }
+        std::hint::spin_loop();
+    }
+}
+
 #[tauri::command]
 pub async fn request_accessibility_permission(app: AppHandle) -> Result<(), String> {
     #[cfg(not(target_os = "macos"))]
@@ -174,12 +190,7 @@ pub async fn request_accessibility_permission(app: AppHandle) -> Result<(), Stri
 
         // 让位 + prompt 全部在同一 run_on_main_thread 闭包内执行，保证顺序：
         // set_always_on_top(false) → deactivate → prompt，避免依赖跨 dispatcher 的 FIFO 假设。
-        let was_main_on_top = if let Some(main) = app.get_webview_window("main") {
-            main.is_always_on_top().unwrap_or(false)
-        } else {
-            false
-        };
-        let pin_generation = main_pin_generation();
+        let (pin_generation, was_main_on_top) = snapshot_main_pin_state(&app);
         let app_for_yield = app.clone();
         if let Err(e) = app.run_on_main_thread(move || {
             if main_pin_generation() == pin_generation {

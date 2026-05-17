@@ -131,21 +131,28 @@ describe('main window pin configuration', () => {
     });
 
     it('restores the accessibility prompt yield to the previous pin state, not always true', () => {
-        const request = rustFunction(accessibilityRs(), 'request_accessibility_permission');
+        const source = accessibilityRs();
+        const snapshot = rustFunction(source, 'snapshot_main_pin_state');
+        const request = rustFunction(source, 'request_accessibility_permission');
+        expect(snapshot, 'snapshot_main_pin_state should exist').not.toBeNull();
         expect(request, 'request_accessibility_permission should exist').not.toBeNull();
-        if (!request) {
+        if (!snapshot || !request) {
             return;
         }
 
-        const savedState = request.body.match(/let\s+([A-Za-z_]\w*)\s*=\s*[\s\S]*?get_webview_window\("main"\)[\s\S]*?is_always_on_top\(\)[\s\S]*?;/);
-        expect(savedState, 'accessibility prompt should snapshot the previous main-window pin state').not.toBeNull();
+        expect(snapshot.body).toMatch(/let\s+before\s*=\s*main_pin_generation\(\)\s*;/);
+        expect(snapshot.body).toMatch(/get_webview_window\("main"\)[\s\S]*?is_always_on_top\(\)/);
+        expect(snapshot.body).toMatch(/let\s+after\s*=\s*main_pin_generation\(\)\s*;/);
+        expect(snapshot.body).toMatch(/if\s+before\s*==\s*after[\s\S]*return\s*\(\s*before\s*,\s*was_main_on_top\s*\)/);
+        expect(request.body).toMatch(/let\s*\(\s*pin_generation\s*,\s*was_main_on_top\s*\)\s*=\s*snapshot_main_pin_state\(\s*&app\s*\)\s*;/);
         const restoreBlock = blockAfter(request.body, 'tauri::async_runtime::spawn(async move');
         expect(restoreBlock, 'accessibility prompt should restore state from its async restore task').not.toBeNull();
-        if (!savedState || !restoreBlock) {
+        if (!restoreBlock) {
             return;
         }
 
-        expect(restoreBlock).toMatch(new RegExp(`\\.set_always_on_top\\(\\s*${escapeRegExp(savedState[1])}\\s*\\)`));
+        expect(restoreBlock).toMatch(/main_pin_generation\(\)\s*==\s*pin_generation/);
+        expect(restoreBlock).toMatch(/\.set_always_on_top\(\s*was_main_on_top\s*\)/);
         expect(restoreBlock).not.toMatch(/\.\s*set_always_on_top\(\s*(?:true|false)\s*\)/);
     });
 });
