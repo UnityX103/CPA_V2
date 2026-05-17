@@ -6,7 +6,7 @@
 //! Pre-fix: 桩 reaches WebKit's main-thread assertion → entire process
 //! SIGTRAPs → child.try_wait() returns Some(status) → test FAILS.
 //!
-//! Post-fix: passthrough::install_first_mouse_only_impl uses
+//! Post-fix: window_helpers::install_first_mouse_only_impl uses
 //! MainThreadMarker::new().expect(...), which panics from non-main
 //! thread; tokio catches the panic; process stays alive → test PASSES.
 

@@ -48,4 +48,14 @@ describe('main window fit-panel layout', () => {
         expect(appRootBlock).toMatch(/\bheight\s*:\s*fit-content\s*;/);
         expect(appRootBlock).toMatch(/\bpadding\s*:\s*8px\s*;/);
     });
+
+    it('does not expose obsolete hit-region commands in the Tauri invoke surface', () => {
+        const libRsPath = path.join(here, '../src-tauri/src/lib.rs');
+        const source = readFileSync(libRsPath, 'utf8');
+
+        expect(source).not.toMatch(/\bset_click_through\b/);
+        expect(source).not.toMatch(/\bregister_hit_region\b/);
+        expect(source).not.toMatch(/\bunregister_hit_region\b/);
+        expect(source).not.toMatch(/\bclear_hit_regions\b/);
+    });
 });
