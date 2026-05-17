@@ -187,6 +187,15 @@ describe('SettingsPanel geometry', () => {
         expect(css).toMatch(/\.settings-nav\s*\{[^}]*width:\s*100%\s*;[^}]*flex-direction:\s*row\s*;/);
         expect(css).toMatch(/\.settings-tab\s*\{[^}]*flex:\s*1\s+0\s+auto\s*;/);
     });
+
+    it('settings modal layer can cover the unscaled window while content scales', () => {
+        const globalCss = readFileSync(path.join(here, '../styles/global.css'), 'utf8');
+        const settingsCss = readFileSync(path.join(here, 'SettingsPanel.css'), 'utf8');
+
+        expect(globalCss).toMatch(/\.settings-window-root\s*\{[^}]*--app-ui-scale:/);
+        expect(globalCss).toMatch(/\.settings-scale-content\s*\{[^}]*zoom:\s*var\(--app-ui-scale\)/);
+        expect(settingsCss).toMatch(/\.danger-modal-layer\s*\{[^}]*position:\s*absolute;[^}]*inset:\s*0;/);
+    });
 });
 
 describe('PomodoroTab parity with gs1Tv', () => {

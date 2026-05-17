@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup, act } from '@testing-library/react';
 import { usePomodoroStore } from '../domain/pomodoro';
@@ -92,5 +95,15 @@ describe('PomodoroPanel drag', () => {
             fireEvent.pointerDown(startButton, { button: 0 });
         });
         expect(startDragging).not.toHaveBeenCalled();
+    });
+});
+
+describe('PomodoroPanel scale root', () => {
+    it('main app content root consumes the app UI scale CSS variable', () => {
+        const here = path.dirname(fileURLToPath(import.meta.url));
+        const css = readFileSync(path.join(here, '../styles/global.css'), 'utf8');
+
+        expect(css).toMatch(/\.app-scale-root\s*\{[^}]*--app-ui-scale:\s*1/);
+        expect(css).toMatch(/\.app-root\s*\{[^}]*zoom:\s*var\(--app-ui-scale\)/);
     });
 });

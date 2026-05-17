@@ -36,6 +36,24 @@ button:focus-visible {
     outline-offset: 2px;
 }
 
+.app-scale-root {
+    --app-ui-scale: 1;
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: auto;
+    background: transparent;
+}
+
+.settings-window-root {
+    --app-ui-scale: 1;
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: auto;
+    background: transparent;
+}
+
 .app-root {
     width: 100vw;
     height: 100vh;
@@ -43,4 +61,11 @@ button:focus-visible {
     align-items: flex-start;
     justify-content: flex-start;
     padding: 8px;
+    zoom: var(--app-ui-scale);
+}
+
+.settings-scale-content {
+    width: 100%;
+    min-height: 100%;
+    zoom: var(--app-ui-scale);
 }
