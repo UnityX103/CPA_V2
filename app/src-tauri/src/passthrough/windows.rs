@@ -7,9 +7,7 @@ use std::sync::Arc;
 use tauri::{Manager, WebviewWindow};
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, POINT, WPARAM};
 use windows::Win32::Graphics::Gdi::ScreenToClient;
-use windows::Win32::UI::Controls::{
-    DefSubclassProc, RemoveWindowSubclass, SetWindowSubclass,
-};
+use windows::Win32::UI::Controls::{DefSubclassProc, RemoveWindowSubclass, SetWindowSubclass};
 use windows::Win32::UI::HiDpi::GetDpiForWindow;
 use windows::Win32::UI::WindowsAndMessaging::{
     HTCLIENT, HTTRANSPARENT, MA_ACTIVATE, WM_MOUSEACTIVATE, WM_NCHITTEST,
@@ -39,7 +37,10 @@ unsafe extern "system" fn subclass_proc(
         let raw = lparam.0 as isize;
         let screen_x = ((raw & 0xFFFF) as i16) as i32;
         let screen_y = (((raw >> 16) & 0xFFFF) as i16) as i32;
-        let mut pt = POINT { x: screen_x, y: screen_y };
+        let mut pt = POINT {
+            x: screen_x,
+            y: screen_y,
+        };
         if unsafe { ScreenToClient(hwnd, &mut pt) }.as_bool() {
             let dpi = unsafe { GetDpiForWindow(hwnd) };
             let scale = if dpi == 0 { 1.0 } else { dpi as f64 / 96.0 };
@@ -65,14 +66,14 @@ pub fn install_impl(window: &WebviewWindow, store: Arc<HitRegionStore>) {
     };
     // Leak Arc → raw ptr; uninstall_impl 收回。
     let raw: *const HitRegionStore = Arc::into_raw(store);
-    let ok = unsafe {
-        SetWindowSubclass(hwnd, Some(subclass_proc), SUBCLASS_ID, raw as usize)
-    }
-    .as_bool();
+    let ok = unsafe { SetWindowSubclass(hwnd, Some(subclass_proc), SUBCLASS_ID, raw as usize) }
+        .as_bool();
     if !ok {
         eprintln!("[passthrough/windows] SetWindowSubclass failed");
         // 失败时把 Arc 收回防止泄漏
-        unsafe { let _ = Arc::from_raw(raw); };
+        unsafe {
+            let _ = Arc::from_raw(raw);
+        };
     }
 }
 
@@ -83,7 +84,9 @@ pub fn uninstall_impl(window: &WebviewWindow) {
     };
     // ref_data 拿不回来；只能在 install 时另存一份指针。这里简化：直接 remove，
     // Arc 在 install 路径 leak 后由进程退出收回（与 macOS 当前同策略，文档化）。
-    unsafe { let _ = RemoveWindowSubclass(hwnd, Some(subclass_proc), SUBCLASS_ID); };
+    unsafe {
+        let _ = RemoveWindowSubclass(hwnd, Some(subclass_proc), SUBCLASS_ID);
+    };
 }
 
 /// 给一个 webview 窗口装上仅处理 WM_MOUSEACTIVATE 的 subclass。复用 `subclass_proc`，
@@ -93,14 +96,13 @@ pub fn install_first_mouse_only_impl(window: &WebviewWindow) {
     let hwnd = match window.hwnd() {
         Ok(h) => HWND(h.0 as *mut _),
         Err(_) => {
-            eprintln!("[passthrough/windows] hwnd() returned Err on first-mouse-only install; skipping");
+            eprintln!(
+                "[passthrough/windows] hwnd() returned Err on first-mouse-only install; skipping"
+            );
             return;
         }
     };
-    let ok = unsafe {
-        SetWindowSubclass(hwnd, Some(subclass_proc), SUBCLASS_ID, 0)
-    }
-    .as_bool();
+    let ok = unsafe { SetWindowSubclass(hwnd, Some(subclass_proc), SUBCLASS_ID, 0) }.as_bool();
     if !ok {
         eprintln!("[passthrough/windows] SetWindowSubclass failed on first-mouse-only install");
     }

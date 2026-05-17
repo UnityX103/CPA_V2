@@ -13,7 +13,9 @@ use tauri::{
 
 #[tauri::command]
 fn set_click_through(window: WebviewWindow, ignore: bool) -> Result<(), String> {
-    window.set_ignore_cursor_events(ignore).map_err(|e| e.to_string())
+    window
+        .set_ignore_cursor_events(ignore)
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -90,12 +92,10 @@ fn build_settings_window_hidden(
     Ok(w)
 }
 
-pub(crate) async fn open_settings_window_impl(
-    app: tauri::AppHandle,
-) -> Result<(), String> {
-    let w = app
-        .get_webview_window("settings")
-        .ok_or_else(|| "settings window not built — setup() probably failed; check stderr".to_string())?;
+pub(crate) async fn open_settings_window_impl(app: tauri::AppHandle) -> Result<(), String> {
+    let w = app.get_webview_window("settings").ok_or_else(|| {
+        "settings window not built — setup() probably failed; check stderr".to_string()
+    })?;
     if let Ok(pos) = settings_center_position(&app) {
         let _ = w.set_position(pos);
     }

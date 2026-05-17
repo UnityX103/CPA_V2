@@ -92,8 +92,7 @@ pub fn install_impl(window: &WebviewWindow, store: Arc<HitRegionStore>) {
         }
     };
     // Safety: NSWindow 必须在主线程访问；Tauri 的 setup() 在主线程运行。
-    let mtm = MainThreadMarker::new()
-        .expect("passthrough macos install_* must run on main thread");
+    let mtm = MainThreadMarker::new().expect("passthrough macos install_* must run on main thread");
     let ns_window: &NSWindow = unsafe { &*ns_window_ptr };
 
     let old_content: Retained<NSView> = match ns_window.contentView() {
@@ -112,15 +111,13 @@ pub fn install_impl(window: &WebviewWindow, store: Arc<HitRegionStore>) {
 
     let this = PassthroughView::alloc(mtm).set_ivars(PassthroughIvars { store: store_raw });
     // 调用 NSView 的 initWithFrame: 作为 super 方法。
-    let view: Retained<PassthroughView> =
-        unsafe { msg_send![super(this), initWithFrame: frame] };
+    let view: Retained<PassthroughView> = unsafe { msg_send![super(this), initWithFrame: frame] };
 
     // 把原 contentView 取下，装进新 view 作子视图，再把新 view 设为 contentView。
     old_content.removeFromSuperview();
     view.addSubview(&old_content);
     old_content.setAutoresizingMask(
-        NSAutoresizingMaskOptions::ViewWidthSizable
-            | NSAutoresizingMaskOptions::ViewHeightSizable,
+        NSAutoresizingMaskOptions::ViewWidthSizable | NSAutoresizingMaskOptions::ViewHeightSizable,
     );
     ns_window.setContentView(Some(&*view));
 }
@@ -159,8 +156,7 @@ pub fn install_first_mouse_only_impl(window: &WebviewWindow) {
             return;
         }
     };
-    let mtm = MainThreadMarker::new()
-        .expect("passthrough macos install_* must run on main thread");
+    let mtm = MainThreadMarker::new().expect("passthrough macos install_* must run on main thread");
     let ns_window: &NSWindow = unsafe { &*ns_window_ptr };
 
     let old_content: Retained<NSView> = match ns_window.contentView() {
@@ -173,14 +169,12 @@ pub fn install_first_mouse_only_impl(window: &WebviewWindow) {
     let frame = old_content.frame();
 
     let this = FirstMouseView::alloc(mtm).set_ivars(());
-    let view: Retained<FirstMouseView> =
-        unsafe { msg_send![super(this), initWithFrame: frame] };
+    let view: Retained<FirstMouseView> = unsafe { msg_send![super(this), initWithFrame: frame] };
 
     old_content.removeFromSuperview();
     view.addSubview(&old_content);
     old_content.setAutoresizingMask(
-        NSAutoresizingMaskOptions::ViewWidthSizable
-            | NSAutoresizingMaskOptions::ViewHeightSizable,
+        NSAutoresizingMaskOptions::ViewWidthSizable | NSAutoresizingMaskOptions::ViewHeightSizable,
     );
     ns_window.setContentView(Some(&*view));
 }
@@ -211,10 +205,7 @@ pub fn post_did_move_notification_for_testing_impl(window: &WebviewWindow) {
         let center = NSNotificationCenter::defaultCenter();
         let ns_window_raw = ns_window_addr as *mut objc2::runtime::AnyObject;
         unsafe {
-            center.postNotificationName_object(
-                NSWindowDidMoveNotification,
-                Some(&*ns_window_raw),
-            );
+            center.postNotificationName_object(NSWindowDidMoveNotification, Some(&*ns_window_raw));
         }
     });
 }
@@ -233,10 +224,10 @@ pub fn post_did_move_notification_for_testing_impl(window: &WebviewWindow) {
 /// 死循环规避：observer 只对 NSWindowDidMoveNotification / NSWindowDidEndLiveResizeNotification
 /// 触发，不对 BecomeKey 触发，所以主窗口被普通 click 激活不会触发还焦。
 pub fn install_focus_restorer_impl(main_window: &WebviewWindow, app: tauri::AppHandle) {
-    use objc2_app_kit::{NSWindowDidEndLiveResizeNotification, NSWindowDidMoveNotification};
-    use objc2_foundation::{NSNotificationCenter, NSOperationQueue};
     use block2::RcBlock;
+    use objc2_app_kit::{NSWindowDidEndLiveResizeNotification, NSWindowDidMoveNotification};
     use objc2_foundation::NSNotification;
+    use objc2_foundation::{NSNotificationCenter, NSOperationQueue};
     use std::ptr::NonNull;
 
     let ns_window_ptr = match main_window.ns_window() {
@@ -247,7 +238,8 @@ pub fn install_focus_restorer_impl(main_window: &WebviewWindow, app: tauri::AppH
         }
     };
 
-    let ns_window_obj: *mut objc2::runtime::AnyObject = ns_window_ptr as *mut objc2::runtime::AnyObject;
+    let ns_window_obj: *mut objc2::runtime::AnyObject =
+        ns_window_ptr as *mut objc2::runtime::AnyObject;
 
     let app_for_block = app;
     let block = RcBlock::new(move |_notif: NonNull<NSNotification>| {

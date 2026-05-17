@@ -23,8 +23,8 @@ where
         kCFRunLoopCommonModes, kCFRunLoopDefaultMode, CFRunLoop, CFRunLoopRunInMode,
     };
     use core_graphics::event::{
-        CGEvent, CGEventTap, CGEventTapLocation, CGEventTapOptions,
-        CGEventTapPlacement, CGEventType, CallbackResult, EventField,
+        CGEvent, CGEventTap, CGEventTapLocation, CGEventTapOptions, CGEventTapPlacement,
+        CGEventType, CallbackResult, EventField,
     };
 
     std::thread::spawn(move || {
@@ -66,11 +66,7 @@ where
         // 否则会抛 _CFRunLoopError_RunCalledWithInvalidMode
         while !stop.load(Ordering::Relaxed) {
             unsafe {
-                let _ = CFRunLoopRunInMode(
-                    kCFRunLoopDefaultMode,
-                    0.1,
-                    0,
-                );
+                let _ = CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.1, 0);
             }
         }
 
