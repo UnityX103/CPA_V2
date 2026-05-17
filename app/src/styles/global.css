@@ -12,7 +12,6 @@
 }
 
 html, body, #root {
-    height: 100%;
     margin: 0;
     padding: 0;
     background: transparent !important;
@@ -37,8 +36,8 @@ button:focus-visible {
 }
 
 .app-root {
-    width: 100vw;
-    height: 100vh;
+    width: fit-content;
+    height: fit-content;
     display: flex;
     align-items: flex-start;
     justify-content: flex-start;
