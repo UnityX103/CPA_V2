@@ -7,11 +7,17 @@ import {
     pomoSig,
     settingsSig,
 } from './host';
-import { useSettingsStore } from '../settings';
-import { usePomodoroStore } from '../pomodoro';
-import { useNetworkStore } from '../network';
+import { useSettingsStore, type SettingsState } from '../settings';
+import { usePomodoroStore, type PomodoroState } from '../pomodoro';
+import { useNetworkStore, type NetworkStateShape } from '../network';
 import { useBindingKeyStore } from '../bindingKey';
 import { BRIDGE_VERSION } from './protocol';
+
+type BindingKeySigInput = Parameters<typeof bindingKeySig>[0];
+type BindingKeyStateWithPermission = BindingKeySigInput & {
+    permissionGranted: boolean;
+    platform: 'macos' | 'windows' | 'other' | null;
+};
 
 const sampleEndActionVideo = {
     sourceKind: 'custom' as const,
@@ -163,29 +169,35 @@ describe('applyDispatch', () => {
 
 describe('bridge host subscription signatures', () => {
     it('settingsSig ignores settings-window-local fields and includes mirrored fields', () => {
-        expect(settingsSig({ uiScale: 1.25, activeTab: 'pomodoro' }))
-            .toBe(settingsSig({ uiScale: 1.25, activeTab: 'global' }));
-        expect(settingsSig({ uiScale: 1.25, activeTab: 'pomodoro' }))
-            .not.toBe(settingsSig({ uiScale: 1.5, activeTab: 'pomodoro' }));
+        const pomodoroTabSettings: SettingsState = { uiScale: 1.25, activeTab: 'pomodoro' };
+        const globalTabSettings: SettingsState = { uiScale: 1.25, activeTab: 'global' };
+        const scaledSettings: SettingsState = { uiScale: 1.5, activeTab: 'pomodoro' };
+
+        expect(settingsSig(pomodoroTabSettings)).toBe(settingsSig(globalTabSettings));
+        expect(settingsSig(pomodoroTabSettings)).not.toBe(settingsSig(scaledSettings));
     });
 
     it('pomoSig includes end-action settings and ignores transient timer fields', () => {
-        const base = {
+        const base: PomodoroState = {
             ...usePomodoroStore.getState(),
             endActionMode: 'playVideo' as const,
             endActionVideo: sampleEndActionVideo,
         };
-
-        expect(pomoSig({ ...base, remainingSeconds: 1 })).toBe(pomoSig({ ...base, remainingSeconds: 99 }));
-        expect(pomoSig(base)).not.toBe(pomoSig({ ...base, endActionMode: 'topWindow' }));
-        expect(pomoSig(base)).not.toBe(pomoSig({
+        const oneSecondRemaining: PomodoroState = { ...base, remainingSeconds: 1 };
+        const ninetyNineSecondsRemaining: PomodoroState = { ...base, remainingSeconds: 99 };
+        const topWindowEndAction: PomodoroState = { ...base, endActionMode: 'topWindow' };
+        const otherVideo: PomodoroState = {
             ...base,
             endActionVideo: { ...sampleEndActionVideo, customVideoPath: '/other.mp4' },
-        }));
+        };
+
+        expect(pomoSig(oneSecondRemaining)).toBe(pomoSig(ninetyNineSecondsRemaining));
+        expect(pomoSig(base)).not.toBe(pomoSig(topWindowEndAction));
+        expect(pomoSig(base)).not.toBe(pomoSig(otherVideo));
     });
 
     it('pomoSig avoids delimiter collisions in end-action video fields', () => {
-        const base = {
+        const base: PomodoroState = {
             ...usePomodoroStore.getState(),
             endActionMode: 'playVideo' as const,
         };
@@ -208,7 +220,7 @@ describe('bridge host subscription signatures', () => {
     });
 
     it('networkSig ignores omitted network fields and includes mirrored fields', () => {
-        const base = {
+        const base: NetworkStateShape = {
             ...useNetworkStore.getState(),
             status: 'joined' as const,
             serverUrl: 'ws://one.example',
@@ -220,9 +232,8 @@ describe('bridge host subscription signatures', () => {
                 },
             },
         };
-
-        expect(networkSig(base)).toBe(networkSig({ ...base, serverUrl: 'ws://two.example' }));
-        expect(networkSig(base)).not.toBe(networkSig({
+        const otherServer: NetworkStateShape = { ...base, serverUrl: 'ws://two.example' };
+        const renamedPlayer: NetworkStateShape = {
             ...base,
             players: {
                 'p-1': {
@@ -231,11 +242,14 @@ describe('bridge host subscription signatures', () => {
                     state: null,
                 },
             },
-        }));
+        };
+
+        expect(networkSig(base)).toBe(networkSig(otherServer));
+        expect(networkSig(base)).not.toBe(networkSig(renamedPlayer));
     });
 
     it('bindingKeySig ignores omitted permission fields and includes mirrored fields', () => {
-        const base = {
+        const base: BindingKeyStateWithPermission = {
             ...useBindingKeyStore.getState(),
             permissionGranted: true,
             platform: 'macos' as const,
@@ -247,15 +261,17 @@ describe('bridge host subscription signatures', () => {
                 enabled: true,
             }],
         };
-
-        expect(bindingKeySig(base)).toBe(bindingKeySig({
+        const deniedPermission: BindingKeyStateWithPermission = {
             ...base,
             permissionGranted: false,
             platform: 'windows',
-        }));
-        expect(bindingKeySig(base)).not.toBe(bindingKeySig({
+        };
+        const incrementedEntry: BindingKeyStateWithPermission = {
             ...base,
             entries: [{ ...base.entries[0], pressCount: 2 }],
-        }));
+        };
+
+        expect(bindingKeySig(base)).toBe(bindingKeySig(deniedPermission));
+        expect(bindingKeySig(base)).not.toBe(bindingKeySig(incrementedEntry));
     });
 });
