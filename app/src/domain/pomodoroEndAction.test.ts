@@ -41,7 +41,7 @@ describe('pomodoro end-action resolver', () => {
             customVideoPath: '',
         }), runtime)).resolves.toEqual({
             kind: 'video',
-            src: '/videos/ms1.webm',
+            src: '/videos/ms1-alpha.mov',
             title: '千千',
         });
     });
@@ -63,7 +63,7 @@ describe('pomodoro end-action resolver', () => {
     it('validates a custom video path and resolves it with a basename title', async () => {
         const runtime = makeRuntime();
         vi.mocked(runtime.validateCustomVideoPath).mockResolvedValue({ ok: true, message: null });
-        vi.mocked(runtime.customVideoSrc).mockReturnValue('asset://localhost/Users/xpy/Videos/focus-end.webm');
+        vi.mocked(runtime.customVideoSrc).mockResolvedValue('asset://localhost/Users/xpy/Library/Caches/app/focus-end.mov');
 
         await expect(resolvePomodoroEndAction(makeState('playVideo', {
             sourceKind: 'custom',
@@ -71,7 +71,7 @@ describe('pomodoro end-action resolver', () => {
             customVideoPath: '/Users/xpy/Videos/focus-end.webm',
         }), runtime)).resolves.toEqual({
             kind: 'video',
-            src: 'asset://localhost/Users/xpy/Videos/focus-end.webm',
+            src: 'asset://localhost/Users/xpy/Library/Caches/app/focus-end.mov',
             title: 'focus-end.webm',
         });
 
@@ -92,6 +92,20 @@ describe('pomodoro end-action resolver', () => {
 
         expect(runtime.showCustomVideoMissingMessage).toHaveBeenCalledWith('文件不存在');
         expect(runtime.customVideoSrc).not.toHaveBeenCalled();
+    });
+
+    it('shows a conversion message and falls back to topWindow when custom alpha preparation fails', async () => {
+        const runtime = makeRuntime();
+        vi.mocked(runtime.validateCustomVideoPath).mockResolvedValue({ ok: true, message: null });
+        vi.mocked(runtime.customVideoSrc).mockRejectedValue(new Error('透明 WebM 转换失败'));
+
+        await expect(resolvePomodoroEndAction(makeState('playVideo', {
+            sourceKind: 'custom',
+            builtinVideoId: 'qianqian',
+            customVideoPath: '/Users/xpy/Videos/focus-end.webm',
+        }), runtime)).resolves.toEqual({ kind: 'topWindow' });
+
+        expect(runtime.showCustomVideoMissingMessage).toHaveBeenCalledWith('透明 WebM 转换失败');
     });
 
     it('falls back to topWindow for empty custom paths without validation or messages', async () => {

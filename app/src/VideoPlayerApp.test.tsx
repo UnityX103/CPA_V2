@@ -16,7 +16,7 @@ describe('VideoPlayerApp', () => {
     beforeEach(() => {
         closeMock.mockReset();
         closeMock.mockResolvedValue(undefined);
-        window.history.pushState({}, '', '/index.html?window=video-player&src=%2Fvideos%2Fms1.webm&title=%E5%8D%83%E5%8D%83');
+        window.history.pushState({}, '', '/index.html?window=video-player&src=%2Fvideos%2Fms1-alpha.mov&title=%E5%8D%83%E5%8D%83');
     });
 
     afterEach(() => {
@@ -27,7 +27,7 @@ describe('VideoPlayerApp', () => {
         render(<VideoPlayerApp />);
 
         const video = screen.getByLabelText('播放 千千') as HTMLVideoElement;
-        expect(video.getAttribute('src')).toBe('/videos/ms1.webm');
+        expect(video.getAttribute('src')).toBe('/videos/ms1-alpha.mov');
     });
 
     it('closes the player window when playback ends', () => {

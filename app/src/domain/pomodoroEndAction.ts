@@ -12,7 +12,7 @@ export type PomodoroEndActionResolution =
 
 export interface PomodoroEndActionRuntime {
     validateCustomVideoPath: (path: string) => MaybePromise<CustomVideoValidation>;
-    customVideoSrc: (path: string) => string;
+    customVideoSrc: (path: string) => MaybePromise<string>;
     showCustomVideoMissingMessage: (message: string) => MaybePromise<void>;
 }
 
@@ -48,11 +48,17 @@ export async function resolvePomodoroEndAction(
         return { kind: 'topWindow' };
     }
 
-    return {
-        kind: 'video',
-        src: runtime.customVideoSrc(path),
-        title: basename(path) || '自定义视频',
-    };
+    try {
+        return {
+            kind: 'video',
+            src: await runtime.customVideoSrc(path),
+            title: basename(path) || '自定义视频',
+        };
+    } catch (error) {
+        const message = error instanceof Error ? error.message : '自定义视频转换失败';
+        await runtime.showCustomVideoMissingMessage(message);
+        return { kind: 'topWindow' };
+    }
 }
 
 function basename(path: string): string {

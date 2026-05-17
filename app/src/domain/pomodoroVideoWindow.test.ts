@@ -46,13 +46,13 @@ describe('pomodoro video player window', () => {
         await openPomodoroVideoWindow({
             kind: 'video',
             title: '千千',
-            src: '/videos/ms1.webm',
+            src: '/videos/ms1-alpha.mov',
         });
 
         expect(getByLabelMock).toHaveBeenCalledWith('pomodoro-video-player');
         expect(invokeMock).toHaveBeenCalledWith('pomodoro_video_screen_rect');
         expect(constructorMock).toHaveBeenCalledWith('pomodoro-video-player', expect.objectContaining({
-            url: 'index.html?window=video-player&src=%2Fvideos%2Fms1.webm&title=%E5%8D%83%E5%8D%83',
+            url: 'index.html?window=video-player&src=%2Fvideos%2Fms1-alpha.mov&title=%E5%8D%83%E5%8D%83',
             title: '千千',
             x: -1920,
             y: 0,

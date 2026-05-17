@@ -437,6 +437,7 @@ pub fn run() {
             passthrough::unregister_hit_region,
             passthrough::clear_hit_regions,
             video_files::validate_custom_video_path,
+            video_files::prepare_custom_alpha_video_path,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application");

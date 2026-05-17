@@ -20,8 +20,9 @@ export async function validateCustomVideoPath(path: string): Promise<CustomVideo
     return invoke<CustomVideoValidation>('validate_custom_video_path', { path });
 }
 
-export function customVideoSrc(path: string): string {
-    return convertFileSrc(path);
+export async function customVideoSrc(path: string): Promise<string> {
+    const playablePath = await invoke<string>('prepare_custom_alpha_video_path', { path });
+    return convertFileSrc(playablePath);
 }
 
 export async function showCustomVideoMissingMessage(text: string): Promise<void> {

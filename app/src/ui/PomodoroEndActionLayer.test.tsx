@@ -79,7 +79,7 @@ describe('PomodoroEndActionLayer', () => {
         const action = {
             kind: 'video' as const,
             title: '千千',
-            src: '/videos/ms1.webm',
+            src: '/videos/ms1-alpha.mov',
         };
         resolvePomodoroEndActionMock.mockResolvedValue(action);
         render(<PomodoroEndActionLayer />);
@@ -99,7 +99,7 @@ describe('PomodoroEndActionLayer', () => {
         resolvePomodoroEndActionMock.mockResolvedValue({
             kind: 'video',
             title: '千千',
-            src: '/videos/ms1.webm',
+            src: '/videos/ms1-alpha.mov',
         });
         openPomodoroVideoWindowMock.mockRejectedValue(new Error('window denied'));
         render(<PomodoroEndActionLayer />);

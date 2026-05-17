@@ -10,7 +10,7 @@ export const BUILTIN_POMODORO_VIDEOS: readonly BuiltinPomodoroVideo[] = [
     {
         id: DEFAULT_BUILTIN_POMODORO_VIDEO_ID,
         name: '千千',
-        url: '/videos/ms1.webm',
+        url: '/videos/ms1-alpha.mov',
     },
 ];
 

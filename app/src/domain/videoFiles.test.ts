@@ -70,11 +70,17 @@ describe('custom video file adapter', () => {
         });
     });
 
-    it('converts a custom video path into a media-safe Tauri src', () => {
-        convertFileSrcMock.mockReturnValue('asset://localhost/Users/xpy/movie.webm');
+    it('converts a custom WebM into an alpha-preserving cached media src', async () => {
+        invokeMock.mockResolvedValue('/Users/xpy/Library/Caches/app/alpha-videos/movie.mov');
+        convertFileSrcMock.mockReturnValue('asset://localhost/Users/xpy/Library/Caches/app/alpha-videos/movie.mov');
 
-        expect(customVideoSrc('/Users/xpy/movie.webm')).toBe('asset://localhost/Users/xpy/movie.webm');
-        expect(convertFileSrcMock).toHaveBeenCalledWith('/Users/xpy/movie.webm');
+        await expect(customVideoSrc('/Users/xpy/movie.webm')).resolves.toBe(
+            'asset://localhost/Users/xpy/Library/Caches/app/alpha-videos/movie.mov',
+        );
+        expect(invokeMock).toHaveBeenCalledWith('prepare_custom_alpha_video_path', {
+            path: '/Users/xpy/movie.webm',
+        });
+        expect(convertFileSrcMock).toHaveBeenCalledWith('/Users/xpy/Library/Caches/app/alpha-videos/movie.mov');
     });
 
     it('shows a warning when the selected custom video is unavailable', async () => {

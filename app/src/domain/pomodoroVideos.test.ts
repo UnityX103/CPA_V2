@@ -11,7 +11,7 @@ describe('pomodoro video registry', () => {
 
         const qianqian = getBuiltinPomodoroVideo('qianqian');
         expect(qianqian?.name).toBe('千千');
-        expect(qianqian?.url).toBe('/videos/ms1.webm');
+        expect(qianqian?.url).toBe('/videos/ms1-alpha.mov');
         expect(getBuiltinPomodoroVideo('missing')).toBeNull();
     });
 
