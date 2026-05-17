@@ -143,8 +143,14 @@ function PomodoroTab() {
         breakMin * 60 !== pomo.breakDurationSeconds ||
         endActionMode !== pomo.endActionMode ||
         !sameEndActionVideo(endActionVideo, pomo.endActionVideo);
+    const hasMissingCustomVideo =
+        endActionMode === 'playVideo' &&
+        endActionVideo.sourceKind === 'custom' &&
+        !endActionVideo.customVideoPath;
+    const canApply = dirty && !hasMissingCustomVideo;
 
     const apply = () => {
+        if (!canApply) return;
         const focusSeconds = focusMin * 60;
         const breakSeconds = breakMin * 60;
         const durationChanged =
@@ -201,7 +207,7 @@ function PomodoroTab() {
     return (
         <>
             <div className="apply-row">
-                <button className="btn btn-primary apply-btn" disabled={!dirty} onClick={apply}>
+                <button className="btn btn-primary apply-btn" disabled={!canApply} onClick={apply}>
                     应用
                 </button>
             </div>

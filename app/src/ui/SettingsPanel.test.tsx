@@ -215,6 +215,28 @@ describe('PomodoroTab end action settings', () => {
         });
 
         expect(screen.getByLabelText('视频选项')).toHaveProperty('value', 'custom');
+        expect(screen.getByRole('button', { name: '应用' })).toHaveProperty('disabled', true);
+    });
+
+    it('does not allow applying a custom video option until a file is selected', async () => {
+        render(<SettingsPanel />);
+
+        fireEvent.change(screen.getByLabelText('视频选项'), { target: { value: 'custom' } });
+        const apply = screen.getByRole('button', { name: '应用' });
+        expect(apply).toHaveProperty('disabled', true);
+
+        fireEvent.click(apply);
+        expect(usePomodoroStore.getState().endActionVideo).toEqual({
+            sourceKind: 'builtin',
+            builtinVideoId: 'qianqian',
+            customVideoPath: '',
+        });
+
+        pickCustomWebmPathMock.mockResolvedValue('/Users/xpy/Videos/custom.webm');
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: '选择自定义视频' }));
+        });
+
         expect(screen.getByRole('button', { name: '应用' })).toHaveProperty('disabled', false);
     });
 
