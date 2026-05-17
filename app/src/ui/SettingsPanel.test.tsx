@@ -143,6 +143,32 @@ describe('SettingsPanel close button', () => {
         await act(async () => { fireEvent.click(closeBtn); });
         expect(invokeMock).toHaveBeenCalledWith('close_settings_window');
     });
+
+    it('closing settings reverts a pending dangerous change before hiding the window', async () => {
+        useSettingsStore.setState({
+            activeTab: 'global',
+            uiScale: 1.5,
+            committedUiScale: 1.0,
+            dangerousChange: {
+                id: 'scale-preview',
+                kind: 'uiScale',
+                previousValue: 1.0,
+                nextValue: 1.5,
+                expiresAt: Date.now() + 5000,
+            },
+        });
+        const revertSpy = vi.spyOn(useSettingsStore.getState(), 'revertDangerousChange');
+
+        render(<SettingsPanel />);
+        const closeBtn = screen.getByRole('button', { name: '关闭' });
+
+        await act(async () => {
+            fireEvent.click(closeBtn);
+        });
+
+        expect(revertSpy).toHaveBeenCalledWith('scale-preview');
+        expect(invokeMock).toHaveBeenCalledWith('close_settings_window');
+    });
 });
 
 describe('SettingsPanel geometry', () => {

@@ -24,8 +24,15 @@ const TABS: Array<{ id: SettingsTab; label: string }> = [
 export function SettingsPanel() {
     const activeTab = useSettingsStore((s) => s.activeTab);
     const setActiveTab = useSettingsStore((s) => s.setActiveTab);
+    const dangerousChange = useSettingsStore((s) => s.dangerousChange);
+    const revertDangerousChange = useSettingsStore((s) => s.revertDangerousChange);
 
-    const onClose = () => { void invoke('close_settings_window'); };
+    const onClose = () => {
+        if (dangerousChange) {
+            revertDangerousChange(dangerousChange.id);
+        }
+        void invoke('close_settings_window');
+    };
 
     const onPanelPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
         if (!shouldStartWindowDrag(e.button, e.target)) return;
