@@ -251,6 +251,49 @@
             },
             {
               "type": "frame",
+              "id": "fnZ59",
+              "name": "pomoAutoStartBreak",
+              "width": "fill_container",
+              "fill": "#F6F7F8",
+              "cornerRadius": 16,
+              "padding": [
+                14,
+                16
+              ],
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "FUZG3",
+                  "name": "pomoAutoStartBreakLeft",
+                  "gap": 10,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "rZHBv",
+                      "name": "pomoAutoStartBreakText",
+                      "fill": "#1A1A1A",
+                      "content": "自动开始休息",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 14,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "id": "iy6OE",
+                  "type": "ref",
+                  "ref": "NGo9f",
+                  "name": "pomoAutoStartBreakToggle",
+                  "fill": "#E5E7EB",
+                  "justifyContent": "start"
+                }
+              ]
+            },
+            {
+              "type": "frame",
               "id": "Jvg0I",
               "name": "pomoVideoCustom",
               "width": "fill_container",

@@ -23,7 +23,13 @@ export interface PomodoroActions {
     skip: () => void;
     reset: () => void;
     togglePin: () => void;
-    applySettings: (focusSeconds: number, breakSeconds: number, totalRounds: number, resetProgress: boolean) => void;
+    applySettings: (
+        focusSeconds: number,
+        breakSeconds: number,
+        totalRounds: number,
+        resetProgress: boolean,
+        autoStartBreak: boolean,
+    ) => void;
     tick: (deltaSeconds: number) => void;
 }
 
@@ -44,19 +50,19 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
             currentPhase: 'focus',
             isRunning: false,
             isPinned: false,
-            autoStartBreak: true,
+            autoStartBreak: false,
             consecutiveCompletedFocus: 0,
             start: () => {},
             pause: () => {},
             skip: () => {},
             reset: () => {},
             togglePin: () => {},
-            applySettings: (focusSeconds, breakSeconds, totalRounds, resetProgress) => {
+            applySettings: (focusSeconds, breakSeconds, totalRounds, resetProgress, autoStartBreak) => {
                 void dispatch({
                     v: BRIDGE_VERSION,
                     store: 'pomodoro',
                     action: 'applySettings',
-                    args: [focusSeconds, breakSeconds, totalRounds, resetProgress],
+                    args: [focusSeconds, breakSeconds, totalRounds, resetProgress, autoStartBreak],
                 });
             },
             tick: () => {},
@@ -105,7 +111,7 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
             currentPhase: 'focus',
             isRunning: false,
             isPinned: false,
-            autoStartBreak: true,
+            autoStartBreak: false,
             consecutiveCompletedFocus: 0,
 
             start: () => {
@@ -141,11 +147,12 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
                 });
             },
             togglePin: () => set((s) => ({ isPinned: !s.isPinned })),
-            applySettings: (focusSeconds, breakSeconds, totalRounds, resetProgress) => {
+            applySettings: (focusSeconds, breakSeconds, totalRounds, resetProgress, autoStartBreak) => {
                 set({
                     focusDurationSeconds: focusSeconds,
                     breakDurationSeconds: breakSeconds,
                     totalRounds,
+                    autoStartBreak,
                 });
                 if (resetProgress) {
                     accumulator = 0;

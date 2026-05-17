@@ -18,6 +18,7 @@ export interface BridgeSnapshot {
         focusDurationSeconds: number;
         breakDurationSeconds: number;
         totalRounds: number;
+        autoStartBreak: boolean;
     };
     network: {
         autoConnect: boolean;
@@ -38,7 +39,7 @@ export interface BridgeSnapshot {
 export type DispatchPayload =
     | { v: typeof BRIDGE_VERSION; store: 'settings';   action: 'setUiScale' | 'previewDangerousUiScale'; args: [number] }
     | { v: typeof BRIDGE_VERSION; store: 'settings';   action: 'applyDangerousChange' | 'revertDangerousChange'; args: [string] }
-    | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'applySettings'; args: [number, number, number, boolean] }
+    | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'applySettings'; args: [number, number, number, boolean, boolean] }
     | { v: typeof BRIDGE_VERSION; store: 'network';    action: 'createRoom' | 'joinRoom'; args: [string] }
     | { v: typeof BRIDGE_VERSION; store: 'network';    action: 'leaveRoom'; args: [] }
     | { v: typeof BRIDGE_VERSION; store: 'network';    action: 'setAutoConnect'; args: [boolean] }

@@ -18,11 +18,13 @@ beforeEach(() => {
 describe('buildSnapshot', () => {
     it('reads from every source store and stamps the version', () => {
         useSettingsStore.setState({ uiScale: 1.5, committedUiScale: 1.5 });
+        usePomodoroStore.setState({ autoStartBreak: true });
         const snap = buildSnapshot();
         expect(snap.v).toBe(BRIDGE_VERSION);
         expect(snap.settings.uiScale).toBe(1.5);
         expect('targetMonitorIndex' in snap.settings).toBe(false);
         expect(snap.pomodoro.focusDurationSeconds).toBe(usePomodoroStore.getState().focusDurationSeconds);
+        expect(snap.pomodoro.autoStartBreak).toBe(true);
         expect(snap.network.status).toBe(useNetworkStore.getState().status);
         expect(snap.bindingKey.entries).toBe(useBindingKeyStore.getState().entries);
     });
@@ -60,6 +62,16 @@ describe('applyDispatch', () => {
         const applyId = useSettingsStore.getState().dangerousChange!.id;
         applyDispatch({ v: BRIDGE_VERSION, store: 'settings', action: 'applyDangerousChange', args: [applyId] });
         expect(useSettingsStore.getState().committedUiScale).toBe(2.0);
+    });
+
+    it('routes pomodoro/applySettings to usePomodoroStore.applySettings', () => {
+        applyDispatch({ v: BRIDGE_VERSION, store: 'pomodoro', action: 'applySettings', args: [900, 180, 5, true, true] });
+
+        const state = usePomodoroStore.getState();
+        expect(state.focusDurationSeconds).toBe(900);
+        expect(state.breakDurationSeconds).toBe(180);
+        expect(state.totalRounds).toBe(5);
+        expect(state.autoStartBreak).toBe(true);
     });
 
     it('ignores payloads with a mismatched bridge version', () => {

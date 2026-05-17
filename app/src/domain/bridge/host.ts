@@ -30,6 +30,7 @@ export function buildSnapshot(): BridgeSnapshot {
             focusDurationSeconds: p.focusDurationSeconds,
             breakDurationSeconds: p.breakDurationSeconds,
             totalRounds: p.totalRounds,
+            autoStartBreak: p.autoStartBreak,
         },
         network: {
             autoConnect: n.autoConnect,
@@ -104,8 +105,13 @@ async function sendSnapshot(): Promise<void> {
     }
 }
 
-function pomoSig(s: { focusDurationSeconds: number; breakDurationSeconds: number; totalRounds: number }): string {
-    return `${s.focusDurationSeconds}|${s.breakDurationSeconds}|${s.totalRounds}`;
+function pomoSig(s: {
+    focusDurationSeconds: number;
+    breakDurationSeconds: number;
+    totalRounds: number;
+    autoStartBreak: boolean;
+}): string {
+    return `${s.focusDurationSeconds}|${s.breakDurationSeconds}|${s.totalRounds}|${s.autoStartBreak}`;
 }
 
 export function useBridgeHost(): void {

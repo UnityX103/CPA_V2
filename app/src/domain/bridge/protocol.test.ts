@@ -26,7 +26,12 @@ describe('bridge protocol', () => {
         const snap: BridgeSnapshot = {
             v: 1,
             settings: { uiScale: 1.5, committedUiScale: 1.0, dangerousChange: null },
-            pomodoro: { focusDurationSeconds: 1500, breakDurationSeconds: 300, totalRounds: 4 },
+            pomodoro: {
+                focusDurationSeconds: 1500,
+                breakDurationSeconds: 300,
+                totalRounds: 4,
+                autoStartBreak: false,
+            },
             network: {
                 autoConnect: false, playerName: 'me', playerId: 'p-1',
                 roomCode: 'R1', status: 'idle',
@@ -44,7 +49,7 @@ describe('bridge protocol', () => {
             { v: 1, store: 'settings',   action: 'previewDangerousUiScale', args: [1.5] },
             { v: 1, store: 'settings',   action: 'applyDangerousChange', args: ['pending-id'] },
             { v: 1, store: 'settings',   action: 'revertDangerousChange', args: ['pending-id'] },
-            { v: 1, store: 'pomodoro',   action: 'applySettings',  args: [1500, 300, 4, true] },
+            { v: 1, store: 'pomodoro',   action: 'applySettings',  args: [1500, 300, 4, true, false] },
             { v: 1, store: 'network',    action: 'createRoom',     args: ['R1'] },
             { v: 1, store: 'network',    action: 'joinRoom',       args: ['R1'] },
             { v: 1, store: 'network',    action: 'leaveRoom',      args: [] },
