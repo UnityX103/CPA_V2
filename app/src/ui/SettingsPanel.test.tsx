@@ -301,6 +301,17 @@ describe('PomodoroTab parity with gs1Tv', () => {
         expect(screen.getByText('自动开始休息')).toBeTruthy();
     });
 
+    it('keeps 自动开始休息 directly below 结束提示音 per fnZ59 ordering in PUI.pen', () => {
+        render(<SettingsPanel />);
+
+        const notif = screen.getByText('结束提示音');
+        const autoStart = screen.getByText('自动开始休息');
+        const endAction = screen.getByText('计时结束提示');
+
+        expect(notif.compareDocumentPosition(autoStart) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(autoStart.compareDocumentPosition(endAction) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
     it('hides the ordinary Apply overlay until a Pomodoro setting changes', () => {
         render(<SettingsPanel />);
 

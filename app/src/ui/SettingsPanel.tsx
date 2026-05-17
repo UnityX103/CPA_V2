@@ -297,6 +297,12 @@ function PomodoroTab({ onApplyStateChange }: {
                             <span className="pomo-row-value pomo-row-value-link">柔和铃声</span>
                         </div>
 
+                        {/* pomoAutoStartBreak fnZ59: 结束提示音下方 → Toggle */}
+                        <div className="card pomo-row">
+                            <span className="pomo-row-label">自动开始休息</span>
+                            <Toggle checked={autoStartBreak} onChange={setAutoStartBreak} ariaLabel="自动开始休息" />
+                        </div>
+
                         {/* pomoEndAction I6SsL5: 计时结束提示 → Dropdown */}
                         <div className="card pomo-row">
                             <span className="pomo-row-label">计时结束提示</span>
@@ -309,11 +315,6 @@ function PomodoroTab({ onApplyStateChange }: {
                                 <option value="topWindow">弹窗到顶部</option>
                                 <option value="playVideo">播放视频</option>
                             </select>
-                        </div>
-
-                        <div className="card pomo-row">
-                            <span className="pomo-row-label">自动开始休息</span>
-                            <Toggle checked={autoStartBreak} onChange={setAutoStartBreak} ariaLabel="自动开始休息" />
                         </div>
 
                         {/* pomoVideoPath WSnlp: enabled:false → 设计稿收起，不渲染 */}
