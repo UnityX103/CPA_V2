@@ -121,6 +121,32 @@ describe('PomodoroEndActionLayer', () => {
         expect(resolvePomodoroEndActionMock).toHaveBeenCalledTimes(1);
     });
 
+    it('processes a reused event id after the store clears the last end event', async () => {
+        resolvePomodoroEndActionMock
+            .mockResolvedValueOnce({ kind: 'topWindow' })
+            .mockResolvedValueOnce({
+                kind: 'video',
+                title: '新一轮',
+                src: '/videos/next.webm',
+            });
+        render(<PomodoroEndActionLayer />);
+
+        await act(async () => {
+            usePomodoroStore.setState({ lastEndEvent: endEvent(1) });
+        });
+        expect(await screen.findByText('专注结束')).toBeTruthy();
+
+        await act(async () => {
+            usePomodoroStore.setState({ lastEndEvent: null });
+        });
+        await act(async () => {
+            usePomodoroStore.setState({ lastEndEvent: endEvent(1) });
+        });
+
+        expect(await screen.findByLabelText('播放 新一轮')).toBeTruthy();
+        expect(resolvePomodoroEndActionMock).toHaveBeenCalledTimes(2);
+    });
+
     it('keeps the latest event UI when an older resolver resolves later', async () => {
         const first = deferred<EndActionResult>();
         const second = deferred<EndActionResult>();

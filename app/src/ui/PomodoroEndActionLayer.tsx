@@ -38,7 +38,11 @@ export function PomodoroEndActionLayer() {
 
         const processEndEvent = (state: ReturnType<typeof usePomodoroStore.getState>) => {
             const event = state.lastEndEvent;
-            if (!event || event.id === seenEventId.current) return;
+            if (!event) {
+                seenEventId.current = null;
+                return;
+            }
+            if (event.id === seenEventId.current) return;
             seenEventId.current = event.id;
             const requestSeq = latestRequestSeq.current + 1;
             latestRequestSeq.current = requestSeq;
