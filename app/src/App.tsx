@@ -1,6 +1,5 @@
 import { useEffect, type CSSProperties } from 'react';
 import { PomodoroPanel } from './ui/PomodoroPanel';
-import { RemoteRoster } from './ui/RemoteRoster';
 import { useStateSync } from './domain/stateSync';
 import { useActiveAppListener } from './domain/activeApp';
 import { useBindingKeyListener } from './domain/bindingKey';
@@ -34,7 +33,6 @@ export default function App() {
         <div className="app-scale-root" style={{ '--app-ui-scale': String(uiScale) } as CSSProperties}>
             <div className="app-root">
                 <PomodoroPanel />
-                <RemoteRoster />
             </div>
         </div>
     );

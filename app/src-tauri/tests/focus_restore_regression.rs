@@ -68,7 +68,5 @@ fn focus_restorer_fires_after_main_window_move() {
 #[test]
 fn focus_restorer_fires_after_main_window_move() {
     // No-op on non-macOS. Windows variant would require similar marker emission from
-    // the WM_EXITSIZEMOVE subclass handler, plus SendMessage-based trigger桩 since
-    // programmatic SetWindowPos does NOT fire ENTER/EXITSIZEMOVE pair. Listed as
-    // follow-up in spec §6.
+    // the Tauri moved/resized focus-restorer path, plus a Windows-specific trigger桩.
 }

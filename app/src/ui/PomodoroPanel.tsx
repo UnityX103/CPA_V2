@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { invoke } from '@tauri-apps/api/core';
 import { usePomodoroStore, formatMmSs, type PomodoroPhase } from '../domain/pomodoro';
-import { useHitRegion } from '../domain/passthrough';
 import { shouldStartWindowDrag } from './windowDrag';
 import './PomodoroPanel.css';
 
@@ -23,7 +22,6 @@ function phaseLabel(phase: PomodoroPhase, isRunning: boolean): string {
 export function PomodoroPanel() {
     const state = usePomodoroStore();
     const tickRef = useRef<number | null>(null);
-    const hitRef = useHitRegion('pomodoro-panel');
 
     useEffect(() => {
         let last = performance.now();
@@ -38,6 +36,13 @@ export function PomodoroPanel() {
         tickRef.current = rafId;
         return () => cancelAnimationFrame(rafId);
     }, []);
+
+    useEffect(() => {
+        void invoke('set_main_window_pinned', { onTop: state.isPinned })
+            .catch((error) => {
+                console.error('[pin] set_main_window_pinned failed', error);
+            });
+    }, [state.isPinned]);
 
     const totalSeconds =
         state.currentPhase === 'break'
@@ -68,7 +73,6 @@ export function PomodoroPanel() {
 
     return (
         <div
-            ref={hitRef}
             className="pomo-panel"
             data-clock-state={clockState}
             onPointerDown={onPanelPointerDown}

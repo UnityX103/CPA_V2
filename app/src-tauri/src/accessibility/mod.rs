@@ -4,7 +4,7 @@
 //! 详细设计见 docs/superpowers/specs/2026-05-16-key-counter-accessibility-permission-design.md。
 
 use serde::Serialize;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Emitter, Manager};
 
@@ -124,13 +124,18 @@ use std::time::Duration;
 const PERMISSION_UI_WINDOW_LABELS: &[&str] = &["main", "settings"];
 
 #[cfg(target_os = "macos")]
+fn set_permission_window_always_on_top(app: &AppHandle, label: &str, on_top: bool) {
+    if let Some(window) = app.get_webview_window(label) {
+        if let Err(e) = window.set_always_on_top(on_top) {
+            eprintln!("[accessibility] set_always_on_top({on_top}) for {label} failed: {e}");
+        }
+    }
+}
+
+#[cfg(target_os = "macos")]
 fn set_permission_windows_always_on_top(app: &AppHandle, on_top: bool) {
     for label in PERMISSION_UI_WINDOW_LABELS {
-        if let Some(window) = app.get_webview_window(label) {
-            if let Err(e) = window.set_always_on_top(on_top) {
-                eprintln!("[accessibility] set_always_on_top({on_top}) for {label} failed: {e}");
-            }
-        }
+        set_permission_window_always_on_top(app, label, on_top);
     }
 }
 
@@ -197,12 +202,37 @@ struct AccessibilityChangedPayload {
 /// 防抖：同一时刻只允许一次 prompt 飞行；第二次点击直接 Ok(()) 返回，避免 restore 任务堆叠
 /// 与 always_on_top 抖动。请求结束（granted=true 翻转或 30s 超时）后重置为 false。
 static PROMPT_IN_FLIGHT: AtomicBool = AtomicBool::new(false);
+static MAIN_PIN_GENERATION: AtomicU64 = AtomicU64::new(0);
+
+pub(crate) fn mark_main_pin_succeeded() -> u64 {
+    MAIN_PIN_GENERATION.fetch_add(1, Ordering::AcqRel) + 1
+}
+
+fn main_pin_generation() -> u64 {
+    MAIN_PIN_GENERATION.load(Ordering::Acquire)
+}
+
+fn snapshot_main_pin_state(app: &AppHandle) -> (u64, bool) {
+    loop {
+        let before = main_pin_generation();
+        let was_main_on_top = if let Some(main) = app.get_webview_window("main") {
+            main.is_always_on_top().unwrap_or(false)
+        } else {
+            false
+        };
+        let after = main_pin_generation();
+        if before == after {
+            return (before, was_main_on_top);
+        }
+        std::hint::spin_loop();
+    }
+}
 
 #[tauri::command]
 pub async fn request_accessibility_permission(app: AppHandle) -> Result<(), String> {
     #[cfg(not(target_os = "macos"))]
     {
-        let _ = app;
+        drop(app);
         return Ok(());
     }
 
@@ -214,16 +244,59 @@ pub async fn request_accessibility_permission(app: AppHandle) -> Result<(), Stri
 
         // 让位 + prompt 全部在同一 run_on_main_thread 闭包内执行，保证顺序：
         // main/settings set_always_on_top(false) → deactivate → prompt，
-        // 避免权限弹窗或系统设置被当前置顶窗口挡住。
+        // 避免权限弹窗或系统设置被当前置顶窗口挡住，同时不覆盖用户在等待期间
+        // 对 HApJ0 置顶状态的后续切换。
+        let (pin_generation, was_main_on_top) = snapshot_main_pin_state(&app);
         let app_for_yield = app.clone();
-        let _ = app.run_on_main_thread(move || {
-            set_permission_windows_always_on_top(&app_for_yield, false);
+        if let Err(e) = app.run_on_main_thread(move || {
+            if main_pin_generation() == pin_generation {
+                if let Some(main) = app_for_yield.get_webview_window("main") {
+                    if let Err(e) = main.set_always_on_top(false) {
+                        eprintln!("[accessibility] set_always_on_top(false) 失败：{e}");
+                    }
+                }
+            }
+            set_permission_window_always_on_top(&app_for_yield, "settings", false);
             macos::deactivate_app();
             macos::prompt();
-        });
+        }) {
+            PROMPT_IN_FLIGHT.store(false, Ordering::Release);
+            return Err(e.to_string());
+        }
 
         // 30s 倒计时 或 granted 翻转，先到先恢复
-        restore_permission_windows_when_done(app);
+        let restore_app = app.clone();
+        tauri::async_runtime::spawn(async move {
+            let deadline = std::time::Instant::now() + Duration::from_secs(30);
+            loop {
+                // AXIsProcessTrusted is thread-safe (no state mutation, no UI interaction);
+                // safe to poll from this tokio worker thread.
+                if current_status().granted {
+                    break;
+                }
+                if std::time::Instant::now() >= deadline {
+                    break;
+                }
+                tokio::time::sleep(Duration::from_millis(200)).await;
+            }
+            let restore_app_for_main = restore_app.clone();
+            if let Err(e) = restore_app.run_on_main_thread(move || {
+                if main_pin_generation() == pin_generation {
+                    if let Some(main) = restore_app_for_main.get_webview_window("main") {
+                        if let Err(e) = main.set_always_on_top(was_main_on_top) {
+                            eprintln!(
+                                "[accessibility] set_always_on_top({was_main_on_top}) 恢复失败：{e}"
+                            );
+                        }
+                    }
+                }
+                set_permission_window_always_on_top(&restore_app_for_main, "settings", true);
+                PROMPT_IN_FLIGHT.store(false, Ordering::Release);
+            }) {
+                eprintln!("[accessibility] restore enqueue failed: {e}");
+                PROMPT_IN_FLIGHT.store(false, Ordering::Release);
+            }
+        });
 
         Ok(())
     }

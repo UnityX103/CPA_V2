@@ -1,23 +1,29 @@
 mod accessibility;
 mod active_app;
 mod key_counter;
-mod passthrough;
+mod window_helpers;
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
-use tauri::{
-    Emitter, Manager, PhysicalPosition, RunEvent, WebviewUrl, WebviewWindow, WebviewWindowBuilder,
-};
+use tauri::{Emitter, Manager, PhysicalPosition, RunEvent, WebviewUrl, WebviewWindowBuilder};
 
 #[tauri::command]
-fn set_click_through(window: WebviewWindow, ignore: bool) -> Result<(), String> {
-    window.set_ignore_cursor_events(ignore).map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-fn set_always_on_top(window: WebviewWindow, on_top: bool) -> Result<(), String> {
-    window.set_always_on_top(on_top).map_err(|e| e.to_string())
+fn set_main_window_pinned(app: tauri::AppHandle, on_top: bool) -> Result<(), String> {
+    let main = app
+        .get_webview_window("main")
+        .ok_or_else(|| "main window not found".to_string())?;
+    let (tx, rx) = std::sync::mpsc::channel();
+    app.run_on_main_thread(move || {
+        let result = main.set_always_on_top(on_top).map_err(|e| e.to_string());
+        if result.is_ok() {
+            accessibility::mark_main_pin_succeeded();
+        }
+        let _ = tx.send(result);
+    })
+    .map_err(|e| e.to_string())?;
+    rx.recv()
+        .map_err(|e| format!("main window pin command did not complete: {e}"))?
 }
 
 #[tauri::command]
@@ -45,7 +51,7 @@ fn settings_center_position(app: &tauri::AppHandle) -> Result<PhysicalPosition<i
     let scale = monitor.scale_factor();
     let win_w = (SETTINGS_W * scale).round() as u32;
     let win_h = (SETTINGS_H * scale).round() as u32;
-    let (x, y) = passthrough::compute_centered_origin(
+    let (x, y) = window_helpers::compute_centered_origin(
         (mpos.x, mpos.y),
         (msize.width, msize.height),
         (win_w, win_h),
@@ -67,12 +73,11 @@ fn build_settings_window_hidden(
         .resizable(true)
         .transparent(true)
         .decorations(false)
-        .always_on_top(true)
         .shadow(false)
         .skip_taskbar(true)
         .visible(false)
         .build()?;
-    passthrough::install_first_mouse_only(&w);
+    window_helpers::install_first_mouse_only(&w);
 
     // 拦截关闭事件：macOS Cmd-W / 应用菜单 / 任何 performClose: 路径默认会真正销毁
     // NSWindow，之后 get_webview_window("settings") 永远返回 None，齿轮按钮变成死按钮。
@@ -89,12 +94,10 @@ fn build_settings_window_hidden(
     Ok(w)
 }
 
-pub(crate) async fn open_settings_window_impl(
-    app: tauri::AppHandle,
-) -> Result<(), String> {
-    let w = app
-        .get_webview_window("settings")
-        .ok_or_else(|| "settings window not built — setup() probably failed; check stderr".to_string())?;
+pub(crate) async fn open_settings_window_impl(app: tauri::AppHandle) -> Result<(), String> {
+    let w = app.get_webview_window("settings").ok_or_else(|| {
+        "settings window not built — setup() probably failed; check stderr".to_string()
+    })?;
     if let Ok(pos) = settings_center_position(&app) {
         let _ = w.set_position(pos);
     }
@@ -131,22 +134,11 @@ pub fn run() {
     let listener_handle_for_manage = listener_handle.clone();
     let listener_handle_for_exit = listener_handle.clone();
 
-    let hit_store = std::sync::Arc::new(passthrough::HitRegionStore::new());
-    let hit_store_for_setup = hit_store.clone();
-    let hit_store_for_manage = hit_store.clone();
-
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_store::Builder::new().build())
-        .manage::<std::sync::Arc<passthrough::HitRegionStore>>(hit_store_for_manage)
         .manage::<std::sync::Arc<accessibility::ListenerHandle>>(listener_handle_for_manage)
         .setup(move |app| {
-            if let Some(window) = app.get_webview_window("main") {
-                let _ = window.set_always_on_top(true);
-            }
-            if let Some(window) = app.get_webview_window("main") {
-                passthrough::install(&window, hit_store_for_setup.clone());
-            }
             // 在主线程构建隐藏的设置窗口 + 装 first-mouse hook。点齿轮时只做
             // 重定位 + show + focus（Tauri-marshaled，线程安全）。失败仅打日志。
             if let Err(e) = build_settings_window_hidden(app.handle()) {
@@ -155,7 +147,7 @@ pub fn run() {
             // Focus restorer: 主窗口拖/resize 末尾把 key 还回 settings (若可见)。
             // 配合 build_settings_window_hidden 一起完成 settings 窗口的 lifecycle 闭环。
             if let Some(window) = app.get_webview_window("main") {
-                passthrough::install_focus_restorer(&window, app.handle().clone());
+                window_helpers::install_focus_restorer(&window, app.handle().clone());
             }
             // 1Hz 前台 App 推送：用 AtomicBool 让 App 退出时线程能跳出循环
             // adversarial-review #6 的修复要点；NSWorkspace.frontmostApplication 在
@@ -216,7 +208,7 @@ pub fn run() {
                             // Test harness asserts this marker appears in stderr; absence means
                             // the trigger桩 short-circuited before exercising the crash path.
                             eprintln!("[e2e stub] reached install_first_mouse_only call site");
-                            passthrough::install_first_mouse_only(&w);
+                            window_helpers::install_first_mouse_only(&w);
                         }
                         Err(e) => eprintln!(
                             "[e2e stub] WebviewWindowBuilder::build failed; \
@@ -269,7 +261,7 @@ pub fn run() {
                     // so we wait 300ms before logging main-moved to give the main queue
                     // time to process the notification and run the observer block.
                     #[cfg(target_os = "macos")]
-                    passthrough::post_did_move_notification_for_testing(&main);
+                    window_helpers::post_did_move_notification_for_testing(&main);
                     #[cfg(target_os = "macos")]
                     std::thread::sleep(Duration::from_millis(300));
                     eprintln!("[e2e focus] main-moved");
@@ -283,8 +275,7 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            set_click_through,
-            set_always_on_top,
+            set_main_window_pinned,
             get_active_app,
             open_settings_window,
             close_settings_window,
@@ -292,21 +283,15 @@ pub fn run() {
             accessibility::open_accessibility_settings,
             accessibility::key_counter_listening,
             accessibility::request_accessibility_permission,
-            passthrough::register_hit_region,
-            passthrough::unregister_hit_region,
-            passthrough::clear_hit_regions,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application");
 
-    app.run(move |handle, event| {
+    app.run(move |_handle, event| {
         if matches!(event, RunEvent::ExitRequested { .. } | RunEvent::Exit) {
             active_app_stop_for_exit.store(true, Ordering::Relaxed);
             accessibility_stop_for_exit.store(true, Ordering::Relaxed);
             listener_handle_for_exit.stop();
-            if let Some(window) = handle.get_webview_window("main") {
-                passthrough::uninstall(&window);
-            }
         }
     });
 }
