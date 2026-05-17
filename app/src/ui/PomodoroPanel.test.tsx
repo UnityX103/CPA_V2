@@ -117,4 +117,23 @@ describe('PomodoroPanel HApJ0 pin behaviour', () => {
 
         expect(invokeMock).toHaveBeenCalledWith('open_settings_window');
     });
+
+    it('does not register obsolete transparent hit regions', async () => {
+        render(<PomodoroPanel />);
+
+        await waitFor(() => {
+            expect(pinCalls()).toContainEqual(['set_main_window_pinned', { onTop: false }]);
+        });
+
+        const obsoleteCommandNames = [
+            `register_${'hit'}_region`,
+            `unregister_${'hit'}_region`,
+            `clear_${'hit'}_regions`,
+        ];
+        const obsoleteCommands = invokeMock.mock.calls
+            .map(([cmd]) => cmd)
+            .filter((cmd) => obsoleteCommandNames.includes(String(cmd)));
+
+        expect(obsoleteCommands).toEqual([]);
+    });
 });
