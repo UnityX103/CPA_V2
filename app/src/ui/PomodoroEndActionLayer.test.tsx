@@ -93,7 +93,8 @@ describe('PomodoroEndActionLayer', () => {
             });
         });
 
-        expect(await screen.findByRole('dialog')).toBeTruthy();
+        const dialog = await screen.findByRole('dialog', { name: '番茄钟结束视频：千千' });
+        expect(dialog.getAttribute('aria-modal')).toBe('true');
         const video = screen.getByLabelText('播放 千千') as HTMLVideoElement;
         expect(video.getAttribute('src')).toBe('/videos/ms1.webm');
     });
@@ -248,6 +249,24 @@ describe('PomodoroEndActionLayer', () => {
         expect(await screen.findByLabelText('播放 千千')).toBeTruthy();
 
         fireEvent.keyDown(window, { key: 'Escape' });
+
+        expect(screen.queryByLabelText('播放 千千')).toBeNull();
+    });
+
+    it('closes the video overlay when playback ends', async () => {
+        resolvePomodoroEndActionMock.mockResolvedValue({
+            kind: 'video',
+            title: '千千',
+            src: '/videos/ms1.webm',
+        });
+        render(<PomodoroEndActionLayer />);
+
+        await act(async () => {
+            usePomodoroStore.setState({ lastEndEvent: endEvent(1) });
+        });
+        const video = await screen.findByLabelText('播放 千千');
+
+        fireEvent.ended(video);
 
         expect(screen.queryByLabelText('播放 千千')).toBeNull();
     });
