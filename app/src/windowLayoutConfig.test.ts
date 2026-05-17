@@ -38,8 +38,10 @@ describe('main window fit-panel layout', () => {
 
     it('does not force the root layout to fill a large transparent viewport', () => {
         const css = readFileSync(globalCssPath, 'utf8');
+        const rootBlock = blockAfter(css, 'html, body, #root');
         const appRootBlock = blockAfter(css, '.app-root');
 
+        expect(rootBlock).toMatch(/\bheight\s*:\s*100%\s*;/);
         expect(appRootBlock).not.toMatch(/\bwidth\s*:\s*100vw\s*;/);
         expect(appRootBlock).not.toMatch(/\bheight\s*:\s*100vh\s*;/);
         expect(appRootBlock).toMatch(/\bwidth\s*:\s*fit-content\s*;/);
