@@ -23,18 +23,40 @@ export function PomodoroEndActionLayer() {
     const [popup, setPopup] = useState<string | null>(null);
     const [video, setVideo] = useState<VideoOverlayState | null>(null);
     const seenEventId = useRef<number | null>(null);
+    const latestRequestSeq = useRef(0);
+    const disposed = useRef(false);
+    const popupTimeout = useRef<number | null>(null);
 
     useEffect(() => {
-        return usePomodoroStore.subscribe((state) => {
+        disposed.current = false;
+
+        const clearPopupTimeout = () => {
+            if (popupTimeout.current === null) return;
+            window.clearTimeout(popupTimeout.current);
+            popupTimeout.current = null;
+        };
+
+        const processEndEvent = (state: ReturnType<typeof usePomodoroStore.getState>) => {
             const event = state.lastEndEvent;
             if (!event || event.id === seenEventId.current) return;
             seenEventId.current = event.id;
+            const requestSeq = latestRequestSeq.current + 1;
+            latestRequestSeq.current = requestSeq;
 
             void resolvePomodoroEndAction(state, {
                 validateCustomVideoPath,
                 customVideoSrc,
                 showCustomVideoMissingMessage,
             }).then((action) => {
+                if (
+                    disposed.current ||
+                    requestSeq !== latestRequestSeq.current ||
+                    seenEventId.current !== event.id
+                ) {
+                    return;
+                }
+
+                clearPopupTimeout();
                 if (action.kind === 'video') {
                     setPopup(null);
                     setVideo({ title: action.title, src: action.src });
@@ -44,11 +66,31 @@ export function PomodoroEndActionLayer() {
                 const title = popupTitle(event);
                 setVideo(null);
                 setPopup(title);
-                window.setTimeout(() => {
+                popupTimeout.current = window.setTimeout(() => {
+                    if (disposed.current || requestSeq !== latestRequestSeq.current) return;
                     setPopup((current) => current === title ? null : current);
+                    popupTimeout.current = null;
                 }, 4000);
             });
-        });
+        };
+
+        const unsubscribe = usePomodoroStore.subscribe(processEndEvent);
+        processEndEvent(usePomodoroStore.getState());
+
+        return () => {
+            disposed.current = true;
+            unsubscribe();
+            clearPopupTimeout();
+        };
+    }, []);
+
+    useEffect(() => {
+        const closeOnEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') setVideo(null);
+        };
+
+        window.addEventListener('keydown', closeOnEscape);
+        return () => window.removeEventListener('keydown', closeOnEscape);
     }, []);
 
     return (
@@ -59,7 +101,12 @@ export function PomodoroEndActionLayer() {
                 </div>
             )}
             {video && (
-                <div className="pomo-video-backdrop" role="dialog">
+                <div
+                    className="pomo-video-backdrop"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label={`番茄钟结束视频：${video.title}`}
+                >
                     <button
                         className="pomo-video-close"
                         type="button"
@@ -75,6 +122,7 @@ export function PomodoroEndActionLayer() {
                         autoPlay
                         controls
                         onEnded={() => setVideo(null)}
+                        onError={() => setVideo(null)}
                     />
                 </div>
             )}
