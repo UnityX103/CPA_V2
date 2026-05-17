@@ -8,7 +8,16 @@ import {
     MIN_SCALE,
     MAX_SCALE,
 } from '../domain/settings';
-import { usePomodoroStore } from '../domain/pomodoro';
+import {
+    usePomodoroStore,
+    type PomodoroEndActionMode,
+    type PomodoroEndActionVideo,
+} from '../domain/pomodoro';
+import {
+    BUILTIN_POMODORO_VIDEOS,
+    DEFAULT_BUILTIN_POMODORO_VIDEO_ID,
+} from '../domain/pomodoroVideos';
+import { pickCustomWebmPath } from '../domain/videoFiles';
 import { useNetworkStore } from '../domain/network';
 import { useBindingKeyStore } from '../domain/bindingKey';
 import './SettingsPanel.css';
@@ -79,18 +88,61 @@ function PomodoroTab() {
     const pomo = usePomodoroStore();
     const [focusMin, setFocusMin] = useState(Math.round(pomo.focusDurationSeconds / 60));
     const [breakMin, setBreakMin] = useState(Math.round(pomo.breakDurationSeconds / 60));
+    const [endActionMode, setEndActionMode] = useState<PomodoroEndActionMode>(pomo.endActionMode);
+    const [endActionVideo, setEndActionVideo] = useState<PomodoroEndActionVideo>({ ...pomo.endActionVideo });
 
     useEffect(() => {
         setFocusMin(Math.round(pomo.focusDurationSeconds / 60));
         setBreakMin(Math.round(pomo.breakDurationSeconds / 60));
-    }, [pomo.focusDurationSeconds, pomo.breakDurationSeconds]);
+        setEndActionMode(pomo.endActionMode);
+        setEndActionVideo({ ...pomo.endActionVideo });
+    }, [pomo.focusDurationSeconds, pomo.breakDurationSeconds, pomo.endActionMode, pomo.endActionVideo]);
 
     const dirty =
         focusMin * 60 !== pomo.focusDurationSeconds ||
-        breakMin * 60 !== pomo.breakDurationSeconds;
+        breakMin * 60 !== pomo.breakDurationSeconds ||
+        endActionMode !== pomo.endActionMode ||
+        !sameEndActionVideo(endActionVideo, pomo.endActionVideo);
 
     const apply = () => {
         pomo.applySettings(focusMin * 60, breakMin * 60, pomo.totalRounds, true);
+        pomo.applyEndActionSettings(endActionMode, endActionVideo);
+    };
+
+    const selectedVideoOption = endActionVideo.sourceKind === 'custom'
+        ? 'custom'
+        : endActionVideo.builtinVideoId;
+
+    const customVideoName = endActionVideo.customVideoPath
+        ? pathBasename(endActionVideo.customVideoPath)
+        : '未选择';
+
+    const setVideoOption = (value: string) => {
+        setEndActionMode('playVideo');
+        if (value === 'custom') {
+            setEndActionVideo((current) => ({
+                sourceKind: 'custom',
+                builtinVideoId: current.builtinVideoId || DEFAULT_BUILTIN_POMODORO_VIDEO_ID,
+                customVideoPath: current.customVideoPath,
+            }));
+            return;
+        }
+        setEndActionVideo((current) => ({
+            sourceKind: 'builtin',
+            builtinVideoId: value,
+            customVideoPath: current.customVideoPath,
+        }));
+    };
+
+    const chooseCustomVideo = async () => {
+        const path = await pickCustomWebmPath();
+        if (!path) return;
+        setEndActionMode('playVideo');
+        setEndActionVideo((current) => ({
+            sourceKind: 'custom',
+            builtinVideoId: current.builtinVideoId || DEFAULT_BUILTIN_POMODORO_VIDEO_ID,
+            customVideoPath: path,
+        }));
     };
 
     return (
@@ -128,27 +180,67 @@ function PomodoroTab() {
                         {/* pomoEndAction I6SsL5: 计时结束提示 → Dropdown */}
                         <div className="card pomo-row">
                             <span className="pomo-row-label">计时结束提示</span>
-                            <button className="dropdown dropdown-fit" type="button">
-                                <span className="dropdown-value">弹窗到顶部</span>
-                                <ChevronDownIcon className="dropdown-chevron" />
-                            </button>
+                            <select
+                                className="dropdown dropdown-fit"
+                                aria-label="计时结束提示"
+                                value={endActionMode}
+                                onChange={(e) => setEndActionMode(e.currentTarget.value as PomodoroEndActionMode)}
+                            >
+                                <option value="topWindow">弹窗到顶部</option>
+                                <option value="playVideo">播放视频</option>
+                            </select>
                         </div>
 
                         {/* pomoVideoPath WSnlp: enabled:false → 设计稿收起，不渲染 */}
+                        {endActionMode === 'playVideo' && (
+                            <div className="card pomo-row">
+                                <span className="pomo-row-label">视频选项</span>
+                                <select
+                                    className="dropdown dropdown-fit"
+                                    aria-label="视频选项"
+                                    value={selectedVideoOption}
+                                    onChange={(e) => setVideoOption(e.currentTarget.value)}
+                                >
+                                    {BUILTIN_POMODORO_VIDEOS.map((video) => (
+                                        <option key={video.id} value={video.id}>{video.name}</option>
+                                    ))}
+                                    <option value="custom">自定义视频</option>
+                                </select>
+                            </div>
+                        )}
 
                         {/* pomoVideoCustom Jvg0I: 自定义视频文件 → 状态文字 + 文件夹图标 */}
-                        <div className="card pomo-row">
+                        <button
+                            className="card pomo-row pomo-row-button"
+                            type="button"
+                            aria-label="选择自定义视频"
+                            onClick={() => { void chooseCustomVideo(); }}
+                        >
                             <span className="pomo-row-label">自定义视频文件</span>
                             <span className="pomo-row-right">
-                                <span className="pomo-row-value pomo-row-value-muted">未选择</span>
+                                <span className={`pomo-row-value ${endActionVideo.customVideoPath ? 'pomo-row-value-link' : 'pomo-row-value-muted'}`}>
+                                    {customVideoName}
+                                </span>
                                 <FolderIcon />
                             </span>
-                        </div>
+                        </button>
                     </div>
                 </div>
             </div>
         </>
     );
+}
+
+function sameEndActionVideo(a: PomodoroEndActionVideo, b: PomodoroEndActionVideo): boolean {
+    return (
+        a.sourceKind === b.sourceKind &&
+        a.builtinVideoId === b.builtinVideoId &&
+        a.customVideoPath === b.customVideoPath
+    );
+}
+
+function pathBasename(path: string): string {
+    return path.split(/[\\/]/).pop() || path;
 }
 
 /* ============================================================
@@ -494,14 +586,6 @@ function CloseIcon() {
     return (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M18 6 6 18M6 6l12 12" />
-        </svg>
-    );
-}
-
-function ChevronDownIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="m6 9 6 6 6-6" />
         </svg>
     );
 }

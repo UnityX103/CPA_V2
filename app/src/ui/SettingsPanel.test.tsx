@@ -5,6 +5,7 @@ import path from 'node:path';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, cleanup, act } from '@testing-library/react';
 import { useSettingsStore } from '../domain/settings';
+import { usePomodoroStore } from '../domain/pomodoro';
 import { useNetworkStore } from '../domain/network';
 import { useBindingKeyStore } from '../domain/bindingKey';
 import { SettingsPanel } from './SettingsPanel';
@@ -16,10 +17,11 @@ function cssRule(css: string, selector: string): string {
     return ruleMatch![0];
 }
 
-const { startDragging, invokeMock, listenMock } = vi.hoisted(() => ({
+const { startDragging, invokeMock, listenMock, pickCustomWebmPathMock } = vi.hoisted(() => ({
     startDragging: vi.fn(),
     invokeMock: vi.fn(),
     listenMock: vi.fn(() => Promise.resolve(() => {})),
+    pickCustomWebmPathMock: vi.fn(),
 }));
 
 vi.mock('@tauri-apps/api/window', () => ({
@@ -33,6 +35,7 @@ vi.mock('@tauri-apps/api/window', () => ({
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: invokeMock }));
 vi.mock('@tauri-apps/api/event', () => ({ listen: listenMock }));
+vi.mock('../domain/videoFiles', () => ({ pickCustomWebmPath: pickCustomWebmPathMock }));
 
 beforeEach(() => {
     startDragging.mockReset();
@@ -40,7 +43,28 @@ beforeEach(() => {
     invokeMock.mockResolvedValue({ granted: true, platform: 'macos' });
     listenMock.mockReset();
     listenMock.mockResolvedValue(() => {});
+    pickCustomWebmPathMock.mockReset();
+    pickCustomWebmPathMock.mockResolvedValue(null);
     useSettingsStore.setState({ activeTab: 'pomodoro' });
+    usePomodoroStore.setState({
+        focusDurationSeconds: 25 * 60,
+        breakDurationSeconds: 5 * 60,
+        totalRounds: 4,
+        currentRound: 1,
+        remainingSeconds: 25 * 60,
+        currentPhase: 'focus',
+        isRunning: false,
+        isPinned: false,
+        autoStartBreak: true,
+        consecutiveCompletedFocus: 0,
+        endActionMode: 'playVideo',
+        endActionVideo: {
+            sourceKind: 'builtin',
+            builtinVideoId: 'qianqian',
+            customVideoPath: '',
+        },
+        lastEndEvent: null,
+    });
     cleanup();
 });
 
@@ -134,6 +158,64 @@ describe('PomodoroTab parity with gs1Tv', () => {
         render(<SettingsPanel />);
         expect(screen.queryByText('总轮次')).toBeNull();
         expect(screen.queryByText('休息自动开始')).toBeNull();
+    });
+});
+
+describe('PomodoroTab end action settings', () => {
+    it('shows qianqian as the default bundled video option and playVideo action', () => {
+        render(<SettingsPanel />);
+
+        expect(screen.getByRole('option', { name: '播放视频' })).toBeTruthy();
+        expect(screen.getByRole('option', { name: '千千' })).toBeTruthy();
+        expect(screen.getByLabelText('计时结束提示')).toHaveProperty('value', 'playVideo');
+        expect(screen.getByLabelText('视频选项')).toHaveProperty('value', 'qianqian');
+    });
+
+    it('applies topWindow as the end action', () => {
+        render(<SettingsPanel />);
+
+        fireEvent.change(screen.getByLabelText('计时结束提示'), { target: { value: 'topWindow' } });
+        fireEvent.click(screen.getByRole('button', { name: '应用' }));
+
+        expect(usePomodoroStore.getState().endActionMode).toBe('topWindow');
+        expect(usePomodoroStore.getState().endActionVideo).toEqual({
+            sourceKind: 'builtin',
+            builtinVideoId: 'qianqian',
+            customVideoPath: '',
+        });
+    });
+
+    it('selecting a custom webm shows the basename and applies the custom video', async () => {
+        pickCustomWebmPathMock.mockResolvedValue('/Users/xpy/Videos/custom.webm');
+        render(<SettingsPanel />);
+
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: '选择自定义视频' }));
+        });
+
+        expect(screen.getByText('custom.webm')).toBeTruthy();
+
+        fireEvent.click(screen.getByRole('button', { name: '应用' }));
+
+        expect(usePomodoroStore.getState().endActionMode).toBe('playVideo');
+        expect(usePomodoroStore.getState().endActionVideo).toEqual({
+            sourceKind: 'custom',
+            builtinVideoId: 'qianqian',
+            customVideoPath: '/Users/xpy/Videos/custom.webm',
+        });
+    });
+
+    it('canceling the custom picker leaves the draft clean', async () => {
+        render(<SettingsPanel />);
+
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: '选择自定义视频' }));
+        });
+
+        const apply = screen.getByRole('button', { name: '应用' });
+        expect(apply).toHaveProperty('disabled', true);
+        expect(screen.getByText('未选择')).toBeTruthy();
+        expect(usePomodoroStore.getState().endActionVideo.customVideoPath).toBe('');
     });
 });
 
