@@ -138,6 +138,7 @@
     width: 100%;
     max-width: 100%;
     overflow-y: auto;
+    overflow-x: hidden;
     padding-right: 4px;
     box-sizing: border-box;
 }
