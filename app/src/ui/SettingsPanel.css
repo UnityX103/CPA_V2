@@ -768,6 +768,79 @@
 }
 .bk-perm-banner button:hover { opacity: 0.85; }
 
+.danger-modal-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.danger-modal-mask {
+    position: absolute;
+    inset: 0;
+    background: rgba(17, 24, 39, 0.28);
+}
+
+.danger-dialog {
+    position: relative;
+    width: min(var(--dialog-w), calc(100% - 32px));
+    border-radius: var(--dialog-radius);
+    background: #FFFFFF;
+    padding: var(--dialog-padding);
+    display: flex;
+    flex-direction: column;
+    gap: var(--dialog-gap);
+    box-shadow: var(--dialog-shadow);
+}
+
+.danger-dialog-header {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.danger-dialog-title-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.danger-dialog-title {
+    margin: 0;
+    font-family: var(--font-cn);
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.danger-dialog-countdown {
+    width: 100%;
+    text-align: center;
+    color: var(--dialog-countdown-color);
+    font-family: var(--font-cn);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.danger-dialog-body {
+    margin: 0;
+    width: 100%;
+    color: var(--dialog-body-color);
+    font-family: var(--font-cn);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+.danger-dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    width: 100%;
+}
+
 @media (max-width: 420px) {
     .settings-panel {
         padding: 14px;

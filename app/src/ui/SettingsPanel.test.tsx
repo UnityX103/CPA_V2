@@ -2,12 +2,13 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup, act } from '@testing-library/react';
 import { useSettingsStore } from '../domain/settings';
 import { useNetworkStore } from '../domain/network';
 import { useBindingKeyStore } from '../domain/bindingKey';
 import { SettingsPanel } from './SettingsPanel';
+import { DangerousChangeDialog } from './DangerousChangeDialog';
 
 function cssRule(css: string, selector: string): string {
     const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -20,6 +21,15 @@ function cssDecl(rule: string, property: string): string | null {
     const escaped = property.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const match = rule.match(new RegExp(`(?:^|[;{]\\s*)${escaped}\\s*:\\s*([^;]+)`));
     return match ? match[1].trim() : null;
+}
+
+function renderSettingsPanelWithDangerDialog() {
+    return render(
+        <>
+            <SettingsPanel />
+            <DangerousChangeDialog />
+        </>,
+    );
 }
 
 const { startDragging, invokeMock, listenMock } = vi.hoisted(() => ({
@@ -46,8 +56,17 @@ beforeEach(() => {
     invokeMock.mockResolvedValue({ granted: true, platform: 'macos' });
     listenMock.mockReset();
     listenMock.mockResolvedValue(() => {});
-    useSettingsStore.setState({ activeTab: 'pomodoro' });
+    useSettingsStore.setState({
+        activeTab: 'pomodoro',
+        uiScale: 1.0,
+        committedUiScale: 1.0,
+        dangerousChange: null,
+    });
     cleanup();
+});
+
+afterEach(() => {
+    vi.useRealTimers();
 });
 
 describe('SettingsPanel drag', () => {
@@ -243,6 +262,93 @@ describe('GlobalTab parity with Pdj9C', () => {
         expect(screen.getByText('需要辅助功能权限才能统计按键')).toBeTruthy();
         expect(screen.getByRole('button', { name: '申请权限' })).toBeTruthy();
         expect(screen.getByRole('button', { name: '打开系统设置' })).toBeTruthy();
+    });
+
+    it('shows a blocking dangerous-change dialog when a scale preview is pending', () => {
+        useSettingsStore.setState({
+            activeTab: 'global',
+            uiScale: 1.5,
+            committedUiScale: 1.0,
+            dangerousChange: {
+                id: 'scale-preview',
+                kind: 'uiScale',
+                previousValue: 1.0,
+                nextValue: 1.5,
+                expiresAt: Date.now() + 5000,
+            },
+        });
+
+        renderSettingsPanelWithDangerDialog();
+
+        expect(screen.getByRole('dialog', { name: '应用界面缩放？' })).toBeTruthy();
+        expect(screen.getByText(/剩余 5s 后自动还原/)).toBeTruthy();
+        expect(screen.getByTestId('dangerous-change-mask')).toBeTruthy();
+    });
+
+    it('dialog apply and cancel route to the pending dangerous action', async () => {
+        useSettingsStore.setState({
+            activeTab: 'global',
+            uiScale: 1.5,
+            committedUiScale: 1.0,
+            dangerousChange: {
+                id: 'scale-preview',
+                kind: 'uiScale',
+                previousValue: 1.0,
+                nextValue: 1.5,
+                expiresAt: Date.now() + 5000,
+            },
+        });
+        const applySpy = vi.spyOn(useSettingsStore.getState(), 'applyDangerousChange');
+        const revertSpy = vi.spyOn(useSettingsStore.getState(), 'revertDangerousChange');
+
+        renderSettingsPanelWithDangerDialog();
+
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: '应用' }));
+        });
+        expect(applySpy).toHaveBeenCalledWith('scale-preview');
+
+        await act(async () => {
+            useSettingsStore.setState({
+                dangerousChange: {
+                    id: 'scale-preview',
+                    kind: 'uiScale',
+                    previousValue: 1.0,
+                    nextValue: 1.5,
+                    expiresAt: Date.now() + 5000,
+                },
+            });
+        });
+
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: '取消' }));
+        });
+        expect(revertSpy).toHaveBeenCalledWith('scale-preview');
+    });
+
+    it('dialog countdown expiry reverts the pending dangerous change', async () => {
+        vi.useFakeTimers();
+        useSettingsStore.setState({
+            activeTab: 'global',
+            uiScale: 1.5,
+            committedUiScale: 1.0,
+            dangerousChange: {
+                id: 'scale-preview',
+                kind: 'uiScale',
+                previousValue: 1.0,
+                nextValue: 1.5,
+                expiresAt: Date.now() + 5000,
+            },
+        });
+        const revertSpy = vi.spyOn(useSettingsStore.getState(), 'revertDangerousChange');
+
+        renderSettingsPanelWithDangerDialog();
+
+        await act(async () => {
+            vi.advanceTimersByTime(5000);
+        });
+
+        expect(revertSpy).toHaveBeenCalledWith('scale-preview');
     });
 });
 
