@@ -247,6 +247,28 @@ describe('SettingsPanel geometry', () => {
         expect(settingsCss).toMatch(/\.danger-modal-layer\s*\{[^}]*position:\s*absolute;[^}]*inset:\s*0;/);
     });
 
+    it('keeps root wrappers fixed while only contentArea scrolls vertically', () => {
+        const globalCss = readFileSync(path.join(here, '../styles/global.css'), 'utf8');
+        const settingsCss = readFileSync(path.join(here, 'SettingsPanel.css'), 'utf8');
+
+        const windowRoot = cssRule(globalCss, '.settings-window-root');
+        const scaleContent = cssRule(globalCss, '.settings-scale-content');
+        const panel = cssRule(settingsCss, '.settings-panel');
+        const body = cssRule(settingsCss, '.settings-body');
+        const content = cssRule(settingsCss, '.settings-content');
+        const scroll = cssRule(settingsCss, '.settings-content-scroll');
+
+        expect(cssDecl(windowRoot, 'overflow')).toBe('hidden');
+        expect(cssDecl(scaleContent, 'height')).toBe('100%');
+        expect(cssDecl(scaleContent, 'overflow')).toBe('hidden');
+        expect(cssDecl(panel, 'height')).toBe('100%');
+        expect(cssDecl(body, 'overflow')).toBe('hidden');
+        expect(cssDecl(content, 'overflow')).toBe('hidden');
+        expect(cssDecl(scroll, 'overflow-y')).toBe('auto');
+        expect(cssDecl(scroll, 'overflow-x')).toBe('hidden');
+        expect(settingsCss.match(/overflow-y:\s*auto\s*;/g)).toHaveLength(1);
+    });
+
     it('ordinary Apply is an overlay and does not reserve tab layout space', () => {
         const css = readFileSync(path.join(here, 'SettingsPanel.css'), 'utf8');
         const row = cssRule(css, '.apply-row');
