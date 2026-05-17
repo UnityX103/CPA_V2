@@ -42,6 +42,22 @@ export function PomodoroEndActionLayer() {
             const requestSeq = latestRequestSeq.current + 1;
             latestRequestSeq.current = requestSeq;
 
+            const showTopPopup = () => {
+                clearPopupTimeout();
+                const title = popupTitle(event);
+                setPopup(title);
+                popupTimeout.current = window.setTimeout(() => {
+                    if (disposed.current || requestSeq !== latestRequestSeq.current) return;
+                    setPopup((current) => current === title ? null : current);
+                    popupTimeout.current = null;
+                }, 4000);
+            };
+
+            if (event.fromPhase !== 'focus') {
+                showTopPopup();
+                return;
+            }
+
             void resolvePomodoroEndAction(state, {
                 validateCustomVideoPath,
                 customVideoSrc,
@@ -71,13 +87,7 @@ export function PomodoroEndActionLayer() {
                     return;
                 }
 
-                const title = popupTitle(event);
-                setPopup(title);
-                popupTimeout.current = window.setTimeout(() => {
-                    if (disposed.current || requestSeq !== latestRequestSeq.current) return;
-                    setPopup((current) => current === title ? null : current);
-                    popupTimeout.current = null;
-                }, 4000);
+                showTopPopup();
             });
         };
 

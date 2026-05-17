@@ -111,6 +111,50 @@ describe('PomodoroEndActionLayer', () => {
         expect(await screen.findByText('专注结束')).toBeTruthy();
     });
 
+    it('shows only a top popup when a break ends even if video is configured', async () => {
+        resolvePomodoroEndActionMock.mockResolvedValue({
+            kind: 'video',
+            title: '千千',
+            src: '/videos/ms1-alpha.mov',
+        });
+        render(<PomodoroEndActionLayer />);
+
+        await act(async () => {
+            usePomodoroStore.setState({
+                lastEndEvent: endEvent(1, {
+                    fromPhase: 'break',
+                    toPhase: 'focus',
+                }),
+            });
+        });
+
+        expect(await screen.findByText('休息结束')).toBeTruthy();
+        expect(resolvePomodoroEndActionMock).not.toHaveBeenCalled();
+        expect(openPomodoroVideoWindowMock).not.toHaveBeenCalled();
+    });
+
+    it('shows only the completion popup when the final break ends', async () => {
+        resolvePomodoroEndActionMock.mockResolvedValue({
+            kind: 'video',
+            title: '千千',
+            src: '/videos/ms1-alpha.mov',
+        });
+        render(<PomodoroEndActionLayer />);
+
+        await act(async () => {
+            usePomodoroStore.setState({
+                lastEndEvent: endEvent(1, {
+                    fromPhase: 'break',
+                    toPhase: 'completed',
+                }),
+            });
+        });
+
+        expect(await screen.findByText('番茄钟完成')).toBeTruthy();
+        expect(resolvePomodoroEndActionMock).not.toHaveBeenCalled();
+        expect(openPomodoroVideoWindowMock).not.toHaveBeenCalled();
+    });
+
     it('does not resolve the same end event id twice', async () => {
         resolvePomodoroEndActionMock.mockResolvedValue({ kind: 'topWindow' });
         render(<PomodoroEndActionLayer />);
