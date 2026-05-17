@@ -324,6 +324,7 @@ function GlobalTab() {
     const settings = useSettingsStore();
     const bk = useBindingKeyStore();
     const [globalEnabled, setGlobalEnabled] = useState(true);
+    const [scaleDragPercent, setScaleDragPercent] = useState<number | null>(null);
 
     // Settings window doesn't run useBindingKeyListener, so we fetch
     // accessibility_status directly here and subscribe to the broadcast
@@ -355,6 +356,7 @@ function GlobalTab() {
     }, []);
 
     const scalePercent = Math.round(settings.uiScale * 100);
+    const displayScalePercent = scaleDragPercent ?? scalePercent;
     const minPct = Math.round(MIN_SCALE * 100);
     const maxPct = Math.round(MAX_SCALE * 100);
 
@@ -369,9 +371,13 @@ function GlobalTab() {
                             value={scalePercent}
                             min={minPct}
                             max={maxPct}
-                            onChange={(v) => settings.previewDangerousUiScale(v / 100)}
+                            onPreviewChange={setScaleDragPercent}
+                            onChange={(v) => {
+                                setScaleDragPercent(null);
+                                settings.previewDangerousUiScale(v / 100);
+                            }}
                         />
-                        <span className="slider-value">{(scalePercent / 100).toFixed(1)}×</span>
+                        <span className="slider-value">{(displayScalePercent / 100).toFixed(1)}×</span>
                     </div>
                 </div>
 
@@ -490,22 +496,33 @@ interface SliderProps {
     value: number;
     min: number;
     max: number;
+    onPreviewChange?: (v: number | null) => void;
     onChange: (v: number) => void;
 }
 
-function Slider({ value, min, max, onChange }: SliderProps) {
+function Slider({ value, min, max, onPreviewChange, onChange }: SliderProps) {
     const draggingPointerIdRef = useRef<number | null>(null);
     const [isDragging, setIsDragging] = useState(false);
-    const ratio = Math.max(0, Math.min(1, (value - min) / (max - min)));
+    const [dragValue, setDragValue] = useState(value);
+    const displayValue = isDragging ? dragValue : value;
+    const ratio = Math.max(0, Math.min(1, (displayValue - min) / (max - min)));
 
-    const valueFromClientX = (element: HTMLDivElement, clientX: number): number => {
+    useEffect(() => {
+        if (!isDragging) setDragValue(value);
+    }, [isDragging, value]);
+
+    const valueFromClientX = (element: HTMLDivElement, clientX: number, fallbackValue: number): number => {
         const rect = element.getBoundingClientRect();
+        if (rect.width <= 0 || !Number.isFinite(clientX)) return fallbackValue;
         const r = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
         return Math.round(min + r * (max - min));
     };
 
-    const updateFromPointer = (e: React.PointerEvent<HTMLDivElement>) => {
-        onChange(valueFromClientX(e.currentTarget, e.clientX));
+    const updateDragFromPointer = (e: React.PointerEvent<HTMLDivElement>): number => {
+        const nextValue = valueFromClientX(e.currentTarget, e.clientX, displayValue);
+        setDragValue(nextValue);
+        onPreviewChange?.(nextValue);
+        return nextValue;
     };
 
     const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -513,19 +530,23 @@ function Slider({ value, min, max, onChange }: SliderProps) {
         e.currentTarget.setPointerCapture?.(e.pointerId);
         draggingPointerIdRef.current = e.pointerId;
         setIsDragging(true);
-        updateFromPointer(e);
+        updateDragFromPointer(e);
     };
 
     const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
         if (draggingPointerIdRef.current !== e.pointerId) return;
-        updateFromPointer(e);
+        updateDragFromPointer(e);
     };
 
     const stopDragging = (e: React.PointerEvent<HTMLDivElement>) => {
         if (draggingPointerIdRef.current !== e.pointerId) return;
+        const shouldApply = e.type === 'pointerup';
+        const finalValue = shouldApply ? updateDragFromPointer(e) : dragValue;
         e.currentTarget.releasePointerCapture?.(e.pointerId);
         draggingPointerIdRef.current = null;
         setIsDragging(false);
+        if (shouldApply) onChange(finalValue);
+        else onPreviewChange?.(null);
     };
 
     return (
@@ -536,12 +557,12 @@ function Slider({ value, min, max, onChange }: SliderProps) {
             onPointerUp={stopDragging}
             onPointerCancel={stopDragging}
             role="slider"
-            aria-valuenow={value}
+            aria-valuenow={displayValue}
             aria-valuemin={min}
             aria-valuemax={max}
         >
-            <div className="slider-fill" style={{ width: `calc((100% - 2px) * ${ratio})` }} />
-            <div className="slider-thumb" style={{ left: `calc(${ratio * 100}%)` }} />
+            <div className="slider-fill" style={{ width: `${ratio * 100}%` }} />
+            <div className="slider-thumb" style={{ left: `${ratio * 100}%` }} />
         </div>
     );
 }

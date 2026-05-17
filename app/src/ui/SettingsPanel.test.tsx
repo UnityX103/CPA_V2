@@ -316,7 +316,7 @@ describe('GlobalTab parity with Pdj9C', () => {
         expect(screen.getByRole('button', { name: '打开系统设置' })).toBeTruthy();
     });
 
-    it('scale slider previews continuously while dragging', async () => {
+    it('scale slider applies only when dragging ends', async () => {
         useSettingsStore.setState({
             activeTab: 'global',
             uiScale: 1.0,
@@ -344,11 +344,18 @@ describe('GlobalTab parity with Pdj9C', () => {
         await act(async () => {
             fireEvent.pointerDown(slider, { pointerId: 1, button: 0, clientX: 100 });
             fireEvent.pointerMove(slider, { pointerId: 1, clientX: 160 });
+        });
+
+        expect(previewSpy).not.toHaveBeenCalled();
+        expect(slider.getAttribute('aria-valuenow')).toBe('170');
+        expect(screen.getByText('1.7×')).toBeTruthy();
+
+        await act(async () => {
             fireEvent.pointerUp(slider, { pointerId: 1, clientX: 160 });
         });
 
-        expect(previewSpy).toHaveBeenCalledWith(1.75);
-        expect(previewSpy).toHaveBeenCalledWith(2.5);
+        expect(previewSpy).toHaveBeenCalledTimes(1);
+        expect(previewSpy).toHaveBeenCalledWith(1.7);
         expect(slider.setPointerCapture).toHaveBeenCalledWith(1);
         expect(slider.releasePointerCapture).toHaveBeenCalledWith(1);
     });

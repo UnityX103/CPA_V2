@@ -35,7 +35,7 @@ interface SettingsActions {
 }
 
 export const MIN_SCALE = 0.5;
-export const MAX_SCALE = 3.0;
+export const MAX_SCALE = 2.0;
 export const DANGEROUS_CHANGE_TIMEOUT_MS = 5000;
 
 export type SettingsStore = UseBoundStore<StoreApi<SettingsState & SettingsActions>>;

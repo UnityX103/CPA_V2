@@ -21,6 +21,10 @@ beforeEach(() => {
 });
 
 describe('useSettingsStore', () => {
+    it('caps UI scale at 2.0', () => {
+        expect(MAX_SCALE).toBe(2.0);
+    });
+
     it('setActiveTab switches the active tab', () => {
         useSettingsStore.getState().setActiveTab('global');
         expect(useSettingsStore.getState().activeTab).toBe('global');
