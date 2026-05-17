@@ -693,6 +693,17 @@
 
 .pomo-row.is-disabled { opacity: 0.5; pointer-events: none; }
 
+.pomo-row-button {
+    width: 100%;
+    text-align: left;
+    font-family: var(--font-cn);
+    cursor: pointer;
+}
+
+.pomo-row-button:hover {
+    background: var(--pill-bg);
+}
+
 .pomo-row-label {
     font-family: var(--font-cn);
     font-size: 14px;

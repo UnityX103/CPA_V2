@@ -1,0 +1,19 @@
+export interface BuiltinPomodoroVideo {
+    readonly id: string;
+    readonly name: string;
+    readonly url: string;
+}
+
+export const DEFAULT_BUILTIN_POMODORO_VIDEO_ID = 'qianqian';
+
+export const BUILTIN_POMODORO_VIDEOS: readonly BuiltinPomodoroVideo[] = [
+    {
+        id: DEFAULT_BUILTIN_POMODORO_VIDEO_ID,
+        name: '千千',
+        url: '/videos/ms1-alpha.mov',
+    },
+];
+
+export function getBuiltinPomodoroVideo(id: string): BuiltinPomodoroVideo | null {
+    return BUILTIN_POMODORO_VIDEOS.find((video) => video.id === id) ?? null;
+}

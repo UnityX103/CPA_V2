@@ -10,10 +10,10 @@ use tauri::{AppHandle, Emitter, Manager};
 
 #[cfg(target_os = "macos")]
 mod macos;
-#[cfg(target_os = "windows")]
-mod windows;
 #[cfg(not(any(target_os = "macos", target_os = "windows")))]
 mod stub;
+#[cfg(target_os = "windows")]
+mod windows;
 
 /// Holds the current key_counter listener's stop flag (None = listener not running).
 /// Replaced atomically when (re)spawning.
@@ -70,15 +70,24 @@ pub struct AccessibilityStatus {
 pub fn current_status() -> AccessibilityStatus {
     #[cfg(target_os = "macos")]
     {
-        AccessibilityStatus { granted: macos::is_trusted(), platform: "macos" }
+        AccessibilityStatus {
+            granted: macos::is_trusted(),
+            platform: "macos",
+        }
     }
     #[cfg(target_os = "windows")]
     {
-        AccessibilityStatus { granted: true, platform: "windows" }
+        AccessibilityStatus {
+            granted: true,
+            platform: "windows",
+        }
     }
     #[cfg(not(any(target_os = "macos", target_os = "windows")))]
     {
-        AccessibilityStatus { granted: true, platform: "other" }
+        AccessibilityStatus {
+            granted: true,
+            platform: "other",
+        }
     }
 }
 
@@ -161,11 +170,7 @@ fn restore_permission_windows_when_done(app: AppHandle) {
 
 /// Spawn the 1Hz watcher thread. Emits `accessibility-permission-changed`
 /// on every state flip and starts/stops the listener through `handle`.
-pub fn start_watcher(
-    app: AppHandle,
-    handle: Arc<ListenerHandle>,
-    stop: Arc<AtomicBool>,
-) {
+pub fn start_watcher(app: AppHandle, handle: Arc<ListenerHandle>, stop: Arc<AtomicBool>) {
     std::thread::spawn(move || {
         let mut last = current_status().granted;
         loop {
@@ -178,10 +183,13 @@ pub fn start_watcher(
             }
             let status = current_status();
             if status.granted != last {
-                let _ = app.emit("accessibility-permission-changed", AccessibilityChangedPayload {
-                    granted: status.granted,
-                    platform: status.platform,
-                });
+                let _ = app.emit(
+                    "accessibility-permission-changed",
+                    AccessibilityChangedPayload {
+                        granted: status.granted,
+                        platform: status.platform,
+                    },
+                );
                 if status.granted {
                     handle.ensure_running(&app);
                 } else {

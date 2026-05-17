@@ -1,10 +1,48 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { applyDispatch, buildSnapshot } from './host';
-import { useSettingsStore } from '../settings';
-import { usePomodoroStore } from '../pomodoro';
-import { useNetworkStore } from '../network';
+import {
+    applyDispatch,
+    bindingKeySig,
+    buildSnapshot,
+    networkSig,
+    pomoSig,
+    settingsSig,
+} from './host';
+import { useSettingsStore, type SettingsState } from '../settings';
+import { usePomodoroStore, type PomodoroState } from '../pomodoro';
+import { useNetworkStore, type NetworkStateShape } from '../network';
 import { useBindingKeyStore } from '../bindingKey';
 import { BRIDGE_VERSION } from './protocol';
+
+type BindingKeySigInput = Parameters<typeof bindingKeySig>[0];
+type BindingKeyStateWithPermission = BindingKeySigInput & {
+    permissionGranted: boolean;
+    platform: 'macos' | 'windows' | 'other' | null;
+};
+
+const sampleEndActionVideo = {
+    sourceKind: 'custom' as const,
+    builtinVideoId: 'builtin-ocean',
+    customVideoPath: '/Users/xpy/Videos/focus-complete.mp4',
+};
+
+const sampleRemoteState = {
+    pomodoro: {
+        phase: 1,
+        remainingSeconds: 42,
+        currentRound: 2,
+        totalRounds: 4,
+        isRunning: true,
+    },
+    activeApp: {
+        name: 'Focus App',
+        bundleId: 'com.example.focus',
+        iconId: 'icon-focus',
+    },
+    bindingKey: {
+        keyLabel: 'A',
+        pressCount: 7,
+    },
+};
 
 beforeEach(() => {
     useSettingsStore.setState({
@@ -12,6 +50,36 @@ beforeEach(() => {
         committedUiScale: 1.0,
         dangerousChange: null,
         activeTab: 'pomodoro',
+    });
+    usePomodoroStore.setState({
+        autoStartBreak: false,
+        endActionMode: 'playVideo',
+        endActionVideo: {
+            sourceKind: 'builtin',
+            builtinVideoId: 'default',
+            customVideoPath: '',
+        },
+    });
+    usePomodoroStore.getState().applyEndActionSettings('playVideo', {
+        sourceKind: 'builtin',
+        builtinVideoId: 'default',
+        customVideoPath: '',
+    });
+    useNetworkStore.setState({
+        autoConnect: false,
+        playerName: '我',
+        playerId: null,
+        roomCode: '',
+        status: 'idle',
+        players: {},
+        lastError: null,
+    });
+    useBindingKeyStore.setState({
+        entries: [],
+        capturingId: null,
+        syncedKeyId: null,
+        permissionGranted: true,
+        platform: null,
     });
 });
 
@@ -25,8 +93,62 @@ describe('buildSnapshot', () => {
         expect('targetMonitorIndex' in snap.settings).toBe(false);
         expect(snap.pomodoro.focusDurationSeconds).toBe(usePomodoroStore.getState().focusDurationSeconds);
         expect(snap.pomodoro.autoStartBreak).toBe(true);
+        expect(snap.pomodoro.endActionMode).toBe(usePomodoroStore.getState().endActionMode);
+        expect(snap.pomodoro.endActionVideo).toEqual(usePomodoroStore.getState().endActionVideo);
         expect(snap.network.status).toBe(useNetworkStore.getState().status);
-        expect(snap.bindingKey.entries).toBe(useBindingKeyStore.getState().entries);
+        expect(snap.bindingKey.entries).toEqual(useBindingKeyStore.getState().entries);
+        expect(snap.bindingKey.entries).not.toBe(useBindingKeyStore.getState().entries);
+    });
+
+    it('detaches nested snapshot values from source store references', () => {
+        usePomodoroStore.getState().applyEndActionSettings('playVideo', sampleEndActionVideo);
+        useNetworkStore.setState({
+            players: {
+                'p-1': {
+                    playerId: 'p-1',
+                    playerName: 'Player One',
+                    state: sampleRemoteState,
+                },
+            },
+        });
+        useBindingKeyStore.setState({
+            entries: [{
+                id: 'bk-1',
+                label: 'A',
+                keyCode: 0,
+                pressCount: 2,
+                enabled: true,
+            }],
+        });
+
+        const snap = buildSnapshot();
+
+        expect(snap.pomodoro.endActionVideo).toEqual(usePomodoroStore.getState().endActionVideo);
+        expect(snap.pomodoro.endActionVideo).not.toBe(usePomodoroStore.getState().endActionVideo);
+        expect(snap.network.players).toEqual(useNetworkStore.getState().players);
+        expect(snap.network.players).not.toBe(useNetworkStore.getState().players);
+        expect(snap.network.players['p-1']).not.toBe(useNetworkStore.getState().players['p-1']);
+        expect(snap.network.players['p-1'].state).not.toBe(useNetworkStore.getState().players['p-1'].state);
+        expect(snap.network.players['p-1'].state?.pomodoro).not.toBe(useNetworkStore.getState().players['p-1'].state?.pomodoro);
+        expect(snap.network.players['p-1'].state?.activeApp).not.toBe(useNetworkStore.getState().players['p-1'].state?.activeApp);
+        expect(snap.network.players['p-1'].state?.bindingKey).not.toBe(useNetworkStore.getState().players['p-1'].state?.bindingKey);
+        expect(snap.bindingKey.entries).toEqual(useBindingKeyStore.getState().entries);
+        expect(snap.bindingKey.entries).not.toBe(useBindingKeyStore.getState().entries);
+        expect(snap.bindingKey.entries[0]).not.toBe(useBindingKeyStore.getState().entries[0]);
+
+        snap.pomodoro.endActionVideo.customVideoPath = '/mutated.mp4';
+        snap.network.players['p-1'].playerName = 'Mutated';
+        snap.network.players['p-1'].state!.pomodoro.remainingSeconds = 1;
+        snap.network.players['p-1'].state!.activeApp!.name = 'Mutated App';
+        snap.network.players['p-1'].state!.bindingKey!.pressCount = 99;
+        snap.bindingKey.entries[0].label = 'Mutated';
+
+        expect(usePomodoroStore.getState().endActionVideo.customVideoPath).toBe('/Users/xpy/Videos/focus-complete.mp4');
+        expect(useNetworkStore.getState().players['p-1'].playerName).toBe('Player One');
+        expect(useNetworkStore.getState().players['p-1'].state?.pomodoro.remainingSeconds).toBe(42);
+        expect(useNetworkStore.getState().players['p-1'].state?.activeApp?.name).toBe('Focus App');
+        expect(useNetworkStore.getState().players['p-1'].state?.bindingKey?.pressCount).toBe(7);
+        expect(useBindingKeyStore.getState().entries[0].label).toBe('A');
     });
 
     it('includes committed scale and dangerous change state', () => {
@@ -74,9 +196,141 @@ describe('applyDispatch', () => {
         expect(state.autoStartBreak).toBe(true);
     });
 
+    it('routes pomodoro/applyEndActionSettings to the main pomodoro store', () => {
+        applyDispatch({
+            v: BRIDGE_VERSION,
+            store: 'pomodoro',
+            action: 'applyEndActionSettings',
+            args: ['topWindow', sampleEndActionVideo],
+        });
+
+        expect(usePomodoroStore.getState().endActionMode).toBe('topWindow');
+        expect(usePomodoroStore.getState().endActionVideo).toEqual(sampleEndActionVideo);
+    });
+
     it('ignores payloads with a mismatched bridge version', () => {
         const before = useSettingsStore.getState().uiScale;
         applyDispatch({ v: 999 as 1, store: 'settings', action: 'setUiScale', args: [2.5] });
         expect(useSettingsStore.getState().uiScale).toBe(before);
+    });
+});
+
+describe('bridge host subscription signatures', () => {
+    it('settingsSig ignores settings-window-local fields and includes mirrored fields', () => {
+        const pomodoroTabSettings: SettingsState = {
+            uiScale: 1.25,
+            committedUiScale: 1.25,
+            dangerousChange: null,
+            activeTab: 'pomodoro',
+        };
+        const globalTabSettings: SettingsState = {
+            ...pomodoroTabSettings,
+            activeTab: 'global',
+        };
+        const scaledSettings: SettingsState = {
+            ...pomodoroTabSettings,
+            uiScale: 1.5,
+        };
+
+        expect(settingsSig(pomodoroTabSettings)).toBe(settingsSig(globalTabSettings));
+        expect(settingsSig(pomodoroTabSettings)).not.toBe(settingsSig(scaledSettings));
+    });
+
+    it('pomoSig includes end-action settings and ignores transient timer fields', () => {
+        const base: PomodoroState = {
+            ...usePomodoroStore.getState(),
+            endActionMode: 'playVideo' as const,
+            endActionVideo: sampleEndActionVideo,
+        };
+        const oneSecondRemaining: PomodoroState = { ...base, remainingSeconds: 1 };
+        const ninetyNineSecondsRemaining: PomodoroState = { ...base, remainingSeconds: 99 };
+        const topWindowEndAction: PomodoroState = { ...base, endActionMode: 'topWindow' };
+        const otherVideo: PomodoroState = {
+            ...base,
+            endActionVideo: { ...sampleEndActionVideo, customVideoPath: '/other.mp4' },
+        };
+
+        expect(pomoSig(oneSecondRemaining)).toBe(pomoSig(ninetyNineSecondsRemaining));
+        expect(pomoSig(base)).not.toBe(pomoSig(topWindowEndAction));
+        expect(pomoSig(base)).not.toBe(pomoSig(otherVideo));
+    });
+
+    it('pomoSig avoids delimiter collisions in end-action video fields', () => {
+        const base: PomodoroState = {
+            ...usePomodoroStore.getState(),
+            endActionMode: 'playVideo' as const,
+        };
+
+        expect(pomoSig({
+            ...base,
+            endActionVideo: {
+                sourceKind: 'custom',
+                builtinVideoId: 'id|path',
+                customVideoPath: 'tail',
+            },
+        })).not.toBe(pomoSig({
+            ...base,
+            endActionVideo: {
+                sourceKind: 'custom',
+                builtinVideoId: 'id',
+                customVideoPath: 'path|tail',
+            },
+        }));
+    });
+
+    it('networkSig ignores omitted network fields and includes mirrored fields', () => {
+        const base: NetworkStateShape = {
+            ...useNetworkStore.getState(),
+            status: 'joined' as const,
+            serverUrl: 'ws://one.example',
+            players: {
+                'p-1': {
+                    playerId: 'p-1',
+                    playerName: 'Player One',
+                    state: null,
+                },
+            },
+        };
+        const otherServer: NetworkStateShape = { ...base, serverUrl: 'ws://two.example' };
+        const renamedPlayer: NetworkStateShape = {
+            ...base,
+            players: {
+                'p-1': {
+                    playerId: 'p-1',
+                    playerName: 'Renamed',
+                    state: null,
+                },
+            },
+        };
+
+        expect(networkSig(base)).toBe(networkSig(otherServer));
+        expect(networkSig(base)).not.toBe(networkSig(renamedPlayer));
+    });
+
+    it('bindingKeySig ignores omitted permission fields and includes mirrored fields', () => {
+        const base: BindingKeyStateWithPermission = {
+            ...useBindingKeyStore.getState(),
+            permissionGranted: true,
+            platform: 'macos' as const,
+            entries: [{
+                id: 'bk-1',
+                label: 'A',
+                keyCode: 0,
+                pressCount: 1,
+                enabled: true,
+            }],
+        };
+        const deniedPermission: BindingKeyStateWithPermission = {
+            ...base,
+            permissionGranted: false,
+            platform: 'windows',
+        };
+        const incrementedEntry: BindingKeyStateWithPermission = {
+            ...base,
+            entries: [{ ...base.entries[0], pressCount: 2 }],
+        };
+
+        expect(bindingKeySig(base)).toBe(bindingKeySig(deniedPermission));
+        expect(bindingKeySig(base)).not.toBe(bindingKeySig(incrementedEntry));
     });
 });

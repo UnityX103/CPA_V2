@@ -5,9 +5,9 @@ import path from 'node:path';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup, act } from '@testing-library/react';
 import { useSettingsStore } from '../domain/settings';
+import { usePomodoroStore } from '../domain/pomodoro';
 import { useNetworkStore } from '../domain/network';
 import { useBindingKeyStore } from '../domain/bindingKey';
-import { usePomodoroStore } from '../domain/pomodoro';
 import { SettingsPanel } from './SettingsPanel';
 import { DangerousChangeDialog } from './DangerousChangeDialog';
 
@@ -33,10 +33,11 @@ function renderSettingsPanelWithDangerDialog() {
     );
 }
 
-const { startDragging, invokeMock, listenMock } = vi.hoisted(() => ({
+const { startDragging, invokeMock, listenMock, pickCustomWebmPathMock } = vi.hoisted(() => ({
     startDragging: vi.fn(),
     invokeMock: vi.fn(),
     listenMock: vi.fn(() => Promise.resolve(() => {})),
+    pickCustomWebmPathMock: vi.fn(),
 }));
 
 vi.mock('@tauri-apps/api/window', () => ({
@@ -50,6 +51,7 @@ vi.mock('@tauri-apps/api/window', () => ({
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: invokeMock }));
 vi.mock('@tauri-apps/api/event', () => ({ listen: listenMock }));
+vi.mock('../domain/videoFiles', () => ({ pickCustomWebmPath: pickCustomWebmPathMock }));
 
 beforeEach(() => {
     startDragging.mockReset();
@@ -57,6 +59,8 @@ beforeEach(() => {
     invokeMock.mockResolvedValue({ granted: true, platform: 'macos' });
     listenMock.mockReset();
     listenMock.mockResolvedValue(() => {});
+    pickCustomWebmPathMock.mockReset();
+    pickCustomWebmPathMock.mockResolvedValue(null);
     useSettingsStore.setState({
         activeTab: 'pomodoro',
         uiScale: 1.0,
@@ -67,7 +71,20 @@ beforeEach(() => {
         focusDurationSeconds: 25 * 60,
         breakDurationSeconds: 5 * 60,
         totalRounds: 4,
+        currentRound: 1,
+        remainingSeconds: 25 * 60,
+        currentPhase: 'focus',
+        isRunning: false,
+        isPinned: false,
         autoStartBreak: false,
+        consecutiveCompletedFocus: 0,
+        endActionMode: 'playVideo',
+        endActionVideo: {
+            sourceKind: 'builtin',
+            builtinVideoId: 'qianqian',
+            customVideoPath: '',
+        },
+        lastEndEvent: null,
     });
     cleanup();
 });
@@ -258,6 +275,137 @@ describe('PomodoroTab parity with gs1Tv', () => {
         fireEvent.click(screen.getByRole('button', { name: '自动开始休息' }));
 
         expect(apply.disabled).toBe(false);
+    });
+});
+
+describe('PomodoroTab end action settings', () => {
+    it('shows qianqian as the default bundled video option and playVideo action', () => {
+        render(<SettingsPanel />);
+
+        expect(screen.getByRole('option', { name: '播放视频' })).toBeTruthy();
+        expect(screen.getByRole('option', { name: '千千' })).toBeTruthy();
+        expect(screen.getByLabelText('计时结束提示')).toHaveProperty('value', 'playVideo');
+        expect(screen.getByLabelText('视频选项')).toHaveProperty('value', 'qianqian');
+    });
+
+    it('applies topWindow as the end action', () => {
+        render(<SettingsPanel />);
+
+        fireEvent.change(screen.getByLabelText('计时结束提示'), { target: { value: 'topWindow' } });
+        fireEvent.click(screen.getByRole('button', { name: '应用' }));
+
+        expect(usePomodoroStore.getState().endActionMode).toBe('topWindow');
+        expect(usePomodoroStore.getState().endActionVideo).toEqual({
+            sourceKind: 'builtin',
+            builtinVideoId: 'qianqian',
+            customVideoPath: '',
+        });
+    });
+
+    it('applying only the end action does not reset a running timer', () => {
+        usePomodoroStore.setState({
+            remainingSeconds: 1234,
+            currentPhase: 'focus',
+            isRunning: true,
+        });
+        render(<SettingsPanel />);
+
+        fireEvent.change(screen.getByLabelText('计时结束提示'), { target: { value: 'topWindow' } });
+        fireEvent.click(screen.getByRole('button', { name: '应用' }));
+
+        const state = usePomodoroStore.getState();
+        expect(state.endActionMode).toBe('topWindow');
+        expect(state.remainingSeconds).toBe(1234);
+        expect(state.currentPhase).toBe('focus');
+        expect(state.isRunning).toBe(true);
+    });
+
+    it('keeps unsaved video draft when the mirrored store replaces the video object reference', () => {
+        render(<SettingsPanel />);
+
+        fireEvent.change(screen.getByLabelText('视频选项'), { target: { value: 'custom' } });
+        expect(screen.getByLabelText('视频选项')).toHaveProperty('value', 'custom');
+
+        act(() => {
+            const current = usePomodoroStore.getState().endActionVideo;
+            usePomodoroStore.setState({ endActionVideo: { ...current } });
+        });
+
+        expect(screen.getByLabelText('视频选项')).toHaveProperty('value', 'custom');
+        expect(screen.getByRole('button', { name: '应用' })).toHaveProperty('disabled', true);
+    });
+
+    it('does not allow applying a custom video option until a file is selected', async () => {
+        render(<SettingsPanel />);
+
+        fireEvent.change(screen.getByLabelText('视频选项'), { target: { value: 'custom' } });
+        const apply = screen.getByRole('button', { name: '应用' });
+        expect(apply).toHaveProperty('disabled', true);
+
+        fireEvent.click(apply);
+        expect(usePomodoroStore.getState().endActionVideo).toEqual({
+            sourceKind: 'builtin',
+            builtinVideoId: 'qianqian',
+            customVideoPath: '',
+        });
+
+        pickCustomWebmPathMock.mockResolvedValue('/Users/xpy/Videos/custom.webm');
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: '选择自定义视频' }));
+        });
+
+        expect(screen.getByRole('button', { name: '应用' })).toHaveProperty('disabled', false);
+    });
+
+    it('syncs clean end action drafts when the committed store value changes', () => {
+        render(<SettingsPanel />);
+
+        act(() => {
+            usePomodoroStore.setState({
+                endActionMode: 'topWindow',
+                endActionVideo: {
+                    sourceKind: 'builtin',
+                    builtinVideoId: 'qianqian',
+                    customVideoPath: '',
+                },
+            });
+        });
+
+        expect(screen.getByLabelText('计时结束提示')).toHaveProperty('value', 'topWindow');
+        expect(screen.getByRole('button', { name: '应用' })).toHaveProperty('disabled', true);
+    });
+
+    it('selecting a custom webm shows the basename and applies the custom video', async () => {
+        pickCustomWebmPathMock.mockResolvedValue('/Users/xpy/Videos/custom.webm');
+        render(<SettingsPanel />);
+
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: '选择自定义视频' }));
+        });
+
+        expect(screen.getByText('custom.webm')).toBeTruthy();
+
+        fireEvent.click(screen.getByRole('button', { name: '应用' }));
+
+        expect(usePomodoroStore.getState().endActionMode).toBe('playVideo');
+        expect(usePomodoroStore.getState().endActionVideo).toEqual({
+            sourceKind: 'custom',
+            builtinVideoId: 'qianqian',
+            customVideoPath: '/Users/xpy/Videos/custom.webm',
+        });
+    });
+
+    it('canceling the custom picker leaves the draft clean', async () => {
+        render(<SettingsPanel />);
+
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: '选择自定义视频' }));
+        });
+
+        const apply = screen.getByRole('button', { name: '应用' });
+        expect(apply).toHaveProperty('disabled', true);
+        expect(screen.getByText('未选择')).toBeTruthy();
+        expect(usePomodoroStore.getState().endActionVideo.customVideoPath).toBe('');
     });
 });
 

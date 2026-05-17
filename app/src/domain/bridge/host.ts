@@ -3,8 +3,8 @@ import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import { useSettingsStore } from '../settings';
 import { usePomodoroStore } from '../pomodoro';
-import { useNetworkStore } from '../network';
-import { useBindingKeyStore } from '../bindingKey';
+import { useNetworkStore, type RemotePlayer } from '../network';
+import { useBindingKeyStore, type BindingKeyEntry } from '../bindingKey';
 import {
     BRIDGE_VERSION,
     EVT_DISPATCH,
@@ -13,6 +13,29 @@ import {
     type BridgeSnapshot,
     type DispatchPayload,
 } from './protocol';
+
+function clonePlayer(player: RemotePlayer): RemotePlayer {
+    return {
+        ...player,
+        state: player.state
+            ? {
+                pomodoro: { ...player.state.pomodoro },
+                activeApp: player.state.activeApp ? { ...player.state.activeApp } : null,
+                bindingKey: player.state.bindingKey ? { ...player.state.bindingKey } : null,
+            }
+            : null,
+    };
+}
+
+function clonePlayers(players: Record<string, RemotePlayer>): Record<string, RemotePlayer> {
+    return Object.fromEntries(
+        Object.entries(players).map(([id, player]) => [id, clonePlayer(player)]),
+    );
+}
+
+function cloneEntries(entries: BindingKeyEntry[]): BindingKeyEntry[] {
+    return entries.map((entry) => ({ ...entry }));
+}
 
 export function buildSnapshot(): BridgeSnapshot {
     const s = useSettingsStore.getState();
@@ -31,6 +54,8 @@ export function buildSnapshot(): BridgeSnapshot {
             breakDurationSeconds: p.breakDurationSeconds,
             totalRounds: p.totalRounds,
             autoStartBreak: p.autoStartBreak,
+            endActionMode: p.endActionMode,
+            endActionVideo: { ...p.endActionVideo },
         },
         network: {
             autoConnect: n.autoConnect,
@@ -38,11 +63,11 @@ export function buildSnapshot(): BridgeSnapshot {
             playerId: n.playerId,
             roomCode: n.roomCode,
             status: n.status,
-            players: n.players,
+            players: clonePlayers(n.players),
             lastError: n.lastError,
         },
         bindingKey: {
-            entries: b.entries,
+            entries: cloneEntries(b.entries),
             capturingId: b.capturingId,
             syncedKeyId: b.syncedKeyId,
         },
@@ -68,6 +93,9 @@ export function applyDispatch(payload: DispatchPayload): void {
         case 'pomodoro': {
             if (payload.action === 'applySettings') {
                 usePomodoroStore.getState().applySettings(...payload.args);
+            }
+            if (payload.action === 'applyEndActionSettings') {
+                usePomodoroStore.getState().applyEndActionSettings(...payload.args);
             }
             return;
         }
@@ -105,13 +133,64 @@ async function sendSnapshot(): Promise<void> {
     }
 }
 
-function pomoSig(s: {
+export function settingsSig(s: {
+    uiScale: number;
+    committedUiScale: number;
+    dangerousChange: unknown;
+}): string {
+    return JSON.stringify([s.uiScale, s.committedUiScale, s.dangerousChange]);
+}
+
+export function pomoSig(s: {
     focusDurationSeconds: number;
     breakDurationSeconds: number;
     totalRounds: number;
     autoStartBreak: boolean;
+    endActionMode: string;
+    endActionVideo: { sourceKind: string; builtinVideoId: string; customVideoPath: string };
 }): string {
-    return `${s.focusDurationSeconds}|${s.breakDurationSeconds}|${s.totalRounds}|${s.autoStartBreak}`;
+    return JSON.stringify([
+        s.focusDurationSeconds,
+        s.breakDurationSeconds,
+        s.totalRounds,
+        s.autoStartBreak,
+        s.endActionMode,
+        s.endActionVideo.sourceKind,
+        s.endActionVideo.builtinVideoId,
+        s.endActionVideo.customVideoPath,
+    ]);
+}
+
+export function networkSig(s: {
+    autoConnect: boolean;
+    playerName: string;
+    playerId: string | null;
+    roomCode: string;
+    status: string;
+    players: Record<string, RemotePlayer>;
+    lastError: string | null;
+}): string {
+    return JSON.stringify([
+        s.autoConnect,
+        s.playerName,
+        s.playerId,
+        s.roomCode,
+        s.status,
+        Object.keys(s.players).sort().map((id) => [id, s.players[id]]),
+        s.lastError,
+    ]);
+}
+
+export function bindingKeySig(s: {
+    entries: BindingKeyEntry[];
+    capturingId: string | null;
+    syncedKeyId: string | null;
+}): string {
+    return JSON.stringify([
+        s.entries,
+        s.capturingId,
+        s.syncedKeyId,
+    ]);
 }
 
 export function useBridgeHost(): void {
@@ -133,17 +212,35 @@ export function useBridgeHost(): void {
             })
             .catch((err) => { console.warn('[bridge] failed to attach listener', err); });
 
+        let prevSettings = settingsSig(useSettingsStore.getState());
         let prevPomo = pomoSig(usePomodoroStore.getState());
+        let prevNetwork = networkSig(useNetworkStore.getState());
+        let prevBindingKey = bindingKeySig(useBindingKeyStore.getState());
         const subs: Array<() => void> = [
-            useSettingsStore.subscribe(() => { void sendSnapshot(); }),
+            useSettingsStore.subscribe((s) => {
+                const sig = settingsSig(s);
+                if (sig === prevSettings) return;
+                prevSettings = sig;
+                void sendSnapshot();
+            }),
             usePomodoroStore.subscribe((s) => {
                 const sig = pomoSig(s);
                 if (sig === prevPomo) return;
                 prevPomo = sig;
                 void sendSnapshot();
             }),
-            useNetworkStore.subscribe(() => { void sendSnapshot(); }),
-            useBindingKeyStore.subscribe(() => { void sendSnapshot(); }),
+            useNetworkStore.subscribe((s) => {
+                const sig = networkSig(s);
+                if (sig === prevNetwork) return;
+                prevNetwork = sig;
+                void sendSnapshot();
+            }),
+            useBindingKeyStore.subscribe((s) => {
+                const sig = bindingKeySig(s);
+                if (sig === prevBindingKey) return;
+                prevBindingKey = sig;
+                void sendSnapshot();
+            }),
         ];
 
         return () => {
