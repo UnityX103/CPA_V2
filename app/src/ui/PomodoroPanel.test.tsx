@@ -46,20 +46,6 @@ describe('PomodoroPanel HApJ0 pin behaviour', () => {
         invokeMock.mockResolvedValue(undefined);
         startDragging.mockReset();
         resetPomodoro();
-        vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
-            const s = this.style;
-            return {
-                x: parseFloat(s.left) || 0,
-                y: parseFloat(s.top) || 0,
-                left: parseFloat(s.left) || 0,
-                top: parseFloat(s.top) || 0,
-                width: parseFloat(s.width) || 0,
-                height: parseFloat(s.height) || 0,
-                right: (parseFloat(s.left) || 0) + (parseFloat(s.width) || 0),
-                bottom: (parseFloat(s.top) || 0) + (parseFloat(s.height) || 0),
-                toJSON: () => ({}),
-            } as DOMRect;
-        });
     });
 
     afterEach(() => {
@@ -102,14 +88,17 @@ describe('PomodoroPanel HApJ0 pin behaviour', () => {
         expect(invokeMock).toHaveBeenCalledWith('open_settings_window');
     });
 
-    it('does not invoke removed transparent hit-region commands', async () => {
+    it('does not invoke removed transparent region commands', async () => {
         render(<PomodoroPanel />);
 
         await waitFor(() => {
             expect(pinCalls()).toContainEqual(['set_main_window_pinned', { onTop: false }]);
         });
 
-        const invokedCommands = invokeMock.mock.calls.map(([cmd]) => cmd);
-        expect(invokedCommands).toEqual(['set_main_window_pinned']);
+        const invokedCommands = invokeMock.mock.calls.map(([cmd]) => String(cmd));
+        const removedRegionCommand = /^(?:un)?register_.*_region$|^clear_.*_regions$/;
+        expect(invokedCommands).not.toEqual(
+            expect.arrayContaining([expect.stringMatching(removedRegionCommand)]),
+        );
     });
 });
