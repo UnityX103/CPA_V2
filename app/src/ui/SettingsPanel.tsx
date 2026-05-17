@@ -79,18 +79,21 @@ function PomodoroTab() {
     const pomo = usePomodoroStore();
     const [focusMin, setFocusMin] = useState(Math.round(pomo.focusDurationSeconds / 60));
     const [breakMin, setBreakMin] = useState(Math.round(pomo.breakDurationSeconds / 60));
+    const [autoStartBreak, setAutoStartBreak] = useState(pomo.autoStartBreak);
 
     useEffect(() => {
         setFocusMin(Math.round(pomo.focusDurationSeconds / 60));
         setBreakMin(Math.round(pomo.breakDurationSeconds / 60));
-    }, [pomo.focusDurationSeconds, pomo.breakDurationSeconds]);
+        setAutoStartBreak(pomo.autoStartBreak);
+    }, [pomo.focusDurationSeconds, pomo.breakDurationSeconds, pomo.autoStartBreak]);
 
     const dirty =
         focusMin * 60 !== pomo.focusDurationSeconds ||
-        breakMin * 60 !== pomo.breakDurationSeconds;
+        breakMin * 60 !== pomo.breakDurationSeconds ||
+        autoStartBreak !== pomo.autoStartBreak;
 
     const apply = () => {
-        pomo.applySettings(focusMin * 60, breakMin * 60, pomo.totalRounds, true);
+        pomo.applySettings(focusMin * 60, breakMin * 60, pomo.totalRounds, true, autoStartBreak);
     };
 
     return (
@@ -132,6 +135,11 @@ function PomodoroTab() {
                                 <span className="dropdown-value">弹窗到顶部</span>
                                 <ChevronDownIcon className="dropdown-chevron" />
                             </button>
+                        </div>
+
+                        <div className="card pomo-row">
+                            <span className="pomo-row-label">自动开始休息</span>
+                            <Toggle checked={autoStartBreak} onChange={setAutoStartBreak} ariaLabel="自动开始休息" />
                         </div>
 
                         {/* pomoVideoPath WSnlp: enabled:false → 设计稿收起，不渲染 */}
@@ -451,13 +459,20 @@ function NumberSuffix({ value, onChange, min, max, suffix, variant }: NumSuffixP
     );
 }
 
-function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+interface ToggleProps {
+    checked: boolean;
+    onChange: (v: boolean) => void;
+    ariaLabel?: string;
+}
+
+function Toggle({ checked, onChange, ariaLabel }: ToggleProps) {
     return (
         <button
             type="button"
             className={`toggle ${checked ? 'on' : ''}`}
             onClick={() => onChange(!checked)}
             aria-pressed={checked}
+            aria-label={ariaLabel}
         >
             <span className="toggle-knob" />
         </button>

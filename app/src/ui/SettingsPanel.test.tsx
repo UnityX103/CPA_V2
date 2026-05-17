@@ -7,6 +7,7 @@ import { render, screen, fireEvent, cleanup, act } from '@testing-library/react'
 import { useSettingsStore } from '../domain/settings';
 import { useNetworkStore } from '../domain/network';
 import { useBindingKeyStore } from '../domain/bindingKey';
+import { usePomodoroStore } from '../domain/pomodoro';
 import { SettingsPanel } from './SettingsPanel';
 
 function cssRule(css: string, selector: string): string {
@@ -47,6 +48,12 @@ beforeEach(() => {
     listenMock.mockReset();
     listenMock.mockResolvedValue(() => {});
     useSettingsStore.setState({ activeTab: 'pomodoro' });
+    usePomodoroStore.setState({
+        focusDurationSeconds: 25 * 60,
+        breakDurationSeconds: 5 * 60,
+        totalRounds: 4,
+        autoStartBreak: false,
+    });
     cleanup();
 });
 
@@ -171,7 +178,7 @@ describe('SettingsPanel geometry', () => {
 });
 
 describe('PomodoroTab parity with gs1Tv', () => {
-    it('renders pomoGrid + 3 visible pomoFooter rows (WSnlp collapsed per design)', () => {
+    it('renders pomoGrid + visible pomoFooter rows (WSnlp collapsed per design)', () => {
         render(<SettingsPanel />);
         // pomoGrid: work + break cards (label text)
         expect(screen.getByText('专注时长')).toBeTruthy();
@@ -183,10 +190,20 @@ describe('PomodoroTab parity with gs1Tv', () => {
         expect(screen.getByText('自定义视频文件')).toBeTruthy();
     });
 
-    it('does NOT render the obsolete 总轮次 / 休息自动开始 rows', () => {
+    it('renders 自动开始休息 while omitting obsolete 总轮次', () => {
         render(<SettingsPanel />);
         expect(screen.queryByText('总轮次')).toBeNull();
-        expect(screen.queryByText('休息自动开始')).toBeNull();
+        expect(screen.getByText('自动开始休息')).toBeTruthy();
+    });
+
+    it('enables Apply when 自动开始休息 changes', () => {
+        render(<SettingsPanel />);
+        const apply = screen.getByRole('button', { name: '应用' }) as HTMLButtonElement;
+        expect(apply.disabled).toBe(true);
+
+        fireEvent.click(screen.getByRole('button', { name: '自动开始休息' }));
+
+        expect(apply.disabled).toBe(false);
     });
 });
 

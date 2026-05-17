@@ -9,7 +9,12 @@ import { BRIDGE_VERSION, type BridgeSnapshot } from './protocol';
 const SAMPLE: BridgeSnapshot = {
     v: BRIDGE_VERSION,
     settings: { uiScale: 2.0 },
-    pomodoro: { focusDurationSeconds: 600, breakDurationSeconds: 120, totalRounds: 6 },
+    pomodoro: {
+        focusDurationSeconds: 600,
+        breakDurationSeconds: 120,
+        totalRounds: 6,
+        autoStartBreak: true,
+    },
     network: {
         autoConnect: true, playerName: 'host', playerId: 'p-host',
         roomCode: 'R9', status: 'joined',
@@ -30,6 +35,7 @@ describe('applySnapshotToMirrors', () => {
         expect(usePomodoroStore.getState().focusDurationSeconds).toBe(600);
         expect(usePomodoroStore.getState().breakDurationSeconds).toBe(120);
         expect(usePomodoroStore.getState().totalRounds).toBe(6);
+        expect(usePomodoroStore.getState().autoStartBreak).toBe(true);
         expect(useNetworkStore.getState().status).toBe('joined');
         expect(useNetworkStore.getState().roomCode).toBe('R9');
         expect(useBindingKeyStore.getState().capturingId).toBe('bk-cap');

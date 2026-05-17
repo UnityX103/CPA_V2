@@ -13,7 +13,7 @@ function reset() {
         currentPhase: 'focus',
         isRunning: false,
         isPinned: false,
-        autoStartBreak: true,
+        autoStartBreak: false,
         consecutiveCompletedFocus: 0,
     });
 }
@@ -24,7 +24,7 @@ describe('PomodoroTimerSystem.tick', () => {
     // adversarial-review #7
     it('autoStartBreak=true 时 phase 切换不吃掉新阶段第一秒', () => {
         const store = usePomodoroStore.getState();
-        store.applySettings(1, 60, 4, true);
+        store.applySettings(1, 60, 4, true, true);
         store.start();
 
         // 累积 1.2s：第 1s 触发 focus→break，多余 0.2s 必须被丢弃，不能扣到 break
@@ -39,6 +39,30 @@ describe('PomodoroTimerSystem.tick', () => {
         // 再 0.3s（总共 1.1s）才扣到 59
         usePomodoroStore.getState().tick(0.3);
         expect(usePomodoroStore.getState().remainingSeconds).toBe(59);
+    });
+
+    it('autoStartBreak=false by default pauses at the start of break', () => {
+        const store = usePomodoroStore.getState();
+        store.applySettings(1, 60, 4, true, false);
+        store.start();
+
+        usePomodoroStore.getState().tick(1);
+
+        expect(usePomodoroStore.getState().currentPhase).toBe('break');
+        expect(usePomodoroStore.getState().remainingSeconds).toBe(60);
+        expect(usePomodoroStore.getState().isRunning).toBe(false);
+    });
+
+    it('autoStartBreak=true starts break immediately after focus completes', () => {
+        const store = usePomodoroStore.getState();
+        store.applySettings(1, 60, 4, true, true);
+        store.start();
+
+        usePomodoroStore.getState().tick(1);
+
+        expect(usePomodoroStore.getState().currentPhase).toBe('break');
+        expect(usePomodoroStore.getState().remainingSeconds).toBe(60);
+        expect(usePomodoroStore.getState().isRunning).toBe(true);
     });
 
     it('暂停时 tick 不扣秒', () => {
@@ -63,10 +87,10 @@ describe('createPomodoroStore — settings-window mode', () => {
         const spy = vi.spyOn(dispatchMod, 'dispatch').mockResolvedValue();
         const store = createPomodoroStore({ isSettingsWindow: true });
         const before = store.getState().focusDurationSeconds;
-        store.getState().applySettings(900, 180, 5, true);
+        store.getState().applySettings(900, 180, 5, true, false);
         expect(store.getState().focusDurationSeconds).toBe(before);
         expect(spy).toHaveBeenCalledWith(expect.objectContaining({
-            v: BRIDGE_VERSION, store: 'pomodoro', action: 'applySettings', args: [900, 180, 5, true],
+            v: BRIDGE_VERSION, store: 'pomodoro', action: 'applySettings', args: [900, 180, 5, true, false],
         }));
         spy.mockRestore();
     });
