@@ -7,6 +7,14 @@ const { constructorMock, getByLabelMock, onceMock } = vi.hoisted(() => ({
     onceMock: vi.fn(() => Promise.resolve(() => {})),
 }));
 
+const { invokeMock } = vi.hoisted(() => ({
+    invokeMock: vi.fn(),
+}));
+
+vi.mock('@tauri-apps/api/core', () => ({
+    invoke: invokeMock,
+}));
+
 vi.mock('@tauri-apps/api/webviewWindow', () => ({
     WebviewWindow: class {
         static getByLabel = getByLabelMock;
@@ -25,9 +33,16 @@ describe('pomodoro video player window', () => {
         getByLabelMock.mockResolvedValue(null);
         onceMock.mockReset();
         onceMock.mockResolvedValue(() => {});
+        invokeMock.mockReset();
+        invokeMock.mockResolvedValue({
+            x: -1920,
+            y: 0,
+            width: 1920,
+            height: 1080,
+        });
     });
 
-    it('creates a transparent fullscreen always-on-top player window', async () => {
+    it('creates a transparent borderless player window that covers the focused app screen', async () => {
         await openPomodoroVideoWindow({
             kind: 'video',
             title: '千千',
@@ -35,10 +50,15 @@ describe('pomodoro video player window', () => {
         });
 
         expect(getByLabelMock).toHaveBeenCalledWith('pomodoro-video-player');
+        expect(invokeMock).toHaveBeenCalledWith('pomodoro_video_screen_rect');
         expect(constructorMock).toHaveBeenCalledWith('pomodoro-video-player', expect.objectContaining({
             url: 'index.html?window=video-player&src=%2Fvideos%2Fms1.webm&title=%E5%8D%83%E5%8D%83',
             title: '千千',
-            fullscreen: true,
+            x: -1920,
+            y: 0,
+            width: 1920,
+            height: 1080,
+            fullscreen: false,
             transparent: true,
             decorations: false,
             alwaysOnTop: true,
