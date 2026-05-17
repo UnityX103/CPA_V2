@@ -2,11 +2,14 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "桌宠番茄钟主窗口最小权限：仅暴露窗口拖动；其它特权操作走 #[tauri::command] 名单",
-  "windows": ["main", "settings"],
+  "windows": ["main", "settings", "pomodoro-video-player"],
   "permissions": [
     "core:default",
     "core:window:default",
+    "core:window:allow-create",
+    "core:window:allow-close",
     "core:window:allow-start-dragging",
+    "core:webview:allow-create-webview-window",
     "core:event:default",
     "dialog:allow-open",
     "dialog:allow-message"

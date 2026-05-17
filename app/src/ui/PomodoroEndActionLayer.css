@@ -12,34 +12,3 @@
     font-size: 14px;
     font-weight: 700;
 }
-
-.pomo-video-backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(16, 14, 12, 0.82);
-}
-
-.pomo-video-player {
-    max-width: min(86vw, 960px);
-    max-height: 78vh;
-    background: #000;
-}
-
-.pomo-video-close {
-    position: fixed;
-    top: 18px;
-    right: 18px;
-    width: 32px;
-    height: 32px;
-    border: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.92);
-    color: #3a2d24;
-    font-size: 22px;
-    line-height: 32px;
-    cursor: pointer;
-}

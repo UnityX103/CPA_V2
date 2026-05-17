@@ -1,19 +1,19 @@
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { usePomodoroStore, type PomodoroEndEvent } from '../domain/pomodoro';
 import { PomodoroEndActionLayer } from './PomodoroEndActionLayer';
 
-const { invokeMock, resolvePomodoroEndActionMock } = vi.hoisted(() => ({
-    invokeMock: vi.fn(),
+const { openPomodoroVideoWindowMock, resolvePomodoroEndActionMock } = vi.hoisted(() => ({
+    openPomodoroVideoWindowMock: vi.fn(),
     resolvePomodoroEndActionMock: vi.fn(),
-}));
-
-vi.mock('@tauri-apps/api/core', () => ({
-    invoke: invokeMock,
 }));
 
 vi.mock('../domain/pomodoroEndAction', () => ({
     resolvePomodoroEndAction: resolvePomodoroEndActionMock,
+}));
+
+vi.mock('../domain/pomodoroVideoWindow', () => ({
+    openPomodoroVideoWindow: openPomodoroVideoWindowMock,
 }));
 
 vi.mock('../domain/videoFiles', () => ({
@@ -23,22 +23,6 @@ vi.mock('../domain/videoFiles', () => ({
 }));
 
 type EndActionResult = { kind: 'topWindow' } | { kind: 'video'; title: string; src: string };
-
-class FakeResizeObserver {
-    constructor(_cb: ResizeObserverCallback) {}
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-}
-vi.stubGlobal('ResizeObserver', FakeResizeObserver);
-
-class FakeMutationObserver {
-    constructor(_cb: MutationCallback) {}
-    observe() {}
-    disconnect() {}
-    takeRecords() { return []; }
-}
-vi.stubGlobal('MutationObserver', FakeMutationObserver);
 
 function deferred<T>() {
     let resolve!: (value: T) => void;
@@ -59,7 +43,8 @@ function endEvent(id: number, overrides: Partial<PomodoroEndEvent> = {}): Pomodo
 }
 
 beforeEach(() => {
-    invokeMock.mockReset();
+    openPomodoroVideoWindowMock.mockReset();
+    openPomodoroVideoWindowMock.mockResolvedValue(undefined);
     resolvePomodoroEndActionMock.mockReset();
     usePomodoroStore.setState({
         lastEndEvent: null,
@@ -83,54 +68,54 @@ describe('PomodoroEndActionLayer', () => {
         render(<PomodoroEndActionLayer />);
 
         await act(async () => {
-            usePomodoroStore.setState({
-                lastEndEvent: {
-                    id: 1,
-                    fromPhase: 'focus',
-                    toPhase: 'break',
-                    triggeredBy: 'timer',
-                },
-            });
+            usePomodoroStore.setState({ lastEndEvent: endEvent(1) });
         });
 
         expect(await screen.findByText('专注结束')).toBeTruthy();
+        expect(openPomodoroVideoWindowMock).not.toHaveBeenCalled();
     });
 
-    it('shows a video overlay when resolver returns video', async () => {
+    it('opens a dedicated video player window when resolver returns video', async () => {
+        const action = {
+            kind: 'video' as const,
+            title: '千千',
+            src: '/videos/ms1.webm',
+        };
+        resolvePomodoroEndActionMock.mockResolvedValue(action);
+        render(<PomodoroEndActionLayer />);
+
+        await act(async () => {
+            usePomodoroStore.setState({ lastEndEvent: endEvent(1) });
+        });
+
+        await vi.waitFor(() => {
+            expect(openPomodoroVideoWindowMock).toHaveBeenCalledWith(action);
+        });
+        expect(screen.queryByRole('dialog')).toBeNull();
+        expect(screen.queryByLabelText('播放 千千')).toBeNull();
+    });
+
+    it('falls back to the top popup when the video player window cannot open', async () => {
         resolvePomodoroEndActionMock.mockResolvedValue({
             kind: 'video',
             title: '千千',
             src: '/videos/ms1.webm',
         });
+        openPomodoroVideoWindowMock.mockRejectedValue(new Error('window denied'));
         render(<PomodoroEndActionLayer />);
 
         await act(async () => {
-            usePomodoroStore.setState({
-                lastEndEvent: {
-                    id: 1,
-                    fromPhase: 'focus',
-                    toPhase: 'break',
-                    triggeredBy: 'timer',
-                },
-            });
+            usePomodoroStore.setState({ lastEndEvent: endEvent(1) });
         });
 
-        const dialog = await screen.findByRole('dialog', { name: '番茄钟结束视频：千千' });
-        expect(dialog.getAttribute('aria-modal')).toBe('true');
-        const video = screen.getByLabelText('播放 千千') as HTMLVideoElement;
-        expect(video.getAttribute('src')).toBe('/videos/ms1.webm');
+        expect(await screen.findByText('专注结束')).toBeTruthy();
     });
 
     it('does not resolve the same end event id twice', async () => {
         resolvePomodoroEndActionMock.mockResolvedValue({ kind: 'topWindow' });
         render(<PomodoroEndActionLayer />);
 
-        const event = {
-            id: 1,
-            fromPhase: 'focus' as const,
-            toPhase: 'break' as const,
-            triggeredBy: 'timer' as const,
-        };
+        const event = endEvent(1);
         await act(async () => {
             usePomodoroStore.setState({ lastEndEvent: event });
         });
@@ -144,13 +129,14 @@ describe('PomodoroEndActionLayer', () => {
     });
 
     it('processes a reused event id after the store clears the last end event', async () => {
+        const secondAction = {
+            kind: 'video' as const,
+            title: '新一轮',
+            src: '/videos/next.webm',
+        };
         resolvePomodoroEndActionMock
             .mockResolvedValueOnce({ kind: 'topWindow' })
-            .mockResolvedValueOnce({
-                kind: 'video',
-                title: '新一轮',
-                src: '/videos/next.webm',
-            });
+            .mockResolvedValueOnce(secondAction);
         render(<PomodoroEndActionLayer />);
 
         await act(async () => {
@@ -165,13 +151,20 @@ describe('PomodoroEndActionLayer', () => {
             usePomodoroStore.setState({ lastEndEvent: endEvent(1) });
         });
 
-        expect(await screen.findByLabelText('播放 新一轮')).toBeTruthy();
+        await vi.waitFor(() => {
+            expect(openPomodoroVideoWindowMock).toHaveBeenCalledWith(secondAction);
+        });
         expect(resolvePomodoroEndActionMock).toHaveBeenCalledTimes(2);
     });
 
     it('keeps the latest event UI when an older resolver resolves later', async () => {
         const first = deferred<EndActionResult>();
         const second = deferred<EndActionResult>();
+        const secondAction = {
+            kind: 'video' as const,
+            title: '第二段',
+            src: '/videos/second.webm',
+        };
         resolvePomodoroEndActionMock
             .mockReturnValueOnce(first.promise)
             .mockReturnValueOnce(second.promise);
@@ -185,28 +178,25 @@ describe('PomodoroEndActionLayer', () => {
         });
 
         await act(async () => {
-            second.resolve({
-                kind: 'video',
-                title: '第二段',
-                src: '/videos/second.webm',
-            });
+            second.resolve(secondAction);
             await second.promise;
         });
-        expect(await screen.findByLabelText('播放 第二段')).toBeTruthy();
+        await vi.waitFor(() => {
+            expect(openPomodoroVideoWindowMock).toHaveBeenCalledWith(secondAction);
+        });
 
         await act(async () => {
             first.resolve({ kind: 'topWindow' });
             await first.promise;
         });
 
-        expect(screen.getByLabelText('播放 第二段').getAttribute('src')).toBe('/videos/second.webm');
+        expect(openPomodoroVideoWindowMock).toHaveBeenCalledTimes(1);
         expect(screen.queryByText('专注结束')).toBeNull();
     });
 
     it('processes an existing last end event on mount only once', async () => {
         resolvePomodoroEndActionMock.mockResolvedValue({ kind: 'topWindow' });
-        const event = endEvent(7);
-        usePomodoroStore.setState({ lastEndEvent: event });
+        usePomodoroStore.setState({ lastEndEvent: endEvent(7) });
 
         render(<PomodoroEndActionLayer />);
 
@@ -219,7 +209,7 @@ describe('PomodoroEndActionLayer', () => {
         expect(resolvePomodoroEndActionMock).toHaveBeenCalledTimes(1);
     });
 
-    it('does not render a pending resolver result after unmount', async () => {
+    it('does not open a pending resolver result after unmount', async () => {
         const pending = deferred<EndActionResult>();
         resolvePomodoroEndActionMock.mockReturnValue(pending.promise);
         const { unmount } = render(<PomodoroEndActionLayer />);
@@ -238,7 +228,7 @@ describe('PomodoroEndActionLayer', () => {
             await pending.promise;
         });
 
-        expect(screen.queryByLabelText('播放 迟到的视频')).toBeNull();
+        expect(openPomodoroVideoWindowMock).not.toHaveBeenCalled();
     });
 
     it('clears a pending popup timeout on unmount', async () => {
@@ -256,106 +246,5 @@ describe('PomodoroEndActionLayer', () => {
 
         expect(clearTimeoutSpy).toHaveBeenCalled();
         clearTimeoutSpy.mockRestore();
-    });
-
-    it('closes the video overlay from the close button', async () => {
-        resolvePomodoroEndActionMock.mockResolvedValue({
-            kind: 'video',
-            title: '千千',
-            src: '/videos/ms1.webm',
-        });
-        render(<PomodoroEndActionLayer />);
-
-        await act(async () => {
-            usePomodoroStore.setState({
-                lastEndEvent: {
-                    id: 1,
-                    fromPhase: 'break',
-                    toPhase: 'completed',
-                    triggeredBy: 'timer',
-                },
-            });
-        });
-        expect(await screen.findByLabelText('播放 千千')).toBeTruthy();
-
-        fireEvent.click(screen.getByRole('button', { name: '关闭视频' }));
-
-        expect(screen.queryByLabelText('播放 千千')).toBeNull();
-    });
-
-    it('registers the video overlay as a native hit region while visible', async () => {
-        resolvePomodoroEndActionMock.mockResolvedValue({
-            kind: 'video',
-            title: '千千',
-            src: '/videos/ms1.webm',
-        });
-        render(<PomodoroEndActionLayer />);
-
-        await act(async () => {
-            usePomodoroStore.setState({ lastEndEvent: endEvent(1) });
-        });
-        expect(await screen.findByLabelText('播放 千千')).toBeTruthy();
-
-        const registerCall = invokeMock.mock.calls.find(([command]) => command === 'register_hit_region');
-        expect(registerCall?.[1].id).toMatch(/^pomodoro-end-video-\d+$/);
-
-        fireEvent.click(screen.getByRole('button', { name: '关闭视频' }));
-
-        const unregisterCall = invokeMock.mock.calls.find(([command]) => command === 'unregister_hit_region');
-        expect(unregisterCall?.[1]).toEqual({ id: registerCall?.[1].id });
-    });
-
-    it('closes the video overlay with Escape', async () => {
-        resolvePomodoroEndActionMock.mockResolvedValue({
-            kind: 'video',
-            title: '千千',
-            src: '/videos/ms1.webm',
-        });
-        render(<PomodoroEndActionLayer />);
-
-        await act(async () => {
-            usePomodoroStore.setState({ lastEndEvent: endEvent(1) });
-        });
-        expect(await screen.findByLabelText('播放 千千')).toBeTruthy();
-
-        fireEvent.keyDown(window, { key: 'Escape' });
-
-        expect(screen.queryByLabelText('播放 千千')).toBeNull();
-    });
-
-    it('closes the video overlay when playback ends', async () => {
-        resolvePomodoroEndActionMock.mockResolvedValue({
-            kind: 'video',
-            title: '千千',
-            src: '/videos/ms1.webm',
-        });
-        render(<PomodoroEndActionLayer />);
-
-        await act(async () => {
-            usePomodoroStore.setState({ lastEndEvent: endEvent(1) });
-        });
-        const video = await screen.findByLabelText('播放 千千');
-
-        fireEvent.ended(video);
-
-        expect(screen.queryByLabelText('播放 千千')).toBeNull();
-    });
-
-    it('closes the video overlay when the video fails to load', async () => {
-        resolvePomodoroEndActionMock.mockResolvedValue({
-            kind: 'video',
-            title: '千千',
-            src: '/videos/ms1.webm',
-        });
-        render(<PomodoroEndActionLayer />);
-
-        await act(async () => {
-            usePomodoroStore.setState({ lastEndEvent: endEvent(1) });
-        });
-        const video = await screen.findByLabelText('播放 千千');
-
-        fireEvent.error(video);
-
-        expect(screen.queryByLabelText('播放 千千')).toBeNull();
     });
 });
