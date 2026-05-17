@@ -246,6 +246,18 @@ describe('SettingsPanel geometry', () => {
         expect(globalCss).toMatch(/\.settings-scale-content\s*\{[^}]*zoom:\s*var\(--app-ui-scale\)/);
         expect(settingsCss).toMatch(/\.danger-modal-layer\s*\{[^}]*position:\s*absolute;[^}]*inset:\s*0;/);
     });
+
+    it('ordinary Apply is an overlay and does not reserve tab layout space', () => {
+        const css = readFileSync(path.join(here, 'SettingsPanel.css'), 'utf8');
+        const row = cssRule(css, '.apply-row');
+        const hidden = cssRule(css, '.apply-row.hidden');
+
+        expect(row).toMatch(/position:\s*absolute\s*;/);
+        expect(row).toMatch(/height:\s*54px\s*;/);
+        expect(row).toMatch(/padding:\s*8px\s+16px\s*;/);
+        expect(hidden).toMatch(/display:\s*none\s*;/);
+        expect(css).not.toMatch(/\.tab-pane\.has-apply\s*\{/);
+    });
 });
 
 describe('PomodoroTab parity with gs1Tv', () => {
@@ -267,14 +279,25 @@ describe('PomodoroTab parity with gs1Tv', () => {
         expect(screen.getByText('自动开始休息')).toBeTruthy();
     });
 
-    it('enables Apply when 自动开始休息 changes', () => {
+    it('hides the ordinary Apply overlay until a Pomodoro setting changes', () => {
         render(<SettingsPanel />);
-        const apply = screen.getByRole('button', { name: '应用' }) as HTMLButtonElement;
-        expect(apply.disabled).toBe(true);
+
+        expect(screen.queryByRole('button', { name: '应用' })).toBeNull();
 
         fireEvent.click(screen.getByRole('button', { name: '自动开始休息' }));
 
+        const apply = screen.getByRole('button', { name: '应用' }) as HTMLButtonElement;
         expect(apply.disabled).toBe(false);
+    });
+
+    it('hides the ordinary Apply overlay after applying Pomodoro changes', () => {
+        render(<SettingsPanel />);
+
+        fireEvent.click(screen.getByRole('button', { name: '自动开始休息' }));
+        fireEvent.click(screen.getByRole('button', { name: '应用' }));
+
+        expect(usePomodoroStore.getState().autoStartBreak).toBe(true);
+        expect(screen.queryByRole('button', { name: '应用' })).toBeNull();
     });
 });
 
@@ -372,7 +395,7 @@ describe('PomodoroTab end action settings', () => {
         });
 
         expect(screen.getByLabelText('计时结束提示')).toHaveProperty('value', 'topWindow');
-        expect(screen.getByRole('button', { name: '应用' })).toHaveProperty('disabled', true);
+        expect(screen.queryByRole('button', { name: '应用' })).toBeNull();
     });
 
     it('selecting a custom webm shows the basename and applies the custom video', async () => {
@@ -402,8 +425,7 @@ describe('PomodoroTab end action settings', () => {
             fireEvent.click(screen.getByRole('button', { name: '选择自定义视频' }));
         });
 
-        const apply = screen.getByRole('button', { name: '应用' });
-        expect(apply).toHaveProperty('disabled', true);
+        expect(screen.queryByRole('button', { name: '应用' })).toBeNull();
         expect(screen.getByText('未选择')).toBeTruthy();
         expect(usePomodoroStore.getState().endActionVideo.customVideoPath).toBe('');
     });

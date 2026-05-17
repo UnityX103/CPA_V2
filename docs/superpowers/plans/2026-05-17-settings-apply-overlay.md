@@ -1,6 +1,6 @@
 # Settings Apply Overlay Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Make the Settings `应用` button a reusable floating overlay that appears only when the active settings section has pending ordinary changes and never affects section auto layout.
 
@@ -32,7 +32,7 @@
 **Files:**
 - Modify: `AUI/PUI.pen`
 
-- [ ] **Step 1: Inspect the current Pencil nodes**
+- [x] **Step 1: Inspect the current Pencil nodes**
 
 Run:
 
@@ -47,7 +47,7 @@ mcp__pencil__batch_get({
 
 Expected: `EOrsv` is reusable `SettingsApplyRow`; `EkvuW` is the `uspApply` instance under `vnYnS/content`, absolute positioned.
 
-- [ ] **Step 2: Update the overlay row sizing**
+- [x] **Step 2: Update the overlay row sizing**
 
 Apply this Pencil update:
 
@@ -58,7 +58,7 @@ U("EkvuW",{height:54,alignItems:"center",justifyContent:"end",fill:"#ffffffff"})
 
 Expected: The row remains a reusable overlay with a 120 x 38 primary button and has 8px top/bottom breathing room.
 
-- [ ] **Step 3: Verify Pencil layout structurally**
+- [x] **Step 3: Verify Pencil layout structurally**
 
 Run:
 
@@ -78,7 +78,7 @@ Expected: `EOrsv.height` is `54`, `EOrsv.padding` is `[8,16]`, and `EkvuW.layout
 **Files:**
 - Modify: `app/src/ui/SettingsPanel.test.tsx`
 
-- [ ] **Step 1: Replace the old disabled-by-default Apply test**
+- [x] **Step 1: Replace the old disabled-by-default Apply test**
 
 Find the existing test named:
 
@@ -101,7 +101,7 @@ it('hides the ordinary Apply overlay until a Pomodoro setting changes', () => {
 });
 ```
 
-- [ ] **Step 2: Add Apply-hides-after-commit test**
+- [x] **Step 2: Add Apply-hides-after-commit test**
 
 Add this test in `describe('PomodoroTab parity with gs1Tv', ...)` after the visibility test:
 
@@ -117,7 +117,7 @@ it('hides the ordinary Apply overlay after applying Pomodoro changes', () => {
 });
 ```
 
-- [ ] **Step 3: Keep invalid dirty state visible but disabled**
+- [x] **Step 3: Keep invalid dirty state visible but disabled**
 
 Update the existing custom-video test so it still expects a disabled Apply button after choosing `custom`:
 
@@ -129,7 +129,7 @@ expect(apply).toHaveProperty('disabled', true);
 
 Expected: No change to this assertion; it documents the dirty-but-invalid state.
 
-- [ ] **Step 4: Add CSS guard for no layout reservation**
+- [x] **Step 4: Add CSS guard for no layout reservation**
 
 Add this test in `describe('SettingsPanel geometry', ...)`:
 
@@ -147,7 +147,7 @@ it('ordinary Apply is an overlay and does not reserve tab layout space', () => {
 });
 ```
 
-- [ ] **Step 5: Run focused tests and confirm failure**
+- [x] **Step 5: Run focused tests and confirm failure**
 
 Run:
 
@@ -162,7 +162,7 @@ Expected: FAIL because `PomodoroTab` still renders Apply directly and `.tab-pane
 **Files:**
 - Modify: `app/src/ui/SettingsPanel.tsx`
 
-- [ ] **Step 1: Add ordinary apply state types**
+- [x] **Step 1: Add ordinary apply state types**
 
 Add below `TABS`:
 
@@ -180,7 +180,7 @@ const EMPTY_APPLY_STATE: OrdinaryApplyState = {
 };
 ```
 
-- [ ] **Step 2: Add shared `SettingsApplyRow` component**
+- [x] **Step 2: Add shared `SettingsApplyRow` component**
 
 Add before `PomodoroTab`:
 
@@ -202,7 +202,7 @@ function SettingsApplyRow({ visible, enabled, onApply }: {
 }
 ```
 
-- [ ] **Step 3: Store active ordinary apply state in `SettingsPanel`**
+- [x] **Step 3: Store active ordinary apply state in `SettingsPanel`**
 
 Inside `SettingsPanel`, add:
 
@@ -214,7 +214,7 @@ useEffect(() => {
 }, [activeTab]);
 ```
 
-- [ ] **Step 4: Render one shared overlay in `.settings-content`**
+- [x] **Step 4: Render one shared overlay in `.settings-content`**
 
 Replace active tab rendering with:
 
@@ -232,7 +232,7 @@ Replace active tab rendering with:
 </div>
 ```
 
-- [ ] **Step 5: Change `PomodoroTab` signature**
+- [x] **Step 5: Change `PomodoroTab` signature**
 
 Replace:
 
@@ -248,7 +248,7 @@ function PomodoroTab({ onApplyStateChange }: {
 }) {
 ```
 
-- [ ] **Step 6: Report Pomodoro dirty/apply state upward**
+- [x] **Step 6: Report Pomodoro dirty/apply state upward**
 
 After `apply` is declared, add:
 
@@ -288,7 +288,7 @@ const apply = useCallback(() => {
 
 Also update the React import to include `useCallback`.
 
-- [ ] **Step 7: Remove tab-local Apply markup and layout class**
+- [x] **Step 7: Remove tab-local Apply markup and layout class**
 
 Remove this block from `PomodoroTab`:
 
@@ -312,7 +312,7 @@ to:
 <div className="tab-pane">
 ```
 
-- [ ] **Step 8: Run focused tests**
+- [x] **Step 8: Run focused tests**
 
 Run:
 
@@ -327,7 +327,7 @@ Expected: CSS guard still fails until CSS is updated; component behavior tests p
 **Files:**
 - Modify: `app/src/ui/SettingsPanel.css`
 
-- [ ] **Step 1: Update `.apply-row`**
+- [x] **Step 1: Update `.apply-row`**
 
 Replace the existing `.apply-row`, `.apply-row .btn`, `.apply-btn`, and `.tab-pane.has-apply` block with:
 
@@ -362,7 +362,7 @@ Replace the existing `.apply-row`, `.apply-row .btn`, `.apply-btn`, and `.tab-pa
 }
 ```
 
-- [ ] **Step 2: Update narrow-width override**
+- [x] **Step 2: Update narrow-width override**
 
 At the bottom media query, keep only:
 
@@ -374,7 +374,7 @@ At the bottom media query, keep only:
 
 Do not add content padding for Apply.
 
-- [ ] **Step 3: Run focused tests**
+- [x] **Step 3: Run focused tests**
 
 Run:
 
@@ -389,7 +389,7 @@ Expected: PASS.
 **Files:**
 - Verify all modified files.
 
-- [ ] **Step 1: Run app tests**
+- [x] **Step 1: Run app tests**
 
 Run:
 
@@ -399,7 +399,7 @@ cd app && npm test
 
 Expected: 20 test files pass.
 
-- [ ] **Step 2: Run frontend build**
+- [x] **Step 2: Run frontend build**
 
 Run:
 
@@ -409,7 +409,7 @@ cd app && npm run build
 
 Expected: `tsc && vite build` completes successfully.
 
-- [ ] **Step 3: Run Rust check**
+- [x] **Step 3: Run Rust check**
 
 Run:
 
@@ -419,7 +419,7 @@ cd app/src-tauri && PATH=/Users/xpy/.rustup/toolchains/stable-aarch64-apple-darw
 
 Expected: Cargo finishes the `dev` profile without errors.
 
-- [ ] **Step 4: Inspect Git diff**
+- [x] **Step 4: Inspect Git diff**
 
 Run:
 
@@ -429,7 +429,7 @@ git diff -- app/src/ui/SettingsPanel.tsx app/src/ui/SettingsPanel.css app/src/ui
 
 Expected: Diff is scoped to the shared Apply overlay implementation and the plan.
 
-- [ ] **Step 5: Commit implementation**
+- [x] **Step 5: Commit implementation**
 
 Run:
 

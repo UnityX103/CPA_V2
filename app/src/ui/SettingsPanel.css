@@ -153,20 +153,25 @@
     max-width: 100%;
 }
 
-/* ----- uspApply EkvuW: absolute, w 349, h 38, justify end ----- */
+/* ----- SettingsApplyRow EOrsv / uspApply EkvuW: absolute overlay, no layout reservation ----- */
 .apply-row {
     position: absolute;
     top: 0;
     right: 0;
     left: 0;
-    height: 38px;
-    padding: 0 16px;
+    height: 54px;
+    padding: 8px 16px;
     display: flex;
     align-items: center;
     justify-content: flex-end;
     background: var(--settings-bg);
     z-index: 2;
     pointer-events: none;
+    box-sizing: border-box;
+}
+
+.apply-row.hidden {
+    display: none;
 }
 
 .apply-row .btn { pointer-events: auto; }
@@ -176,9 +181,6 @@
     height: 38px;
     font-size: 14px;
 }
-
-/* 当 apply 行存在时，把第一个 card 顶部留出空间避免被 apply 按钮遮住 */
-.tab-pane.has-apply { padding-top: 46px; }
 
 /* ===== 卡片基础 (gspScale / pomoWork / onlAutoRow ...) ===== */
 
@@ -884,6 +886,6 @@
     }
 
     .apply-row {
-        padding: 0;
+        padding: 8px 0;
     }
 }

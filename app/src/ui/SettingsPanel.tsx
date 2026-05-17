@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
@@ -30,11 +30,28 @@ const TABS: Array<{ id: SettingsTab; label: string }> = [
     { id: 'global', label: '全局' },
 ];
 
+interface OrdinaryApplyState {
+    dirty: boolean;
+    canApply: boolean;
+    apply: () => void;
+}
+
+const EMPTY_APPLY_STATE: OrdinaryApplyState = {
+    dirty: false,
+    canApply: false,
+    apply: () => {},
+};
+
 export function SettingsPanel() {
     const activeTab = useSettingsStore((s) => s.activeTab);
     const setActiveTab = useSettingsStore((s) => s.setActiveTab);
     const dangerousChange = useSettingsStore((s) => s.dangerousChange);
     const revertDangerousChange = useSettingsStore((s) => s.revertDangerousChange);
+    const [ordinaryApply, setOrdinaryApply] = useState<OrdinaryApplyState>(EMPTY_APPLY_STATE);
+
+    useEffect(() => {
+        setOrdinaryApply(EMPTY_APPLY_STATE);
+    }, [activeTab]);
 
     const onClose = () => {
         if (dangerousChange) {
@@ -77,12 +94,33 @@ export function SettingsPanel() {
                     ))}
                 </nav>
                 <div className="settings-content">
-                    {activeTab === 'pomodoro' && <PomodoroTab />}
+                    {activeTab === 'pomodoro' && <PomodoroTab onApplyStateChange={setOrdinaryApply} />}
                     {activeTab === 'online' && <OnlineTab />}
                     {activeTab === 'pet' && <PetTab />}
                     {activeTab === 'global' && <GlobalTab />}
+                    <SettingsApplyRow
+                        visible={ordinaryApply.dirty}
+                        enabled={ordinaryApply.canApply}
+                        onApply={ordinaryApply.apply}
+                    />
                 </div>
             </div>
+        </div>
+    );
+}
+
+function SettingsApplyRow({ visible, enabled, onApply }: {
+    visible: boolean;
+    enabled: boolean;
+    onApply: () => void;
+}) {
+    return (
+        <div className={`apply-row ${visible ? '' : 'hidden'}`} aria-hidden={!visible}>
+            {visible && (
+                <button className="btn btn-primary apply-btn" disabled={!enabled} onClick={onApply}>
+                    应用
+                </button>
+            )}
         </div>
     );
 }
@@ -91,7 +129,9 @@ export function SettingsPanel() {
  * Pomodoro Settings (gs1Tv)
  * ============================================================ */
 
-function PomodoroTab() {
+function PomodoroTab({ onApplyStateChange }: {
+    onApplyStateChange: (state: OrdinaryApplyState) => void;
+}) {
     const pomo = usePomodoroStore();
     const [focusMin, setFocusMin] = useState(Math.round(pomo.focusDurationSeconds / 60));
     const [breakMin, setBreakMin] = useState(Math.round(pomo.breakDurationSeconds / 60));
@@ -164,7 +204,7 @@ function PomodoroTab() {
         !endActionVideo.customVideoPath;
     const canApply = dirty && !hasMissingCustomVideo;
 
-    const apply = () => {
+    const apply = useCallback(() => {
         if (!canApply) return;
         const focusSeconds = focusMin * 60;
         const breakSeconds = breakMin * 60;
@@ -182,7 +222,15 @@ function PomodoroTab() {
         if (endActionChanged) {
             pomo.applyEndActionSettings(endActionMode, endActionVideo);
         }
-    };
+    }, [canApply, focusMin, breakMin, autoStartBreak, endActionMode, endActionVideo, pomo]);
+
+    useEffect(() => {
+        onApplyStateChange({
+            dirty,
+            canApply,
+            apply,
+        });
+    }, [onApplyStateChange, dirty, canApply, apply]);
 
     const selectedVideoOption = endActionVideo.sourceKind === 'custom'
         ? 'custom'
@@ -222,13 +270,8 @@ function PomodoroTab() {
 
     return (
         <>
-            <div className="apply-row">
-                <button className="btn btn-primary apply-btn" disabled={!canApply} onClick={apply}>
-                    应用
-                </button>
-            </div>
             <div className="settings-content-scroll">
-                <div className="tab-pane has-apply">
+                <div className="tab-pane">
                     {/* pomoGrid aIr3d */}
                     <div className="card card-grid">
                         <div className="card">

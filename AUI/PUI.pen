@@ -3080,7 +3080,13 @@
                           "name": "SettingsApplyRow",
                           "reusable": true,
                           "width": "fill_container",
+                          "height": 54,
+                          "padding": [
+                            8,
+                            16
+                          ],
                           "justifyContent": "end",
+                          "alignItems": "center",
                           "children": [
                             {
                               "id": "gBjcB",
@@ -3331,7 +3337,7 @@
           "ref": "bfMCZ",
           "name": "Unsaved Changes Dialog",
           "x": 32,
-          "y": 2257,
+          "y": 2283,
           "descendants": {
             "D1pHM": {
               "content": "有未保存的更改"
@@ -3951,7 +3957,7 @@
                   "fill": "#ffffffff",
                   "flipX": false,
                   "flipY": false,
-                  "height": 38,
+                  "height": 54,
                   "gap": 19,
                   "justifyContent": "end",
                   "alignItems": "center",
