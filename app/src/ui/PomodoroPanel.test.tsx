@@ -17,22 +17,6 @@ vi.mock('@tauri-apps/api/window', () => ({
     }),
 }));
 
-class FakeResizeObserver {
-    constructor(_cb: ResizeObserverCallback) {}
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-}
-vi.stubGlobal('ResizeObserver', FakeResizeObserver);
-
-class FakeMutationObserver {
-    constructor(_cb: MutationCallback) {}
-    observe() {}
-    disconnect() {}
-    takeRecords() { return []; }
-}
-vi.stubGlobal('MutationObserver', FakeMutationObserver);
-
 const { PomodoroPanel } = await import('./PomodoroPanel');
 const { usePomodoroStore } = await import('../domain/pomodoro');
 
@@ -118,22 +102,14 @@ describe('PomodoroPanel HApJ0 pin behaviour', () => {
         expect(invokeMock).toHaveBeenCalledWith('open_settings_window');
     });
 
-    it('does not register obsolete transparent hit regions', async () => {
+    it('does not invoke removed transparent hit-region commands', async () => {
         render(<PomodoroPanel />);
 
         await waitFor(() => {
             expect(pinCalls()).toContainEqual(['set_main_window_pinned', { onTop: false }]);
         });
 
-        const obsoleteCommandNames = [
-            `register_${'hit'}_region`,
-            `unregister_${'hit'}_region`,
-            `clear_${'hit'}_regions`,
-        ];
-        const obsoleteCommands = invokeMock.mock.calls
-            .map(([cmd]) => cmd)
-            .filter((cmd) => obsoleteCommandNames.includes(String(cmd)));
-
-        expect(obsoleteCommands).toEqual([]);
+        const invokedCommands = invokeMock.mock.calls.map(([cmd]) => cmd);
+        expect(invokedCommands).toEqual(['set_main_window_pinned']);
     });
 });
