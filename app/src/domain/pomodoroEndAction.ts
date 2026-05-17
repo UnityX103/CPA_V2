@@ -1,5 +1,6 @@
 import type { PomodoroState } from './pomodoro';
 import { getBuiltinPomodoroVideo } from './pomodoroVideos';
+import type { CustomVideoValidation } from './videoFiles';
 
 type MaybePromise<T> = T | Promise<T>;
 
@@ -10,10 +11,7 @@ export type PomodoroEndActionResolution =
     | { kind: 'video'; src: string; title: string };
 
 export interface PomodoroEndActionRuntime {
-    validateCustomVideoPath: (path: string) => MaybePromise<{
-        readonly valid: boolean;
-        readonly message?: string | null;
-    }>;
+    validateCustomVideoPath: (path: string) => MaybePromise<CustomVideoValidation>;
     customVideoSrc: (path: string) => string;
     showCustomVideoMissingMessage: (message: string) => MaybePromise<void>;
 }
@@ -45,7 +43,7 @@ export async function resolvePomodoroEndAction(
     }
 
     const validation = await runtime.validateCustomVideoPath(path);
-    if (!validation.valid) {
+    if (!validation.ok) {
         await runtime.showCustomVideoMissingMessage(validation.message || '自定义视频不可用');
         return { kind: 'topWindow' };
     }

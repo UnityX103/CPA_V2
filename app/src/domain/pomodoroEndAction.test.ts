@@ -54,11 +54,15 @@ describe('pomodoro end-action resolver', () => {
             builtinVideoId: 'missing',
             customVideoPath: '',
         }), runtime)).resolves.toEqual({ kind: 'topWindow' });
+
+        expect(runtime.validateCustomVideoPath).not.toHaveBeenCalled();
+        expect(runtime.customVideoSrc).not.toHaveBeenCalled();
+        expect(runtime.showCustomVideoMissingMessage).not.toHaveBeenCalled();
     });
 
     it('validates a custom video path and resolves it with a basename title', async () => {
         const runtime = makeRuntime();
-        vi.mocked(runtime.validateCustomVideoPath).mockResolvedValue({ valid: true, message: null });
+        vi.mocked(runtime.validateCustomVideoPath).mockResolvedValue({ ok: true, message: null });
         vi.mocked(runtime.customVideoSrc).mockReturnValue('asset://localhost/Users/xpy/Videos/focus-end.webm');
 
         await expect(resolvePomodoroEndAction(makeState('playVideo', {
@@ -78,7 +82,7 @@ describe('pomodoro end-action resolver', () => {
 
     it('shows the missing custom video message and falls back to topWindow when custom validation fails', async () => {
         const runtime = makeRuntime();
-        vi.mocked(runtime.validateCustomVideoPath).mockResolvedValue({ valid: false, message: '文件不存在' });
+        vi.mocked(runtime.validateCustomVideoPath).mockResolvedValue({ ok: false, message: '文件不存在' });
 
         await expect(resolvePomodoroEndAction(makeState('playVideo', {
             sourceKind: 'custom',
