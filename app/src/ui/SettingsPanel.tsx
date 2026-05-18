@@ -20,6 +20,7 @@ import {
 import { pickCustomWebmPath } from '../domain/videoFiles';
 import { useNetworkStore } from '../domain/network';
 import { useBindingKeyStore } from '../domain/bindingKey';
+import { useAppUpdateStore, type AppUpdateStatus } from '../domain/appUpdate';
 import { shouldStartWindowDrag } from './windowDrag';
 import './SettingsPanel.css';
 
@@ -596,6 +597,8 @@ function GlobalTab() {
                     </div>
                 </div>
 
+                <AppUpdateSettingsRow />
+
                 {/* gspBindingKey yjJtt */}
                 <div className="card">
                     {!bk.permissionGranted && (
@@ -657,6 +660,72 @@ function GlobalTab() {
             </div>
         </div>
     );
+}
+
+function AppUpdateSettingsRow() {
+    const autoUpdateEnabled = useAppUpdateStore((s) => s.autoUpdateEnabled);
+    const status = useAppUpdateStore((s) => s.status);
+    const currentVersion = useAppUpdateStore((s) => s.currentVersion);
+    const availableVersion = useAppUpdateStore((s) => s.availableVersion);
+    const errorMessage = useAppUpdateStore((s) => s.errorMessage);
+    const setAutoUpdateEnabled = useAppUpdateStore((s) => s.setAutoUpdateEnabled);
+    const checkNow = useAppUpdateStore((s) => s.checkNow);
+    const restartForUpdate = useAppUpdateStore((s) => s.restartForUpdate);
+    const busy = status === 'checking' || status === 'downloading' || status === 'installing';
+
+    return (
+        <div className="card app-update-card">
+            <div className="card-row">
+                <span className="card-label">自动下载并安装更新</span>
+                <Toggle
+                    checked={autoUpdateEnabled}
+                    onChange={(enabled) => { void setAutoUpdateEnabled(enabled); }}
+                    ariaLabel="自动下载并安装更新"
+                />
+            </div>
+            <div className="app-update-footer">
+                <span className="status-text app-update-status">
+                    {appUpdateStatusText(status, currentVersion, availableVersion, errorMessage)}
+                </span>
+                {status === 'readyToRestart' ? (
+                    <button
+                        className="btn btn-primary btn-fit app-update-action"
+                        type="button"
+                        onClick={() => { void restartForUpdate(); }}
+                    >
+                        重启更新
+                    </button>
+                ) : (
+                    <button
+                        className="btn btn-secondary btn-fit app-update-action"
+                        type="button"
+                        disabled={!autoUpdateEnabled || busy}
+                        onClick={() => { void checkNow(); }}
+                    >
+                        立即检查
+                    </button>
+                )}
+            </div>
+        </div>
+    );
+}
+
+function appUpdateStatusText(
+    status: AppUpdateStatus,
+    currentVersion: string | null,
+    availableVersion: string | null,
+    errorMessage: string | null,
+): string {
+    const current = currentVersion ?? '未知版本';
+    const available = availableVersion ?? '新版本';
+    if (status === 'disabled') return '自动更新已关闭';
+    if (status === 'checking') return `当前版本 ${current} · 正在检查`;
+    if (status === 'upToDate') return `当前版本 ${current} · 已是最新`;
+    if (status === 'downloading') return `发现版本 ${available} · 正在下载`;
+    if (status === 'installing') return `发现版本 ${available} · 正在安装`;
+    if (status === 'readyToRestart') return `新版本 ${available} 已安装 · 重启后生效`;
+    if (status === 'error') return `更新检查失败：${errorMessage ?? '请稍后再试'}`;
+    return `当前版本 ${current} · 等待检查`;
 }
 
 /* ============================================================

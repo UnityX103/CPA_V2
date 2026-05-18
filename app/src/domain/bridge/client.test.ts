@@ -5,6 +5,7 @@ import { usePomodoroStore } from '../pomodoro';
 import { useNetworkStore } from '../network';
 import { useBindingKeyStore } from '../bindingKey';
 import { useActiveAppStore } from '../activeApp';
+import { useAppUpdateStore } from '../appUpdate';
 import { BRIDGE_VERSION, type BridgeSnapshot } from './protocol';
 
 const sampleRemoteState = {
@@ -86,6 +87,15 @@ function makeSample(): BridgeSnapshot {
             capturingId: 'bk-cap',
             syncedKeyId: 'bk-sync',
         },
+        appUpdate: {
+            autoUpdateEnabled: true,
+            status: 'readyToRestart',
+            currentVersion: '0.1.0',
+            availableVersion: '0.1.1',
+            releaseNotes: 'Quiet update',
+            lastCheckedAt: 1700000000000,
+            errorMessage: null,
+        },
     };
 }
 
@@ -124,6 +134,15 @@ beforeEach(() => {
         platform: null,
     });
     useActiveAppStore.setState({ current: null });
+    useAppUpdateStore.setState({
+        autoUpdateEnabled: true,
+        status: 'idle',
+        currentVersion: null,
+        availableVersion: null,
+        releaseNotes: null,
+        lastCheckedAt: null,
+        errorMessage: null,
+    });
 });
 
 describe('applySnapshotToMirrors', () => {
@@ -148,6 +167,14 @@ describe('applySnapshotToMirrors', () => {
         expect(useNetworkStore.getState().roomCode).toBe('R9');
         expect(useBindingKeyStore.getState().capturingId).toBe('bk-cap');
         expect(useBindingKeyStore.getState().syncedKeyId).toBe('bk-sync');
+        expect(useAppUpdateStore.getState()).toMatchObject({
+            status: 'readyToRestart',
+            currentVersion: '0.1.0',
+            availableVersion: '0.1.1',
+            releaseNotes: 'Quiet update',
+            lastCheckedAt: 1700000000000,
+            errorMessage: null,
+        });
     });
 
     it('detaches nested mirror state from the incoming snapshot object', () => {

@@ -3337,7 +3337,7 @@
           "ref": "bfMCZ",
           "name": "Unsaved Changes Dialog",
           "x": 32,
-          "y": 2283,
+          "y": 2309,
           "descendants": {
             "D1pHM": {
               "content": "有未保存的更改"
@@ -4027,30 +4027,81 @@
         {
           "type": "frame",
           "id": "v1Cfj",
-          "name": "gspDisplay",
+          "name": "gspActiveFileTitle",
           "width": "fill_container",
           "fill": "#F6F7F8",
           "cornerRadius": 16,
-          "layout": "vertical",
-          "gap": 10,
           "padding": 16,
+          "justifyContent": "space_between",
+          "alignItems": "center",
           "children": [
             {
               "type": "text",
               "id": "s4PsK",
-              "name": "gsp-display-label",
+              "name": "gsp-active-file-title-label",
               "fill": "#9CA3AF",
-              "content": "目标显示器",
+              "content": "显示打开的文件名",
               "fontFamily": "MaokenAssortedSans",
               "fontSize": 12,
               "fontWeight": "600"
             },
             {
-              "id": "eTdq5",
+              "id": "n3wo6x",
               "type": "ref",
-              "ref": "Frjkw",
-              "name": "gsp-display-dropdown",
-              "width": "fill_container"
+              "ref": "NGo9f",
+              "name": "gsp-active-file-title-toggle"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "PgdON",
+          "name": "gspAutoUpdate",
+          "width": "fill_container",
+          "height": 74,
+          "fill": "#F6F7F8",
+          "cornerRadius": 16,
+          "layout": "vertical",
+          "gap": 6,
+          "padding": 16,
+          "children": [
+            {
+              "type": "frame",
+              "id": "EbYoC",
+              "name": "gsp-auto-update-header",
+              "width": "fill_container",
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "S7UTI",
+                  "name": "gsp-auto-update-label",
+                  "fill": "#9CA3AF",
+                  "content": "自动下载并安装更新",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 12,
+                  "fontWeight": "600"
+                },
+                {
+                  "id": "w5gRGm",
+                  "type": "ref",
+                  "ref": "NGo9f",
+                  "name": "gsp-auto-update-toggle"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "Vh5hp",
+              "name": "gsp-auto-update-status",
+              "fill": "#9CA3AF",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "当前版本 0.1.0 · 等待检查",
+              "fontFamily": "MaokenAssortedSans",
+              "fontSize": 11,
+              "fontWeight": "normal"
             }
           ]
         },
