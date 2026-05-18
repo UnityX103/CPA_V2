@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
+const appRoot = path.join(here, '../..');
 
 function cssRules(source: string, selector: string): string[] {
     const blocks: string[] = [];
@@ -49,5 +50,18 @@ describe('Maoken app font', () => {
             expect(fontFace).toMatch(/font-display:\s*block\s*;/);
         });
         expect(root).toMatch(/--font-cn:\s*"CPAMaoken"\s*;/);
+    });
+
+    it('uses a Chromium-loadable Maoken TTF without the invalid vhea table', () => {
+        const font = readFileSync(path.join(appRoot, 'public/fonts/MaokenAssortedSans.ttf'));
+        const numTables = font.readUInt16BE(4);
+        const tables = Array.from({ length: numTables }, (_, index) => {
+            const offset = 12 + index * 16;
+            return font.toString('ascii', offset, offset + 4);
+        });
+
+        expect(tables).toContain('glyf');
+        expect(tables).toContain('cmap');
+        expect(tables).not.toContain('vhea');
     });
 });
