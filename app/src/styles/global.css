@@ -3,7 +3,47 @@
 @font-face {
     font-family: 'MaokenAssortedSans';
     src: url('/fonts/MaokenAssortedSans.ttf') format('truetype');
-    font-weight: 100 900;
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'MaokenAssortedSans';
+    src: url('/fonts/MaokenAssortedSans.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'MaokenAssortedSans';
+    src: url('/fonts/MaokenAssortedSans.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'MaokenAssortedSans';
+    src: url('/fonts/MaokenAssortedSans.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'MaokenAssortedSans';
+    src: url('/fonts/MaokenAssortedSans.ttf') format('truetype');
+    font-weight: 800;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'MaokenAssortedSans';
+    src: url('/fonts/MaokenAssortedSans.ttf') format('truetype');
+    font-weight: 900;
     font-style: normal;
     font-display: swap;
 }
