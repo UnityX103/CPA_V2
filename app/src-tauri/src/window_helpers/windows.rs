@@ -2,8 +2,11 @@
 
 use tauri::{Manager, WebviewWindow};
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, WPARAM};
-use windows::Win32::UI::Controls::{DefSubclassProc, SetWindowSubclass};
-use windows::Win32::UI::WindowsAndMessaging::{MA_ACTIVATE, WM_MOUSEACTIVATE};
+use windows::Win32::UI::Shell::{DefSubclassProc, SetWindowSubclass};
+use windows::Win32::UI::WindowsAndMessaging::{
+    SetWindowPos, HWND_NOTOPMOST, HWND_TOPMOST, MA_ACTIVATE, SWP_NOMOVE, SWP_NOSIZE,
+    SWP_NOACTIVATE, WM_MOUSEACTIVATE,
+};
 
 const FIRST_MOUSE_SUBCLASS_ID: usize = 0xCA0_FA11;
 
@@ -64,4 +67,23 @@ pub fn install_focus_restorer_impl(main_window: &WebviewWindow, app: tauri::AppH
             }
         }
     });
+}
+
+pub fn set_always_on_top_native_impl(window: &WebviewWindow, on_top: bool) -> Result<(), String> {
+    let hwnd = window
+        .hwnd()
+        .map(|h| HWND(h.0 as *mut _))
+        .map_err(|e| format!("hwnd() failed for set_always_on_top_native: {e}"))?;
+    unsafe {
+        SetWindowPos(
+            hwnd,
+            if on_top { HWND_TOPMOST } else { HWND_NOTOPMOST },
+            0,
+            0,
+            0,
+            0,
+            SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE,
+        )
+    }
+    .map_err(|e| format!("SetWindowPos({on_top}) failed: {e}"))
 }

@@ -46,4 +46,8 @@ export async function openPomodoroVideoWindow(action: PomodoroVideoWindowAction)
     player.once('tauri://error', (event) => {
         console.warn('[pomodoro-video] failed to create player window', event.payload);
     }).catch(() => {});
+
+    await invoke('reassert_window_always_on_top', { label: VIDEO_WINDOW_LABEL }).catch((error) => {
+        console.warn('[pomodoro-video] failed to reassert always-on-top', error);
+    });
 }

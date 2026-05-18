@@ -43,6 +43,18 @@ pub fn install_focus_restorer(main_window: &WebviewWindow, app: tauri::AppHandle
     stub::install_focus_restorer_impl(main_window, app);
 }
 
+/// Re-assert always-on-top through the native backend when the platform needs
+/// a stronger hint than Tauri's cross-platform window flag.
+pub fn set_always_on_top_native(window: &WebviewWindow, on_top: bool) -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    return windows::set_always_on_top_native_impl(window, on_top);
+    #[cfg(not(target_os = "windows"))]
+    {
+        let _ = (window, on_top);
+        Ok(())
+    }
+}
+
 /// Testing helper: manually post NSWindowDidMoveNotification so the macOS
 /// focus-restorer observer can be triggered by the E2E test path.
 #[cfg(target_os = "macos")]

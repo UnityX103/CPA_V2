@@ -17,7 +17,10 @@ fn set_main_window_pinned(app: tauri::AppHandle, on_top: bool) -> Result<(), Str
         .ok_or_else(|| "main window not found".to_string())?;
     let (tx, rx) = std::sync::mpsc::channel();
     app.run_on_main_thread(move || {
-        let result = main.set_always_on_top(on_top).map_err(|e| e.to_string());
+        let result = main
+            .set_always_on_top(on_top)
+            .map_err(|e| e.to_string())
+            .and_then(|()| window_helpers::set_always_on_top_native(&main, on_top));
         if result.is_ok() {
             accessibility::mark_main_pin_succeeded();
         }
@@ -26,6 +29,21 @@ fn set_main_window_pinned(app: tauri::AppHandle, on_top: bool) -> Result<(), Str
     .map_err(|e| e.to_string())?;
     rx.recv()
         .map_err(|e| format!("main window pin command did not complete: {e}"))?
+}
+
+#[tauri::command]
+fn reassert_window_always_on_top(app: tauri::AppHandle, label: String) -> Result<(), String> {
+    let window = app
+        .get_webview_window(&label)
+        .ok_or_else(|| format!("{label} window not found"))?;
+    let (tx, rx) = std::sync::mpsc::channel();
+    app.run_on_main_thread(move || {
+        let result = window_helpers::set_always_on_top_native(&window, true);
+        let _ = tx.send(result);
+    })
+    .map_err(|e| e.to_string())?;
+    rx.recv()
+        .map_err(|e| format!("window always-on-top reassert command did not complete: {e}"))?
 }
 
 #[tauri::command]
@@ -416,6 +434,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             set_main_window_pinned,
+            reassert_window_always_on_top,
             get_active_app,
             pomodoro_video_screen_rect,
             open_settings_window,

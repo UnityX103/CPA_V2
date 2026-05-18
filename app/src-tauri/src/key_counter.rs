@@ -1,21 +1,12 @@
-//! 全局键盘事件监听（macOS）
-//!
-//! 用 `CGEventTap` 在 HID 层监听 KeyDown 事件，通过 channel 把 keyCode 推到主线程，
-//! 再由 Tauri emit 给前端。CGEventTap 必须运行在自己的 CFRunLoop 上才能持续接收事件，
-//! 因此我们把它整体放在专属线程：线程内 setup tap → 注册到当前 RunLoop → run 直到
-//! 停止信号。
-//!
-//! 安全前提：用户必须在「系统设置 → 隐私与安全 → 辅助功能」里授予此 App。
-//! 没有权限时 `CGEventTap::new` 直接返回 Err；本模块不主动检测权限，
-//! 由 `accessibility` 模块在权限翻转时调用 `spawn_listener`。
+//! Global keyboard listener.
 
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", target_os = "windows"))]
 use std::sync::atomic::{AtomicBool, Ordering};
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", target_os = "windows"))]
 use std::sync::Arc;
 
 #[cfg(target_os = "macos")]
-pub fn spawn_listener<F>(stop: Arc<AtomicBool>, on_key: F)
+pub fn spawn_listener<F>(stop: Arc<AtomicBool>, on_key: F) -> Result<(), String>
 where
     F: Fn(i64) + Send + Sync + 'static,
 {
@@ -23,12 +14,11 @@ where
         kCFRunLoopCommonModes, kCFRunLoopDefaultMode, CFRunLoop, CFRunLoopRunInMode,
     };
     use core_graphics::event::{
-        CGEvent, CGEventTap, CGEventTapLocation, CGEventTapOptions, CGEventTapPlacement,
-        CGEventType, CallbackResult, EventField,
+        CallbackResult, CGEvent, CGEventTap, CGEventTapLocation, CGEventTapOptions,
+        CGEventTapPlacement, CGEventType, EventField,
     };
 
     std::thread::spawn(move || {
-        // listen-only：不修改事件，CallbackResult::Keep 透传
         let tap = match CGEventTap::new(
             CGEventTapLocation::HID,
             CGEventTapPlacement::HeadInsertEventTap,
@@ -42,7 +32,7 @@ where
         ) {
             Ok(tap) => tap,
             Err(_) => {
-                eprintln!("[key_counter] CGEventTap 创建失败：可能未授予辅助功能权限");
+                eprintln!("[key_counter] CGEventTap create failed; Accessibility permission may be missing");
                 return;
             }
         };
@@ -50,36 +40,153 @@ where
         let loop_source = match tap.mach_port().create_runloop_source(0) {
             Ok(src) => src,
             Err(_) => {
-                eprintln!("[key_counter] 创建 RunLoop source 失败");
+                eprintln!("[key_counter] failed to create CFRunLoop source");
                 return;
             }
         };
 
         unsafe {
             let run_loop = CFRunLoop::get_current();
-            // source 加到 commonModes 让 default/event-tracking 模式都能收到
             run_loop.add_source(&loop_source, kCFRunLoopCommonModes);
             tap.enable();
         }
 
-        // 100ms 唤醒一次轮询 stop 信号；CFRunLoopRunInMode 必须传具体模式（非 commonModes 这种 meta-mode），
-        // 否则会抛 _CFRunLoopError_RunCalledWithInvalidMode
         while !stop.load(Ordering::Relaxed) {
             unsafe {
                 let _ = CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.1, 0);
             }
         }
 
-        // tap 在 drop 时自动从 runloop 移除；let _ 保持作用域到此处
         let _ = loop_source;
         let _ = tap;
     });
+    Ok(())
 }
 
-#[cfg(not(target_os = "macos"))]
-pub fn spawn_listener<F>(_stop: std::sync::Arc<std::sync::atomic::AtomicBool>, _on_key: F)
+#[cfg(target_os = "windows")]
+pub fn spawn_listener<F>(stop: Arc<AtomicBool>, on_key: F) -> Result<(), String>
 where
     F: Fn(i64) + Send + Sync + 'static,
 {
-    // 其他平台暂不支持
+    use std::sync::mpsc;
+    use std::sync::Mutex;
+    use std::sync::OnceLock;
+    use std::time::Duration;
+    use windows::Win32::Foundation::{LPARAM, LRESULT, WPARAM};
+    use windows::Win32::UI::WindowsAndMessaging::{
+        CallNextHookEx, DispatchMessageW, PeekMessageW, SetWindowsHookExW, TranslateMessage,
+        UnhookWindowsHookEx, KBDLLHOOKSTRUCT, MSG, PM_NOREMOVE, PM_REMOVE, WH_KEYBOARD_LL,
+        WM_KEYDOWN, WM_QUIT, WM_SYSKEYDOWN,
+    };
+
+    static KEY_SENDER: OnceLock<Mutex<Option<mpsc::Sender<i64>>>> = OnceLock::new();
+
+    unsafe extern "system" fn keyboard_proc(code: i32, w_param: WPARAM, l_param: LPARAM) -> LRESULT {
+        if code >= 0 {
+            let message = w_param.0 as u32;
+            if message == WM_KEYDOWN || message == WM_SYSKEYDOWN {
+                let event = unsafe { *(l_param.0 as *const KBDLLHOOKSTRUCT) };
+                if let Some(sender_slot) = KEY_SENDER.get() {
+                    if let Ok(sender_guard) = sender_slot.lock() {
+                        if let Some(sender) = sender_guard.as_ref() {
+                            let _ = sender.send(i64::from(event.vkCode));
+                        }
+                    }
+                }
+            }
+        }
+
+        unsafe { CallNextHookEx(None, code, w_param, l_param) }
+    }
+
+    let (tx, rx) = mpsc::channel::<i64>();
+    let sender_slot = KEY_SENDER.get_or_init(|| Mutex::new(None));
+    {
+        let Ok(mut sender_guard) = sender_slot.lock() else {
+            return Err("[key_counter] Windows keyboard hook sender lock poisoned".to_string());
+        };
+        if sender_guard.is_some() {
+            return Err("[key_counter] Windows keyboard hook already running".to_string());
+        }
+        *sender_guard = Some(tx);
+    }
+
+    let (install_tx, install_rx) = mpsc::channel::<Result<(), String>>();
+    std::thread::spawn(move || {
+        let hook = match unsafe {
+            SetWindowsHookExW(WH_KEYBOARD_LL, Some(keyboard_proc), None, 0)
+        } {
+            Ok(hook) => hook,
+            Err(err) => {
+                let message = format!("[key_counter] SetWindowsHookExW failed: {err}");
+                let _ = install_tx.send(Err(message.clone()));
+                eprintln!("{message}");
+                if let Some(sender_slot) = KEY_SENDER.get() {
+                    if let Ok(mut sender_guard) = sender_slot.lock() {
+                        *sender_guard = None;
+                    }
+                }
+                return;
+            }
+        };
+        let _ = install_tx.send(Ok(()));
+
+        let mut msg = MSG::default();
+        unsafe {
+            let _ = PeekMessageW(&mut msg, None, 0, 0, PM_NOREMOVE);
+        }
+
+        let mut should_exit = false;
+        while !stop.load(Ordering::Relaxed) && !should_exit {
+            while unsafe { PeekMessageW(&mut msg, None, 0, 0, PM_REMOVE).as_bool() } {
+                if msg.message == WM_QUIT || stop.load(Ordering::Relaxed) {
+                    should_exit = true;
+                    break;
+                }
+
+                unsafe {
+                    let _ = TranslateMessage(&msg);
+                    DispatchMessageW(&msg);
+                }
+            }
+
+            while let Ok(keycode) = rx.try_recv() {
+                on_key(keycode);
+            }
+
+            std::thread::sleep(Duration::from_millis(50));
+        }
+
+        unsafe {
+            let _ = UnhookWindowsHookEx(hook);
+        }
+
+        if let Some(sender_slot) = KEY_SENDER.get() {
+            if let Ok(mut sender_guard) = sender_slot.lock() {
+                *sender_guard = None;
+            }
+        }
+
+        while let Ok(keycode) = rx.try_recv() {
+            on_key(keycode);
+        }
+    });
+
+    match install_rx.recv() {
+        Ok(result) => result,
+        Err(err) => Err(format!(
+            "[key_counter] Windows keyboard hook install status channel closed: {err}"
+        )),
+    }
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "windows")))]
+pub fn spawn_listener<F>(
+    _stop: std::sync::Arc<std::sync::atomic::AtomicBool>,
+    _on_key: F,
+) -> Result<(), String>
+where
+    F: Fn(i64) + Send + Sync + 'static,
+{
+    Ok(())
 }

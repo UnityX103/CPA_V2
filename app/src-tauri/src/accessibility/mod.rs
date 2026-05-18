@@ -6,7 +6,9 @@
 use serde::Serialize;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Emitter};
+#[cfg(target_os = "macos")]
+use tauri::Manager;
 
 #[cfg(target_os = "macos")]
 mod macos;
@@ -42,9 +44,18 @@ impl ListenerHandle {
         // Phase 2: spawn outside the lock so a long thread-spawn or future re-entry
         // through the same handle cannot deadlock against this Mutex.
         let app_handle = app.clone();
-        crate::key_counter::spawn_listener(stop, move |keycode| {
+        if let Err(error) = crate::key_counter::spawn_listener(stop.clone(), move |keycode| {
             let _ = app_handle.emit("key-pressed", keycode);
-        });
+        }) {
+            eprintln!("{error}");
+            let mut guard = self.inner.lock().unwrap();
+            if guard
+                .as_ref()
+                .is_some_and(|current| Arc::ptr_eq(current, &stop))
+            {
+                *guard = None;
+            }
+        }
     }
 
     /// Signal the running listener to stop (no-op if not running).
@@ -209,6 +220,7 @@ struct AccessibilityChangedPayload {
 
 /// 防抖：同一时刻只允许一次 prompt 飞行；第二次点击直接 Ok(()) 返回，避免 restore 任务堆叠
 /// 与 always_on_top 抖动。请求结束（granted=true 翻转或 30s 超时）后重置为 false。
+#[cfg(target_os = "macos")]
 static PROMPT_IN_FLIGHT: AtomicBool = AtomicBool::new(false);
 static MAIN_PIN_GENERATION: AtomicU64 = AtomicU64::new(0);
 
@@ -216,10 +228,12 @@ pub(crate) fn mark_main_pin_succeeded() -> u64 {
     MAIN_PIN_GENERATION.fetch_add(1, Ordering::AcqRel) + 1
 }
 
+#[cfg(target_os = "macos")]
 fn main_pin_generation() -> u64 {
     MAIN_PIN_GENERATION.load(Ordering::Acquire)
 }
 
+#[cfg(target_os = "macos")]
 fn snapshot_main_pin_state(app: &AppHandle) -> (u64, bool) {
     loop {
         let before = main_pin_generation();

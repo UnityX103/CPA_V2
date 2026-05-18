@@ -122,12 +122,113 @@ pub fn current_active_app_window_bounds() -> Option<AppWindowBounds> {
     None
 }
 
-#[cfg(not(target_os = "macos"))]
+#[cfg(target_os = "windows")]
+pub fn current_active_app() -> Option<ActiveAppInfo> {
+    use std::path::Path;
+    use windows::core::PWSTR;
+    use windows::Win32::Foundation::{CloseHandle, HWND};
+    use windows::Win32::System::Threading::{
+        OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32,
+        PROCESS_QUERY_LIMITED_INFORMATION,
+    };
+    use windows::Win32::UI::WindowsAndMessaging::{
+        GetForegroundWindow, GetWindowTextLengthW, GetWindowTextW, GetWindowThreadProcessId,
+    };
+
+    fn foreground_window() -> Option<HWND> {
+        let hwnd = unsafe { GetForegroundWindow() };
+        if hwnd.0.is_null() {
+            None
+        } else {
+            Some(hwnd)
+        }
+    }
+
+    fn foreground_pid(hwnd: HWND) -> Option<u32> {
+        let mut pid = 0;
+        unsafe {
+            GetWindowThreadProcessId(hwnd, Some(&mut pid as *mut u32));
+        }
+        (pid != 0).then_some(pid)
+    }
+
+    fn window_title(hwnd: HWND) -> Option<String> {
+        let len = unsafe { GetWindowTextLengthW(hwnd) };
+        if len <= 0 {
+            return None;
+        }
+
+        let mut buffer = vec![0u16; len as usize + 1];
+        let copied = unsafe { GetWindowTextW(hwnd, &mut buffer) };
+        if copied <= 0 {
+            return None;
+        }
+
+        Some(String::from_utf16_lossy(&buffer[..copied as usize]))
+    }
+
+    fn process_path(pid: u32) -> Option<String> {
+        let handle = unsafe { OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid).ok()? };
+        let mut buffer = vec![0u16; 32768];
+        let mut len = buffer.len() as u32;
+        let result = unsafe {
+            QueryFullProcessImageNameW(
+                handle,
+                PROCESS_NAME_WIN32,
+                PWSTR(buffer.as_mut_ptr()),
+                &mut len,
+            )
+        };
+        unsafe {
+            let _ = CloseHandle(handle);
+        }
+        result
+            .ok()
+            .map(|_| String::from_utf16_lossy(&buffer[..len as usize]))
+            .filter(|path| !path.is_empty())
+    }
+
+    let hwnd = foreground_window()?;
+    let pid = foreground_pid(hwnd)?;
+    let bundle_id = process_path(pid).unwrap_or_default();
+    let name = Path::new(&bundle_id)
+        .file_name()
+        .and_then(|name| name.to_str())
+        .map(str::to_owned)
+        .filter(|name| !name.is_empty())
+        .or_else(|| window_title(hwnd))
+        .unwrap_or_default();
+
+    Some(ActiveAppInfo { name, bundle_id })
+}
+
+#[cfg(target_os = "windows")]
+pub fn current_active_app_window_bounds() -> Option<AppWindowBounds> {
+    use windows::Win32::Foundation::RECT;
+    use windows::Win32::UI::WindowsAndMessaging::{GetForegroundWindow, GetWindowRect};
+
+    let hwnd = unsafe { GetForegroundWindow() };
+    if hwnd.0.is_null() {
+        return None;
+    }
+
+    let mut rect = RECT::default();
+    unsafe { GetWindowRect(hwnd, &mut rect) }.ok()?;
+
+    Some(AppWindowBounds {
+        x: rect.left as f64,
+        y: rect.top as f64,
+        width: (rect.right - rect.left) as f64,
+        height: (rect.bottom - rect.top) as f64,
+    })
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "windows")))]
 pub fn current_active_app() -> Option<ActiveAppInfo> {
     None
 }
 
-#[cfg(not(target_os = "macos"))]
+#[cfg(not(any(target_os = "macos", target_os = "windows")))]
 pub fn current_active_app_window_bounds() -> Option<AppWindowBounds> {
     None
 }

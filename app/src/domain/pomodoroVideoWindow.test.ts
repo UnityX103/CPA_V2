@@ -51,6 +51,9 @@ describe('pomodoro video player window', () => {
 
         expect(getByLabelMock).toHaveBeenCalledWith('pomodoro-video-player');
         expect(invokeMock).toHaveBeenCalledWith('pomodoro_video_screen_rect');
+        expect(invokeMock).toHaveBeenCalledWith('reassert_window_always_on_top', {
+            label: 'pomodoro-video-player',
+        });
         expect(constructorMock).toHaveBeenCalledWith('pomodoro-video-player', expect.objectContaining({
             url: 'index.html?window=video-player&src=%2Fvideos%2Fms1-alpha.mov&title=%E5%8D%83%E5%8D%83',
             title: '千千',
@@ -82,6 +85,25 @@ describe('pomodoro video player window', () => {
         });
 
         expect(closeMock).toHaveBeenCalledOnce();
+        expect(constructorMock).toHaveBeenCalledOnce();
+    });
+
+    it('keeps opening the player when native always-on-top reassert fails', async () => {
+        invokeMock
+            .mockResolvedValueOnce({
+                x: 0,
+                y: 0,
+                width: 1280,
+                height: 720,
+            })
+            .mockRejectedValueOnce(new Error('native topmost failed'));
+
+        await expect(openPomodoroVideoWindow({
+            kind: 'video',
+            title: 'video',
+            src: '/videos/ms1.webm',
+        })).resolves.toBeUndefined();
+
         expect(constructorMock).toHaveBeenCalledOnce();
     });
 });

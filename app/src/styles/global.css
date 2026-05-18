@@ -4,11 +4,13 @@
     font-family: 'MaokenAssortedSans';
     src: url('/fonts/MaokenAssortedSans.ttf') format('truetype');
     font-weight: 100 900;
+    font-style: normal;
     font-display: swap;
 }
 
 * {
     box-sizing: border-box;
+    font-family: var(--font-cn);
 }
 
 html, body, #root {
@@ -29,6 +31,12 @@ button {
     border: none;
     background: none;
     padding: 0;
+}
+
+input,
+select,
+textarea {
+    font-family: inherit;
 }
 
 button:focus-visible {

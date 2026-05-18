@@ -1,9 +1,14 @@
 use serde::Serialize;
+#[cfg(not(target_os = "windows"))]
 use std::collections::hash_map::DefaultHasher;
+#[cfg(not(target_os = "windows"))]
 use std::fs;
+#[cfg(not(target_os = "windows"))]
 use std::hash::{Hash, Hasher};
 use std::path::Path;
+#[cfg(not(target_os = "windows"))]
 use std::process::Command;
+#[cfg(not(target_os = "windows"))]
 use tauri::Manager;
 
 #[derive(Debug, Serialize, PartialEq, Eq)]
@@ -61,6 +66,14 @@ pub fn prepare_custom_alpha_video_path(
             .unwrap_or_else(|| "自定义视频不可用".to_string()));
     }
 
+    #[cfg(target_os = "windows")]
+    {
+        let _ = app;
+        return Ok(source.to_string_lossy().into_owned());
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
     let cache_dir = app
         .path()
         .app_cache_dir()
@@ -84,8 +97,10 @@ pub fn prepare_custom_alpha_video_path(
 
     fs::rename(&tmp, &target).map_err(|e| format!("无法保存转换后的视频：{e}"))?;
     Ok(target.to_string_lossy().into_owned())
+    }
 }
 
+#[cfg(not(target_os = "windows"))]
 fn run_ffmpeg_alpha_transcode(
     source: &Path,
     target: &Path,
@@ -130,6 +145,7 @@ fn run_ffmpeg_alpha_transcode(
     ))
 }
 
+#[cfg(not(target_os = "windows"))]
 fn alpha_cache_filename(source: &Path) -> String {
     let mut hasher = DefaultHasher::new();
     source.to_string_lossy().hash(&mut hasher);
@@ -143,6 +159,7 @@ fn alpha_cache_filename(source: &Path) -> String {
     format!("{stem}-{hash:016x}.mov")
 }
 
+#[cfg(not(target_os = "windows"))]
 fn sanitize_cache_stem(stem: &str) -> String {
     stem.chars()
         .map(|ch| {
@@ -155,6 +172,7 @@ fn sanitize_cache_stem(stem: &str) -> String {
         .collect()
 }
 
+#[cfg(not(target_os = "windows"))]
 fn cached_alpha_video_is_fresh(source: &Path, target: &Path) -> bool {
     let Ok(target_meta) = fs::metadata(target) else {
         return false;
@@ -173,9 +191,9 @@ fn cached_alpha_video_is_fresh(source: &Path, target: &Path) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{
-        alpha_cache_filename, sanitize_cache_stem, validate_webm_path, CustomVideoValidation,
-    };
+    #[cfg(not(target_os = "windows"))]
+    use super::{alpha_cache_filename, sanitize_cache_stem};
+    use super::{validate_webm_path, CustomVideoValidation};
     use std::fs;
     use std::path::Path;
 
@@ -262,6 +280,7 @@ mod tests {
         );
     }
 
+    #[cfg(not(target_os = "windows"))]
     #[test]
     fn alpha_cache_filename_keeps_extension_and_hashes_absolute_path() {
         let a = alpha_cache_filename(Path::new("/Users/xpy/Videos/focus end.webm"));
@@ -272,6 +291,7 @@ mod tests {
         assert_ne!(a, b);
     }
 
+    #[cfg(not(target_os = "windows"))]
     #[test]
     fn sanitize_cache_stem_replaces_path_unfriendly_characters() {
         assert_eq!(sanitize_cache_stem("focus end 千千"), "focus-end---");
