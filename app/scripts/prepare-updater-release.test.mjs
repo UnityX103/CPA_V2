@@ -41,7 +41,7 @@ describe('prepare-updater-release', () => {
 
         const result = await prepareUpdaterRelease({
             appRoot,
-            baseUrl: 'https://updates.nanzhaigame.cn/cpa',
+            baseUrl: 'https://github.com/UnityX103/CPA_V2/releases/download',
             bundleDir,
             channel: 'stable',
             outDir,
@@ -61,7 +61,7 @@ describe('prepare-updater-release', () => {
             platforms: {
                 'darwin-aarch64': {
                     signature: 'signed-by-tauri',
-                    url: 'https://updates.nanzhaigame.cn/cpa/stable/0.2.0/deskpet.app.tar.gz',
+                    url: 'https://github.com/UnityX103/CPA_V2/releases/download/v0.2.0/deskpet.app.tar.gz',
                 },
             },
         });
@@ -78,7 +78,7 @@ describe('prepare-updater-release', () => {
 
         await expect(prepareUpdaterRelease({
             appRoot,
-            baseUrl: 'https://updates.nanzhaigame.cn/cpa',
+            baseUrl: 'https://github.com/UnityX103/CPA_V2/releases/download',
             bundleDir,
             outDir: join(appRoot, 'release'),
             platform: 'darwin-aarch64',
@@ -96,7 +96,7 @@ describe('prepare-updater-release', () => {
 
         await expect(prepareUpdaterRelease({
             appRoot,
-            baseUrl: 'https://updates.nanzhaigame.cn/cpa',
+            baseUrl: 'https://github.com/UnityX103/CPA_V2/releases/download',
             bundleDir,
             outDir: join(appRoot, 'release'),
             platform: 'darwin-aarch64',

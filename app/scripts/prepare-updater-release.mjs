@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_APP_ROOT = resolve(SCRIPT_DIR, '..');
-const DEFAULT_BASE_URL = 'https://updates.nanzhaigame.cn/cpa';
+const DEFAULT_BASE_URL = 'https://github.com/UnityX103/CPA_V2/releases/download';
 const DEFAULT_CHANNEL = 'stable';
 
 function resolveFromAppRoot(appRoot, path) {
@@ -22,6 +22,17 @@ function urlJoin(...parts) {
         normalizeBaseUrl(first),
         ...rest.map((part) => encodeURIComponent(part).replace(/%2F/g, '/')),
     ].join('/');
+}
+
+function isGithubReleaseDownloadBase(url) {
+    return /github\.com\/[^/]+\/[^/]+\/releases\/download$/i.test(normalizeBaseUrl(url));
+}
+
+function artifactUrl(baseUrl, channel, version, artifactName) {
+    if (isGithubReleaseDownloadBase(baseUrl)) {
+        return urlJoin(baseUrl, `v${version}`, artifactName);
+    }
+    return urlJoin(baseUrl, channel, version, artifactName);
 }
 
 async function readJson(path) {
@@ -155,7 +166,7 @@ export async function prepareUpdaterRelease(options = {}) {
 
         platforms[platform] = {
             signature,
-            url: urlJoin(baseUrl, channel, version, artifactName),
+            url: artifactUrl(baseUrl, channel, version, artifactName),
         };
     }
 
