@@ -41,7 +41,7 @@ describe('prepare-updater-release', () => {
 
         const result = await prepareUpdaterRelease({
             appRoot,
-            baseUrl: 'https://updates.nanzhai.com/cpa',
+            baseUrl: 'https://updates.nanzhaigame.cn/cpa',
             bundleDir,
             channel: 'stable',
             outDir,
@@ -61,7 +61,7 @@ describe('prepare-updater-release', () => {
             platforms: {
                 'darwin-aarch64': {
                     signature: 'signed-by-tauri',
-                    url: 'https://updates.nanzhai.com/cpa/stable/0.2.0/deskpet.app.tar.gz',
+                    url: 'https://updates.nanzhaigame.cn/cpa/stable/0.2.0/deskpet.app.tar.gz',
                 },
             },
         });
@@ -78,7 +78,7 @@ describe('prepare-updater-release', () => {
 
         await expect(prepareUpdaterRelease({
             appRoot,
-            baseUrl: 'https://updates.nanzhai.com/cpa',
+            baseUrl: 'https://updates.nanzhaigame.cn/cpa',
             bundleDir,
             outDir: join(appRoot, 'release'),
             platform: 'darwin-aarch64',
@@ -96,7 +96,7 @@ describe('prepare-updater-release', () => {
 
         await expect(prepareUpdaterRelease({
             appRoot,
-            baseUrl: 'https://updates.nanzhai.com/cpa',
+            baseUrl: 'https://updates.nanzhaigame.cn/cpa',
             bundleDir,
             outDir: join(appRoot, 'release'),
             platform: 'darwin-aarch64',

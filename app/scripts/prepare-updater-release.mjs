@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_APP_ROOT = resolve(SCRIPT_DIR, '..');
-const DEFAULT_BASE_URL = 'https://updates.nanzhai.com/cpa';
+const DEFAULT_BASE_URL = 'https://updates.nanzhaigame.cn/cpa';
 const DEFAULT_CHANNEL = 'stable';
 
 function resolveFromAppRoot(appRoot, path) {

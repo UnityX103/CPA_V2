@@ -42,7 +42,7 @@ describe('updater configuration', () => {
         const conf = readJson(tauriConfPath);
         expect(conf.bundle?.createUpdaterArtifacts).toBe(true);
         expect(conf.plugins?.updater?.endpoints).toEqual([
-            'https://updates.nanzhai.com/cpa/stable/latest.json',
+            'https://updates.nanzhaigame.cn/cpa/stable/latest.json',
         ]);
         expect(conf.plugins?.updater?.pubkey).toEqual(expect.any(String));
         expect(conf.plugins.updater.pubkey.length).toBeGreaterThan(40);

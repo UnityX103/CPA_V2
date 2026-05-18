@@ -46,9 +46,9 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEFCRjg5OEQ0QjYwNEQ0MUIKUldRYjFBUzIxSmo0cXhuTGhVazJlT29vM1UwVlRmeE1kWUFwV2VIWUYvL1RqQk9scm91c1BOWkkK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEQ2ODE2ODVGM0Y1RkQ2MjUKUldRbDFsOC9YMmlCMXU0Y2NxQmYxVWRVcDFuQTNMZW1lWmx6VUJsUHpLL0JLMk0xRE8yaVdpV0EK",
       "endpoints": [
-        "https://updates.nanzhai.com/cpa/stable/latest.json"
+        "https://updates.nanzhaigame.cn/cpa/stable/latest.json"
       ],
       "windows": {
         "installMode": "passive"
