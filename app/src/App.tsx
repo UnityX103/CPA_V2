@@ -6,6 +6,7 @@ import { useActiveAppListener } from './domain/activeApp';
 import { useBindingKeyListener } from './domain/bindingKey';
 import { useBridgeHost } from './domain/bridge/host';
 import { useInputCounterWindowController } from './domain/inputCounterWindow';
+import { MAIN_WINDOW_BASE_SIZE, useScaledWindowSize } from './domain/scaledWindow';
 import { useSettingsStore } from './domain/settings';
 import { loadPersistedSettings } from './domain/settingsPersistence';
 
@@ -16,6 +17,13 @@ export default function App() {
     useBridgeHost();
     useInputCounterWindowController();
     const uiScale = useSettingsStore((s) => s.uiScale);
+    useScaledWindowSize({
+        label: 'main',
+        baseWidth: MAIN_WINDOW_BASE_SIZE.width,
+        baseHeight: MAIN_WINDOW_BASE_SIZE.height,
+        minWidth: MAIN_WINDOW_BASE_SIZE.width,
+        minHeight: MAIN_WINDOW_BASE_SIZE.height,
+    });
 
     useEffect(() => {
         let cancelled = false;
