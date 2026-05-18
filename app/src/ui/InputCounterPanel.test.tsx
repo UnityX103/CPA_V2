@@ -37,6 +37,7 @@ beforeEach(() => {
     useActiveAppStore.setState({ current: null });
     useSettingsStore.setState({
         showActiveAppWindowTitle: true,
+        uiScale: 1,
     });
 });
 
@@ -67,7 +68,33 @@ describe('InputCounterPanel', () => {
 
         expect(container.firstChild).toBeNull();
         await waitFor(() => {
-            expect(invokeMock).not.toHaveBeenCalledWith('resize_input_counter_window', expect.anything());
+            expect(invokeMock).not.toHaveBeenCalledWith('resize_scaled_window', expect.anything());
+        });
+    });
+
+    it('requests scaled native size from visible key count and global scale', async () => {
+        useSettingsStore.setState({ uiScale: 1.5 });
+        useBindingKeyStore.setState({
+            entries: [
+                { id: 'space', label: 'Space', keyCode: 49, pressCount: 47, enabled: true },
+                { id: 'enter', label: 'Enter', keyCode: 36, pressCount: 3, enabled: true },
+            ],
+        });
+
+        render(<InputCounterPanel />);
+
+        await waitFor(() => {
+            expect(invokeMock).toHaveBeenCalledWith('resize_scaled_window', {
+                args: {
+                    label: 'input-counter',
+                    baseWidth: 128,
+                    baseHeight: 111,
+                    minWidth: 128,
+                    minHeight: 84,
+                    scale: 1.5,
+                    center: false,
+                },
+            });
         });
     });
 

@@ -1,8 +1,13 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useActiveAppStore } from '../domain/activeApp';
 import { isVisibleBindingEntry, useBindingKeyStore, type BindingKeyEntry } from '../domain/bindingKey';
+import {
+    INPUT_COUNTER_BASE_HEIGHT,
+    INPUT_COUNTER_BASE_WIDTH,
+    useScaledWindowSize,
+} from '../domain/scaledWindow';
 import { useSettingsStore } from '../domain/settings';
 import { shouldStartWindowDrag } from './windowDrag';
 import './InputCounterPanel.css';
@@ -29,11 +34,15 @@ export function InputCounterPanel() {
     ) || activeApp?.name?.trim() || '未聚焦应用';
     const appIcon = activeApp?.icon_data_url || null;
 
-    useEffect(() => {
-        if (!panelEnabled || boundEntries.length === 0) return;
-        void invoke('resize_input_counter_window', { height: windowHeightForPills(boundEntries.length) })
-            .catch(() => { /* non-Tauri/test env */ });
-    }, [boundEntries.length, panelEnabled]);
+    const baseHeight = windowHeightForPills(boundEntries.length);
+    useScaledWindowSize({
+        label: 'input-counter',
+        baseWidth: INPUT_COUNTER_BASE_WIDTH,
+        baseHeight,
+        minWidth: INPUT_COUNTER_BASE_WIDTH,
+        minHeight: INPUT_COUNTER_BASE_HEIGHT,
+        enabled: panelEnabled && boundEntries.length > 0,
+    });
 
     if (!panelEnabled || boundEntries.length === 0) return null;
 
