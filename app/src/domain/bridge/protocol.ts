@@ -3,6 +3,7 @@ import type { DangerousChange } from '../settings';
 import type { ConnectionStatus, RemotePlayer } from '../network';
 import type { PomodoroEndActionMode, PomodoroEndActionVideo } from '../pomodoro';
 import type { ActiveAppInfo } from '../activeApp';
+import type { AppUpdateSnapshot } from '../appUpdate';
 
 export const EVT_STATE_REQUEST = 'app:state:request';
 export const EVT_STATE = 'app:state';
@@ -41,6 +42,7 @@ export interface BridgeSnapshot {
         capturingId: string | null;
         syncedKeyId: string | null;
     };
+    appUpdate: AppUpdateSnapshot;
 }
 
 export type DispatchPayload =
@@ -56,4 +58,6 @@ export type DispatchPayload =
     | { v: typeof BRIDGE_VERSION; store: 'bindingKey'; action: 'beginCapture' | 'removeEntry'; args: [string] }
     | { v: typeof BRIDGE_VERSION; store: 'bindingKey'; action: 'setPanelEnabled'; args: [boolean] }
     | { v: typeof BRIDGE_VERSION; store: 'bindingKey'; action: 'setSynced'; args: [string | null] }
-    | { v: typeof BRIDGE_VERSION; store: 'bindingKey'; action: 'addEntry'; args: [] };
+    | { v: typeof BRIDGE_VERSION; store: 'bindingKey'; action: 'addEntry'; args: [] }
+    | { v: typeof BRIDGE_VERSION; store: 'appUpdate';  action: 'setAutoUpdateEnabled'; args: [boolean] }
+    | { v: typeof BRIDGE_VERSION; store: 'appUpdate';  action: 'checkNow' | 'restartForUpdate'; args: [] };

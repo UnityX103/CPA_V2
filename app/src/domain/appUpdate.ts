@@ -8,7 +8,7 @@ import {
     type PersistedAppUpdateSettings,
 } from './appUpdatePersistence';
 import { dispatch } from './bridge/dispatch';
-import { BRIDGE_VERSION } from './bridge/protocol';
+import { BRIDGE_VERSION, type DispatchPayload } from './bridge/protocol';
 
 export const APP_UPDATE_STARTUP_DELAY_MS = 30_000;
 export const APP_UPDATE_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
@@ -86,7 +86,7 @@ function createDefaultDeps(): AppUpdateDeps {
 }
 
 function appUpdateDispatchPayload(action: 'checkNow' | 'restartForUpdate') {
-    return { v: BRIDGE_VERSION, store: 'appUpdate', action, args: [] } as unknown as Parameters<typeof dispatch>[0];
+    return { v: BRIDGE_VERSION, store: 'appUpdate', action, args: [] } satisfies DispatchPayload;
 }
 
 function appUpdateTogglePayload(enabled: boolean) {
@@ -95,7 +95,7 @@ function appUpdateTogglePayload(enabled: boolean) {
         store: 'appUpdate',
         action: 'setAutoUpdateEnabled',
         args: [enabled],
-    } as unknown as Parameters<typeof dispatch>[0];
+    } satisfies DispatchPayload;
 }
 
 export function createAppUpdateStore(deps: AppUpdateDeps): AppUpdateStore {

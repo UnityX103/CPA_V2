@@ -6,6 +6,7 @@ import { usePomodoroStore } from '../pomodoro';
 import { useNetworkStore, type RemotePlayer } from '../network';
 import { useBindingKeyStore, type BindingKeyEntry } from '../bindingKey';
 import { useActiveAppStore, type ActiveAppInfo } from '../activeApp';
+import { useAppUpdateStore } from '../appUpdate';
 import {
     BRIDGE_VERSION,
     EVT_STATE,
@@ -93,6 +94,7 @@ export function applySnapshotToMirrors(snap: BridgeSnapshot): void {
         capturingId: snap.bindingKey.capturingId,
         syncedKeyId: snap.bindingKey.syncedKeyId,
     });
+    useAppUpdateStore.getState().applySnapshot({ ...snap.appUpdate });
 }
 
 export function useBridgeClient(): void {

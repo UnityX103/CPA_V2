@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
     applyDispatch,
     activeAppIdentitySig,
     activeAppSig,
+    appUpdateSig,
     bindingKeySig,
     buildSnapshot,
     networkSig,
@@ -15,6 +16,7 @@ import { useNetworkStore, type NetworkStateShape } from '../network';
 import { useBindingKeyStore } from '../bindingKey';
 import { useActiveAppStore } from '../activeApp';
 import { BRIDGE_VERSION } from './protocol';
+import { useAppUpdateStore } from '../appUpdate';
 
 type BindingKeySigInput = Parameters<typeof bindingKeySig>[0];
 type BindingKeyStateWithPermission = BindingKeySigInput & {
@@ -87,6 +89,15 @@ beforeEach(() => {
         platform: null,
     });
     useActiveAppStore.setState({ current: null });
+    useAppUpdateStore.setState({
+        autoUpdateEnabled: true,
+        status: 'idle',
+        currentVersion: null,
+        availableVersion: null,
+        releaseNotes: null,
+        lastCheckedAt: null,
+        errorMessage: null,
+    });
 });
 
 describe('buildSnapshot', () => {
@@ -106,6 +117,15 @@ describe('buildSnapshot', () => {
         expect(snap.network.status).toBe(useNetworkStore.getState().status);
         expect(snap.bindingKey.entries).toEqual(useBindingKeyStore.getState().entries);
         expect(snap.bindingKey.entries).not.toBe(useBindingKeyStore.getState().entries);
+        expect(snap.appUpdate).toEqual({
+            autoUpdateEnabled: true,
+            status: 'idle',
+            currentVersion: null,
+            availableVersion: null,
+            releaseNotes: null,
+            lastCheckedAt: null,
+            errorMessage: null,
+        });
     });
 
     it('detaches nested snapshot values from source store references', () => {
@@ -286,6 +306,36 @@ describe('applyDispatch', () => {
         applyDispatch({ v: BRIDGE_VERSION, store: 'bindingKey', action: 'beginCapture', args: [entry.id] });
         expect(useBindingKeyStore.getState().capturingId).toBe(entry.id);
     });
+
+    it('routes app-update actions to the authoritative main store', () => {
+        const original = {
+            setAutoUpdateEnabled: useAppUpdateStore.getState().setAutoUpdateEnabled,
+            checkNow: useAppUpdateStore.getState().checkNow,
+            restartForUpdate: useAppUpdateStore.getState().restartForUpdate,
+        };
+        const setAutoUpdateEnabled = vi.fn(async () => {});
+        const checkNow = vi.fn(async () => {});
+        const restartForUpdate = vi.fn(async () => {});
+        useAppUpdateStore.setState({
+            setAutoUpdateEnabled,
+            checkNow,
+            restartForUpdate,
+        });
+
+        applyDispatch({
+            v: BRIDGE_VERSION,
+            store: 'appUpdate',
+            action: 'setAutoUpdateEnabled',
+            args: [false],
+        });
+        applyDispatch({ v: BRIDGE_VERSION, store: 'appUpdate', action: 'checkNow', args: [] });
+        applyDispatch({ v: BRIDGE_VERSION, store: 'appUpdate', action: 'restartForUpdate', args: [] });
+
+        expect(setAutoUpdateEnabled).toHaveBeenCalledWith(false);
+        expect(checkNow).toHaveBeenCalledTimes(1);
+        expect(restartForUpdate).toHaveBeenCalledTimes(1);
+        useAppUpdateStore.setState(original);
+    });
 });
 
 describe('bridge host subscription signatures', () => {
@@ -411,6 +461,23 @@ describe('bridge host subscription signatures', () => {
 
         expect(bindingKeySig(base)).toBe(bindingKeySig(deniedPermission));
         expect(bindingKeySig(base)).not.toBe(bindingKeySig(incrementedEntry));
+    });
+
+    it('appUpdateSig includes mirrored update status fields', () => {
+        const base = {
+            autoUpdateEnabled: true,
+            status: 'upToDate' as const,
+            currentVersion: '0.1.0',
+            availableVersion: null,
+            releaseNotes: null,
+            lastCheckedAt: 1700000000000,
+            errorMessage: null,
+        };
+        const disabled = { ...base, autoUpdateEnabled: false };
+        const checkedLater = { ...base, lastCheckedAt: 1700000100000 };
+
+        expect(appUpdateSig(base)).not.toBe(appUpdateSig(disabled));
+        expect(appUpdateSig(base)).not.toBe(appUpdateSig(checkedLater));
     });
 
     it('activeAppSig ignores heavy icon data but includes title changes', () => {

@@ -6,6 +6,7 @@ import { usePomodoroStore } from '../pomodoro';
 import { useNetworkStore, type RemotePlayer } from '../network';
 import { useBindingKeyStore, type BindingKeyEntry } from '../bindingKey';
 import { useActiveAppStore, type ActiveAppInfo } from '../activeApp';
+import { useAppUpdateStore, type AppUpdateSnapshot } from '../appUpdate';
 import {
     BRIDGE_VERSION,
     EVT_DISPATCH,
@@ -52,12 +53,25 @@ function cloneActiveApp(
     return withoutIcon;
 }
 
+function appUpdateSnapshot(s: AppUpdateSnapshot): AppUpdateSnapshot {
+    return {
+        autoUpdateEnabled: s.autoUpdateEnabled,
+        status: s.status,
+        currentVersion: s.currentVersion,
+        availableVersion: s.availableVersion,
+        releaseNotes: s.releaseNotes,
+        lastCheckedAt: s.lastCheckedAt,
+        errorMessage: s.errorMessage,
+    };
+}
+
 export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
     const s = useSettingsStore.getState();
     const p = usePomodoroStore.getState();
     const n = useNetworkStore.getState();
     const b = useBindingKeyStore.getState();
     const a = useActiveAppStore.getState();
+    const u = useAppUpdateStore.getState();
     return {
         v: BRIDGE_VERSION,
         settings: {
@@ -90,6 +104,7 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
             capturingId: b.capturingId,
             syncedKeyId: b.syncedKeyId,
         },
+        appUpdate: appUpdateSnapshot(u),
     };
 }
 
@@ -138,6 +153,15 @@ export function applyDispatch(payload: DispatchPayload): void {
                 case 'setPanelEnabled': b.setPanelEnabled(...payload.args); return;
                 case 'setSynced':    b.setSynced(...payload.args); return;
                 case 'addEntry':     b.addEntry(); return;
+            }
+            return;
+        }
+        case 'appUpdate': {
+            const u = useAppUpdateStore.getState();
+            switch (payload.action) {
+                case 'setAutoUpdateEnabled': void u.setAutoUpdateEnabled(...payload.args); return;
+                case 'checkNow': void u.checkNow(); return;
+                case 'restartForUpdate': void u.restartForUpdate(); return;
             }
             return;
         }
@@ -227,6 +251,18 @@ export function bindingKeySig(s: {
     ]);
 }
 
+export function appUpdateSig(s: AppUpdateSnapshot): string {
+    return JSON.stringify([
+        s.autoUpdateEnabled,
+        s.status,
+        s.currentVersion,
+        s.availableVersion,
+        s.releaseNotes,
+        s.lastCheckedAt,
+        s.errorMessage,
+    ]);
+}
+
 export function activeAppSig(s: { current: ActiveAppInfo | null }): string {
     if (!s.current) return JSON.stringify(null);
     const { icon_data_url: _iconDataUrl, ...withoutIcon } = s.current;
@@ -261,6 +297,7 @@ export function useBridgeHost(): void {
         let prevPomo = pomoSig(usePomodoroStore.getState());
         let prevNetwork = networkSig(useNetworkStore.getState());
         let prevBindingKey = bindingKeySig(useBindingKeyStore.getState());
+        let prevAppUpdate = appUpdateSig(useAppUpdateStore.getState());
         let prevActiveApp = activeAppSig(useActiveAppStore.getState());
         let prevActiveAppIdentity = activeAppIdentitySig(useActiveAppStore.getState());
         const subs: Array<() => void> = [
@@ -286,6 +323,12 @@ export function useBridgeHost(): void {
                 const sig = bindingKeySig(s);
                 if (sig === prevBindingKey) return;
                 prevBindingKey = sig;
+                void sendSnapshot();
+            }),
+            useAppUpdateStore.subscribe((s) => {
+                const sig = appUpdateSig(s);
+                if (sig === prevAppUpdate) return;
+                prevAppUpdate = sig;
                 void sendSnapshot();
             }),
             useActiveAppStore.subscribe((s) => {
