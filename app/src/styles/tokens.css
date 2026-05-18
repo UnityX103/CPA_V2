@@ -6,7 +6,7 @@
  */
 :root {
     /* === 字体 === */
-    --font-cn: "MaokenAssortedSans", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", system-ui, sans-serif;
+    --font-cn: "CPAMaoken";
 
     /* === 桌宠面板（PomodoroPanel / PlayerCard / InputCounterPanel） === */
     --panel-bg: #FFFDFBEE;          /* PomodoroPanel YRqeB.fill */

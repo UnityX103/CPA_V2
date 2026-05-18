@@ -1,51 +1,51 @@
 @import url('./tokens.css');
 
 @font-face {
-    font-family: 'MaokenAssortedSans';
+    font-family: 'CPAMaoken';
     src: url('/fonts/MaokenAssortedSans.ttf') format('truetype');
     font-weight: 400;
     font-style: normal;
-    font-display: swap;
+    font-display: block;
 }
 
 @font-face {
-    font-family: 'MaokenAssortedSans';
+    font-family: 'CPAMaoken';
     src: url('/fonts/MaokenAssortedSans.ttf') format('truetype');
     font-weight: 500;
     font-style: normal;
-    font-display: swap;
+    font-display: block;
 }
 
 @font-face {
-    font-family: 'MaokenAssortedSans';
+    font-family: 'CPAMaoken';
     src: url('/fonts/MaokenAssortedSans.ttf') format('truetype');
     font-weight: 600;
     font-style: normal;
-    font-display: swap;
+    font-display: block;
 }
 
 @font-face {
-    font-family: 'MaokenAssortedSans';
+    font-family: 'CPAMaoken';
     src: url('/fonts/MaokenAssortedSans.ttf') format('truetype');
     font-weight: 700;
     font-style: normal;
-    font-display: swap;
+    font-display: block;
 }
 
 @font-face {
-    font-family: 'MaokenAssortedSans';
+    font-family: 'CPAMaoken';
     src: url('/fonts/MaokenAssortedSans.ttf') format('truetype');
     font-weight: 800;
     font-style: normal;
-    font-display: swap;
+    font-display: block;
 }
 
 @font-face {
-    font-family: 'MaokenAssortedSans';
+    font-family: 'CPAMaoken';
     src: url('/fonts/MaokenAssortedSans.ttf') format('truetype');
     font-weight: 900;
     font-style: normal;
-    font-display: swap;
+    font-display: block;
 }
 
 * {

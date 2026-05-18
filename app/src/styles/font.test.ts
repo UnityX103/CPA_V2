@@ -44,9 +44,10 @@ describe('Maoken app font', () => {
 
         expect(weights).toEqual(['400', '500', '600', '700', '800', '900']);
         fontFaces.forEach((fontFace) => {
-            expect(fontFace).toMatch(/font-family:\s*['"]MaokenAssortedSans['"]\s*;/);
+            expect(fontFace).toMatch(/font-family:\s*['"]CPAMaoken['"]\s*;/);
             expect(fontFace).toMatch(/src:\s*url\(['"]?\/fonts\/MaokenAssortedSans\.ttf['"]?\)\s*format\(['"]truetype['"]\)\s*;/);
+            expect(fontFace).toMatch(/font-display:\s*block\s*;/);
         });
-        expect(root).toMatch(/--font-cn:\s*"MaokenAssortedSans"/);
+        expect(root).toMatch(/--font-cn:\s*"CPAMaoken"\s*;/);
     });
 });
