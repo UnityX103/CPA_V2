@@ -664,6 +664,28 @@
     flex: 1;
 }
 
+.app-update-card {
+    gap: 8px;
+}
+
+.app-update-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-width: 0;
+}
+
+.app-update-status {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    line-height: 1.35;
+}
+
+.app-update-action {
+    flex: 0 0 auto;
+}
+
 .card-empty {
     font-size: 12px;
     color: var(--text-muted);
