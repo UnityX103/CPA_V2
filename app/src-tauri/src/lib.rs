@@ -1,6 +1,7 @@
 mod accessibility;
 mod active_app;
 mod key_counter;
+mod scaled_window;
 mod window_helpers;
 mod video_files;
 
@@ -329,6 +330,14 @@ async fn resize_input_counter_window(app: tauri::AppHandle, height: f64) -> Resu
     Ok(())
 }
 
+#[tauri::command]
+fn resize_scaled_window(
+    app: tauri::AppHandle,
+    args: scaled_window::ResizeScaledWindowArgs,
+) -> Result<(), String> {
+    scaled_window::resize_scaled_window(app, args)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let active_app_stop = Arc::new(AtomicBool::new(false));
@@ -500,6 +509,7 @@ pub fn run() {
             show_input_counter_window,
             hide_input_counter_window,
             resize_input_counter_window,
+            resize_scaled_window,
             accessibility::accessibility_status,
             accessibility::open_accessibility_settings,
             accessibility::key_counter_listening,

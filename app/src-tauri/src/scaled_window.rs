@@ -1,4 +1,5 @@
 use serde::Deserialize;
+use tauri::{LogicalPosition, LogicalSize, Manager};
 
 pub const WINDOW_EDGE_MARGIN: f64 = 24.0;
 
@@ -82,6 +83,88 @@ pub fn clamp_origin_to_monitor(
         origin.0.clamp(min_x.min(max_x), min_x.max(max_x)),
         origin.1.clamp(min_y.min(max_y), min_y.max(max_y)),
     )
+}
+
+fn monitor_logical_rect(monitor: &tauri::Monitor) -> LogicalRect {
+    let scale = monitor.scale_factor();
+    let position = monitor.position();
+    let size = monitor.size();
+    LogicalRect {
+        x: position.x as f64 / scale,
+        y: position.y as f64 / scale,
+        width: size.width as f64 / scale,
+        height: size.height as f64 / scale,
+    }
+}
+
+fn window_logical_origin(window: &tauri::WebviewWindow) -> Result<(f64, f64), String> {
+    let position = window.outer_position().map_err(|e| e.to_string())?;
+    let scale = window.scale_factor().map_err(|e| e.to_string())?;
+    Ok((position.x as f64 / scale, position.y as f64 / scale))
+}
+
+fn monitor_for_window(
+    app: &tauri::AppHandle,
+    window: &tauri::WebviewWindow,
+    center: bool,
+) -> Result<Option<tauri::Monitor>, String> {
+    if center {
+        if let Some(main) = app.get_webview_window("main") {
+            return main.current_monitor().map_err(|e| e.to_string());
+        }
+    }
+    window.current_monitor().map_err(|e| e.to_string())
+}
+
+pub fn resize_scaled_window(
+    app: tauri::AppHandle,
+    args: ResizeScaledWindowArgs,
+) -> Result<(), String> {
+    let Some(window) = app.get_webview_window(&args.label) else {
+        return Ok(());
+    };
+
+    let target = scaled_size(args.base_width, args.base_height, args.scale)?;
+    let monitor = monitor_for_window(&app, &window, args.center)?;
+    let target = if let Some(ref monitor) = monitor {
+        let logical = monitor_logical_rect(monitor);
+        clamp_size_to_monitor(
+            target,
+            args.min_width,
+            args.min_height,
+            logical.width,
+            logical.height,
+            WINDOW_EDGE_MARGIN,
+        )
+    } else {
+        LogicalSizePair {
+            width: target.width.max(args.min_width),
+            height: target.height.max(args.min_height),
+        }
+    };
+
+    window
+        .set_size(LogicalSize::new(target.width, target.height))
+        .map_err(|e| e.to_string())?;
+
+    let Some(monitor) = monitor else {
+        return Ok(());
+    };
+    let logical_monitor = monitor_logical_rect(&monitor);
+    let origin = if args.center {
+        centered_origin(logical_monitor, target)
+    } else {
+        clamp_origin_to_monitor(
+            window_logical_origin(&window)?,
+            logical_monitor,
+            target,
+            WINDOW_EDGE_MARGIN,
+        )
+    };
+    window
+        .set_position(LogicalPosition::new(origin.0, origin.1))
+        .map_err(|e| e.to_string())?;
+    Ok(())
 }
 
 #[cfg(test)]
