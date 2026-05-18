@@ -349,7 +349,9 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_persisted_scope::init())
+        .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_store::Builder::new().build())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .manage::<std::sync::Arc<accessibility::ListenerHandle>>(listener_handle_for_manage)
         .setup(move |app| {
             // 在主线程构建隐藏的设置窗口 + 装 first-mouse hook。点齿轮时只做
