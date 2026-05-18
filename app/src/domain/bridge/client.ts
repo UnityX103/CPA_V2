@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import { useSettingsStore } from '../settings';
@@ -95,12 +95,19 @@ export function applySnapshotToMirrors(snap: BridgeSnapshot): void {
     });
 }
 
-export function useBridgeClient(): void {
+export function useBridgeClient(): boolean {
+    const [hasInitialSnapshot, setHasInitialSnapshot] = useState(false);
+
     useEffect(() => {
         let cancelled = false;
         const unlistens: UnlistenFn[] = [];
 
-        listen<BridgeSnapshot>(EVT_STATE, (e) => { applySnapshotToMirrors(e.payload); })
+        listen<BridgeSnapshot>(EVT_STATE, (e) => {
+            applySnapshotToMirrors(e.payload);
+            if (e.payload.v === BRIDGE_VERSION) {
+                setHasInitialSnapshot(true);
+            }
+        })
             .then(async (u) => {
                 if (cancelled) { u(); return; }
                 unlistens.push(u);
@@ -121,4 +128,6 @@ export function useBridgeClient(): void {
             unlistens.forEach((u) => u());
         };
     }, []);
+
+    return hasInitialSnapshot;
 }

@@ -5,6 +5,7 @@ import { useSettingsStore } from './domain/settings';
 
 const {
     invokeMock,
+    loadPersistedSettingsMock,
     useStateSync,
     useActiveAppListener,
     useBindingKeyListener,
@@ -12,6 +13,7 @@ const {
     useInputCounterWindowController,
 } = vi.hoisted(() => ({
     invokeMock: vi.fn(),
+    loadPersistedSettingsMock: vi.fn(),
     useStateSync: vi.fn(),
     useActiveAppListener: vi.fn(),
     useBindingKeyListener: vi.fn(),
@@ -25,7 +27,7 @@ vi.mock('./domain/activeApp', () => ({ useActiveAppListener }));
 vi.mock('./domain/bindingKey', () => ({ useBindingKeyListener }));
 vi.mock('./domain/bridge/host', () => ({ useBridgeHost }));
 vi.mock('./domain/inputCounterWindow', () => ({ useInputCounterWindowController }));
-vi.mock('./domain/settingsPersistence', () => ({ loadPersistedSettings: vi.fn(() => Promise.resolve(null)) }));
+vi.mock('./domain/settingsPersistence', () => ({ loadPersistedSettings: loadPersistedSettingsMock }));
 vi.mock('./ui/PomodoroPanel', () => ({
     PomodoroPanel: () => <div data-testid="pomodoro-panel" />,
 }));
@@ -46,7 +48,9 @@ beforeEach(() => {
     useBindingKeyListener.mockClear();
     useBridgeHost.mockClear();
     useInputCounterWindowController.mockClear();
-    useSettingsStore.setState({ uiScale: 1.5, committedUiScale: 1.5, dangerousChange: null });
+    loadPersistedSettingsMock.mockReset();
+    loadPersistedSettingsMock.mockResolvedValue({ uiScale: 1.5, showActiveAppWindowTitle: true });
+    useSettingsStore.setState({ uiScale: 1, committedUiScale: 1, dangerousChange: null });
 });
 
 afterEach(() => {
@@ -81,6 +85,37 @@ describe('main App window composition', () => {
                     center: false,
                 },
             });
+        });
+    });
+
+    it('does not resize with default scale before persisted settings hydrate', async () => {
+        let resolveSettings!: (value: { uiScale: number; showActiveAppWindowTitle: boolean }) => void;
+        loadPersistedSettingsMock.mockReturnValue(new Promise((resolve) => {
+            resolveSettings = resolve;
+        }));
+
+        render(<App />);
+
+        await Promise.resolve();
+        expect(invokeMock).not.toHaveBeenCalled();
+
+        resolveSettings({ uiScale: 1.5, showActiveAppWindowTitle: true });
+
+        await waitFor(() => {
+            expect(invokeMock).toHaveBeenCalledWith('resize_scaled_window', {
+                args: {
+                    label: 'main',
+                    baseWidth: 249,
+                    baseHeight: 171,
+                    minWidth: 249,
+                    minHeight: 171,
+                    scale: 1.5,
+                    center: false,
+                },
+            });
+        });
+        expect(invokeMock).not.toHaveBeenCalledWith('resize_scaled_window', {
+            args: expect.objectContaining({ label: 'main', scale: 1 }),
         });
     });
 });

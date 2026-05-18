@@ -7,7 +7,7 @@ import { useSettingsStore } from './domain/settings';
 import './styles/global.css';
 
 export default function SettingsApp() {
-    useBridgeClient();
+    const bridgeReady = useBridgeClient();
     const uiScale = useSettingsStore((s) => s.uiScale);
     useScaledWindowSize({
         label: 'settings',
@@ -16,6 +16,7 @@ export default function SettingsApp() {
         minWidth: SETTINGS_WINDOW_MIN_SIZE.width,
         minHeight: SETTINGS_WINDOW_MIN_SIZE.height,
         center: true,
+        enabled: bridgeReady,
     });
 
     return (
