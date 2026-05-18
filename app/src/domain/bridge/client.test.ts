@@ -4,6 +4,8 @@ import { useSettingsStore } from '../settings';
 import { usePomodoroStore } from '../pomodoro';
 import { useNetworkStore } from '../network';
 import { useBindingKeyStore } from '../bindingKey';
+import { useActiveAppStore } from '../activeApp';
+import { useAppUpdateStore } from '../appUpdate';
 import { BRIDGE_VERSION, type BridgeSnapshot } from './protocol';
 
 const sampleRemoteState = {
@@ -31,6 +33,7 @@ function makeSample(): BridgeSnapshot {
         settings: {
             uiScale: 2.0,
             committedUiScale: 1.0,
+            showActiveAppWindowTitle: false,
             dangerousChange: {
                 id: 'scale-pending',
                 kind: 'uiScale',
@@ -66,7 +69,14 @@ function makeSample(): BridgeSnapshot {
             },
             lastError: null,
         },
+        activeApp: {
+            name: 'VS Code',
+            bundle_id: 'com.microsoft.VSCode',
+            window_title: 'README.md - CPA_V2',
+            icon_data_url: null,
+        },
         bindingKey: {
+            panelEnabled: true,
             entries: [{
                 id: 'bk-1',
                 label: 'A',
@@ -77,6 +87,15 @@ function makeSample(): BridgeSnapshot {
             capturingId: 'bk-cap',
             syncedKeyId: 'bk-sync',
         },
+        appUpdate: {
+            autoUpdateEnabled: true,
+            status: 'readyToRestart',
+            currentVersion: '0.1.0',
+            availableVersion: '0.1.1',
+            releaseNotes: 'Quiet update',
+            lastCheckedAt: 1700000000000,
+            errorMessage: null,
+        },
     };
 }
 
@@ -84,6 +103,7 @@ beforeEach(() => {
     useSettingsStore.setState({
         uiScale: 1.0,
         committedUiScale: 1.0,
+        showActiveAppWindowTitle: true,
         dangerousChange: null,
         activeTab: 'pomodoro',
     });
@@ -106,11 +126,22 @@ beforeEach(() => {
         lastError: null,
     });
     useBindingKeyStore.setState({
+        panelEnabled: true,
         entries: [],
         capturingId: null,
         syncedKeyId: null,
         permissionGranted: true,
         platform: null,
+    });
+    useActiveAppStore.setState({ current: null });
+    useAppUpdateStore.setState({
+        autoUpdateEnabled: true,
+        status: 'idle',
+        currentVersion: null,
+        availableVersion: null,
+        releaseNotes: null,
+        lastCheckedAt: null,
+        errorMessage: null,
     });
 });
 
@@ -119,6 +150,7 @@ describe('applySnapshotToMirrors', () => {
         applySnapshotToMirrors(makeSample());
         expect(useSettingsStore.getState().uiScale).toBe(2.0);
         expect(useSettingsStore.getState().committedUiScale).toBe(1.0);
+        expect(useSettingsStore.getState().showActiveAppWindowTitle).toBe(false);
         expect(useSettingsStore.getState().dangerousChange?.id).toBe('scale-pending');
         expect('targetMonitorIndex' in useSettingsStore.getState()).toBe(false);
         expect(usePomodoroStore.getState().focusDurationSeconds).toBe(600);
@@ -135,6 +167,14 @@ describe('applySnapshotToMirrors', () => {
         expect(useNetworkStore.getState().roomCode).toBe('R9');
         expect(useBindingKeyStore.getState().capturingId).toBe('bk-cap');
         expect(useBindingKeyStore.getState().syncedKeyId).toBe('bk-sync');
+        expect(useAppUpdateStore.getState()).toMatchObject({
+            status: 'readyToRestart',
+            currentVersion: '0.1.0',
+            availableVersion: '0.1.1',
+            releaseNotes: 'Quiet update',
+            lastCheckedAt: 1700000000000,
+            errorMessage: null,
+        });
     });
 
     it('detaches nested mirror state from the incoming snapshot object', () => {
@@ -179,5 +219,74 @@ describe('applySnapshotToMirrors', () => {
         useSettingsStore.setState({ activeTab: 'global' });
         applySnapshotToMirrors(makeSample());
         expect(useSettingsStore.getState().activeTab).toBe('global');
+    });
+
+    it('preserves the previous active app icon when a lightweight snapshot omits it', () => {
+        applySnapshotToMirrors({
+            ...makeSample(),
+            activeApp: {
+                name: 'Rider',
+                bundle_id: 'com.jetbrains.rider',
+                window_title: 'CPA_V2',
+                icon_data_url: 'data:image/png;base64,heavy-icon',
+            },
+        });
+
+        applySnapshotToMirrors({
+            ...makeSample(),
+            activeApp: {
+                name: 'Rider',
+                bundle_id: 'com.jetbrains.rider',
+                window_title: 'CPA_V2 - host.ts',
+            },
+            bindingKey: {
+                panelEnabled: true,
+                entries: [{
+                    id: 'bk-1',
+                    label: 'A',
+                    keyCode: 0,
+                    pressCount: 3,
+                    enabled: true,
+                }],
+                capturingId: null,
+                syncedKeyId: null,
+            },
+        });
+
+        expect(useActiveAppStore.getState().current).toEqual({
+            name: 'Rider',
+            bundle_id: 'com.jetbrains.rider',
+            window_title: 'CPA_V2 - host.ts',
+            icon_data_url: 'data:image/png;base64,heavy-icon',
+        });
+    });
+
+    it('replaces the active app icon when an active-app-change snapshot includes a new one', () => {
+        applySnapshotToMirrors({
+            ...makeSample(),
+            activeApp: {
+                name: 'Rider',
+                bundle_id: 'com.jetbrains.rider',
+                window_title: 'CPA_V2',
+                icon_data_url: 'data:image/png;base64,rider-icon',
+            },
+        });
+
+        applySnapshotToMirrors({
+            ...makeSample(),
+            activeApp: {
+                name: 'Safari',
+                bundle_id: 'com.apple.Safari',
+                window_title: 'Docs',
+                icon_data_url: 'data:image/png;base64,safari-icon',
+            },
+        });
+
+        expect(useActiveAppStore.getState().current).toEqual({
+            name: 'Safari',
+            bundle_id: 'com.apple.Safari',
+            window_title: 'Docs',
+            icon_data_url: 'data:image/png;base64,safari-icon',
+        });
     });
 });

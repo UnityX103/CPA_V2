@@ -6,6 +6,8 @@ import { invoke } from '@tauri-apps/api/core';
 export interface ActiveAppInfo {
     name: string;
     bundle_id: string;
+    window_title?: string | null;
+    icon_data_url?: string | null;
 }
 
 interface ActiveAppState {

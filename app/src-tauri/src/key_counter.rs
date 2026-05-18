@@ -14,8 +14,8 @@ where
         kCFRunLoopCommonModes, kCFRunLoopDefaultMode, CFRunLoop, CFRunLoopRunInMode,
     };
     use core_graphics::event::{
-        CallbackResult, CGEvent, CGEventTap, CGEventTapLocation, CGEventTapOptions,
-        CGEventTapPlacement, CGEventType, EventField,
+        CGEvent, CGEventTap, CGEventTapLocation, CGEventTapOptions, CGEventTapPlacement,
+        CGEventType, CallbackResult, EventField,
     };
 
     std::thread::spawn(move || {
@@ -81,7 +81,11 @@ where
 
     static KEY_SENDER: OnceLock<Mutex<Option<mpsc::Sender<i64>>>> = OnceLock::new();
 
-    unsafe extern "system" fn keyboard_proc(code: i32, w_param: WPARAM, l_param: LPARAM) -> LRESULT {
+    unsafe extern "system" fn keyboard_proc(
+        code: i32,
+        w_param: WPARAM,
+        l_param: LPARAM,
+    ) -> LRESULT {
         if code >= 0 {
             let message = w_param.0 as u32;
             if message == WM_KEYDOWN || message == WM_SYSKEYDOWN {
@@ -113,9 +117,8 @@ where
 
     let (install_tx, install_rx) = mpsc::channel::<Result<(), String>>();
     std::thread::spawn(move || {
-        let hook = match unsafe {
-            SetWindowsHookExW(WH_KEYBOARD_LL, Some(keyboard_proc), None, 0)
-        } {
+        let hook = match unsafe { SetWindowsHookExW(WH_KEYBOARD_LL, Some(keyboard_proc), None, 0) }
+        {
             Ok(hook) => hook,
             Err(err) => {
                 let message = format!("[key_counter] SetWindowsHookExW failed: {err}");

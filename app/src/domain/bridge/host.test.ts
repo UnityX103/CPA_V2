@@ -1,6 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
     applyDispatch,
+    activeAppIdentitySig,
+    activeAppSig,
+    appUpdateSig,
     bindingKeySig,
     buildSnapshot,
     networkSig,
@@ -11,7 +14,9 @@ import { useSettingsStore, type SettingsState } from '../settings';
 import { usePomodoroStore, type PomodoroState } from '../pomodoro';
 import { useNetworkStore, type NetworkStateShape } from '../network';
 import { useBindingKeyStore } from '../bindingKey';
+import { useActiveAppStore } from '../activeApp';
 import { BRIDGE_VERSION } from './protocol';
+import { useAppUpdateStore } from '../appUpdate';
 
 type BindingKeySigInput = Parameters<typeof bindingKeySig>[0];
 type BindingKeyStateWithPermission = BindingKeySigInput & {
@@ -48,6 +53,7 @@ beforeEach(() => {
     useSettingsStore.setState({
         uiScale: 1.0,
         committedUiScale: 1.0,
+        showActiveAppWindowTitle: true,
         dangerousChange: null,
         activeTab: 'pomodoro',
     });
@@ -75,11 +81,22 @@ beforeEach(() => {
         lastError: null,
     });
     useBindingKeyStore.setState({
+        panelEnabled: true,
         entries: [],
         capturingId: null,
         syncedKeyId: null,
         permissionGranted: true,
         platform: null,
+    });
+    useActiveAppStore.setState({ current: null });
+    useAppUpdateStore.setState({
+        autoUpdateEnabled: true,
+        status: 'idle',
+        currentVersion: null,
+        availableVersion: null,
+        releaseNotes: null,
+        lastCheckedAt: null,
+        errorMessage: null,
     });
 });
 
@@ -87,9 +104,11 @@ describe('buildSnapshot', () => {
     it('reads from every source store and stamps the version', () => {
         useSettingsStore.setState({ uiScale: 1.5, committedUiScale: 1.5 });
         usePomodoroStore.setState({ autoStartBreak: true });
+        useSettingsStore.getState().setShowActiveAppWindowTitle(false);
         const snap = buildSnapshot();
         expect(snap.v).toBe(BRIDGE_VERSION);
         expect(snap.settings.uiScale).toBe(1.5);
+        expect(snap.settings.showActiveAppWindowTitle).toBe(false);
         expect('targetMonitorIndex' in snap.settings).toBe(false);
         expect(snap.pomodoro.focusDurationSeconds).toBe(usePomodoroStore.getState().focusDurationSeconds);
         expect(snap.pomodoro.autoStartBreak).toBe(true);
@@ -98,6 +117,15 @@ describe('buildSnapshot', () => {
         expect(snap.network.status).toBe(useNetworkStore.getState().status);
         expect(snap.bindingKey.entries).toEqual(useBindingKeyStore.getState().entries);
         expect(snap.bindingKey.entries).not.toBe(useBindingKeyStore.getState().entries);
+        expect(snap.appUpdate).toEqual({
+            autoUpdateEnabled: true,
+            status: 'idle',
+            currentVersion: null,
+            availableVersion: null,
+            releaseNotes: null,
+            lastCheckedAt: null,
+            errorMessage: null,
+        });
     });
 
     it('detaches nested snapshot values from source store references', () => {
@@ -164,6 +192,41 @@ describe('buildSnapshot', () => {
         }));
     });
 
+    it('omits active app icon data by default for lightweight store-change snapshots', () => {
+        useActiveAppStore.setState({
+            current: {
+                name: 'Rider',
+                bundle_id: 'com.jetbrains.rider',
+                window_title: 'CPA_V2',
+                icon_data_url: 'data:image/png;base64,heavy-icon',
+            },
+        });
+
+        const snap = buildSnapshot();
+
+        expect(snap.activeApp).toEqual({
+            name: 'Rider',
+            bundle_id: 'com.jetbrains.rider',
+            window_title: 'CPA_V2',
+        });
+        expect(snap.activeApp).not.toHaveProperty('icon_data_url');
+    });
+
+    it('can include active app icon data for explicit requests and active-app-change sends', () => {
+        useActiveAppStore.setState({
+            current: {
+                name: 'Rider',
+                bundle_id: 'com.jetbrains.rider',
+                window_title: 'CPA_V2',
+                icon_data_url: 'data:image/png;base64,heavy-icon',
+            },
+        });
+
+        const snap = buildSnapshot({ includeActiveAppIcon: true });
+
+        expect(snap.activeApp?.icon_data_url).toBe('data:image/png;base64,heavy-icon');
+    });
+
     it('does NOT include transient timer fields like remainingSeconds', () => {
         const snap = buildSnapshot();
         // @ts-expect-error remainingSeconds is intentionally absent from the snapshot type
@@ -184,6 +247,17 @@ describe('applyDispatch', () => {
         const applyId = useSettingsStore.getState().dangerousChange!.id;
         applyDispatch({ v: BRIDGE_VERSION, store: 'settings', action: 'applyDangerousChange', args: [applyId] });
         expect(useSettingsStore.getState().committedUiScale).toBe(2.0);
+    });
+
+    it('routes show-active-app-title setting to the authoritative settings store', () => {
+        applyDispatch({
+            v: BRIDGE_VERSION,
+            store: 'settings',
+            action: 'setShowActiveAppWindowTitle',
+            args: [false],
+        });
+
+        expect(useSettingsStore.getState().showActiveAppWindowTitle).toBe(false);
     });
 
     it('routes pomodoro/applySettings to usePomodoroStore.applySettings', () => {
@@ -213,6 +287,55 @@ describe('applyDispatch', () => {
         applyDispatch({ v: 999 as 1, store: 'settings', action: 'setUiScale', args: [2.5] });
         expect(useSettingsStore.getState().uiScale).toBe(before);
     });
+
+    it('routes binding-key add/capture/panel actions to the authoritative main store', () => {
+        applyDispatch({ v: BRIDGE_VERSION, store: 'bindingKey', action: 'setPanelEnabled', args: [false] });
+        expect(useBindingKeyStore.getState().panelEnabled).toBe(false);
+
+        applyDispatch({ v: BRIDGE_VERSION, store: 'bindingKey', action: 'addEntry', args: [] });
+        const entry = useBindingKeyStore.getState().entries[0];
+        expect(entry).toEqual(expect.objectContaining({
+            label: '未绑定',
+            keyCode: -1,
+            pressCount: 0,
+            enabled: true,
+        }));
+        expect(useBindingKeyStore.getState().capturingId).toBe(entry.id);
+
+        useBindingKeyStore.getState().cancelCapture();
+        applyDispatch({ v: BRIDGE_VERSION, store: 'bindingKey', action: 'beginCapture', args: [entry.id] });
+        expect(useBindingKeyStore.getState().capturingId).toBe(entry.id);
+    });
+
+    it('routes app-update actions to the authoritative main store', () => {
+        const original = {
+            setAutoUpdateEnabled: useAppUpdateStore.getState().setAutoUpdateEnabled,
+            checkNow: useAppUpdateStore.getState().checkNow,
+            restartForUpdate: useAppUpdateStore.getState().restartForUpdate,
+        };
+        const setAutoUpdateEnabled = vi.fn(async () => {});
+        const checkNow = vi.fn(async () => {});
+        const restartForUpdate = vi.fn(async () => {});
+        useAppUpdateStore.setState({
+            setAutoUpdateEnabled,
+            checkNow,
+            restartForUpdate,
+        });
+
+        applyDispatch({
+            v: BRIDGE_VERSION,
+            store: 'appUpdate',
+            action: 'setAutoUpdateEnabled',
+            args: [false],
+        });
+        applyDispatch({ v: BRIDGE_VERSION, store: 'appUpdate', action: 'checkNow', args: [] });
+        applyDispatch({ v: BRIDGE_VERSION, store: 'appUpdate', action: 'restartForUpdate', args: [] });
+
+        expect(setAutoUpdateEnabled).toHaveBeenCalledWith(false);
+        expect(checkNow).toHaveBeenCalledTimes(1);
+        expect(restartForUpdate).toHaveBeenCalledTimes(1);
+        useAppUpdateStore.setState(original);
+    });
 });
 
 describe('bridge host subscription signatures', () => {
@@ -220,6 +343,7 @@ describe('bridge host subscription signatures', () => {
         const pomodoroTabSettings: SettingsState = {
             uiScale: 1.25,
             committedUiScale: 1.25,
+            showActiveAppWindowTitle: true,
             dangerousChange: null,
             activeTab: 'pomodoro',
         };
@@ -231,9 +355,14 @@ describe('bridge host subscription signatures', () => {
             ...pomodoroTabSettings,
             uiScale: 1.5,
         };
+        const hiddenTitleSettings: SettingsState = {
+            ...pomodoroTabSettings,
+            showActiveAppWindowTitle: false,
+        };
 
         expect(settingsSig(pomodoroTabSettings)).toBe(settingsSig(globalTabSettings));
         expect(settingsSig(pomodoroTabSettings)).not.toBe(settingsSig(scaledSettings));
+        expect(settingsSig(pomodoroTabSettings)).not.toBe(settingsSig(hiddenTitleSettings));
     });
 
     it('pomoSig includes end-action settings and ignores transient timer fields', () => {
@@ -332,5 +461,76 @@ describe('bridge host subscription signatures', () => {
 
         expect(bindingKeySig(base)).toBe(bindingKeySig(deniedPermission));
         expect(bindingKeySig(base)).not.toBe(bindingKeySig(incrementedEntry));
+    });
+
+    it('appUpdateSig includes mirrored update status fields', () => {
+        const base = {
+            autoUpdateEnabled: true,
+            status: 'upToDate' as const,
+            currentVersion: '0.1.0',
+            availableVersion: null,
+            releaseNotes: null,
+            lastCheckedAt: 1700000000000,
+            errorMessage: null,
+        };
+        const disabled = { ...base, autoUpdateEnabled: false };
+        const checkedLater = { ...base, lastCheckedAt: 1700000100000 };
+
+        expect(appUpdateSig(base)).not.toBe(appUpdateSig(disabled));
+        expect(appUpdateSig(base)).not.toBe(appUpdateSig(checkedLater));
+    });
+
+    it('activeAppSig ignores heavy icon data but includes title changes', () => {
+        const base = {
+            current: {
+                name: 'Rider',
+                bundle_id: 'com.jetbrains.rider',
+                window_title: 'CPA_V2',
+                icon_data_url: 'data:image/png;base64,first-heavy-icon',
+            },
+        };
+        const sameMetadataNewIcon = {
+            current: {
+                ...base.current,
+                icon_data_url: 'data:image/png;base64,second-heavy-icon',
+            },
+        };
+        const renamedWindow = {
+            current: {
+                ...base.current,
+                window_title: 'host.ts - CPA_V2',
+            },
+        };
+
+        expect(activeAppSig(base)).toBe(activeAppSig(sameMetadataNewIcon));
+        expect(activeAppSig(base)).not.toBe(activeAppSig(renamedWindow));
+    });
+
+    it('activeAppIdentitySig changes only when the foreground app identity changes', () => {
+        const rider = {
+            current: {
+                name: 'Rider',
+                bundle_id: 'com.jetbrains.rider',
+                window_title: 'CPA_V2',
+                icon_data_url: 'data:image/png;base64,rider-icon',
+            },
+        };
+        const riderOtherTitle = {
+            current: {
+                ...rider.current,
+                window_title: 'client.ts - CPA_V2',
+            },
+        };
+        const safari = {
+            current: {
+                name: 'Safari',
+                bundle_id: 'com.apple.Safari',
+                window_title: 'Docs',
+                icon_data_url: 'data:image/png;base64,safari-icon',
+            },
+        };
+
+        expect(activeAppIdentitySig(rider)).toBe(activeAppIdentitySig(riderOtherTitle));
+        expect(activeAppIdentitySig(rider)).not.toBe(activeAppIdentitySig(safari));
     });
 });

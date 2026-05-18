@@ -28,6 +28,20 @@ describe('createBindingKeyStore — settings-window mode', () => {
         spy.mockRestore();
     });
 
+    it('setPanelEnabled dispatches and does not mutate local mirror state', () => {
+        const spy = vi.spyOn(dispatchMod, 'dispatch').mockResolvedValue();
+        const store = createBindingKeyStore({ isSettingsWindow: true });
+        expect(store.getState().panelEnabled).toBe(true);
+
+        store.getState().setPanelEnabled(false);
+
+        expect(store.getState().panelEnabled).toBe(true);
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({
+            v: BRIDGE_VERSION, store: 'bindingKey', action: 'setPanelEnabled', args: [false],
+        }));
+        spy.mockRestore();
+    });
+
     it('setPermission updates local state (not a no-op) so the banner can react in the settings window', () => {
         const store = createBindingKeyStore({ isSettingsWindow: true });
         expect(store.getState().permissionGranted).toBe(true);
@@ -49,6 +63,36 @@ describe('createBindingKeyStore — permission state', () => {
         store.getState().setPermission(false, 'macos');
         expect(store.getState().permissionGranted).toBe(false);
         expect(store.getState().platform).toBe('macos');
+    });
+
+    it('toggles the independent input counter panel visibility flag', () => {
+        const store = createBindingKeyStore({ isSettingsWindow: false });
+        expect(store.getState().panelEnabled).toBe(true);
+
+        store.getState().setPanelEnabled(false);
+
+        expect(store.getState().panelEnabled).toBe(false);
+    });
+
+    it('increments only enabled bound entries with matching key codes', () => {
+        const store = createBindingKeyStore({ isSettingsWindow: false });
+        store.setState({
+            entries: [
+                { id: 'bound', label: 'Space', keyCode: 49, pressCount: 4, enabled: true },
+                { id: 'disabled', label: 'A', keyCode: 0, pressCount: 8, enabled: false },
+                { id: 'unbound', label: '未绑定', keyCode: -1, pressCount: 2, enabled: true },
+            ],
+        });
+
+        store.getState().incrementByKeyCode(49);
+        store.getState().incrementByKeyCode(0);
+        store.getState().incrementByKeyCode(-1);
+
+        expect(store.getState().entries).toEqual([
+            { id: 'bound', label: 'Space', keyCode: 49, pressCount: 5, enabled: true },
+            { id: 'disabled', label: 'A', keyCode: 0, pressCount: 8, enabled: false },
+            { id: 'unbound', label: '未绑定', keyCode: -1, pressCount: 2, enabled: true },
+        ]);
     });
 });
 

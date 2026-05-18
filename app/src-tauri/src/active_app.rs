@@ -1,9 +1,11 @@
 use serde::Serialize;
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Clone, PartialEq, Eq)]
 pub struct ActiveAppInfo {
     pub name: String,
     pub bundle_id: String,
+    pub window_title: Option<String>,
+    pub icon_data_url: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -27,11 +29,18 @@ pub fn current_active_app() -> Option<ActiveAppInfo> {
         .bundleIdentifier()
         .map(|s| s.to_string())
         .unwrap_or_default();
-    Some(ActiveAppInfo { name, bundle_id })
+    let window_title = current_active_app_window_title();
+    let icon_data_url = current_active_app_icon_data_url();
+    Some(ActiveAppInfo {
+        name,
+        bundle_id,
+        window_title,
+        icon_data_url,
+    })
 }
 
 #[cfg(target_os = "macos")]
-pub fn current_active_app_window_bounds() -> Option<AppWindowBounds> {
+fn current_active_app_front_window() -> Option<(AppWindowBounds, Option<String>)> {
     use core_foundation::base::{CFType, CFTypeRef, TCFType};
     use core_foundation::dictionary::CFDictionary;
     use core_foundation::number::CFNumber;
@@ -39,7 +48,7 @@ pub fn current_active_app_window_bounds() -> Option<AppWindowBounds> {
     use core_graphics::window::{
         copy_window_info, kCGNullWindowID, kCGWindowAlpha, kCGWindowBounds, kCGWindowIsOnscreen,
         kCGWindowLayer, kCGWindowListExcludeDesktopElements, kCGWindowListOptionOnScreenOnly,
-        kCGWindowOwnerPID,
+        kCGWindowName, kCGWindowOwnerPID,
     };
     use objc2_app_kit::NSWorkspace;
 
@@ -72,6 +81,17 @@ pub fn current_active_app_window_bounds() -> Option<AppWindowBounds> {
             width: named_number(&bounds, "Width")?,
             height: named_number(&bounds, "Height")?,
         })
+    }
+
+    fn string_for_key(dict: &CFDictionary<CFString, CFType>, key: CFStringRef) -> Option<String> {
+        let key = static_key(key);
+        let s = dict.find(&key)?.downcast::<CFString>()?;
+        let s = s.to_string();
+        if s.trim().is_empty() {
+            None
+        } else {
+            Some(s)
+        }
     }
 
     let pid = {
@@ -115,7 +135,8 @@ pub fn current_active_app_window_bounds() -> Option<AppWindowBounds> {
             continue;
         };
         if bounds.width >= 32.0 && bounds.height >= 32.0 {
-            return Some(bounds);
+            let title = string_for_key(&dict, unsafe { kCGWindowName });
+            return Some((bounds, title));
         }
     }
 
@@ -190,16 +211,22 @@ pub fn current_active_app() -> Option<ActiveAppInfo> {
 
     let hwnd = foreground_window()?;
     let pid = foreground_pid(hwnd)?;
+    let window_title = window_title(hwnd);
     let bundle_id = process_path(pid).unwrap_or_default();
     let name = Path::new(&bundle_id)
         .file_name()
         .and_then(|name| name.to_str())
         .map(str::to_owned)
         .filter(|name| !name.is_empty())
-        .or_else(|| window_title(hwnd))
+        .or_else(|| window_title.clone())
         .unwrap_or_default();
 
-    Some(ActiveAppInfo { name, bundle_id })
+    Some(ActiveAppInfo {
+        name,
+        bundle_id,
+        window_title,
+        icon_data_url: None,
+    })
 }
 
 #[cfg(target_os = "windows")]
@@ -221,6 +248,42 @@ pub fn current_active_app_window_bounds() -> Option<AppWindowBounds> {
         width: (rect.right - rect.left) as f64,
         height: (rect.bottom - rect.top) as f64,
     })
+}
+
+#[cfg(target_os = "macos")]
+pub fn current_active_app_window_bounds() -> Option<AppWindowBounds> {
+    current_active_app_front_window().map(|(bounds, _)| bounds)
+}
+
+#[cfg(target_os = "macos")]
+pub fn current_active_app_window_title() -> Option<String> {
+    current_active_app_front_window().and_then(|(_, title)| title)
+}
+
+#[cfg(target_os = "macos")]
+pub fn current_active_app_icon_data_url() -> Option<String> {
+    use base64::engine::general_purpose::STANDARD;
+    use base64::Engine;
+    use objc2::runtime::AnyObject;
+    use objc2::AnyThread;
+    use objc2_app_kit::{
+        NSBitmapImageFileType, NSBitmapImageRep, NSBitmapImageRepPropertyKey, NSWorkspace,
+    };
+    use objc2_foundation::{NSDictionary, NSRect};
+
+    let app = NSWorkspace::sharedWorkspace().frontmostApplication()?;
+    let icon = app.icon()?;
+    let cg_image = unsafe {
+        let mut proposed_rect = NSRect::new(Default::default(), icon.size());
+        icon.CGImageForProposedRect_context_hints(&mut proposed_rect, None, None)
+    }?;
+    let image_rep = NSBitmapImageRep::initWithCGImage(NSBitmapImageRep::alloc(), &cg_image);
+    let properties = NSDictionary::<NSBitmapImageRepPropertyKey, AnyObject>::new();
+    let data = unsafe {
+        image_rep.representationUsingType_properties(NSBitmapImageFileType::PNG, &properties)
+    }?;
+    let encoded = STANDARD.encode(data.to_vec());
+    Some(format!("data:image/png;base64,{encoded}"))
 }
 
 #[cfg(not(any(target_os = "macos", target_os = "windows")))]

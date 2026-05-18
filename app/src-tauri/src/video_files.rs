@@ -74,29 +74,29 @@ pub fn prepare_custom_alpha_video_path(
 
     #[cfg(not(target_os = "windows"))]
     {
-    let cache_dir = app
-        .path()
-        .app_cache_dir()
-        .map_err(|e| format!("无法打开视频缓存目录：{e}"))?
-        .join("alpha-videos");
-    fs::create_dir_all(&cache_dir).map_err(|e| format!("无法创建视频缓存目录：{e}"))?;
+        let cache_dir = app
+            .path()
+            .app_cache_dir()
+            .map_err(|e| format!("无法打开视频缓存目录：{e}"))?
+            .join("alpha-videos");
+        fs::create_dir_all(&cache_dir).map_err(|e| format!("无法创建视频缓存目录：{e}"))?;
 
-    let target = cache_dir.join(alpha_cache_filename(source));
-    if cached_alpha_video_is_fresh(source, &target) {
-        return Ok(target.to_string_lossy().into_owned());
-    }
+        let target = cache_dir.join(alpha_cache_filename(source));
+        if cached_alpha_video_is_fresh(source, &target) {
+            return Ok(target.to_string_lossy().into_owned());
+        }
 
-    let tmp = target.with_extension("mov.tmp");
-    let _ = fs::remove_file(&tmp);
-    let status = run_ffmpeg_alpha_transcode(source, &tmp)?;
-
-    if !status.success() {
+        let tmp = target.with_extension("mov.tmp");
         let _ = fs::remove_file(&tmp);
-        return Err("透明 WebM 转换失败，请确认视频包含可解码的 alpha 通道".to_string());
-    }
+        let status = run_ffmpeg_alpha_transcode(source, &tmp)?;
 
-    fs::rename(&tmp, &target).map_err(|e| format!("无法保存转换后的视频：{e}"))?;
-    Ok(target.to_string_lossy().into_owned())
+        if !status.success() {
+            let _ = fs::remove_file(&tmp);
+            return Err("透明 WebM 转换失败，请确认视频包含可解码的 alpha 通道".to_string());
+        }
+
+        fs::rename(&tmp, &target).map_err(|e| format!("无法保存转换后的视频：{e}"))?;
+        Ok(target.to_string_lossy().into_owned())
     }
 }
 

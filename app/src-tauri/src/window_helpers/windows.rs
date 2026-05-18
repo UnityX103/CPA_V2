@@ -4,8 +4,8 @@ use tauri::{Manager, WebviewWindow};
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, WPARAM};
 use windows::Win32::UI::Shell::{DefSubclassProc, SetWindowSubclass};
 use windows::Win32::UI::WindowsAndMessaging::{
-    SetWindowPos, HWND_NOTOPMOST, HWND_TOPMOST, MA_ACTIVATE, SWP_NOMOVE, SWP_NOSIZE,
-    SWP_NOACTIVATE, WM_MOUSEACTIVATE,
+    SetWindowPos, HWND_NOTOPMOST, HWND_TOPMOST, MA_ACTIVATE, SWP_NOACTIVATE, SWP_NOMOVE,
+    SWP_NOSIZE, WM_MOUSEACTIVATE,
 };
 
 const FIRST_MOUSE_SUBCLASS_ID: usize = 0xCA0_FA11;

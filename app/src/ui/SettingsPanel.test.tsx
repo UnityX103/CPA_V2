@@ -8,6 +8,7 @@ import { useSettingsStore } from '../domain/settings';
 import { usePomodoroStore } from '../domain/pomodoro';
 import { useNetworkStore } from '../domain/network';
 import { useBindingKeyStore } from '../domain/bindingKey';
+import { useAppUpdateStore } from '../domain/appUpdate';
 import { SettingsPanel } from './SettingsPanel';
 import { DangerousChangeDialog } from './DangerousChangeDialog';
 
@@ -85,6 +86,26 @@ beforeEach(() => {
             customVideoPath: '',
         },
         lastEndEvent: null,
+    });
+    useAppUpdateStore.setState({
+        autoUpdateEnabled: true,
+        status: 'idle',
+        currentVersion: '0.1.0',
+        availableVersion: null,
+        releaseNotes: null,
+        lastCheckedAt: null,
+        errorMessage: null,
+        setAutoUpdateEnabled: async (enabled: boolean) => {
+            useAppUpdateStore.setState({
+                autoUpdateEnabled: enabled,
+                status: enabled ? 'idle' : 'disabled',
+                errorMessage: null,
+            });
+        },
+        checkNow: async () => {
+            useAppUpdateStore.setState({ status: 'checking', errorMessage: null });
+        },
+        restartForUpdate: async () => {},
     });
     cleanup();
 });
@@ -210,9 +231,10 @@ describe('SettingsPanel geometry', () => {
 
     it('settings window is resizable and has minimum bounds instead of a locked shell', () => {
         const libRs = readFileSync(path.join(here, '../../src-tauri/src/lib.rs'), 'utf8');
-        expect(libRs).toMatch(/\.resizable\(true\)/);
-        expect(libRs).toMatch(/\.min_inner_size\(\s*SETTINGS_MIN_W,\s*SETTINGS_MIN_H\s*\)/);
-        expect(libRs).not.toMatch(/\.resizable\(false\)/);
+        const settingsBuilder = libRs.match(/fn build_settings_window_hidden[\s\S]*?Ok\(w\)/)?.[0] ?? '';
+        expect(settingsBuilder).toMatch(/\.resizable\(true\)/);
+        expect(settingsBuilder).toMatch(/\.min_inner_size\(\s*SETTINGS_MIN_W,\s*SETTINGS_MIN_H\s*\)/);
+        expect(settingsBuilder).not.toMatch(/\.resizable\(false\)/);
     });
 
     it('content flex areas can shrink and wrap instead of forcing a fixed width', () => {
@@ -515,9 +537,77 @@ describe('GlobalTab parity with Pdj9C', () => {
     it('renders global controls without the obsolete target display setting', () => {
         render(<SettingsPanel />);
         expect(screen.getByText('界面缩放')).toBeTruthy();
+        expect(screen.getByText('显示打开的文件名')).toBeTruthy();
+        expect(screen.getByText('自动下载并安装更新')).toBeTruthy();
         expect(screen.getByText('按键计数')).toBeTruthy();
         expect(screen.queryByText('目标显示器')).toBeNull();
         expect(screen.queryByText(/显示器 \d+/)).toBeNull();
+    });
+
+    it('keeps the app update row between active title and binding key controls', () => {
+        render(<SettingsPanel />);
+
+        const activeTitle = screen.getByText('显示打开的文件名');
+        const autoUpdate = screen.getByText('自动下载并安装更新');
+        const bindingKey = screen.getByText('按键计数');
+
+        expect(activeTitle.compareDocumentPosition(autoUpdate) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(autoUpdate.compareDocumentPosition(bindingKey) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('toggles whether active app window titles are shown', () => {
+        render(<SettingsPanel />);
+        const toggle = screen.getByRole('button', { name: '显示打开的文件名' });
+
+        expect(toggle.getAttribute('aria-pressed')).toBe('true');
+        fireEvent.click(toggle);
+        expect(useSettingsStore.getState().showActiveAppWindowTitle).toBe(false);
+    });
+
+    it('shows app update status and can disable automatic updates', () => {
+        render(<SettingsPanel />);
+
+        expect(screen.getByText('当前版本 0.1.0 · 等待检查')).toBeTruthy();
+        const toggle = screen.getByRole('button', { name: '自动下载并安装更新' });
+        expect(toggle.getAttribute('aria-pressed')).toBe('true');
+
+        fireEvent.click(toggle);
+
+        expect(useAppUpdateStore.getState().autoUpdateEnabled).toBe(false);
+        expect(screen.getByText('自动更新已关闭')).toBeTruthy();
+    });
+
+    it('routes the manual update check button to the app update store', async () => {
+        const checkNow = vi.fn(async () => {
+            useAppUpdateStore.setState({ status: 'checking' });
+        });
+        useAppUpdateStore.setState({ checkNow });
+
+        render(<SettingsPanel />);
+
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: '立即检查' }));
+        });
+
+        expect(checkNow).toHaveBeenCalledTimes(1);
+        expect(screen.getByText('当前版本 0.1.0 · 正在检查')).toBeTruthy();
+    });
+
+    it('shows restart action when an update is ready', async () => {
+        const restartForUpdate = vi.fn(async () => {});
+        useAppUpdateStore.setState({
+            status: 'readyToRestart',
+            availableVersion: '0.2.0',
+            restartForUpdate,
+        });
+
+        render(<SettingsPanel />);
+
+        expect(screen.getByText('新版本 0.2.0 已安装 · 重启后生效')).toBeTruthy();
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: '重启更新' }));
+        });
+        expect(restartForUpdate).toHaveBeenCalledTimes(1);
     });
 
     it('shows accessibility permission banner when permissionGranted is false', async () => {
