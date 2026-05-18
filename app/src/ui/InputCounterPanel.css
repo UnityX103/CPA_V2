@@ -1,0 +1,118 @@
+.input-counter-panel {
+    width: 128px;
+    min-height: 84px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+    border-radius: var(--panel-radius-md);
+    border: none;
+    background: var(--panel-bg-strong);
+    box-shadow: inset 0 0 0 1px var(--panel-stroke), var(--shadow-panel);
+    overflow: hidden;
+    color: var(--text-primary);
+    -webkit-app-region: drag;
+}
+
+.input-counter-head {
+    width: 100%;
+    min-height: 22px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.input-counter-pill-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+.input-counter-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--pill-gap);
+    width: fit-content;
+    padding: var(--pill-pad-y) var(--pill-pad-x);
+    border: 1px solid var(--pill-stroke);
+    border-radius: 999px;
+    background: var(--pill-bg);
+    white-space: nowrap;
+}
+
+.input-counter-key-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--pill-key-pad-y, 1px) var(--pill-key-pad-x, 4px);
+    border: 1px solid var(--pill-key-stroke);
+    border-radius: var(--pill-key-radius);
+    background: var(--pill-key-bg);
+    color: var(--pill-key-color);
+    font-size: var(--pill-key-size);
+    font-weight: 700;
+    line-height: 1;
+}
+
+.input-counter-key-count {
+    color: var(--pill-count-color);
+    font-size: var(--pill-count-size);
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.input-counter-pin {
+    width: 22px;
+    height: 22px;
+    flex: 0 0 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 11px;
+    background: var(--btn-copy-bg);
+    color: var(--btn-pin-icon-card);
+    -webkit-app-region: no-drag;
+}
+
+.input-counter-pin.is-pinned {
+    color: var(--btn-pin-icon-active);
+}
+
+.input-counter-divider {
+    width: 100%;
+    height: 1px;
+    flex: 0 0 1px;
+    background: var(--pc-divider);
+}
+
+.input-counter-footer {
+    width: 100%;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--pc-foot-text);
+}
+
+.input-counter-app-icon,
+.input-counter-app-img {
+    width: 13px;
+    height: 13px;
+    flex: 0 0 13px;
+    color: var(--pc-foot-icon);
+    object-fit: contain;
+}
+
+.input-counter-app-text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--pc-foot-text);
+    font-size: var(--pc-foot-text-size);
+    font-weight: 500;
+    line-height: 1;
+}

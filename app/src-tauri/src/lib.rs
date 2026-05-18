@@ -8,7 +8,7 @@ use serde::Serialize;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
-use tauri::{Emitter, Manager, PhysicalPosition, RunEvent, WebviewUrl, WebviewWindowBuilder};
+use tauri::{Emitter, LogicalSize, Manager, PhysicalPosition, RunEvent, WebviewUrl, WebviewWindowBuilder};
 
 #[tauri::command]
 fn set_main_window_pinned(app: tauri::AppHandle, on_top: bool) -> Result<(), String> {
@@ -26,6 +26,21 @@ fn set_main_window_pinned(app: tauri::AppHandle, on_top: bool) -> Result<(), Str
     .map_err(|e| e.to_string())?;
     rx.recv()
         .map_err(|e| format!("main window pin command did not complete: {e}"))?
+}
+
+#[tauri::command]
+fn set_input_counter_window_pinned(app: tauri::AppHandle, on_top: bool) -> Result<(), String> {
+    let window = app
+        .get_webview_window("input-counter")
+        .ok_or_else(|| "input-counter window not found".to_string())?;
+    let (tx, rx) = std::sync::mpsc::channel();
+    app.run_on_main_thread(move || {
+        let result = window.set_always_on_top(on_top).map_err(|e| e.to_string());
+        let _ = tx.send(result);
+    })
+    .map_err(|e| e.to_string())?;
+    rx.recv()
+        .map_err(|e| format!("input-counter pin command did not complete: {e}"))?
 }
 
 #[tauri::command]
@@ -172,6 +187,8 @@ const SETTINGS_W: f64 = 460.0;
 const SETTINGS_H: f64 = 440.0;
 const SETTINGS_MIN_W: f64 = 360.0;
 const SETTINGS_MIN_H: f64 = 320.0;
+const INPUT_COUNTER_W: f64 = 128.0;
+const INPUT_COUNTER_H: f64 = 84.0;
 
 /// 计算设置窗口在主窗口所在 monitor 的中心位置（物理像素）。
 /// 多显示器下保证设置窗弹在用户当前屏，而非系统主屏。
@@ -231,6 +248,34 @@ fn build_settings_window_hidden(
     Ok(w)
 }
 
+fn build_input_counter_window_hidden(
+    app: &tauri::AppHandle,
+) -> Result<tauri::WebviewWindow, tauri::Error> {
+    let url = WebviewUrl::App("index.html?window=input-counter".into());
+    let w = WebviewWindowBuilder::new(app, "input-counter", url)
+        .title("按键统计")
+        .inner_size(INPUT_COUNTER_W, INPUT_COUNTER_H)
+        .resizable(false)
+        .transparent(true)
+        .decorations(false)
+        .shadow(false)
+        .skip_taskbar(true)
+        .visible(false)
+        .always_on_top(false)
+        .build()?;
+    window_helpers::install_first_mouse_only(&w);
+
+    let w_for_hide = w.clone();
+    w.on_window_event(move |event| {
+        if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+            api.prevent_close();
+            let _ = w_for_hide.hide();
+        }
+    });
+
+    Ok(w)
+}
+
 pub(crate) async fn open_settings_window_impl(app: tauri::AppHandle) -> Result<(), String> {
     let w = app.get_webview_window("settings").ok_or_else(|| {
         "settings window not built — setup() probably failed; check stderr".to_string()
@@ -253,6 +298,34 @@ async fn close_settings_window(app: tauri::AppHandle) -> Result<(), String> {
     if let Some(w) = app.get_webview_window("settings") {
         w.hide().map_err(|e| e.to_string())?;
     }
+    Ok(())
+}
+
+#[tauri::command]
+async fn show_input_counter_window(app: tauri::AppHandle) -> Result<(), String> {
+    let w = app
+        .get_webview_window("input-counter")
+        .ok_or_else(|| "input-counter window not built — setup() probably failed; check stderr".to_string())?;
+    w.show().map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+async fn hide_input_counter_window(app: tauri::AppHandle) -> Result<(), String> {
+    if let Some(w) = app.get_webview_window("input-counter") {
+        w.hide().map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+#[tauri::command]
+async fn resize_input_counter_window(app: tauri::AppHandle, height: f64) -> Result<(), String> {
+    let Some(w) = app.get_webview_window("input-counter") else {
+        return Ok(());
+    };
+    let height = height.max(INPUT_COUNTER_H);
+    w.set_size(LogicalSize::new(INPUT_COUNTER_W, height))
+        .map_err(|e| e.to_string())?;
     Ok(())
 }
 
@@ -284,6 +357,9 @@ pub fn run() {
             if let Err(e) = build_settings_window_hidden(app.handle()) {
                 eprintln!("[setup] build_settings_window_hidden failed: {e}");
             }
+            if let Err(e) = build_input_counter_window_hidden(app.handle()) {
+                eprintln!("[setup] build_input_counter_window_hidden failed: {e}");
+            }
             // Focus restorer: 主窗口拖/resize 末尾把 key 还回 settings (若可见)。
             // 配合 build_settings_window_hidden 一起完成 settings 窗口的 lifecycle 闭环。
             if let Some(window) = app.get_webview_window("main") {
@@ -299,7 +375,7 @@ pub fn run() {
                 while !stop.load(Ordering::Relaxed) {
                     let current = active_app::current_active_app();
                     let changed = match (&current, &last) {
-                        (Some(a), Some(b)) => a.name != b.name || a.bundle_id != b.bundle_id,
+                        (Some(a), Some(b)) => a != b,
                         (Some(_), None) | (None, Some(_)) => true,
                         (None, None) => false,
                     };
@@ -416,10 +492,14 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             set_main_window_pinned,
+            set_input_counter_window_pinned,
             get_active_app,
             pomodoro_video_screen_rect,
             open_settings_window,
             close_settings_window,
+            show_input_counter_window,
+            hide_input_counter_window,
+            resize_input_counter_window,
             accessibility::accessibility_status,
             accessibility::open_accessibility_settings,
             accessibility::key_counter_listening,

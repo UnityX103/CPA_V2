@@ -16,6 +16,7 @@ beforeEach(() => {
         activeTab: 'pomodoro',
         uiScale: 1.0,
         committedUiScale: 1.0,
+        showActiveAppWindowTitle: true,
         dangerousChange: null,
     });
 });
@@ -114,6 +115,20 @@ describe('useSettingsStore', () => {
         expect(useSettingsStore.getState().committedUiScale).toBe(MAX_SCALE);
         expect(useSettingsStore.getState().dangerousChange).toBeNull();
     });
+
+    it('defaults to showing active app window titles and can toggle it', () => {
+        expect(useSettingsStore.getState().showActiveAppWindowTitle).toBe(true);
+
+        useSettingsStore.getState().setShowActiveAppWindowTitle(false);
+        expect(useSettingsStore.getState().showActiveAppWindowTitle).toBe(false);
+    });
+
+    it('hydrates showActiveAppWindowTitle from persisted settings', () => {
+        useSettingsStore.getState().hydrateSettings({ uiScale: 1.25, showActiveAppWindowTitle: false });
+
+        expect(useSettingsStore.getState().uiScale).toBe(1.25);
+        expect(useSettingsStore.getState().showActiveAppWindowTitle).toBe(false);
+    });
 });
 
 describe('createSettingsStore — settings-window mode', () => {
@@ -172,5 +187,21 @@ describe('createSettingsStore — settings-window mode', () => {
         const store = createSettingsStore({ isSettingsWindow: true });
         expect('targetMonitorIndex' in store.getState()).toBe(false);
         expect('setTargetMonitor' in store.getState()).toBe(false);
+    });
+
+    it('setShowActiveAppWindowTitle dispatches instead of mutating local state', () => {
+        const spy = vi.spyOn(dispatchMod, 'dispatch').mockResolvedValue();
+        const store = createSettingsStore({ isSettingsWindow: true });
+
+        store.getState().setShowActiveAppWindowTitle(false);
+
+        expect(store.getState().showActiveAppWindowTitle).toBe(true);
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({
+            v: BRIDGE_VERSION,
+            store: 'settings',
+            action: 'setShowActiveAppWindowTitle',
+            args: [false],
+        }));
+        spy.mockRestore();
     });
 });

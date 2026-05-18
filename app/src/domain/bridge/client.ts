@@ -5,6 +5,7 @@ import { useSettingsStore } from '../settings';
 import { usePomodoroStore } from '../pomodoro';
 import { useNetworkStore, type RemotePlayer } from '../network';
 import { useBindingKeyStore, type BindingKeyEntry } from '../bindingKey';
+import { useActiveAppStore, type ActiveAppInfo } from '../activeApp';
 import {
     BRIDGE_VERSION,
     EVT_STATE,
@@ -35,6 +36,26 @@ function cloneEntries(entries: BindingKeyEntry[]): BindingKeyEntry[] {
     return entries.map((entry) => ({ ...entry }));
 }
 
+function hasIconDataProperty(activeApp: ActiveAppInfo): boolean {
+    return Object.prototype.hasOwnProperty.call(activeApp, 'icon_data_url');
+}
+
+function sameActiveAppIdentity(a: ActiveAppInfo, b: ActiveAppInfo): boolean {
+    return a.name === b.name && a.bundle_id === b.bundle_id;
+}
+
+function cloneActiveAppForMirror(activeApp: ActiveAppInfo | null): ActiveAppInfo | null {
+    if (!activeApp) return null;
+    const incoming = { ...activeApp };
+    if (hasIconDataProperty(incoming)) return incoming;
+
+    const previous = useActiveAppStore.getState().current;
+    if (previous?.icon_data_url && sameActiveAppIdentity(previous, incoming)) {
+        return { ...incoming, icon_data_url: previous.icon_data_url };
+    }
+    return incoming;
+}
+
 export function applySnapshotToMirrors(snap: BridgeSnapshot): void {
     if (snap.v !== BRIDGE_VERSION) {
         console.warn('[bridge] snapshot version mismatch:', snap.v);
@@ -43,6 +64,7 @@ export function applySnapshotToMirrors(snap: BridgeSnapshot): void {
     useSettingsStore.setState({
         uiScale: snap.settings.uiScale,
         committedUiScale: snap.settings.committedUiScale,
+        showActiveAppWindowTitle: snap.settings.showActiveAppWindowTitle,
         dangerousChange: snap.settings.dangerousChange,
     });
     usePomodoroStore.setState({
@@ -62,7 +84,11 @@ export function applySnapshotToMirrors(snap: BridgeSnapshot): void {
         players: clonePlayers(snap.network.players),
         lastError: snap.network.lastError,
     });
+    useActiveAppStore.setState({
+        current: cloneActiveAppForMirror(snap.activeApp),
+    });
     useBindingKeyStore.setState({
+        panelEnabled: snap.bindingKey.panelEnabled,
         entries: cloneEntries(snap.bindingKey.entries),
         capturingId: snap.bindingKey.capturingId,
         syncedKeyId: snap.bindingKey.syncedKeyId,

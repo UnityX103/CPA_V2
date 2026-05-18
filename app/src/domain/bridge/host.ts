@@ -5,6 +5,7 @@ import { useSettingsStore } from '../settings';
 import { usePomodoroStore } from '../pomodoro';
 import { useNetworkStore, type RemotePlayer } from '../network';
 import { useBindingKeyStore, type BindingKeyEntry } from '../bindingKey';
+import { useActiveAppStore, type ActiveAppInfo } from '../activeApp';
 import {
     BRIDGE_VERSION,
     EVT_DISPATCH,
@@ -37,16 +38,32 @@ function cloneEntries(entries: BindingKeyEntry[]): BindingKeyEntry[] {
     return entries.map((entry) => ({ ...entry }));
 }
 
-export function buildSnapshot(): BridgeSnapshot {
+interface BuildSnapshotOptions {
+    includeActiveAppIcon?: boolean;
+}
+
+function cloneActiveApp(
+    current: ActiveAppInfo | null,
+    opts: BuildSnapshotOptions,
+): ActiveAppInfo | null {
+    if (!current) return null;
+    if (opts.includeActiveAppIcon) return { ...current };
+    const { icon_data_url: _iconDataUrl, ...withoutIcon } = current;
+    return withoutIcon;
+}
+
+export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
     const s = useSettingsStore.getState();
     const p = usePomodoroStore.getState();
     const n = useNetworkStore.getState();
     const b = useBindingKeyStore.getState();
+    const a = useActiveAppStore.getState();
     return {
         v: BRIDGE_VERSION,
         settings: {
             uiScale: s.uiScale,
             committedUiScale: s.committedUiScale,
+            showActiveAppWindowTitle: s.showActiveAppWindowTitle,
             dangerousChange: s.dangerousChange,
         },
         pomodoro: {
@@ -66,7 +83,9 @@ export function buildSnapshot(): BridgeSnapshot {
             players: clonePlayers(n.players),
             lastError: n.lastError,
         },
+        activeApp: cloneActiveApp(a.current, opts),
         bindingKey: {
+            panelEnabled: b.panelEnabled,
             entries: cloneEntries(b.entries),
             capturingId: b.capturingId,
             syncedKeyId: b.syncedKeyId,
@@ -85,6 +104,7 @@ export function applyDispatch(payload: DispatchPayload): void {
             switch (payload.action) {
                 case 'setUiScale': s.setUiScale(...payload.args); return;
                 case 'previewDangerousUiScale': s.previewDangerousUiScale(...payload.args); return;
+                case 'setShowActiveAppWindowTitle': s.setShowActiveAppWindowTitle(...payload.args); return;
                 case 'applyDangerousChange': s.applyDangerousChange(...payload.args); return;
                 case 'revertDangerousChange': s.revertDangerousChange(...payload.args); return;
             }
@@ -115,6 +135,7 @@ export function applyDispatch(payload: DispatchPayload): void {
             switch (payload.action) {
                 case 'beginCapture': b.beginCapture(...payload.args); return;
                 case 'removeEntry':  b.removeEntry(...payload.args); return;
+                case 'setPanelEnabled': b.setPanelEnabled(...payload.args); return;
                 case 'setSynced':    b.setSynced(...payload.args); return;
                 case 'addEntry':     b.addEntry(); return;
             }
@@ -123,22 +144,33 @@ export function applyDispatch(payload: DispatchPayload): void {
     }
 }
 
-async function sendSnapshot(): Promise<void> {
+const MIRROR_WINDOW_LABELS = ['settings', 'input-counter'] as const;
+
+async function sendSnapshot(opts: BuildSnapshotOptions = {}): Promise<void> {
     try {
-        const w = await WebviewWindow.getByLabel('settings');
-        if (!w) return;
-        await w.emit(EVT_STATE, buildSnapshot());
+        const snap = buildSnapshot(opts);
+        await Promise.all(MIRROR_WINDOW_LABELS.map(async (label) => {
+            const w = await WebviewWindow.getByLabel(label);
+            if (!w) return;
+            await w.emit(EVT_STATE, snap);
+        }));
     } catch {
-        /* swallow — settings window not open */
+        /* swallow — mirror windows may not be open */
     }
 }
 
 export function settingsSig(s: {
     uiScale: number;
     committedUiScale: number;
+    showActiveAppWindowTitle: boolean;
     dangerousChange: unknown;
 }): string {
-    return JSON.stringify([s.uiScale, s.committedUiScale, s.dangerousChange]);
+    return JSON.stringify([
+        s.uiScale,
+        s.committedUiScale,
+        s.showActiveAppWindowTitle,
+        s.dangerousChange,
+    ]);
 }
 
 export function pomoSig(s: {
@@ -182,15 +214,28 @@ export function networkSig(s: {
 }
 
 export function bindingKeySig(s: {
+    panelEnabled: boolean;
     entries: BindingKeyEntry[];
     capturingId: string | null;
     syncedKeyId: string | null;
 }): string {
     return JSON.stringify([
+        s.panelEnabled,
         s.entries,
         s.capturingId,
         s.syncedKeyId,
     ]);
+}
+
+export function activeAppSig(s: { current: ActiveAppInfo | null }): string {
+    if (!s.current) return JSON.stringify(null);
+    const { icon_data_url: _iconDataUrl, ...withoutIcon } = s.current;
+    return JSON.stringify(withoutIcon);
+}
+
+export function activeAppIdentitySig(s: { current: ActiveAppInfo | null }): string {
+    if (!s.current) return JSON.stringify(null);
+    return JSON.stringify([s.current.name, s.current.bundle_id]);
 }
 
 export function useBridgeHost(): void {
@@ -198,7 +243,7 @@ export function useBridgeHost(): void {
         let cancelled = false;
         const unlistens: UnlistenFn[] = [];
 
-        listen(EVT_STATE_REQUEST, () => { void sendSnapshot(); })
+        listen(EVT_STATE_REQUEST, () => { void sendSnapshot({ includeActiveAppIcon: true }); })
             .then((u) => {
                 if (cancelled) u();
                 else unlistens.push(u);
@@ -216,6 +261,8 @@ export function useBridgeHost(): void {
         let prevPomo = pomoSig(usePomodoroStore.getState());
         let prevNetwork = networkSig(useNetworkStore.getState());
         let prevBindingKey = bindingKeySig(useBindingKeyStore.getState());
+        let prevActiveApp = activeAppSig(useActiveAppStore.getState());
+        let prevActiveAppIdentity = activeAppIdentitySig(useActiveAppStore.getState());
         const subs: Array<() => void> = [
             useSettingsStore.subscribe((s) => {
                 const sig = settingsSig(s);
@@ -240,6 +287,15 @@ export function useBridgeHost(): void {
                 if (sig === prevBindingKey) return;
                 prevBindingKey = sig;
                 void sendSnapshot();
+            }),
+            useActiveAppStore.subscribe((s) => {
+                const sig = activeAppSig(s);
+                if (sig === prevActiveApp) return;
+                const identitySig = activeAppIdentitySig(s);
+                const includeActiveAppIcon = identitySig !== prevActiveAppIdentity;
+                prevActiveApp = sig;
+                prevActiveAppIdentity = identitySig;
+                void sendSnapshot({ includeActiveAppIcon });
             }),
         ];
 

@@ -5,6 +5,7 @@ import { useStateSync } from './domain/stateSync';
 import { useActiveAppListener } from './domain/activeApp';
 import { useBindingKeyListener } from './domain/bindingKey';
 import { useBridgeHost } from './domain/bridge/host';
+import { useInputCounterWindowController } from './domain/inputCounterWindow';
 import { useSettingsStore } from './domain/settings';
 import { loadPersistedSettings } from './domain/settingsPersistence';
 
@@ -13,6 +14,7 @@ export default function App() {
     useActiveAppListener();
     useBindingKeyListener();
     useBridgeHost();
+    useInputCounterWindowController();
     const uiScale = useSettingsStore((s) => s.uiScale);
 
     useEffect(() => {

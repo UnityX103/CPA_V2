@@ -54,6 +54,15 @@ button:focus-visible {
     background: transparent;
 }
 
+.input-counter-window-root {
+    position: relative;
+    width: fit-content;
+    height: fit-content;
+    padding: 0;
+    overflow: hidden;
+    background: transparent;
+}
+
 .app-root {
     width: fit-content;
     height: fit-content;

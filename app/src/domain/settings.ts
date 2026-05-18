@@ -18,16 +18,19 @@ export interface SettingsState {
     activeTab: SettingsTab;
     uiScale: number;
     committedUiScale: number;
+    showActiveAppWindowTitle: boolean;
     dangerousChange: DangerousChange | null;
 }
 
 export interface PersistedSettingsSnapshot {
     uiScale: number;
+    showActiveAppWindowTitle?: boolean;
 }
 
 interface SettingsActions {
     setActiveTab: (tab: SettingsTab) => void;
     setUiScale: (scale: number) => void;
+    setShowActiveAppWindowTitle: (enabled: boolean) => void;
     previewDangerousUiScale: (scale: number) => void;
     applyDangerousChange: (id: string) => void;
     revertDangerousChange: (id: string) => void;
@@ -58,10 +61,14 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
             activeTab: 'pomodoro',
             uiScale: 1.0,
             committedUiScale: 1.0,
+            showActiveAppWindowTitle: true,
             dangerousChange: null,
             setActiveTab: (tab) => set({ activeTab: tab }),
             setUiScale: (scale) => {
                 void dispatch({ v: BRIDGE_VERSION, store: 'settings', action: 'setUiScale', args: [scale] });
+            },
+            setShowActiveAppWindowTitle: (enabled) => {
+                void dispatch({ v: BRIDGE_VERSION, store: 'settings', action: 'setShowActiveAppWindowTitle', args: [enabled] });
             },
             previewDangerousUiScale: (scale) => {
                 void dispatch({ v: BRIDGE_VERSION, store: 'settings', action: 'previewDangerousUiScale', args: [scale] });
@@ -74,7 +81,12 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
             },
             hydrateSettings: (snapshot) => {
                 const uiScale = clampScale(snapshot.uiScale);
-                set({ uiScale, committedUiScale: uiScale, dangerousChange: null });
+                set({
+                    uiScale,
+                    committedUiScale: uiScale,
+                    showActiveAppWindowTitle: snapshot.showActiveAppWindowTitle ?? true,
+                    dangerousChange: null,
+                });
             },
         }));
     }
@@ -82,11 +94,20 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
         activeTab: 'pomodoro',
         uiScale: 1.0,
         committedUiScale: 1.0,
+        showActiveAppWindowTitle: true,
         dangerousChange: null,
         setActiveTab: (tab) => set({ activeTab: tab }),
         setUiScale: (scale) => {
             const uiScale = clampScale(scale);
             set({ uiScale, committedUiScale: uiScale, dangerousChange: null });
+        },
+        setShowActiveAppWindowTitle: (enabled) => {
+            set({ showActiveAppWindowTitle: enabled });
+            const state = get();
+            void savePersistedSettings({
+                uiScale: state.committedUiScale,
+                showActiveAppWindowTitle: enabled,
+            });
         },
         previewDangerousUiScale: (scale) => {
             const nextValue = clampScale(scale);
@@ -110,7 +131,10 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
             if (!change || change.id !== id) return;
             const committedUiScale = change.nextValue;
             set({ uiScale: committedUiScale, committedUiScale, dangerousChange: null });
-            void savePersistedSettings({ uiScale: committedUiScale });
+            void savePersistedSettings({
+                uiScale: committedUiScale,
+                showActiveAppWindowTitle: get().showActiveAppWindowTitle,
+            });
         },
         revertDangerousChange: (id) => {
             const change = get().dangerousChange;
@@ -119,7 +143,12 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
         },
         hydrateSettings: (snapshot) => {
             const uiScale = clampScale(snapshot.uiScale);
-            set({ uiScale, committedUiScale: uiScale, dangerousChange: null });
+            set({
+                uiScale,
+                committedUiScale: uiScale,
+                showActiveAppWindowTitle: snapshot.showActiveAppWindowTitle ?? true,
+                dangerousChange: null,
+            });
         },
     }));
 }

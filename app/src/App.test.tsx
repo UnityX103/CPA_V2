@@ -2,17 +2,19 @@ import '@testing-library/jest-dom/vitest';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-const { useStateSync, useActiveAppListener, useBindingKeyListener, useBridgeHost } = vi.hoisted(() => ({
+const { useStateSync, useActiveAppListener, useBindingKeyListener, useBridgeHost, useInputCounterWindowController } = vi.hoisted(() => ({
     useStateSync: vi.fn(),
     useActiveAppListener: vi.fn(),
     useBindingKeyListener: vi.fn(),
     useBridgeHost: vi.fn(),
+    useInputCounterWindowController: vi.fn(),
 }));
 
 vi.mock('./domain/stateSync', () => ({ useStateSync }));
 vi.mock('./domain/activeApp', () => ({ useActiveAppListener }));
 vi.mock('./domain/bindingKey', () => ({ useBindingKeyListener }));
 vi.mock('./domain/bridge/host', () => ({ useBridgeHost }));
+vi.mock('./domain/inputCounterWindow', () => ({ useInputCounterWindowController }));
 vi.mock('./ui/PomodoroPanel', () => ({
     PomodoroPanel: () => <div data-testid="pomodoro-panel" />,
 }));
@@ -32,5 +34,6 @@ describe('main App window composition', () => {
         expect(useActiveAppListener).toHaveBeenCalledTimes(1);
         expect(useBindingKeyListener).toHaveBeenCalledTimes(1);
         expect(useBridgeHost).toHaveBeenCalledTimes(1);
+        expect(useInputCounterWindowController).toHaveBeenCalledTimes(1);
     });
 });

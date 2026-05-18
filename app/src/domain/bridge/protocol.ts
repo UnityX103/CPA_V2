@@ -2,6 +2,7 @@ import type { BindingKeyEntry } from '../bindingKey';
 import type { DangerousChange } from '../settings';
 import type { ConnectionStatus, RemotePlayer } from '../network';
 import type { PomodoroEndActionMode, PomodoroEndActionVideo } from '../pomodoro';
+import type { ActiveAppInfo } from '../activeApp';
 
 export const EVT_STATE_REQUEST = 'app:state:request';
 export const EVT_STATE = 'app:state';
@@ -13,6 +14,7 @@ export interface BridgeSnapshot {
     settings: {
         uiScale: number;
         committedUiScale: number;
+        showActiveAppWindowTitle: boolean;
         dangerousChange: DangerousChange | null;
     };
     pomodoro: {
@@ -32,7 +34,9 @@ export interface BridgeSnapshot {
         players: Record<string, RemotePlayer>;
         lastError: string | null;
     };
+    activeApp: ActiveAppInfo | null;
     bindingKey: {
+        panelEnabled: boolean;
         entries: BindingKeyEntry[];
         capturingId: string | null;
         syncedKeyId: string | null;
@@ -41,6 +45,7 @@ export interface BridgeSnapshot {
 
 export type DispatchPayload =
     | { v: typeof BRIDGE_VERSION; store: 'settings';   action: 'setUiScale' | 'previewDangerousUiScale'; args: [number] }
+    | { v: typeof BRIDGE_VERSION; store: 'settings';   action: 'setShowActiveAppWindowTitle'; args: [boolean] }
     | { v: typeof BRIDGE_VERSION; store: 'settings';   action: 'applyDangerousChange' | 'revertDangerousChange'; args: [string] }
     | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'applySettings'; args: [number, number, number, boolean, boolean] }
     | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'applyEndActionSettings'; args: [PomodoroEndActionMode, PomodoroEndActionVideo] }
@@ -49,5 +54,6 @@ export type DispatchPayload =
     | { v: typeof BRIDGE_VERSION; store: 'network';    action: 'setAutoConnect'; args: [boolean] }
     | { v: typeof BRIDGE_VERSION; store: 'network';    action: 'setPlayerName'; args: [string] }
     | { v: typeof BRIDGE_VERSION; store: 'bindingKey'; action: 'beginCapture' | 'removeEntry'; args: [string] }
+    | { v: typeof BRIDGE_VERSION; store: 'bindingKey'; action: 'setPanelEnabled'; args: [boolean] }
     | { v: typeof BRIDGE_VERSION; store: 'bindingKey'; action: 'setSynced'; args: [string | null] }
     | { v: typeof BRIDGE_VERSION; store: 'bindingKey'; action: 'addEntry'; args: [] };

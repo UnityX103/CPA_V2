@@ -19,6 +19,7 @@ export interface BindingKeyEntry {
 }
 
 interface BindingKeyState {
+    panelEnabled: boolean;
     entries: BindingKeyEntry[];
     syncedKeyId: string | null;
     capturingId: string | null;
@@ -27,6 +28,7 @@ interface BindingKeyState {
 }
 
 interface BindingKeyActions {
+    setPanelEnabled: (enabled: boolean) => void;
     addEntry: () => string;
     removeEntry: (id: string) => void;
     setEnabled: (id: string, enabled: boolean) => void;
@@ -57,16 +59,28 @@ export function labelForKeyCode(keyCode: number): string {
     return KEYCODE_LABELS[keyCode] ?? `Key#${keyCode}`;
 }
 
+export function isVisibleBindingEntry(entry: BindingKeyEntry): boolean {
+    return entry.enabled && entry.keyCode >= 0;
+}
+
+export function hasVisibleInputCounterEntries(entries: BindingKeyEntry[]): boolean {
+    return entries.some(isVisibleBindingEntry);
+}
+
 export type BindingKeyStore = UseBoundStore<StoreApi<BindingKeyState & BindingKeyActions>>;
 
 export function createBindingKeyStore(opts: { isSettingsWindow: boolean }): BindingKeyStore {
     if (opts.isSettingsWindow) {
         return create<BindingKeyState & BindingKeyActions>((set) => ({
+            panelEnabled: true,
             entries: [],
             syncedKeyId: null,
             capturingId: null,
             permissionGranted: true,
             platform: null,
+            setPanelEnabled: (enabled) => {
+                void dispatch({ v: BRIDGE_VERSION, store: 'bindingKey', action: 'setPanelEnabled', args: [enabled] });
+            },
             addEntry: () => {
                 void dispatch({ v: BRIDGE_VERSION, store: 'bindingKey', action: 'addEntry', args: [] });
                 return '';
@@ -90,12 +104,14 @@ export function createBindingKeyStore(opts: { isSettingsWindow: boolean }): Bind
         }));
     }
     return create<BindingKeyState & BindingKeyActions>((set, get) => ({
+        panelEnabled: true,
         entries: [],
         syncedKeyId: null,
         capturingId: null,
         permissionGranted: true,
         platform: null,
 
+        setPanelEnabled: (enabled) => set({ panelEnabled: enabled }),
         addEntry: () => {
             const id = newId();
             const entry: BindingKeyEntry = {
@@ -134,9 +150,10 @@ export function createBindingKeyStore(opts: { isSettingsWindow: boolean }): Bind
             }));
         },
         incrementByKeyCode: (keyCode) => {
+            if (keyCode < 0) return;
             set((s) => ({
                 entries: s.entries.map((e) =>
-                    e.keyCode === keyCode && e.enabled ? { ...e, pressCount: e.pressCount + 1 } : e,
+                    e.keyCode >= 0 && e.keyCode === keyCode && e.enabled ? { ...e, pressCount: e.pressCount + 1 } : e,
                 ),
             }));
         },

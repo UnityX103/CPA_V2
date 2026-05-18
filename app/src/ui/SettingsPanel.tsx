@@ -528,7 +528,6 @@ function PetTab() {
 function GlobalTab() {
     const settings = useSettingsStore();
     const bk = useBindingKeyStore();
-    const [globalEnabled, setGlobalEnabled] = useState(true);
     const [scaleDragPercent, setScaleDragPercent] = useState<number | null>(null);
 
     // Settings window doesn't run useBindingKeyListener, so we fetch
@@ -586,6 +585,17 @@ function GlobalTab() {
                     </div>
                 </div>
 
+                <div className="card">
+                    <div className="card-row">
+                        <span className="card-label">显示打开的文件名</span>
+                        <Toggle
+                            checked={settings.showActiveAppWindowTitle}
+                            onChange={settings.setShowActiveAppWindowTitle}
+                            ariaLabel="显示打开的文件名"
+                        />
+                    </div>
+                </div>
+
                 {/* gspBindingKey yjJtt */}
                 <div className="card">
                     {!bk.permissionGranted && (
@@ -601,7 +611,7 @@ function GlobalTab() {
                     )}
                     <div className="card-row">
                         <span className="card-label">按键计数</span>
-                        <Toggle checked={globalEnabled} onChange={setGlobalEnabled} />
+                        <Toggle checked={bk.panelEnabled} onChange={bk.setPanelEnabled} ariaLabel="按键计数" />
                     </div>
                     <p className="bk-desc">
                         添加按键监听绑定；启用某一项后弹出独立的输入计数面板；最多 1 个标记为同步到远端。

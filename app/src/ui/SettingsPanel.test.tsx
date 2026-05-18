@@ -210,9 +210,10 @@ describe('SettingsPanel geometry', () => {
 
     it('settings window is resizable and has minimum bounds instead of a locked shell', () => {
         const libRs = readFileSync(path.join(here, '../../src-tauri/src/lib.rs'), 'utf8');
-        expect(libRs).toMatch(/\.resizable\(true\)/);
-        expect(libRs).toMatch(/\.min_inner_size\(\s*SETTINGS_MIN_W,\s*SETTINGS_MIN_H\s*\)/);
-        expect(libRs).not.toMatch(/\.resizable\(false\)/);
+        const settingsBuilder = libRs.match(/fn build_settings_window_hidden[\s\S]*?Ok\(w\)/)?.[0] ?? '';
+        expect(settingsBuilder).toMatch(/\.resizable\(true\)/);
+        expect(settingsBuilder).toMatch(/\.min_inner_size\(\s*SETTINGS_MIN_W,\s*SETTINGS_MIN_H\s*\)/);
+        expect(settingsBuilder).not.toMatch(/\.resizable\(false\)/);
     });
 
     it('content flex areas can shrink and wrap instead of forcing a fixed width', () => {
@@ -515,9 +516,19 @@ describe('GlobalTab parity with Pdj9C', () => {
     it('renders global controls without the obsolete target display setting', () => {
         render(<SettingsPanel />);
         expect(screen.getByText('界面缩放')).toBeTruthy();
+        expect(screen.getByText('显示打开的文件名')).toBeTruthy();
         expect(screen.getByText('按键计数')).toBeTruthy();
         expect(screen.queryByText('目标显示器')).toBeNull();
         expect(screen.queryByText(/显示器 \d+/)).toBeNull();
+    });
+
+    it('toggles whether active app window titles are shown', () => {
+        render(<SettingsPanel />);
+        const toggle = screen.getByRole('button', { name: '显示打开的文件名' });
+
+        expect(toggle.getAttribute('aria-pressed')).toBe('true');
+        fireEvent.click(toggle);
+        expect(useSettingsStore.getState().showActiveAppWindowTitle).toBe(false);
     });
 
     it('shows accessibility permission banner when permissionGranted is false', async () => {

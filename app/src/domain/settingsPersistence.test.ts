@@ -18,10 +18,23 @@ describe('settingsPersistence', () => {
     });
 
     it('loads persisted v1 settings', async () => {
+        store.get.mockResolvedValue({ v: 1, uiScale: 1.75, showActiveAppWindowTitle: false });
+        const { loadPersistedSettings } = await import('./settingsPersistence');
+
+        await expect(loadPersistedSettings()).resolves.toEqual({
+            uiScale: 1.75,
+            showActiveAppWindowTitle: false,
+        });
+    });
+
+    it('defaults showActiveAppWindowTitle to true for older v1 settings', async () => {
         store.get.mockResolvedValue({ v: 1, uiScale: 1.75 });
         const { loadPersistedSettings } = await import('./settingsPersistence');
 
-        await expect(loadPersistedSettings()).resolves.toEqual({ uiScale: 1.75 });
+        await expect(loadPersistedSettings()).resolves.toEqual({
+            uiScale: 1.75,
+            showActiveAppWindowTitle: true,
+        });
     });
 
     it('ignores malformed persisted settings', async () => {
@@ -34,9 +47,13 @@ describe('settingsPersistence', () => {
     it('saves persisted v1 settings', async () => {
         const { savePersistedSettings } = await import('./settingsPersistence');
 
-        await savePersistedSettings({ uiScale: 2 });
+        await savePersistedSettings({ uiScale: 2, showActiveAppWindowTitle: false });
 
-        expect(store.set).toHaveBeenCalledWith('settings', { v: 1, uiScale: 2 });
+        expect(store.set).toHaveBeenCalledWith('settings', {
+            v: 1,
+            uiScale: 2,
+            showActiveAppWindowTitle: false,
+        });
         expect(store.save).toHaveBeenCalledTimes(1);
     });
 });
