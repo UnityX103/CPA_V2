@@ -35,6 +35,12 @@ function artifactUrl(baseUrl, channel, version, artifactName) {
     return urlJoin(baseUrl, channel, version, artifactName);
 }
 
+function githubAssetName(artifactName) {
+    const asciiName = artifactName.normalize('NFKD').replace(/[^\w.-]+/g, '');
+    const trimmed = asciiName.replace(/^[._-]+/, '');
+    return trimmed || artifactName;
+}
+
 async function readJson(path) {
     return JSON.parse(await readFile(path, 'utf8'));
 }
@@ -155,8 +161,11 @@ export async function prepareUpdaterRelease(options = {}) {
             throw new Error(`Duplicate updater artifact for ${platform}`);
         }
 
-        const artifactName = basename(artifactPath);
-        const signatureName = basename(sigPath);
+        const originalArtifactName = basename(artifactPath);
+        const artifactName = isGithubReleaseDownloadBase(baseUrl)
+            ? githubAssetName(originalArtifactName)
+            : originalArtifactName;
+        const signatureName = `${artifactName}.sig`;
         const targetArtifact = join(artifactOutDir, artifactName);
         const targetSignature = join(artifactOutDir, signatureName);
         const signature = (await readFile(sigPath, 'utf8')).trim();
