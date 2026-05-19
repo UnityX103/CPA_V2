@@ -15,6 +15,8 @@ export interface RemotePomodoroState {
 export interface RemoteActiveApp {
     name: string;
     bundleId: string;
+    windowTitle?: string | null;
+    iconDataUrl?: string | null;
     iconId?: string;
 }
 

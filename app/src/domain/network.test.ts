@@ -89,6 +89,34 @@ describe('NetworkSystem 接收校验', () => {
         expect(useNetworkStore.getState().players['ghost']).toBeUndefined();
         expect(ghostMsg.playerId).toBe('ghost'); // touch 变量避免 unused 警告
     });
+
+    it('accepts active app title and icon fields in remote player state', () => {
+        const state = {
+            pomodoro: { phase: 0, remainingSeconds: 1200, currentRound: 1, totalRounds: 4, isRunning: true },
+            activeApp: {
+                name: 'Safari',
+                bundleId: 'com.apple.Safari',
+                windowTitle: 'Apple - Safari',
+                iconDataUrl: 'data:image/png;base64,QUFB',
+            },
+            bindingKey: null,
+        };
+
+        useNetworkStore.setState({
+            players: {
+                p1: { playerId: 'p1', playerName: '远端玩家', state: null },
+            },
+        });
+
+        useNetworkStore.setState((s) => ({
+            players: {
+                ...s.players,
+                p1: { ...s.players.p1, state },
+            },
+        }));
+
+        expect(useNetworkStore.getState().players.p1.state?.activeApp).toEqual(state.activeApp);
+    });
 });
 
 describe('createNetworkStore — settings-window mode', () => {
