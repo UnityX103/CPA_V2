@@ -12,6 +12,12 @@ The canonical local config is:
 
 It contains only paths and public identifiers. The files named by those paths contain the sensitive data.
 
+For this repo, keep copied key files under the ignored project-local directory:
+
+```bash
+.local/release-secrets/
+```
+
 ## Files To Migrate
 
 Copy these files securely to the same paths, or update the config paths on the new machine:
@@ -30,7 +36,7 @@ Also restore `gh auth login`; the GitHub token is stored by GitHub CLI/keychain 
 
 1. Install Node, npm, Rust stable, Tauri prerequisites, GitHub CLI, Xcode command line tools.
 2. Copy or recreate `~/.config/cpa-v2-release/release-secret-paths.env`.
-3. Copy secret files with `chmod 600` for private keys and password files.
+3. Copy secret files into `.local/release-secrets/` with `chmod 600` for private keys and password files.
 4. Update `RUST_TOOLCHAIN_BIN` if the Rust toolchain path differs.
 5. Confirm:
    ```bash

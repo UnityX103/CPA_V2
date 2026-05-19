@@ -16,6 +16,9 @@ build.log
 .vscode/
 .idea/
 
+# Local release secrets copied for this machine only
+.local/
+
 # Server has its own git repo — track via submodule later if desired
 Server/.git/
 Server/node_modules/

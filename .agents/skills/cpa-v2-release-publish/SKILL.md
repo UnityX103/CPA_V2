@@ -13,6 +13,12 @@ Treat release signing keys, GitHub tokens, Apple credentials, and SSH private ke
 ~/.config/cpa-v2-release/release-secret-paths.env
 ```
 
+Keep the actual key files in the repo-local ignored directory:
+
+```bash
+.local/release-secrets/
+```
+
 Run the inventory helper before release or migration:
 
 ```bash
@@ -23,6 +29,7 @@ If the local secret config is missing, copy the template first:
 
 ```bash
 mkdir -p ~/.config/cpa-v2-release
+mkdir -p .local/release-secrets
 cp .agents/skills/cpa-v2-release-publish/assets/release-secret-paths.env.example \
   ~/.config/cpa-v2-release/release-secret-paths.env
 ```
