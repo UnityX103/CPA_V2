@@ -41,7 +41,7 @@ describe('prepare-updater-release', () => {
 
         const result = await prepareUpdaterRelease({
             appRoot,
-            baseUrl: 'https://updates.nanzhaigame.cn/cpa',
+            baseUrl: 'https://github.com/UnityX103/CPA_V2/releases/download',
             bundleDir,
             channel: 'stable',
             outDir,
@@ -61,7 +61,7 @@ describe('prepare-updater-release', () => {
             platforms: {
                 'darwin-aarch64': {
                     signature: 'signed-by-tauri',
-                    url: 'https://updates.nanzhaigame.cn/cpa/stable/0.2.0/deskpet.app.tar.gz',
+                    url: 'https://github.com/UnityX103/CPA_V2/releases/download/v0.2.0/deskpet.app.tar.gz',
                 },
             },
         });
@@ -78,7 +78,7 @@ describe('prepare-updater-release', () => {
 
         await expect(prepareUpdaterRelease({
             appRoot,
-            baseUrl: 'https://updates.nanzhaigame.cn/cpa',
+            baseUrl: 'https://github.com/UnityX103/CPA_V2/releases/download',
             bundleDir,
             outDir: join(appRoot, 'release'),
             platform: 'darwin-aarch64',
@@ -121,10 +121,34 @@ describe('prepare-updater-release', () => {
 
         await expect(prepareUpdaterRelease({
             appRoot,
-            baseUrl: 'https://updates.nanzhaigame.cn/cpa',
+            baseUrl: 'https://github.com/UnityX103/CPA_V2/releases/download',
             bundleDir,
             outDir: join(appRoot, 'release'),
             platform: 'darwin-aarch64',
         })).rejects.toThrow(/duplicate updater artifact/i);
+    });
+
+    it('uses stable ASCII asset names for GitHub release URLs', async () => {
+        const appRoot = fixtureProject('0.2.0');
+        const bundleDir = join(appRoot, 'src-tauri', 'target', 'release', 'bundle', 'macos');
+        const outDir = join(appRoot, 'release');
+        mkdirSync(bundleDir, { recursive: true });
+        writeFileSync(join(bundleDir, '桌宠番茄钟.app.tar.gz'), 'artifact');
+        writeFileSync(join(bundleDir, '桌宠番茄钟.app.tar.gz.sig'), 'signature');
+
+        await prepareUpdaterRelease({
+            appRoot,
+            baseUrl: 'https://github.com/UnityX103/CPA_V2/releases/download',
+            bundleDir,
+            outDir,
+            platform: 'darwin-aarch64',
+        });
+
+        const latest = JSON.parse(readFileSync(join(outDir, 'stable', 'latest.json'), 'utf8'));
+        expect(existsSync(join(outDir, 'stable', '0.2.0', 'app.tar.gz'))).toBe(true);
+        expect(existsSync(join(outDir, 'stable', '0.2.0', 'app.tar.gz.sig'))).toBe(true);
+        expect(latest.platforms['darwin-aarch64'].url).toBe(
+            'https://github.com/UnityX103/CPA_V2/releases/download/v0.2.0/app.tar.gz',
+        );
     });
 });
