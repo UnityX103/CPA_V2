@@ -26,6 +26,10 @@ class FakeWebSocket {
     close() { this.readyState = FakeWebSocket.CLOSED; this.onclose?.(); }
 }
 
+function latestSocket(): FakeWebSocket | undefined {
+    return FakeWebSocket.instances[FakeWebSocket.instances.length - 1];
+}
+
 beforeEach(() => {
     useNetworkStore.getState().disconnect();
     FakeWebSocket.instances = [];
@@ -81,7 +85,7 @@ describe('NetworkSystem 接收校验', () => {
             players: { p1: { playerId: 'p1', playerName: '我', state: null } },
         });
 
-        FakeWebSocket.instances.at(-1)?.onmessage?.({
+        latestSocket()?.onmessage?.({
             data: JSON.stringify({
                 type: 'player_state_broadcast',
                 roomCode: 'TEST',
@@ -116,7 +120,7 @@ describe('NetworkSystem 接收校验', () => {
             bindingKey: null,
         };
 
-        FakeWebSocket.instances.at(-1)?.onmessage?.({
+        latestSocket()?.onmessage?.({
             data: JSON.stringify({
                 type: 'player_state_broadcast',
                 roomCode: 'TEST',
@@ -144,14 +148,14 @@ describe('NetworkSystem 接收校验', () => {
             bindingKey: null,
         };
 
-        FakeWebSocket.instances.at(-1)?.onmessage?.({
+        latestSocket()?.onmessage?.({
             data: JSON.stringify({
                 type: 'room_snapshot',
                 roomCode: 'TEST',
                 players: [{ playerId: 'p1', playerName: '远端玩家', state: null }],
             }),
         } as MessageEvent);
-        FakeWebSocket.instances.at(-1)?.onmessage?.({
+        latestSocket()?.onmessage?.({
             data: JSON.stringify({
                 type: 'player_state_broadcast',
                 roomCode: 'TEST',
