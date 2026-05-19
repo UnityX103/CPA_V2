@@ -36,6 +36,17 @@ function platformArch() {
     return process.arch;
 }
 
+function platformArchFromArtifact(path) {
+    const normalized = basename(path).toLowerCase();
+    if (/(^|[_\-.])x64([_\-.]|$)/.test(normalized)) return 'x86_64';
+    if (/(^|[_\-.])x86_64([_\-.]|$)/.test(normalized)) return 'x86_64';
+    if (/(^|[_\-.])arm64([_\-.]|$)/.test(normalized)) return 'aarch64';
+    if (/(^|[_\-.])aarch64([_\-.]|$)/.test(normalized)) return 'aarch64';
+    if (/(^|[_\-.])ia32([_\-.]|$)/.test(normalized)) return 'i686';
+    if (/(^|[_\-.])i686([_\-.]|$)/.test(normalized)) return 'i686';
+    return null;
+}
+
 function platformOsFromArtifact(path) {
     const normalized = path.split(sep).join('/').toLowerCase();
     if (normalized.includes('/macos/') || normalized.includes('/dmg/') || normalized.endsWith('.app.tar.gz')) {
@@ -62,13 +73,22 @@ function platformOsFromArtifact(path) {
     return null;
 }
 
+function platformInstallerFromArtifact(path) {
+    const normalized = path.split(sep).join('/').toLowerCase();
+    if (normalized.includes('/nsis/') || normalized.endsWith('.nsis.zip')) return 'nsis';
+    if (normalized.includes('/msi/') || normalized.endsWith('.msi.zip') || normalized.endsWith('.msi')) return 'msi';
+    return null;
+}
+
 function inferPlatform(artifactPath, forcedPlatform) {
     if (forcedPlatform) return forcedPlatform;
     const os = platformOsFromArtifact(artifactPath);
     if (!os) {
         throw new Error(`Cannot infer updater platform for ${artifactPath}; pass --platform OS-ARCH`);
     }
-    return `${os}-${platformArch()}`;
+    const installer = platformInstallerFromArtifact(artifactPath);
+    const arch = platformArchFromArtifact(artifactPath) ?? platformArch();
+    return installer ? `${os}-${arch}-${installer}` : `${os}-${arch}`;
 }
 
 async function listSignatureFiles(dir) {

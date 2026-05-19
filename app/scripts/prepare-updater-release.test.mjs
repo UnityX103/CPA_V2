@@ -85,6 +85,31 @@ describe('prepare-updater-release', () => {
         })).rejects.toThrow(/version mismatch/i);
     });
 
+    it('uses the Tauri updater NSIS platform key for Windows installers', async () => {
+        const appRoot = fixtureProject('0.2.0');
+        const bundleDir = join(appRoot, 'src-tauri', 'target', 'release', 'bundle');
+        const nsisDir = join(bundleDir, 'nsis');
+        const outDir = join(appRoot, 'release');
+        mkdirSync(nsisDir, { recursive: true });
+        writeFileSync(join(nsisDir, 'CPA_V2_0.2.0_x64-setup.exe'), 'artifact');
+        writeFileSync(join(nsisDir, 'CPA_V2_0.2.0_x64-setup.exe.sig'), 'signed-by-tauri');
+
+        await prepareUpdaterRelease({
+            appRoot,
+            baseUrl: 'https://updates.nanzhaigame.cn/cpa',
+            bundleDir,
+            channel: 'stable',
+            outDir,
+        });
+
+        const latest = JSON.parse(readFileSync(join(outDir, 'stable', 'latest.json'), 'utf8'));
+        expect(latest.platforms['windows-x86_64-nsis']).toMatchObject({
+            signature: 'signed-by-tauri',
+            url: 'https://updates.nanzhaigame.cn/cpa/stable/0.2.0/CPA_V2_0.2.0_x64-setup.exe',
+        });
+        expect(latest.platforms['windows-x86_64']).toBeUndefined();
+    });
+
     it('rejects duplicate artifacts for the same platform', async () => {
         const appRoot = fixtureProject('0.2.0');
         const bundleDir = join(appRoot, 'src-tauri', 'target', 'release', 'bundle');
