@@ -12,6 +12,7 @@
 .pc-card {
     position: relative;
     width: var(--pc-w);
+    height: 94px;
     background: var(--panel-bg-strong);
     border: 1px solid var(--panel-stroke);
     border-radius: var(--panel-radius-md);
@@ -148,15 +149,26 @@
     color: var(--pc-foot-icon);
     flex-shrink: 0;
     display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
 }
 
 .pc-foot-text {
+    min-width: 0;
     font-size: var(--pc-foot-text-size);
     font-weight: 500;
     color: var(--pc-foot-text);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.pc-app-img {
+    width: 13px;
+    height: 13px;
+    object-fit: contain;
+    display: block;
 }
 
 /* pin btn epxz9: design absolute (110, 50) inside D3ZIc (pc-content-stack 125×66).
@@ -171,9 +183,11 @@
     border-radius: 11px;
     background: var(--btn-pin-bg-card);
     border: 1px solid var(--btn-pin-stroke);
+    padding: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     color: var(--btn-pin-icon-card);
+    cursor: pointer;
     z-index: 1;
 }

@@ -1,4 +1,6 @@
+import { getCurrentWindow } from '@tauri-apps/api/window';
 import type { RemotePlayer, RemoteState } from '../domain/network';
+import { shouldStartWindowDrag } from './windowDrag';
 import './PlayerCard.css';
 
 interface PlayerCardProps {
@@ -21,11 +23,20 @@ function deriveBadge(state: RemoteState | null): PhaseBadge {
 
 export function PlayerCard({ player }: PlayerCardProps) {
     const badge = deriveBadge(player.state);
-    const appName = player.state?.activeApp?.name ?? '待加入';
+    const activeApp = player.state?.activeApp ?? null;
+    const appName = activeApp?.windowTitle?.trim() || activeApp?.name?.trim() || '待加入';
+    const appIcon = activeApp?.iconDataUrl || null;
     const binding = player.state?.bindingKey ?? null;
 
+    const onCardPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+        if (!shouldStartWindowDrag(e.button, e.target)) return;
+        void getCurrentWindow().startDragging().catch(() => {
+            /* non-Tauri/test env */
+        });
+    };
+
     return (
-        <div className="pc-card">
+        <div className="pc-card" onPointerDown={onCardPointerDown}>
             <div className="pc-content">
                 <div className="pc-row pc-row-head">
                     <div className="pc-name-col">
@@ -49,11 +60,24 @@ export function PlayerCard({ player }: PlayerCardProps) {
 
                 <div className="pc-footer">
                     <span className="pc-foot-icon" aria-hidden>
-                        <AppWindowIcon />
+                        {appIcon ? (
+                            <img className="pc-app-img" src={appIcon} alt="" draggable={false} />
+                        ) : (
+                            <AppWindowIcon />
+                        )}
                     </span>
-                    <span className="pc-foot-text">{appName}</span>
+                    <span className="pc-foot-text" title={appName}>{appName}</span>
                 </div>
             </div>
+            <button
+                type="button"
+                className="pc-pin"
+                aria-label="固定远端玩家卡牌"
+                title="固定远端玩家卡牌"
+                data-no-window-drag
+            >
+                <PinIcon />
+            </button>
         </div>
     );
 }
@@ -61,9 +85,17 @@ export function PlayerCard({ player }: PlayerCardProps) {
 function AppWindowIcon() {
     /* lucide app-window — KN0dX */
     return (
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg data-testid="player-card-fallback-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <rect width="20" height="16" x="2" y="4" rx="2" />
             <path d="M2 10h20M6 7v.01M9 7v.01M12 7v.01" />
+        </svg>
+    );
+}
+
+function PinIcon() {
+    return (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M14 4v5l3 3v2h-5v6l-1 1-1-1v-6H5v-2l3-3V4H7V2h8v2h-1z" />
         </svg>
     );
 }
