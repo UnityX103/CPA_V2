@@ -10,6 +10,8 @@ interface AccessibilityStatus {
     platform: 'macos' | 'windows' | 'other';
 }
 
+type BindingKeyPlatform = AccessibilityStatus['platform'];
+
 export interface BindingKeyEntry {
     id: string;
     label: string;
@@ -45,7 +47,7 @@ let nextId = 0;
 const newId = () => `bk-${Date.now().toString(36)}-${nextId++}`;
 
 // macOS 虚拟键码到展示标签的最小映射；不在表里的键直接 fallback 为 "Key#N"
-const KEYCODE_LABELS: Record<number, string> = {
+const MAC_KEYCODE_LABELS: Record<number, string> = {
     0: 'A', 11: 'B', 8: 'C', 2: 'D', 14: 'E', 3: 'F', 5: 'G', 4: 'H',
     34: 'I', 38: 'J', 40: 'K', 37: 'L', 46: 'M', 45: 'N', 31: 'O',
     35: 'P', 12: 'Q', 15: 'R', 1: 'S', 17: 'T', 32: 'U', 9: 'V',
@@ -55,8 +57,21 @@ const KEYCODE_LABELS: Record<number, string> = {
     123: '←', 124: '→', 125: '↓', 126: '↑',
 };
 
-export function labelForKeyCode(keyCode: number): string {
-    return KEYCODE_LABELS[keyCode] ?? `Key#${keyCode}`;
+const WINDOWS_KEYCODE_LABELS: Record<number, string> = {
+    8: 'Backspace', 9: 'Tab', 13: 'Enter', 16: 'Shift', 17: 'Ctrl',
+    18: 'Alt', 20: 'CapsLock', 27: 'Esc', 32: 'Space', 37: 'Left',
+    38: 'Up', 39: 'Right', 40: 'Down', 46: 'Delete',
+    48: '0', 49: '1', 50: '2', 51: '3', 52: '4',
+    53: '5', 54: '6', 55: '7', 56: '8', 57: '9',
+    65: 'A', 66: 'B', 67: 'C', 68: 'D', 69: 'E', 70: 'F', 71: 'G',
+    72: 'H', 73: 'I', 74: 'J', 75: 'K', 76: 'L', 77: 'M', 78: 'N',
+    79: 'O', 80: 'P', 81: 'Q', 82: 'R', 83: 'S', 84: 'T', 85: 'U',
+    86: 'V', 87: 'W', 88: 'X', 89: 'Y', 90: 'Z',
+};
+
+export function labelForKeyCode(keyCode: number, platform: BindingKeyPlatform | null = 'macos'): string {
+    const labels = platform === 'windows' ? WINDOWS_KEYCODE_LABELS : MAC_KEYCODE_LABELS;
+    return labels[keyCode] ?? `Key#${keyCode}`;
 }
 
 export function isVisibleBindingEntry(entry: BindingKeyEntry): boolean {
@@ -96,7 +111,9 @@ export function createBindingKeyStore(opts: { isSettingsWindow: boolean }): Bind
                 void dispatch({ v: BRIDGE_VERSION, store: 'bindingKey', action: 'beginCapture', args: [id] });
             },
             cancelCapture: () => {},
-            completeCapture: () => {},
+            completeCapture: (keyCode, label) => {
+                void dispatch({ v: BRIDGE_VERSION, store: 'bindingKey', action: 'completeCapture', args: [keyCode, label] });
+            },
             incrementByKeyCode: () => {},
             resetCount: () => {},
             setPermission: (granted, platform) =>
@@ -190,7 +207,7 @@ export function useBindingKeyListener() {
             const store = useBindingKeyStore.getState();
             const keyCode = Number(event.payload);
             if (store.capturingId) {
-                store.completeCapture(keyCode, labelForKeyCode(keyCode));
+                store.completeCapture(keyCode, labelForKeyCode(keyCode, store.platform));
             } else {
                 store.incrementByKeyCode(keyCode);
             }

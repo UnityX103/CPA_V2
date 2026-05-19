@@ -300,6 +300,18 @@ fn build_input_counter_window_hidden(
     Ok(w)
 }
 
+fn install_main_window_exit_on_close(app: tauri::AppHandle) {
+    let Some(main) = app.get_webview_window("main") else {
+        return;
+    };
+    let app_for_close = app.clone();
+    main.on_window_event(move |event| {
+        if let tauri::WindowEvent::CloseRequested { .. } = event {
+            app_for_close.exit(0);
+        }
+    });
+}
+
 pub(crate) async fn open_settings_window_impl(app: tauri::AppHandle) -> Result<(), String> {
     let w = app.get_webview_window("settings").ok_or_else(|| {
         "settings window not built — setup() probably failed; check stderr".to_string()
@@ -394,6 +406,7 @@ pub fn run() {
             if let Err(e) = build_input_counter_window_hidden(app.handle()) {
                 eprintln!("[setup] build_input_counter_window_hidden failed: {e}");
             }
+            install_main_window_exit_on_close(app.handle().clone());
             // Focus restorer: 主窗口拖/resize 末尾把 key 还回 settings (若可见)。
             // 配合 build_settings_window_hidden 一起完成 settings 窗口的 lifecycle 闭环。
             if let Some(window) = app.get_webview_window("main") {

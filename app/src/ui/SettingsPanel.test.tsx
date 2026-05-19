@@ -623,6 +623,37 @@ describe('GlobalTab parity with Pdj9C', () => {
         expect(screen.getByRole('button', { name: '打开系统设置' })).toBeTruthy();
     });
 
+    it('finishes a Windows key capture from the focused settings window', async () => {
+        invokeMock.mockResolvedValue({ granted: true, platform: 'windows' });
+        useBindingKeyStore.setState({
+            permissionGranted: true,
+            platform: 'windows',
+            entries: [{
+                id: 'bk-space',
+                label: '未绑定',
+                keyCode: -1,
+                pressCount: 3,
+                enabled: true,
+            }],
+            capturingId: 'bk-space',
+        });
+
+        await act(async () => {
+            render(<SettingsPanel />);
+        });
+
+        await act(async () => {
+            fireEvent.keyDown(window, { key: ' ', code: 'Space', keyCode: 32, which: 32 });
+        });
+
+        expect(useBindingKeyStore.getState().capturingId).toBe(null);
+        expect(useBindingKeyStore.getState().entries[0]).toEqual(expect.objectContaining({
+            keyCode: 32,
+            label: 'Space',
+            pressCount: 0,
+        }));
+    });
+
     it('scale slider applies only when dragging ends', async () => {
         useSettingsStore.setState({
             activeTab: 'global',

@@ -152,6 +152,7 @@ export function applyDispatch(payload: DispatchPayload): void {
                 case 'removeEntry':  b.removeEntry(...payload.args); return;
                 case 'setPanelEnabled': b.setPanelEnabled(...payload.args); return;
                 case 'setSynced':    b.setSynced(...payload.args); return;
+                case 'completeCapture': b.completeCapture(...payload.args); return;
                 case 'addEntry':     b.addEntry(); return;
             }
             return;

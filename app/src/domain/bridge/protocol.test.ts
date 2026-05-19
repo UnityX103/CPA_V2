@@ -89,12 +89,13 @@ describe('bridge protocol', () => {
             { v: 1, store: 'bindingKey', action: 'removeEntry',    args: ['bk-1'] },
             { v: 1, store: 'bindingKey', action: 'setPanelEnabled', args: [false] },
             { v: 1, store: 'bindingKey', action: 'setSynced',      args: [null] },
+            { v: 1, store: 'bindingKey', action: 'completeCapture', args: [32, 'Space'] },
             { v: 1, store: 'bindingKey', action: 'addEntry',       args: [] },
             { v: 1, store: 'appUpdate',  action: 'setAutoUpdateEnabled', args: [false] },
             { v: 1, store: 'appUpdate',  action: 'checkNow',       args: [] },
             { v: 1, store: 'appUpdate',  action: 'restartForUpdate', args: [] },
         ];
-        expect(samples).toHaveLength(20);
+        expect(samples).toHaveLength(21);
         expect(samples[6]).toEqual({
             v: 1,
             store: 'pomodoro',

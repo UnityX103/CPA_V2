@@ -28,6 +28,18 @@ describe('createBindingKeyStore — settings-window mode', () => {
         spy.mockRestore();
     });
 
+    it('completeCapture dispatches the captured key back to the authoritative main store', () => {
+        const spy = vi.spyOn(dispatchMod, 'dispatch').mockResolvedValue();
+        const store = createBindingKeyStore({ isSettingsWindow: true });
+
+        store.getState().completeCapture(32, 'Space');
+
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({
+            v: BRIDGE_VERSION, store: 'bindingKey', action: 'completeCapture', args: [32, 'Space'],
+        }));
+        spy.mockRestore();
+    });
+
     it('setPanelEnabled dispatches and does not mutate local mirror state', () => {
         const spy = vi.spyOn(dispatchMod, 'dispatch').mockResolvedValue();
         const store = createBindingKeyStore({ isSettingsWindow: true });

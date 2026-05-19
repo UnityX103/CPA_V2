@@ -19,7 +19,7 @@ import {
 } from '../domain/pomodoroVideos';
 import { pickCustomWebmPath } from '../domain/videoFiles';
 import { useNetworkStore } from '../domain/network';
-import { useBindingKeyStore } from '../domain/bindingKey';
+import { labelForKeyCode, useBindingKeyStore } from '../domain/bindingKey';
 import { useAppUpdateStore, type AppUpdateStatus } from '../domain/appUpdate';
 import { shouldStartWindowDrag } from './windowDrag';
 import './SettingsPanel.css';
@@ -559,6 +559,24 @@ function GlobalTab() {
             unlisten();
         };
     }, []);
+
+    useEffect(() => {
+        if (bk.platform !== 'windows' || !bk.capturingId) return;
+
+        const completeWindowsCapture = (event: KeyboardEvent) => {
+            const keyCode = event.keyCode || event.which;
+            if (!keyCode) return;
+            event.preventDefault();
+            event.stopPropagation();
+            useBindingKeyStore.getState().completeCapture(
+                keyCode,
+                labelForKeyCode(keyCode, 'windows'),
+            );
+        };
+
+        window.addEventListener('keydown', completeWindowsCapture, true);
+        return () => window.removeEventListener('keydown', completeWindowsCapture, true);
+    }, [bk.platform, bk.capturingId]);
 
     const scalePercent = Math.round(settings.uiScale * 100);
     const displayScalePercent = scaleDragPercent ?? scalePercent;

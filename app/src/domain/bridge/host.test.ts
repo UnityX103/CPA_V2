@@ -305,6 +305,19 @@ describe('applyDispatch', () => {
         useBindingKeyStore.getState().cancelCapture();
         applyDispatch({ v: BRIDGE_VERSION, store: 'bindingKey', action: 'beginCapture', args: [entry.id] });
         expect(useBindingKeyStore.getState().capturingId).toBe(entry.id);
+
+        applyDispatch({
+            v: BRIDGE_VERSION,
+            store: 'bindingKey',
+            action: 'completeCapture',
+            args: [32, 'Space'],
+        });
+        expect(useBindingKeyStore.getState().capturingId).toBe(null);
+        expect(useBindingKeyStore.getState().entries[0]).toEqual(expect.objectContaining({
+            keyCode: 32,
+            label: 'Space',
+            pressCount: 0,
+        }));
     });
 
     it('routes app-update actions to the authoritative main store', () => {
