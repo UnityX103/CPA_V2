@@ -228,6 +228,7 @@ function normalizeOptionalRoomCode(roomCode)
 // 字符串字段最大字节数：防止恶意客户端用超长 name/bundleId/keyLabel 污染对端 UI / 内存
 // adversarial-review #1
 const MAX_STRING_FIELD_BYTES = 256;
+const MAX_ICON_DATA_URL_BYTES = 1_048_576;
 const MAX_PRESS_COUNT = 1_000_000_000;
 // icon_request 单次最多查询的 bundleId 数：防止恶意客户端用超长数组触发 per-item 循环
 // 与拉爆 IconCache 查询；macOS 上活跃 App 数远小于此值。adversarial-review codex follow-up
@@ -264,7 +265,7 @@ function normalizeActiveApp(activeApp)
     const name = clampString(activeApp.name);
     const bundleId = clampString(activeApp.bundleId);
     const windowTitle = activeApp.windowTitle == null ? undefined : clampString(activeApp.windowTitle);
-    const iconDataUrl = activeApp.iconDataUrl == null ? undefined : clampString(activeApp.iconDataUrl);
+    const iconDataUrl = activeApp.iconDataUrl == null ? undefined : clampString(activeApp.iconDataUrl, MAX_ICON_DATA_URL_BYTES);
     const iconId = activeApp.iconId == null ? undefined : clampString(activeApp.iconId);
     if (!name && !bundleId)
     {
@@ -279,15 +280,15 @@ function normalizeActiveApp(activeApp)
     });
 }
 
-function clampString(value)
+function clampString(value, maxLength = MAX_STRING_FIELD_BYTES)
 {
     if (typeof value !== 'string')
     {
         return '';
     }
-    if (value.length > MAX_STRING_FIELD_BYTES)
+    if (value.length > maxLength)
     {
-        return value.slice(0, MAX_STRING_FIELD_BYTES);
+        return value.slice(0, maxLength);
     }
     return value;
 }

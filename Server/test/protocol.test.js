@@ -179,7 +179,7 @@ test('parseClientMessage preserves active app window title and icon data', () =>
     });
 });
 
-test('parseClientMessage clamps long active app title and icon data fields', () =>
+test('parseClientMessage preserves 300-char active app icon data while clamping long title', () =>
 {
     const long = 'x'.repeat(300);
     const message = parseClientMessage(JSON.stringify({
@@ -198,7 +198,31 @@ test('parseClientMessage clamps long active app title and icon data fields', () 
     }));
 
     assert.equal(message.state.activeApp.windowTitle.length, 256);
-    assert.equal(message.state.activeApp.iconDataUrl.length, 256);
+    assert.equal(message.state.activeApp.iconDataUrl, long);
+});
+
+test('parseClientMessage clamps oversized active app icon data to the icon cache limit', () =>
+{
+    const oversizedIconDataUrl = 'x'.repeat(1_048_577);
+    const message = parseClientMessage(JSON.stringify({
+        v: PROTOCOL_VERSION,
+        type: 'player_state_update',
+        state: {
+            pomodoro: { phase: 0, remainingSeconds: 1500, currentRound: 1, totalRounds: 4, isRunning: true },
+            activeApp: {
+                name: 'App',
+                bundleId: 'com.example.App',
+                windowTitle: 'short title',
+                iconDataUrl: oversizedIconDataUrl,
+                evilExtra: 'strip-me'
+            },
+            bindingKey: null
+        }
+    }));
+
+    assert.equal(message.state.activeApp.iconDataUrl.length, 1_048_576);
+    assert.equal(message.state.activeApp.windowTitle, 'short title');
+    assert.equal(Object.hasOwn(message.state.activeApp, 'evilExtra'), false);
 });
 
 test('player_joined 使用 players 数组携带远端玩家资料，避免新增字段', () =>

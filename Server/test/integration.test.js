@@ -277,7 +277,7 @@ test('player_state_broadcast and room_snapshot preserve active app title and ico
         name: 'Visual Studio Code',
         bundleId: 'com.microsoft.VSCode',
         windowTitle: 'stateSync.ts - CPA_V2',
-        iconDataUrl: 'data:image/png;base64,QUFB'
+        iconDataUrl: `data:image/png;base64,${'A'.repeat(278)}`
     };
 
     sendJson(clientA, {

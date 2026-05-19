@@ -8,6 +8,7 @@ export const EMPTY_ROOM_TTL_MS = 30_000;
 export const PLAYER_STATE_WINDOW_MS = 1_000;
 export const MAX_PLAYER_STATE_UPDATES_PER_WINDOW = 10;
 const MAX_STRING_FIELD_BYTES = 256;
+const MAX_ICON_DATA_URL_BYTES = 1_048_576;
 
 const defaultRoomCodeFactory = customAlphabet(ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH);
 
@@ -336,7 +337,7 @@ function normalizeActiveApp(activeApp)
     const name = clampString(activeApp.name);
     const bundleId = clampString(activeApp.bundleId);
     const windowTitle = activeApp.windowTitle == null ? undefined : clampString(activeApp.windowTitle);
-    const iconDataUrl = activeApp.iconDataUrl == null ? undefined : clampString(activeApp.iconDataUrl);
+    const iconDataUrl = activeApp.iconDataUrl == null ? undefined : clampString(activeApp.iconDataUrl, MAX_ICON_DATA_URL_BYTES);
     const iconId = activeApp.iconId == null ? undefined : clampString(activeApp.iconId);
 
     if (!name && !bundleId)
@@ -353,15 +354,15 @@ function normalizeActiveApp(activeApp)
     });
 }
 
-function clampString(value)
+function clampString(value, maxLength = MAX_STRING_FIELD_BYTES)
 {
     if (typeof value !== 'string')
     {
         return '';
     }
-    if (value.length > MAX_STRING_FIELD_BYTES)
+    if (value.length > maxLength)
     {
-        return value.slice(0, MAX_STRING_FIELD_BYTES);
+        return value.slice(0, maxLength);
     }
     return value;
 }
