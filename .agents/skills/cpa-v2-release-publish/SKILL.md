@@ -1,6 +1,6 @@
 ---
 name: cpa-v2-release-publish
-description: Use when packaging CPA_V2, publishing Tauri updater artifacts, uploading GitHub Releases assets, checking macOS DMG/Gatekeeper issues, or migrating CPA_V2 release keys to another computer.
+description: Use when packaging CPA_V2, publishing Tauri updater artifacts, uploading Nanzhai CDN or GitHub Release assets, checking macOS DMG/Gatekeeper issues, or migrating CPA_V2 release keys to another computer.
 ---
 
 # CPA_V2 Release Publish
@@ -61,7 +61,7 @@ From the repo root in `CPA_V2`:
    rm -rf release-updates
    npm run release:updater -- --notes "当前版本更新" --platform darwin-aarch64
    ```
-6. Upload GitHub Release assets with stable ASCII names:
+6. Upload macOS GitHub Release assets with stable ASCII names:
    - `app/release-updates/stable/latest.json`
    - `app/release-updates/stable/<version>/app.tar.gz`
    - `app/release-updates/stable/<version>/app.tar.gz.sig`
@@ -72,14 +72,43 @@ From the repo root in `CPA_V2`:
    curl -I -L https://github.com/UnityX103/CPA_V2/releases/download/v0.1.0/CPA_V2_0.1.0_aarch64.dmg
    ```
 
+## Windows CDN Upload Flow
+
+Use this path when publishing the Windows updater package to `updates.nanzhaigame.cn`.
+
+1. Confirm the local artifacts exist:
+   - `app/release-updates/stable/latest.json`
+   - `app/release-updates/stable/<version>/CPA_V2_<version>_x64-setup.exe`
+   - `app/release-updates/stable/<version>/CPA_V2_<version>_x64-setup.exe.sig`
+2. Verify updater config before upload:
+   ```powershell
+   cd app
+   npm.cmd test -- src/updateConfig.test.ts scripts/prepare-updater-release.test.mjs
+   ```
+3. Upload to `root@139.159.233.218:/srv/cpa-updates/public/cpa`. Upload package files first, then `latest.json` last:
+   ```powershell
+   C:\WINDOWS\System32\OpenSSH\ssh.exe -i cpa-v2-release\KeyPair-bec2.pem root@139.159.233.218 "mkdir -p /srv/cpa-updates/public/cpa/stable/<version>"
+   C:\WINDOWS\System32\OpenSSH\scp.exe -i cpa-v2-release\KeyPair-bec2.pem app\release-updates\stable\<version>\CPA_V2_<version>_x64-setup.exe app\release-updates\stable\<version>\CPA_V2_<version>_x64-setup.exe.sig root@139.159.233.218:/srv/cpa-updates/public/cpa/stable/<version>/
+   C:\WINDOWS\System32\OpenSSH\scp.exe -i cpa-v2-release\KeyPair-bec2.pem app\release-updates\stable\latest.json root@139.159.233.218:/srv/cpa-updates/public/cpa/stable/latest.json
+   ```
+4. Verify the public CDN:
+   ```powershell
+   curl.exe -fsSL https://updates.nanzhaigame.cn/cpa/stable/latest.json
+   curl.exe -I -L https://updates.nanzhaigame.cn/cpa/stable/<version>/CPA_V2_<version>_x64-setup.exe
+   curl.exe -I -L https://updates.nanzhaigame.cn/cpa/stable/<version>/CPA_V2_<version>_x64-setup.exe.sig
+   ```
+
 ## Important Gotchas
 
-- Current updater endpoint should be GitHub Releases:
-  `https://github.com/UnityX103/CPA_V2/releases/latest/download/latest.json`
+- Current updater endpoint should be the Nanzhai CDN:
+  `https://updates.nanzhaigame.cn/cpa/stable/latest.json`
 - GitHub normalizes non-ASCII asset names. Use ASCII release asset names for updater artifacts (`app.tar.gz`, `app.tar.gz.sig`) and DMG (`CPA_V2_<version>_aarch64.dmg`).
 - `--no-sign` skips Apple code signing and notarization. It is acceptable for local packaging but not a polished public macOS release.
 - If a downloaded DMG installs an app that macOS says is damaged, check with `hdiutil verify`, `codesign --verify --deep --strict`, and `spctl --assess`. Without Developer ID + notarization, users may need to remove quarantine manually.
 - Windows releases must be built on Windows and then merged into `latest.json`; do not overwrite the existing macOS platform entry.
+- On Windows, the Bash inventory helper may be unavailable. Do the equivalent checks in PowerShell: `git status --short --branch`, `gh auth status`, release artifact existence, and updater tests. An invalid `gh` token blocks GitHub Release uploads but does not block Nanzhai CDN upload via SSH.
+- Windows OpenSSH refuses private keys with broad ACLs. If `KeyPair-bec2.pem` reports `UNPROTECTED PRIVATE KEY FILE`, restrict it to the current Windows user before retrying; never print or copy the key contents.
+- Upload `latest.json` last so clients never see metadata for package files that are still transferring.
 
 ## References
 

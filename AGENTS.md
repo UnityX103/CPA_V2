@@ -39,6 +39,13 @@ CPA_V2/
 - All tests: `cd Server && npm test` (which runs `node --test test/*.js` — not `node --test test/`, see `Server/README.md` for why on Node 25)
 - Single test file: `cd Server && node --test test/protocol.test.js`
 
+### Updater release publishing
+- The updater CDN endpoint is `https://updates.nanzhaigame.cn/cpa/stable/latest.json`.
+- Publish generated files from `app/release-updates/` to the CDN path backing `updates.nanzhaigame.cn/cpa/`.
+- The target server for CDN publishing is the Huawei personal server `root@139.159.233.218`.
+- SSH credentials are not stored in this repo. `ServerAI/CLAUDE.md` references `.ssh/KeyPair-1c90.pem`; confirm the local key path before uploading.
+- For Windows updater packages, `latest.json` must include `windows-x86_64-nsis` and `windows-x86_64` platform keys in addition to macOS keys.
+
 ## Architecture: state layering (borrowed from Unity QFramework)
 
 The domain layer is structured to mirror what existed in Unity, so the Unity field names and module boundaries carry over directly:
