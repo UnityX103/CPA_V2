@@ -1,0 +1,15 @@
+{
+    "name": "pomodoro-mp-server",
+    "version": "1.0.0",
+    "private": true,
+    "type": "module",
+    "description": "桌宠多人番茄钟 WebSocket 后端",
+    "scripts": {
+        "start": "node src/index.js",
+        "test": "node --test test/*.js"
+    },
+    "dependencies": {
+        "nanoid": "^5.1.5",
+        "ws": "^8.18.1"
+    }
+}
