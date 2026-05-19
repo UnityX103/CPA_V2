@@ -26,9 +26,11 @@ export default function RemotePlayerCardApp() {
             if (cancelled) return;
 
             const position = await currentWindow.outerPosition();
+            const scaleFactor = await currentWindow.scaleFactor();
             if (cancelled) return;
 
-            await saveRemotePlayerCardPosition(playerId, { x: position.x, y: position.y });
+            const logical = position.toLogical(scaleFactor);
+            await saveRemotePlayerCardPosition(playerId, { x: logical.x, y: logical.y });
         })
             .then((cleanup) => {
                 if (cancelled) {

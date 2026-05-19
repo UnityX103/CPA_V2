@@ -101,6 +101,7 @@ describe('remote player windows', () => {
             decorations: false,
             alwaysOnTop: true,
             resizable: false,
+            preventOverflow: true,
             shadow: false,
             skipTaskbar: true,
             focus: false,

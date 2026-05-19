@@ -79,10 +79,15 @@ export function useStateSync() {
             }
         });
 
+        const unsubA = useActiveAppStore.subscribe(() => {
+            send();
+        });
+
         const interval = setInterval(send, 5000);
         return () => {
             unsubP();
             unsubN();
+            unsubA();
             clearInterval(interval);
         };
     }, []);

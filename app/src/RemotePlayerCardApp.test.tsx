@@ -16,7 +16,12 @@ const {
 vi.mock('@tauri-apps/api/window', () => ({
     getCurrentWindow: () => ({
         onMoved: onMovedMock,
-        outerPosition: () => Promise.resolve({ x: 12, y: 34 }),
+        outerPosition: () => Promise.resolve({
+            x: 24,
+            y: 68,
+            toLogical: (scaleFactor: number) => ({ x: 24 / scaleFactor, y: 68 / scaleFactor }),
+        }),
+        scaleFactor: () => Promise.resolve(2),
     }),
 }));
 
@@ -84,7 +89,7 @@ describe('RemotePlayerCardApp', () => {
         expect(screen.queryByText('本地玩家')).toBeNull();
     });
 
-    it('saves native card window position on move', async () => {
+    it('saves logical card window position on move', async () => {
         const { default: RemotePlayerCardApp } = await import('./RemotePlayerCardApp');
 
         render(<RemotePlayerCardApp />);

@@ -45,7 +45,7 @@ const TARGETS: Target[] = [
     {
         id: 'vnYnS',
         label: '设置面板 vnYnS (460×394→440)',
-        image: '/dev-align/vnYnS.png',
+        image: 'dev-align/vnYnS.png',
         width: 460,
         height: 394,
         render: () => <SettingsPanel />,
@@ -54,7 +54,7 @@ const TARGETS: Target[] = [
     {
         id: 'YRqeB',
         label: '番茄面板 YRqeB (233×155)',
-        image: '/dev-align/YRqeB.png',
+        image: 'dev-align/YRqeB.png',
         width: 233,
         height: 155,
         render: () => <PomodoroPanel />,
@@ -62,7 +62,7 @@ const TARGETS: Target[] = [
     {
         id: 'drqFB',
         label: '玩家卡片 drqFB (153×94)',
-        image: '/dev-align/drqFB.png',
+        image: 'dev-align/drqFB.png',
         width: 153,
         height: 94,
         render: () => <PlayerCard player={MOCK_PLAYER} />,
