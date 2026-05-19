@@ -151,6 +151,56 @@ test('parseClientMessage 会过滤 bindingKey 中不在白名单内的字段', (
     assert.deepEqual(message.state.bindingKey, { keyLabel: 'F', pressCount: 3 });
 });
 
+test('parseClientMessage preserves active app window title and icon data', () =>
+{
+    const message = parseClientMessage(JSON.stringify({
+        v: PROTOCOL_VERSION,
+        type: 'player_state_update',
+        state: {
+            pomodoro: { phase: 0, remainingSeconds: 1500, currentRound: 1, totalRounds: 4, isRunning: true },
+            activeApp: {
+                name: 'Visual Studio Code',
+                bundleId: 'com.microsoft.VSCode',
+                windowTitle: 'network.ts - CPA_V2',
+                iconDataUrl: 'data:image/png;base64,QUFB',
+                iconId: 'com.microsoft.VSCode:cached',
+                evilExtra: 'strip-me'
+            },
+            bindingKey: null
+        }
+    }));
+
+    assert.deepEqual(message.state.activeApp, {
+        name: 'Visual Studio Code',
+        bundleId: 'com.microsoft.VSCode',
+        windowTitle: 'network.ts - CPA_V2',
+        iconDataUrl: 'data:image/png;base64,QUFB',
+        iconId: 'com.microsoft.VSCode:cached'
+    });
+});
+
+test('parseClientMessage clamps long active app title and icon data fields', () =>
+{
+    const long = 'x'.repeat(300);
+    const message = parseClientMessage(JSON.stringify({
+        v: PROTOCOL_VERSION,
+        type: 'player_state_update',
+        state: {
+            pomodoro: { phase: 0, remainingSeconds: 1500, currentRound: 1, totalRounds: 4, isRunning: true },
+            activeApp: {
+                name: 'App',
+                bundleId: 'com.example.App',
+                windowTitle: long,
+                iconDataUrl: long
+            },
+            bindingKey: null
+        }
+    }));
+
+    assert.equal(message.state.activeApp.windowTitle.length, 256);
+    assert.equal(message.state.activeApp.iconDataUrl.length, 256);
+});
+
 test('player_joined 使用 players 数组携带远端玩家资料，避免新增字段', () =>
 {
     const encoded = encodeMessage(createPlayerJoinedMessage({

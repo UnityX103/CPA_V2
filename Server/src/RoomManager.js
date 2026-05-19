@@ -7,6 +7,7 @@ export const MAX_PLAYER_NAME_LENGTH = 16;
 export const EMPTY_ROOM_TTL_MS = 30_000;
 export const PLAYER_STATE_WINDOW_MS = 1_000;
 export const MAX_PLAYER_STATE_UPDATES_PER_WINDOW = 10;
+const MAX_STRING_FIELD_BYTES = 256;
 
 const defaultRoomCodeFactory = customAlphabet(ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH);
 
@@ -318,9 +319,58 @@ function normalizeRemoteState(state)
             totalRounds: normalizeInteger(pomodoro.totalRounds, 'INVALID_STATE'),
             isRunning: Boolean(pomodoro.isRunning)
         },
-        activeApp: state.activeApp ?? null,
+        activeApp: normalizeActiveApp(state.activeApp),
         bindingKey: normalizeBindingKey(state.bindingKey)
     };
+}
+
+// 见 protocol.js 同名函数：RoomManager 也作为房间状态可信源执行白名单归一化，
+// 防止直接调用 RoomManager API 时绕过协议层，把未知 activeApp 字段广播给其他玩家。
+function normalizeActiveApp(activeApp)
+{
+    if (activeApp == null || typeof activeApp !== 'object')
+    {
+        return null;
+    }
+
+    const name = clampString(activeApp.name);
+    const bundleId = clampString(activeApp.bundleId);
+    const windowTitle = activeApp.windowTitle == null ? undefined : clampString(activeApp.windowTitle);
+    const iconDataUrl = activeApp.iconDataUrl == null ? undefined : clampString(activeApp.iconDataUrl);
+    const iconId = activeApp.iconId == null ? undefined : clampString(activeApp.iconId);
+
+    if (!name && !bundleId)
+    {
+        return null;
+    }
+
+    return stripUndefinedFields({
+        name,
+        bundleId,
+        windowTitle,
+        iconDataUrl,
+        iconId
+    });
+}
+
+function clampString(value)
+{
+    if (typeof value !== 'string')
+    {
+        return '';
+    }
+    if (value.length > MAX_STRING_FIELD_BYTES)
+    {
+        return value.slice(0, MAX_STRING_FIELD_BYTES);
+    }
+    return value;
+}
+
+function stripUndefinedFields(message)
+{
+    return Object.fromEntries(
+        Object.entries(message).filter(([, value]) => value !== undefined)
+    );
 }
 
 // 见 protocol.js 同名函数：白名单 keyLabel + pressCount，null 透传，pressCount 钳到 [0, +∞)。

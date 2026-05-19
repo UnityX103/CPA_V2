@@ -249,6 +249,64 @@ test('room_snapshot 把已有玩家的 bindingKey 透传给新进来的玩家（
     assert.deepEqual(playerA.state.bindingKey, { keyLabel: 'F', pressCount: 3 });
 });
 
+test('player_state_broadcast and room_snapshot preserve active app title and icon data', async (t) =>
+{
+    const app = await createPomodoroServer({
+        port: 0,
+        heartbeatIntervalMs: 5000,
+        initTimeoutMs: 1000
+    });
+    t.after(async () => { await app.close(); });
+
+    const clientA = await openClient(app.url);
+    const clientB = await openClient(app.url);
+    const inboxA = createMessageCollector(clientA);
+    const inboxB = createMessageCollector(clientB);
+    t.after(() => { clientA.close(); clientB.close(); });
+
+    sendJson(clientA, { type: 'create_room', playerName: 'A' });
+    const roomCreated = await inboxA.waitFor('room_created');
+    await inboxA.waitFor('room_snapshot');
+
+    sendJson(clientB, { type: 'join_room', roomCode: roomCreated.roomCode, playerName: 'B' });
+    await inboxB.waitFor('room_joined');
+    await inboxB.waitFor('room_snapshot');
+    await inboxA.waitFor('player_joined');
+
+    const activeApp = {
+        name: 'Visual Studio Code',
+        bundleId: 'com.microsoft.VSCode',
+        windowTitle: 'stateSync.ts - CPA_V2',
+        iconDataUrl: 'data:image/png;base64,QUFB'
+    };
+
+    sendJson(clientA, {
+        type: 'player_state_update',
+        state: {
+            pomodoro: { phase: 0, remainingSeconds: 1499, currentRound: 1, totalRounds: 4, isRunning: true },
+            activeApp,
+            bindingKey: { keyLabel: 'Space', pressCount: 9 }
+        }
+    });
+
+    const broadcast = await inboxB.waitFor('player_state_broadcast');
+    assert.deepEqual(broadcast.state.activeApp, activeApp);
+    assert.deepEqual(broadcast.state.bindingKey, { keyLabel: 'Space', pressCount: 9 });
+
+    const clientC = await openClient(app.url);
+    const inboxC = createMessageCollector(clientC);
+    t.after(() => { clientC.close(); });
+
+    sendJson(clientC, { type: 'join_room', roomCode: roomCreated.roomCode, playerName: 'C' });
+    await inboxC.waitFor('room_joined');
+    const snapshot = await inboxC.waitFor('room_snapshot');
+    const playerA = snapshot.players.find((p) => p.playerName === 'A');
+
+    assert.ok(playerA, 'snapshot includes A');
+    assert.deepEqual(playerA.state.activeApp, activeApp);
+    assert.deepEqual(playerA.state.bindingKey, { keyLabel: 'Space', pressCount: 9 });
+});
+
 test('图标流程：state_update → icon_need → icon_upload → icon_broadcast', async (t) =>
 {
     const app = await createPomodoroServer({

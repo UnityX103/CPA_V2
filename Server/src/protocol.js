@@ -263,12 +263,20 @@ function normalizeActiveApp(activeApp)
     }
     const name = clampString(activeApp.name);
     const bundleId = clampString(activeApp.bundleId);
+    const windowTitle = activeApp.windowTitle == null ? undefined : clampString(activeApp.windowTitle);
+    const iconDataUrl = activeApp.iconDataUrl == null ? undefined : clampString(activeApp.iconDataUrl);
     const iconId = activeApp.iconId == null ? undefined : clampString(activeApp.iconId);
     if (!name && !bundleId)
     {
         return null;
     }
-    return iconId ? { name, bundleId, iconId } : { name, bundleId };
+    return stripUndefinedFields({
+        name,
+        bundleId,
+        windowTitle,
+        iconDataUrl,
+        iconId
+    });
 }
 
 function clampString(value)
