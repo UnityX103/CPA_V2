@@ -15,6 +15,8 @@ interface PersistedRemotePlayerCardPositionsV1 {
     positions: RemotePlayerCardPositions;
 }
 
+let saveQueue: Promise<void> = Promise.resolve();
+
 function isRemotePlayerCardPosition(value: unknown): value is RemotePlayerCardPosition {
     if (!value || typeof value !== 'object') return false;
 
@@ -54,6 +56,15 @@ export async function loadRemotePlayerCardPositions(): Promise<RemotePlayerCardP
 }
 
 export async function saveRemotePlayerCardPosition(
+    playerId: string,
+    position: RemotePlayerCardPosition,
+): Promise<void> {
+    const save = () => saveRemotePlayerCardPositionNow(playerId, position);
+    saveQueue = saveQueue.then(save, save);
+    await saveQueue;
+}
+
+async function saveRemotePlayerCardPositionNow(
     playerId: string,
     position: RemotePlayerCardPosition,
 ): Promise<void> {

@@ -81,4 +81,27 @@ describe('remotePlayerCardPositions', () => {
         });
         expect(store.save).toHaveBeenCalledTimes(1);
     });
+
+    it('serializes concurrent saves so the final payload keeps both player positions', async () => {
+        let persisted: unknown;
+        store.get.mockImplementation(() => Promise.resolve(persisted));
+        store.set.mockImplementation((_, value) => {
+            persisted = value;
+            return Promise.resolve();
+        });
+        const { saveRemotePlayerCardPosition } = await import('./remotePlayerCardPositions');
+
+        const firstSave = saveRemotePlayerCardPosition('p1', { x: 10, y: 20 });
+        const secondSave = saveRemotePlayerCardPosition('p2', { x: 30, y: 40 });
+
+        await Promise.all([firstSave, secondSave]);
+
+        expect(persisted).toEqual({
+            v: 1,
+            positions: {
+                p1: { x: 10, y: 20 },
+                p2: { x: 30, y: 40 },
+            },
+        });
+    });
 });
