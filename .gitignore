@@ -16,6 +16,9 @@ build.log
 .vscode/
 .idea/
 
+# Local release credential pack. Contains private keys and passwords.
+/cpa-v2-release/
+
 # Server has its own git repo — track via submodule later if desired
 Server/.git/
 Server/node_modules/

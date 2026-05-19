@@ -4,17 +4,25 @@ Use this when moving release capability to another Mac or Windows machine.
 
 ## Secret Path Config
 
-The canonical local config is:
+The canonical self-contained credential pack lives inside the repo root:
 
 ```bash
-~/.config/cpa-v2-release/release-secret-paths.env
+CPA_V2/cpa-v2-release/
 ```
 
-It contains only paths and public identifiers. The files named by those paths contain the sensitive data.
+That directory is ignored by Git. It should contain:
+
+```bash
+cpa-v2-release/release-secret-paths.env
+```
+
+The config derives `CPA_V2_REPO` from its own directory, so it does not need to store the machine-specific project path. The files named by the key path variables live next to the config file.
+
+For compatibility with existing helper scripts, `~/.config/cpa-v2-release/release-secret-paths.env` can be a shim that sources the repo-local config.
 
 ## Files To Migrate
 
-Copy these files securely to the same paths, or update the config paths on the new machine:
+Copy the whole `cpa-v2-release/` directory securely. It should contain these files:
 
 ```text
 CPA_UPDATER_PRIVATE_KEY_PATH     Tauri updater private key
@@ -29,8 +37,8 @@ Also restore `gh auth login`; the GitHub token is stored by GitHub CLI/keychain 
 ## New Machine Checklist
 
 1. Install Node, npm, Rust stable, Tauri prerequisites, GitHub CLI, Xcode command line tools.
-2. Copy or recreate `~/.config/cpa-v2-release/release-secret-paths.env`.
-3. Copy secret files with `chmod 600` for private keys and password files.
+2. Copy `cpa-v2-release/` into the CPA_V2 repo root on the new machine.
+3. Set `chmod 700 cpa-v2-release` and `chmod 600` for private keys and password files.
 4. Update `RUST_TOOLCHAIN_BIN` if the Rust toolchain path differs.
 5. Confirm:
    ```bash

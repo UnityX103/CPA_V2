@@ -7,7 +7,13 @@ description: Use when packaging CPA_V2, publishing Tauri updater artifacts, uplo
 
 ## Core Rule
 
-Treat release signing keys, GitHub tokens, Apple credentials, and SSH private keys as local secrets. Never print, paste, commit, or upload secret contents. Use the path config at:
+Treat release signing keys, GitHub tokens, Apple credentials, and SSH private keys as local secrets. Never print, paste, commit, or upload secret contents. Keep the self-contained credential pack in the repo root at:
+
+```bash
+cpa-v2-release/
+```
+
+This directory is ignored by Git and should contain `release-secret-paths.env` plus the key files it references. The global config can be a tiny shim that sources the repo-local config:
 
 ```bash
 ~/.config/cpa-v2-release/release-secret-paths.env
@@ -23,8 +29,11 @@ If the local secret config is missing, copy the template first:
 
 ```bash
 mkdir -p ~/.config/cpa-v2-release
+mkdir -p cpa-v2-release
 cp .agents/skills/cpa-v2-release-publish/assets/release-secret-paths.env.example \
-  ~/.config/cpa-v2-release/release-secret-paths.env
+  cpa-v2-release/release-secret-paths.env
+printf 'source "%s/cpa-v2-release/release-secret-paths.env"\n' "$(pwd)" \
+  > ~/.config/cpa-v2-release/release-secret-paths.env
 ```
 
 ## Release Flow
