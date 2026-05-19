@@ -8,6 +8,7 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "release:updater": "node scripts/prepare-updater-release.mjs",
+    "test:player-card-visual": "node scripts/compare-player-card.mjs",
     "test": "vitest run",
     "tauri": "tauri"
   },

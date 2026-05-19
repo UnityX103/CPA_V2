@@ -78,9 +78,18 @@ const TABS: Array<{ id: SettingsTab; label: string }> = [
     { id: 'global', label: '全局' },
 ];
 
+function initialTargetId(): string {
+    const target = new URLSearchParams(window.location.search).get('target');
+    return TARGETS.some((item) => item.id === target) ? target! : TARGETS[0].id;
+}
+
+function initialMode(): Mode {
+    return new URLSearchParams(window.location.search).get('mode') === 'overlay' ? 'overlay' : 'side';
+}
+
 export default function DevAlignApp() {
-    const [targetId, setTargetId] = useState(TARGETS[0].id);
-    const [mode, setMode] = useState<Mode>('side');
+    const [targetId, setTargetId] = useState(initialTargetId);
+    const [mode, setMode] = useState<Mode>(initialMode);
     const [opacity, setOpacity] = useState(50);
     const [showGrid, setShowGrid] = useState(false);
     const [bg, setBg] = useState<'checker' | 'white' | 'dark'>('checker');
