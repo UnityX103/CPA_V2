@@ -18,7 +18,7 @@ import { useBindingKeyStore } from '../bindingKey';
 import { useActiveAppStore } from '../activeApp';
 import { BRIDGE_VERSION } from './protocol';
 import { useAppUpdateStore } from '../appUpdate';
-import { REMOTE_PLAYER_WINDOW_LABELS } from '../remotePlayerWindows';
+import { REMOTE_PLAYER_WINDOW_LABELS } from '../remotePlayerWindowLabels';
 
 type BindingKeySigInput = Parameters<typeof bindingKeySig>[0];
 type BindingKeyStateWithPermission = BindingKeySigInput & {

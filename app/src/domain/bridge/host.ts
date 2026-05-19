@@ -7,7 +7,7 @@ import { useNetworkStore, type RemotePlayer } from '../network';
 import { useBindingKeyStore, type BindingKeyEntry } from '../bindingKey';
 import { useActiveAppStore, type ActiveAppInfo } from '../activeApp';
 import { useAppUpdateStore, type AppUpdateSnapshot } from '../appUpdate';
-import { REMOTE_PLAYER_WINDOW_LABELS } from '../remotePlayerWindows';
+import { REMOTE_PLAYER_WINDOW_LABELS } from '../remotePlayerWindowLabels';
 import {
     BRIDGE_VERSION,
     EVT_DISPATCH,

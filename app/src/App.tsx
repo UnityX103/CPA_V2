@@ -7,6 +7,7 @@ import { useActiveAppListener } from './domain/activeApp';
 import { useBindingKeyListener } from './domain/bindingKey';
 import { useBridgeHost } from './domain/bridge/host';
 import { useInputCounterWindowController } from './domain/inputCounterWindow';
+import { useRemotePlayerWindowController } from './domain/remotePlayerWindows';
 import { MAIN_WINDOW_BASE_SIZE, useScaledWindowSize } from './domain/scaledWindow';
 import { useAppUpdateStore } from './domain/appUpdate';
 import { useSettingsStore } from './domain/settings';
@@ -18,6 +19,7 @@ export default function App() {
     useBindingKeyListener();
     useBridgeHost();
     useInputCounterWindowController();
+    useRemotePlayerWindowController();
     const uiScale = useSettingsStore((s) => s.uiScale);
     const [settingsHydrated, setSettingsHydrated] = useState(false);
     useScaledWindowSize({

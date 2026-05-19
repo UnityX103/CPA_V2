@@ -7,18 +7,10 @@ import {
     type RemotePlayerCardPositions,
     type RemotePlayerCardPosition,
 } from './remotePlayerCardPositions';
-
-export const REMOTE_PLAYER_WINDOW_LABELS = [
-    'remote-player-0',
-    'remote-player-1',
-    'remote-player-2',
-    'remote-player-3',
-    'remote-player-4',
-    'remote-player-5',
-    'remote-player-6',
-] as const;
-
-type RemotePlayerWindowLabel = typeof REMOTE_PLAYER_WINDOW_LABELS[number];
+import {
+    REMOTE_PLAYER_WINDOW_LABELS,
+    type RemotePlayerWindowLabel,
+} from './remotePlayerWindowLabels';
 
 interface SyncRemotePlayerWindowsInput {
     localPlayerId: string | null;
@@ -37,12 +29,8 @@ const DEFAULT_Y = 160;
 const DEFAULT_OFFSET = 24;
 
 let assignments = new Map<string, Assignment>();
-let positionsPromise: Promise<RemotePlayerCardPositions> | null = null;
-
-function loadPositionsOnce(): Promise<RemotePlayerCardPositions> {
-    positionsPromise ??= loadRemotePlayerCardPositions();
-    return positionsPromise;
-}
+let syncQueue: Promise<void> = Promise.resolve();
+let syncGeneration = 0;
 
 function sortedRemotePlayerIds(input: SyncRemotePlayerWindowsInput): string[] {
     return Object.values(input.players)
@@ -76,40 +64,56 @@ async function closeLabel(label: RemotePlayerWindowLabel): Promise<void> {
     }
 }
 
+function isStaleSync(generation: number, signal?: AbortSignal): boolean {
+    return generation !== syncGeneration || signal?.aborted === true;
+}
+
 function openWindow(
     label: RemotePlayerWindowLabel,
     playerId: string,
     position: RemotePlayerCardPosition,
-): void {
+): boolean {
     const params = new URLSearchParams({
         window: 'remote-player',
         playerId,
     });
 
-    const remoteWindow = new WebviewWindow(label, {
-        url: `index.html?${params.toString()}`,
-        title: playerId,
-        x: Math.round(position.x),
-        y: Math.round(position.y),
-        width: CARD_WIDTH,
-        height: CARD_HEIGHT,
-        transparent: true,
-        decorations: false,
-        alwaysOnTop: true,
-        resizable: false,
-        shadow: false,
-        skipTaskbar: true,
-        focus: false,
-        backgroundColor: [0, 0, 0, 0],
-        dragDropEnabled: false,
-    });
+    try {
+        const remoteWindow = new WebviewWindow(label, {
+            url: `index.html?${params.toString()}`,
+            title: playerId,
+            x: Math.round(position.x),
+            y: Math.round(position.y),
+            width: CARD_WIDTH,
+            height: CARD_HEIGHT,
+            transparent: true,
+            decorations: false,
+            alwaysOnTop: true,
+            resizable: false,
+            shadow: false,
+            skipTaskbar: true,
+            focus: false,
+            backgroundColor: [0, 0, 0, 0],
+            dragDropEnabled: false,
+        });
 
-    remoteWindow.once('tauri://error', (event) => {
-        console.warn('[remote-player] failed to create window', label, event.payload);
-    }).catch(() => {});
+        remoteWindow.once('tauri://error', (event) => {
+            console.warn('[remote-player] failed to create window', label, event.payload);
+        }).catch(() => {});
+        return true;
+    } catch (err) {
+        console.warn('[remote-player] failed to create window', label, err);
+        return false;
+    }
 }
 
-export async function syncRemotePlayerWindows(input: SyncRemotePlayerWindowsInput): Promise<void> {
+async function syncRemotePlayerWindowsNow(
+    input: SyncRemotePlayerWindowsInput,
+    generation: number,
+    signal?: AbortSignal,
+): Promise<void> {
+    if (isStaleSync(generation, signal)) return;
+
     const desiredPlayerIds = new Set(sortedRemotePlayerIds(input));
 
     await Promise.all([...assignments.entries()].map(async ([playerId, assignment]) => {
@@ -117,21 +121,43 @@ export async function syncRemotePlayerWindows(input: SyncRemotePlayerWindowsInpu
         assignments.delete(playerId);
         await closeLabel(assignment.label);
     }));
+    if (isStaleSync(generation, signal)) return;
 
-    const positions = await loadPositionsOnce();
+    const needsOpen = [...desiredPlayerIds].some((playerId) => !assignments.has(playerId));
+    if (!needsOpen) return;
+
+    const positions = await loadRemotePlayerCardPositions();
     for (const playerId of desiredPlayerIds) {
+        if (isStaleSync(generation, signal)) return;
         if (assignments.has(playerId)) continue;
 
         const usedLabels = new Set([...assignments.values()].map((assignment) => assignment.label));
         const label = REMOTE_PLAYER_WINDOW_LABELS.find((candidate) => !usedLabels.has(candidate));
         if (!label) return;
 
-        assignments.set(playerId, { label, playerId });
-        openWindow(label, playerId, windowPosition(playerId, label, positions));
+        await closeLabel(label);
+        if (isStaleSync(generation, signal)) return;
+
+        if (openWindow(label, playerId, windowPosition(playerId, label, positions))) {
+            assignments.set(playerId, { label, playerId });
+        }
     }
 }
 
+export function syncRemotePlayerWindows(
+    input: SyncRemotePlayerWindowsInput,
+    opts: { signal?: AbortSignal } = {},
+): Promise<void> {
+    const generation = ++syncGeneration;
+    const run = syncQueue
+        .catch(() => {})
+        .then(() => syncRemotePlayerWindowsNow(input, generation, opts.signal));
+    syncQueue = run.catch(() => {});
+    return run;
+}
+
 export async function closeAllRemotePlayerWindows(): Promise<void> {
+    syncGeneration += 1;
     const labels = [...assignments.values()].map((assignment) => assignment.label);
     assignments = new Map();
     await Promise.all(labels.map((label) => closeLabel(label)));
@@ -139,7 +165,8 @@ export async function closeAllRemotePlayerWindows(): Promise<void> {
 
 export function resetRemotePlayerWindowControllerForTest(): void {
     assignments = new Map();
-    positionsPromise = null;
+    syncQueue = Promise.resolve();
+    syncGeneration = 0;
 }
 
 export function useRemotePlayerWindowController(): void {
@@ -147,6 +174,12 @@ export function useRemotePlayerWindowController(): void {
     const players = useNetworkStore((s) => s.players);
 
     useEffect(() => {
-        void syncRemotePlayerWindows({ localPlayerId, players });
+        const controller = new AbortController();
+        void syncRemotePlayerWindows({ localPlayerId, players }, { signal: controller.signal });
+        return () => {
+            controller.abort();
+        };
     }, [localPlayerId, players]);
 }
+
+export { REMOTE_PLAYER_WINDOW_LABELS };

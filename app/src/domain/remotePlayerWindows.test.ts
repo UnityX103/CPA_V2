@@ -1,5 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, renderHook, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RemotePlayer } from './network';
+import { useNetworkStore } from './network';
 
 const { constructorMock, getByLabelMock, onceMock } = vi.hoisted(() => ({
     constructorMock: vi.fn(),
@@ -10,6 +12,14 @@ const { constructorMock, getByLabelMock, onceMock } = vi.hoisted(() => ({
 const { loadPositionsMock } = vi.hoisted(() => ({
     loadPositionsMock: vi.fn(),
 }));
+
+function deferred<T>() {
+    let resolve!: (value: T) => void;
+    const promise = new Promise<T>((r) => {
+        resolve = r;
+    });
+    return { promise, resolve };
+}
 
 vi.mock('@tauri-apps/api/webviewWindow', () => ({
     WebviewWindow: class {
@@ -46,10 +56,18 @@ describe('remote player windows', () => {
 
         const module = await import('./remotePlayerWindows');
         module.resetRemotePlayerWindowControllerForTest();
+        useNetworkStore.setState({
+            playerId: null,
+            players: {},
+        });
+    });
+
+    afterEach(() => {
+        vi.clearAllMocks();
     });
 
     it('exports seven fixed remote player window labels', async () => {
-        const { REMOTE_PLAYER_WINDOW_LABELS } = await import('./remotePlayerWindows');
+        const { REMOTE_PLAYER_WINDOW_LABELS } = await import('./remotePlayerWindowLabels');
 
         expect(REMOTE_PLAYER_WINDOW_LABELS).toEqual([
             'remote-player-0',
@@ -114,6 +132,117 @@ describe('remote player windows', () => {
         }));
     });
 
+    it('loads freshly saved positions when a closed player window is reopened', async () => {
+        const { syncRemotePlayerWindows } = await import('./remotePlayerWindows');
+        loadPositionsMock
+            .mockResolvedValueOnce({ remote: { x: 321, y: 654 } })
+            .mockResolvedValueOnce({ remote: { x: 987, y: 123 } });
+
+        await syncRemotePlayerWindows({
+            localPlayerId: 'local',
+            players: {
+                local: player('local'),
+                remote: player('remote'),
+            },
+        });
+        await syncRemotePlayerWindows({
+            localPlayerId: 'local',
+            players: {
+                local: player('local'),
+            },
+        });
+        await syncRemotePlayerWindows({
+            localPlayerId: 'local',
+            players: {
+                local: player('local'),
+                remote: player('remote'),
+            },
+        });
+
+        expect(loadPositionsMock).toHaveBeenCalledTimes(2);
+        expect(constructorMock).toHaveBeenNthCalledWith(2, 'remote-player-0', expect.objectContaining({
+            x: 987,
+            y: 123,
+        }));
+    });
+
+    it('lets newer state win when an older sync is still loading positions', async () => {
+        const { syncRemotePlayerWindows } = await import('./remotePlayerWindows');
+        const firstPositions = deferred<Record<string, never>>();
+        loadPositionsMock
+            .mockReturnValueOnce(firstPositions.promise)
+            .mockResolvedValueOnce({});
+
+        const firstSync = syncRemotePlayerWindows({
+            localPlayerId: 'local',
+            players: {
+                local: player('local'),
+                a: player('a'),
+            },
+        });
+        const secondSync = syncRemotePlayerWindows({
+            localPlayerId: 'local',
+            players: {
+                local: player('local'),
+                b: player('b'),
+            },
+        });
+
+        firstPositions.resolve({});
+        await Promise.all([firstSync, secondSync]);
+
+        expect(constructorMock).toHaveBeenCalledTimes(1);
+        expect(constructorMock).toHaveBeenCalledWith('remote-player-0', expect.objectContaining({
+            url: 'index.html?window=remote-player&playerId=b',
+        }));
+    });
+
+    it('closes any existing same-label window before creating a remote player window', async () => {
+        const { syncRemotePlayerWindows } = await import('./remotePlayerWindows');
+        const close = vi.fn().mockResolvedValue(undefined);
+        getByLabelMock.mockResolvedValue({ close });
+
+        await syncRemotePlayerWindows({
+            localPlayerId: 'local',
+            players: {
+                local: player('local'),
+                remote: player('remote'),
+            },
+        });
+
+        expect(getByLabelMock).toHaveBeenCalledWith('remote-player-0');
+        expect(close).toHaveBeenCalledTimes(1);
+        expect(close.mock.invocationCallOrder[0]).toBeLessThan(
+            constructorMock.mock.invocationCallOrder[0],
+        );
+    });
+
+    it('does not keep an assignment when creating the window fails before construction completes', async () => {
+        const { syncRemotePlayerWindows } = await import('./remotePlayerWindows');
+        constructorMock
+            .mockImplementationOnce(() => {
+                throw new Error('boom');
+            })
+            .mockImplementation(() => {});
+
+        await syncRemotePlayerWindows({
+            localPlayerId: 'local',
+            players: {
+                local: player('local'),
+                remote: player('remote'),
+            },
+        });
+        await syncRemotePlayerWindows({
+            localPlayerId: 'local',
+            players: {
+                local: player('local'),
+                remote: player('remote'),
+            },
+        });
+
+        expect(constructorMock).toHaveBeenCalledTimes(2);
+    });
+
     it('does not recreate assigned windows on later state updates', async () => {
         const { syncRemotePlayerWindows } = await import('./remotePlayerWindows');
 
@@ -150,6 +279,7 @@ describe('remote player windows', () => {
                 local: player('local'),
             },
         });
+        closeByLabel.forEach((close) => close.mockClear());
         await syncRemotePlayerWindows({
             localPlayerId: 'local',
             players: {
@@ -159,11 +289,36 @@ describe('remote player windows', () => {
             },
         });
 
-        expect(closeByLabel.get('remote-player-0')).toHaveBeenCalledOnce();
+        expect(closeByLabel.get('remote-player-0')).toHaveBeenCalledTimes(2);
         expect(closeByLabel.get('remote-player-1')?.mock.calls.length ?? 0).toBe(0);
         expect(constructorMock).toHaveBeenCalledTimes(3);
         expect(constructorMock).toHaveBeenNthCalledWith(3, 'remote-player-0', expect.objectContaining({
             url: 'index.html?window=remote-player&playerId=c',
         }));
+    });
+
+    it('cancels a pending hook sync on unmount before it can open a window', async () => {
+        const { useRemotePlayerWindowController } = await import('./remotePlayerWindows');
+        const positions = deferred<Record<string, never>>();
+        loadPositionsMock.mockReturnValueOnce(positions.promise);
+        useNetworkStore.setState({
+            playerId: 'local',
+            players: {
+                local: player('local'),
+                remote: player('remote'),
+            },
+        });
+
+        const rendered = renderHook(() => useRemotePlayerWindowController());
+        await waitFor(() => expect(loadPositionsMock).toHaveBeenCalledTimes(1));
+
+        rendered.unmount();
+        positions.resolve({});
+        await act(async () => {
+            await positions.promise;
+            await Promise.resolve();
+        });
+
+        expect(constructorMock).not.toHaveBeenCalled();
     });
 });
