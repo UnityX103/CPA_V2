@@ -27,9 +27,10 @@ export function PlayerCard({ player }: PlayerCardProps) {
     const appName = activeApp?.windowTitle?.trim() || activeApp?.name?.trim() || '待加入';
     const appIcon = activeApp?.iconDataUrl || null;
     const rawBinding = player.state?.bindingKey ?? null;
-    const binding = rawBinding && rawBinding.keyLabel.trim()
+    const label = typeof rawBinding?.keyLabel === 'string' ? rawBinding.keyLabel.trim() : '';
+    const binding = rawBinding && label
         ? {
-            keyLabel: rawBinding.keyLabel.trim(),
+            keyLabel: label,
             pressCount: Math.max(0, Number.isFinite(rawBinding.pressCount) ? Math.trunc(rawBinding.pressCount) : 0),
         }
         : null;

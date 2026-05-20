@@ -138,6 +138,20 @@ describe('PlayerCard Pencil hierarchy and remote key counter', () => {
 
         expect(container.querySelector('.pc-time-row')).toBeNull();
     });
+
+    it('hides oCExj key counter pill when a malformed remote key label is null', () => {
+        const malformedBinding = {
+            keyLabel: null,
+            pressCount: 3,
+        } as unknown as RemoteState['bindingKey'];
+
+        const { container } = render(<PlayerCard player={player(state({
+            bindingKey: malformedBinding,
+        }))} />);
+
+        expect(container.querySelector('.pc-time-row')).toBeNull();
+        expect(screen.queryByText('3')).toBeNull();
+    });
 });
 
 describe('PlayerCard native window drag', () => {
