@@ -42,7 +42,7 @@ describe('updater configuration', () => {
         const conf = readJson(tauriConfPath);
         expect(conf.bundle?.createUpdaterArtifacts).toBe(true);
         expect(conf.plugins?.updater?.endpoints).toEqual([
-            'https://github.com/UnityX103/CPA_V2/releases/latest/download/latest.json',
+            'https://updates.nanzhaigame.cn/cpa/stable/latest.json',
         ]);
         expect(conf.plugins?.updater?.pubkey).toEqual(expect.any(String));
         expect(conf.plugins.updater.pubkey.length).toBeGreaterThan(40);
@@ -51,6 +51,11 @@ describe('updater configuration', () => {
             /^untrusted comment: minisign public key:/,
         );
         expect(conf.plugins.updater.windows?.installMode).toBe('passive');
+    });
+
+    it('allows production multiplayer websocket connections in the CSP', () => {
+        const conf = readJson(tauriConfPath);
+        expect(conf.app?.security?.csp).toContain('ws://113.46.152.120:8039');
     });
 
     it('initializes updater and process plugins in Rust', () => {

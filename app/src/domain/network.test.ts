@@ -1,5 +1,11 @@
 import { describe, expect, it, beforeEach, vi } from 'vitest';
-import { useNetworkStore, createNetworkStore } from './network';
+import {
+    DEVELOPMENT_SERVER_URL,
+    PRODUCTION_SERVER_URL,
+    defaultServerUrl,
+    useNetworkStore,
+    createNetworkStore,
+} from './network';
 import * as dispatchMod from './bridge/dispatch';
 import { BRIDGE_VERSION } from './bridge/protocol';
 
@@ -47,6 +53,12 @@ beforeEach(() => {
 });
 
 describe('NetworkSystem 协议序列化', () => {
+    it('uses the local server in dev mode and the production target server in release mode', () => {
+        expect(defaultServerUrl(false)).toBe(DEVELOPMENT_SERVER_URL);
+        expect(defaultServerUrl(true)).toBe(PRODUCTION_SERVER_URL);
+        expect(PRODUCTION_SERVER_URL).toBe('ws://113.46.152.120:8039');
+    });
+
     // adversarial-review #10 case 3
     it('sendStateUpdate 输出包含 v / type / state / roomCode', async () => {
         const promise = useNetworkStore.getState().createRoom('TEST');

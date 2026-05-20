@@ -3,6 +3,12 @@ import { dispatch } from './bridge/dispatch';
 import { BRIDGE_VERSION } from './bridge/protocol';
 
 export const PROTOCOL_VERSION = 1;
+export const DEVELOPMENT_SERVER_URL = 'ws://127.0.0.1:8039';
+export const PRODUCTION_SERVER_URL = 'ws://113.46.152.120:8039';
+
+export function defaultServerUrl(isReleaseBuild = import.meta.env.PROD): string {
+    return isReleaseBuild ? PRODUCTION_SERVER_URL : DEVELOPMENT_SERVER_URL;
+}
 
 export interface RemotePomodoroState {
     phase: number;
@@ -87,7 +93,7 @@ export type NetworkStore = UseBoundStore<StoreApi<NetworkStateShape & NetworkAct
 
 const INITIAL_STATE: NetworkStateShape = {
     status: 'idle',
-    serverUrl: 'ws://127.0.0.1:8039',
+    serverUrl: defaultServerUrl(),
     autoConnect: false,
     roomCode: '',
     playerName: '我',

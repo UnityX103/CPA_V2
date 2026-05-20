@@ -68,14 +68,15 @@ From the repo root in `CPA_V2`:
    - DMG copied to `/tmp/CPA_V2_<version>_aarch64.dmg`
 7. Verify:
    ```bash
-   curl -fsSL https://github.com/UnityX103/CPA_V2/releases/latest/download/latest.json
-   curl -I -L https://github.com/UnityX103/CPA_V2/releases/download/v0.1.0/CPA_V2_0.1.0_aarch64.dmg
+   curl -fsSL https://updates.nanzhaigame.cn/cpa/stable/latest.json
+   curl -I -L https://updates.nanzhaigame.cn/cpa/stable/0.1.0/CPA_V2_0.1.0_aarch64.dmg
    ```
 
 ## Important Gotchas
 
-- Current updater endpoint should be GitHub Releases:
-  `https://github.com/UnityX103/CPA_V2/releases/latest/download/latest.json`
+- Current updater host is `139.159.233.218`. The client endpoint should use the
+  TLS-covered domain:
+  `https://updates.nanzhaigame.cn/cpa/stable/latest.json`
 - GitHub normalizes non-ASCII asset names. Use ASCII release asset names for updater artifacts (`app.tar.gz`, `app.tar.gz.sig`) and DMG (`CPA_V2_<version>_aarch64.dmg`).
 - `--no-sign` skips Apple code signing and notarization. It is acceptable for local packaging but not a polished public macOS release.
 - If a downloaded DMG installs an app that macOS says is damaged, check with `hdiutil verify`, `codesign --verify --deep --strict`, and `spctl --assess`. Without Developer ID + notarization, users may need to remove quarantine manually.
