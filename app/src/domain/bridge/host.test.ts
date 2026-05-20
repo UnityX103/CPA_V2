@@ -19,6 +19,7 @@ import { useActiveAppStore } from '../activeApp';
 import { BRIDGE_VERSION } from './protocol';
 import { useAppUpdateStore } from '../appUpdate';
 import { REMOTE_PLAYER_WINDOW_LABELS } from '../remotePlayerWindowLabels';
+import { defaultWeeklyPlan, useCheckinStore } from '../checkin';
 
 type BindingKeySigInput = Parameters<typeof bindingKeySig>[0];
 type BindingKeyStateWithPermission = BindingKeySigInput & {
@@ -100,6 +101,11 @@ beforeEach(() => {
         releaseNotes: null,
         lastCheckedAt: null,
         errorMessage: null,
+    });
+    useCheckinStore.setState({
+        weeklyPlan: defaultWeeklyPlan('2026-05-18'),
+        dailyRecords: {},
+        lastError: null,
     });
 });
 
@@ -382,6 +388,26 @@ describe('applyDispatch', () => {
         expect(checkNow).toHaveBeenCalledTimes(1);
         expect(restartForUpdate).toHaveBeenCalledTimes(1);
         useAppUpdateStore.setState(original);
+    });
+
+    it('routes checkin plan and item increment actions to the authoritative main store', () => {
+        const nextPlan = defaultWeeklyPlan('2026-05-25');
+
+        applyDispatch({
+            v: BRIDGE_VERSION,
+            store: 'checkin',
+            action: 'setWeeklyPlan',
+            args: [nextPlan],
+        });
+        applyDispatch({
+            v: BRIDGE_VERSION,
+            store: 'checkin',
+            action: 'incrementItem',
+            args: ['2026-05-25', 'pomodoro-focus'],
+        });
+
+        expect(useCheckinStore.getState().weeklyPlan.weekStartDate).toBe('2026-05-25');
+        expect(useCheckinStore.getState().dailyRecords['2026-05-25'].countsByItemId['pomodoro-focus']).toBe(1);
     });
 });
 

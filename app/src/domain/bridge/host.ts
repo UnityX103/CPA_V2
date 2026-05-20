@@ -7,6 +7,7 @@ import { useNetworkStore, type RemotePlayer } from '../network';
 import { useBindingKeyStore, type BindingKeyEntry } from '../bindingKey';
 import { useActiveAppStore, type ActiveAppInfo } from '../activeApp';
 import { useAppUpdateStore, type AppUpdateSnapshot } from '../appUpdate';
+import { useCheckinStore } from '../checkin';
 import { REMOTE_PLAYER_WINDOW_LABELS } from '../remotePlayerWindowLabels';
 import {
     BRIDGE_VERSION,
@@ -166,6 +167,14 @@ export function applyDispatch(payload: DispatchPayload): void {
                 case 'setAutoUpdateEnabled': void u.setAutoUpdateEnabled(...payload.args); return;
                 case 'checkNow': void u.checkNow(); return;
                 case 'restartForUpdate': void u.restartForUpdate(); return;
+            }
+            return;
+        }
+        case 'checkin': {
+            const c = useCheckinStore.getState();
+            switch (payload.action) {
+                case 'setWeeklyPlan': c.setWeeklyPlan(...payload.args); return;
+                case 'incrementItem': c.incrementItem(...payload.args); return;
             }
             return;
         }
