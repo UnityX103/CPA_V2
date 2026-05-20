@@ -16,6 +16,7 @@ import { loadPersistedSettings, savePersistedSettings } from './domain/settingsP
 import { readAutostartEnabled } from './domain/autostart';
 import { useCheckinStore } from './domain/checkin';
 import { loadPersistedCheckin, savePersistedCheckin } from './domain/checkinPersistence';
+import { usePomodoroStore } from './domain/pomodoro';
 
 function clampStartupScale(scale: number): number {
     if (!Number.isFinite(scale)) return 1.0;
@@ -212,6 +213,16 @@ export default function App() {
             cancelled = true;
             cleanup();
         };
+    }, []);
+
+    useEffect(() => {
+        return usePomodoroStore.subscribe((state, previous) => {
+            const event = state.lastEndEvent;
+            if (!event || event === previous.lastEndEvent) return;
+            if (event.fromPhase !== 'focus') return;
+
+            useCheckinStore.getState().applyPomodoroFocusCompletion(todayLocalDate(), event.id);
+        });
     }, []);
 
     return (
