@@ -1,0 +1,212 @@
+.today-checkin-panel {
+    box-sizing: border-box;
+    width: 278px;
+    min-height: 289px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+    overflow: hidden;
+    border-radius: 24px;
+    background: #fffdfbee;
+    box-shadow: inset 0 0 0 1px #efdccd, 0 14px 28px rgba(91, 70, 54, 0.18);
+    color: #5b4636;
+    font-family: MaokenAssortedSans, sans-serif;
+}
+
+.today-checkin-head,
+.today-checkin-progress-meta,
+.today-checkin-footer,
+.today-checkin-item,
+.today-checkin-item-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.today-checkin-title-wrap {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.today-checkin-title-wrap h2 {
+    margin: 0;
+    color: #5b4636;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.today-checkin-title-wrap p,
+.today-checkin-progress-meta,
+.today-checkin-footer {
+    margin: 0;
+    color: #a28b79;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.today-checkin-status {
+    flex: 0 0 auto;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: #ffe5d9;
+    color: #d15f3d;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.today-checkin-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.today-checkin-progress-meta strong {
+    color: #d15f3d;
+    font-size: 11px;
+}
+
+.today-checkin-track {
+    height: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #f0e0d0;
+}
+
+.today-checkin-track div {
+    height: 100%;
+    border-radius: inherit;
+    background: #d15f3d;
+}
+
+.today-checkin-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.today-checkin-item {
+    min-height: 44px;
+    padding: 8px 10px;
+    border: 1px solid #f0d3bc;
+    border-radius: 14px;
+    background: #fff7f0;
+}
+
+.today-checkin-item.done {
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+}
+
+.today-checkin-item-copy {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.today-checkin-item-copy strong {
+    overflow: hidden;
+    color: #5b4636;
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.today-checkin-item-copy span {
+    color: #a28b79;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.today-checkin-item-actions {
+    flex: 0 0 auto;
+    gap: 6px;
+}
+
+.today-checkin-item-actions span {
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: #ffe5d9;
+    color: #d15f3d;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.today-checkin-item-actions button {
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: 14px;
+    background: #d15f3d;
+    color: white;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.today-checkin-item.done .today-checkin-item-actions span {
+    background: #dcfce7;
+    color: #34a853;
+}
+
+.today-checkin-item.done .today-checkin-item-actions button {
+    border: 1px solid #bfe8ca;
+    background: #e8f7ed;
+    color: #34a853;
+}
+
+.today-checkin-rest {
+    min-height: 118px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px solid #a7f3d0;
+    border-radius: 16px;
+    background: #ecfdf3;
+    text-align: center;
+}
+
+.today-checkin-rest span {
+    color: #214e34;
+    font-size: 17px;
+    font-weight: 800;
+}
+
+.today-checkin-rest p {
+    width: 210px;
+    margin: 0;
+    color: #52745e;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.today-checkin-footer {
+    margin-top: auto;
+}
+
+.today-checkin-footer button {
+    padding: 6px 8px;
+    border: 1px solid #efdccd;
+    border-radius: 999px;
+    background: #ffffffcc;
+    color: #a28b79;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.today-checkin-panel.is-complete .today-checkin-status,
+.today-checkin-panel.is-rest .today-checkin-status {
+    background: #dcfce7;
+    color: #34a853;
+}
