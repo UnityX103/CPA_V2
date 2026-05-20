@@ -640,6 +640,84 @@ describe('GlobalTab parity with Pdj9C', () => {
         expect(screen.getByRole('button', { name: '打开系统设置' })).toBeTruthy();
     });
 
+    it('shows listener health banner when permission is granted but listener is stopped', async () => {
+        invokeMock.mockImplementation((command: string) => {
+            if (command === 'accessibility_status') {
+                return Promise.resolve({ granted: true, platform: 'macos' });
+            }
+            if (command === 'key_counter_health') {
+                return Promise.resolve({
+                    permissionGranted: true,
+                    platform: 'macos',
+                    listenerRunning: false,
+                    lastStartError: '[key_counter] CGEventTap create failed',
+                    lastStartedAtMs: null,
+                    lastStoppedAtMs: 1770000001000,
+                    bundleIdentifier: 'com.nanzhai.cpa',
+                    executablePath: '/Applications/桌宠番茄钟.app/Contents/MacOS/app',
+                    codeSignIdentifier: 'app-461de596266994b3',
+                });
+            }
+            return Promise.resolve();
+        });
+        useBindingKeyStore.setState({
+            permissionGranted: true,
+            platform: 'macos',
+            listenerRunning: false,
+            listenerError: '[key_counter] CGEventTap create failed',
+            listenerDiagnostic: {
+                bundleIdentifier: 'com.nanzhai.cpa',
+                executablePath: '/Applications/桌宠番茄钟.app/Contents/MacOS/app',
+                codeSignIdentifier: 'app-461de596266994b3',
+            },
+        });
+
+        await act(async () => {
+            render(<SettingsPanel />);
+        });
+
+        expect(screen.getByText('已授予权限，但监听器未启动')).toBeTruthy();
+        expect(screen.getByText('[key_counter] CGEventTap create failed')).toBeTruthy();
+        expect(screen.getByText(/app-461de596266994b3/)).toBeTruthy();
+        expect(screen.getByRole('button', { name: '重试监听' })).toBeTruthy();
+    });
+
+    it('retries listener from the settings banner', async () => {
+        invokeMock.mockImplementation((command: string) => {
+            if (command === 'restart_key_counter_listener') {
+                return Promise.resolve({
+                    permissionGranted: true,
+                    platform: 'macos',
+                    listenerRunning: true,
+                    lastStartError: null,
+                    lastStartedAtMs: 1770000002000,
+                    lastStoppedAtMs: 1770000001000,
+                    bundleIdentifier: 'com.nanzhai.cpa',
+                    executablePath: '/Applications/桌宠番茄钟.app/Contents/MacOS/app',
+                    codeSignIdentifier: 'app-461de596266994b3',
+                });
+            }
+            return Promise.resolve({ granted: true, platform: 'macos' });
+        });
+        useBindingKeyStore.setState({
+            permissionGranted: true,
+            platform: 'macos',
+            listenerRunning: false,
+            listenerError: 'tap failed',
+            listenerDiagnostic: null,
+        });
+
+        await act(async () => {
+            render(<SettingsPanel />);
+        });
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: '重试监听' }));
+        });
+
+        expect(invokeMock).toHaveBeenCalledWith('restart_key_counter_listener');
+        expect(useBindingKeyStore.getState().listenerRunning).toBe(true);
+    });
+
     it('finishes a Windows key capture from the focused settings window', async () => {
         invokeMock.mockResolvedValue({ granted: true, platform: 'windows' });
         useBindingKeyStore.setState({

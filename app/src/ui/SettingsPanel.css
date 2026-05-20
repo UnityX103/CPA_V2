@@ -808,6 +808,19 @@
 }
 .bk-perm-banner button:hover { opacity: 0.85; }
 
+.bk-health-banner {
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+.bk-health-detail {
+    width: 100%;
+    color: var(--text-muted);
+    font-size: 11px;
+    line-height: 1.35;
+    word-break: break-all;
+}
+
 .danger-modal-layer {
     position: absolute;
     inset: 0;
