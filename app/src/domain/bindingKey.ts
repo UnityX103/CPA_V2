@@ -12,6 +12,24 @@ interface AccessibilityStatus {
 
 type BindingKeyPlatform = AccessibilityStatus['platform'];
 
+export interface KeyCounterHealth {
+    permissionGranted: boolean;
+    platform: 'macos' | 'windows' | 'other';
+    listenerRunning: boolean;
+    lastStartError: string | null;
+    lastStartedAtMs: number | null;
+    lastStoppedAtMs: number | null;
+    bundleIdentifier: string | null;
+    executablePath: string | null;
+    codeSignIdentifier: string | null;
+}
+
+interface ListenerDiagnostic {
+    bundleIdentifier: string | null;
+    executablePath: string | null;
+    codeSignIdentifier: string | null;
+}
+
 export interface BindingKeyEntry {
     id: string;
     label: string;
@@ -27,6 +45,9 @@ interface BindingKeyState {
     capturingId: string | null;
     permissionGranted: boolean;
     platform: 'macos' | 'windows' | 'other' | null;
+    listenerRunning: boolean | null;
+    listenerError: string | null;
+    listenerDiagnostic: ListenerDiagnostic | null;
 }
 
 interface BindingKeyActions {
@@ -41,6 +62,7 @@ interface BindingKeyActions {
     incrementByKeyCode: (keyCode: number) => void;
     resetCount: (id: string) => void;
     setPermission: (granted: boolean, platform: 'macos' | 'windows' | 'other') => void;
+    setListenerHealth: (health: KeyCounterHealth) => void;
 }
 
 let nextId = 0;
@@ -84,6 +106,23 @@ export function hasVisibleInputCounterEntries(entries: BindingKeyEntry[]): boole
 
 export type BindingKeyStore = UseBoundStore<StoreApi<BindingKeyState & BindingKeyActions>>;
 
+function listenerHealthPatch(health: KeyCounterHealth): Pick<
+    BindingKeyState,
+    'permissionGranted' | 'platform' | 'listenerRunning' | 'listenerError' | 'listenerDiagnostic'
+> {
+    return {
+        permissionGranted: health.permissionGranted,
+        platform: health.platform,
+        listenerRunning: health.listenerRunning,
+        listenerError: health.lastStartError,
+        listenerDiagnostic: {
+            bundleIdentifier: health.bundleIdentifier,
+            executablePath: health.executablePath,
+            codeSignIdentifier: health.codeSignIdentifier,
+        },
+    };
+}
+
 export function createBindingKeyStore(opts: { isSettingsWindow: boolean }): BindingKeyStore {
     if (opts.isSettingsWindow) {
         return create<BindingKeyState & BindingKeyActions>((set) => ({
@@ -93,6 +132,9 @@ export function createBindingKeyStore(opts: { isSettingsWindow: boolean }): Bind
             capturingId: null,
             permissionGranted: true,
             platform: null,
+            listenerRunning: null,
+            listenerError: null,
+            listenerDiagnostic: null,
             setPanelEnabled: (enabled) => {
                 void dispatch({ v: BRIDGE_VERSION, store: 'bindingKey', action: 'setPanelEnabled', args: [enabled] });
             },
@@ -118,6 +160,7 @@ export function createBindingKeyStore(opts: { isSettingsWindow: boolean }): Bind
             resetCount: () => {},
             setPermission: (granted, platform) =>
                 set({ permissionGranted: granted, platform }),
+            setListenerHealth: (health) => set(listenerHealthPatch(health)),
         }));
     }
     return create<BindingKeyState & BindingKeyActions>((set, get) => ({
@@ -127,6 +170,9 @@ export function createBindingKeyStore(opts: { isSettingsWindow: boolean }): Bind
         capturingId: null,
         permissionGranted: true,
         platform: null,
+        listenerRunning: null,
+        listenerError: null,
+        listenerDiagnostic: null,
 
         setPanelEnabled: (enabled) => set({ panelEnabled: enabled }),
         addEntry: () => {
@@ -180,6 +226,7 @@ export function createBindingKeyStore(opts: { isSettingsWindow: boolean }): Bind
             }));
         },
         setPermission: (granted, platform) => set({ permissionGranted: granted, platform }),
+        setListenerHealth: (health) => set(listenerHealthPatch(health)),
     }));
 }
 
@@ -192,9 +239,15 @@ export const useBindingKeyStore: BindingKeyStore = createBindingKeyStore({
     isSettingsWindow: detectIsSettingsWindow(),
 });
 
+function applyHealth(health: KeyCounterHealth) {
+    useBindingKeyStore.getState().setListenerHealth(health);
+}
+
 export function useBindingKeyListener() {
     useEffect(() => {
         let unlistenKey = () => {};
+        let unlistenHealth = () => {};
+        let unlistenPerm = () => {};
         let cancelled = false;
 
         // 启动时拉一次状态；后续翻转走 accessibility-permission-changed 事件
@@ -202,6 +255,31 @@ export function useBindingKeyListener() {
             if (cancelled) return;
             useBindingKeyStore.getState().setPermission(s.granted, s.platform);
         }).catch(() => { /* 非 Tauri 环境（vitest jsdom）下静默 */ });
+
+        const loadHealth = () =>
+            invoke<KeyCounterHealth>('key_counter_health')
+                .then((health) => {
+                    if (cancelled) return null;
+                    applyHealth(health);
+                    return health;
+                })
+                .catch(() => null);
+
+        void loadHealth();
+
+        const refreshOnFocus = () => {
+            void loadHealth().then((health) => {
+                if (cancelled || !health?.permissionGranted || health.listenerRunning) return;
+                invoke<KeyCounterHealth>('restart_key_counter_listener')
+                    .then((restartedHealth) => {
+                        if (cancelled) return;
+                        applyHealth(restartedHealth);
+                    })
+                    .catch(() => {});
+            });
+        };
+
+        window.addEventListener('focus', refreshOnFocus);
 
         listen<number>('key-pressed', (event) => {
             const store = useBindingKeyStore.getState();
@@ -212,20 +290,30 @@ export function useBindingKeyListener() {
                 store.incrementByKeyCode(keyCode);
             }
         }).then((un) => {
-            unlistenKey = un;
-        });
+            if (cancelled) un();
+            else unlistenKey = un;
+        }).catch(() => {});
 
-        let unlistenPerm = () => {};
+        listen<KeyCounterHealth>('key-counter-health-changed', (event) => {
+            applyHealth(event.payload);
+        }).then((un) => {
+            if (cancelled) un();
+            else unlistenHealth = un;
+        }).catch(() => {});
+
         listen<{ granted: boolean; platform: 'macos' | 'windows' | 'other' }>('accessibility-permission-changed', (event) => {
             const { granted, platform } = event.payload;
             useBindingKeyStore.getState().setPermission(granted, platform);
         }).then((un) => {
-            unlistenPerm = un;
-        });
+            if (cancelled) un();
+            else unlistenPerm = un;
+        }).catch(() => {});
 
         return () => {
             cancelled = true;
+            window.removeEventListener('focus', refreshOnFocus);
             unlistenKey();
+            unlistenHealth();
             unlistenPerm();
         };
     }, []);

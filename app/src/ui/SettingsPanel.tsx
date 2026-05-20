@@ -19,7 +19,7 @@ import {
 } from '../domain/pomodoroVideos';
 import { pickCustomWebmPath } from '../domain/videoFiles';
 import { useNetworkStore } from '../domain/network';
-import { labelForKeyCode, useBindingKeyStore } from '../domain/bindingKey';
+import { labelForKeyCode, useBindingKeyStore, type KeyCounterHealth } from '../domain/bindingKey';
 import { useAppUpdateStore, type AppUpdateStatus } from '../domain/appUpdate';
 import { shouldStartWindowDrag } from './windowDrag';
 import './SettingsPanel.css';
@@ -42,6 +42,12 @@ const EMPTY_APPLY_STATE: OrdinaryApplyState = {
     canApply: false,
     apply: () => {},
 };
+
+function isKeyCounterHealth(value: unknown): value is KeyCounterHealth {
+    if (!value || typeof value !== 'object') return false;
+    const health = value as Partial<KeyCounterHealth>;
+    return typeof health.permissionGranted === 'boolean' && typeof health.listenerRunning === 'boolean';
+}
 
 export function SettingsPanel() {
     const activeTab = useSettingsStore((s) => s.activeTab);
@@ -545,8 +551,18 @@ function GlobalTab() {
             }).catch(() => { /* non-Tauri env (vitest jsdom) — swallow */ });
         }
 
+        const health = invoke<KeyCounterHealth>('key_counter_health');
+        if (health && typeof health.then === 'function') {
+            health.then((h) => {
+                if (cancelled || !isKeyCounterHealth(h)) return;
+                useBindingKeyStore.getState().setListenerHealth(h);
+            }).catch(() => { /* non-Tauri env (vitest jsdom) — swallow */ });
+        }
+
         let unlisten = () => {};
+        let unlistenHealth = () => {};
         listen<{ granted: boolean; platform: 'macos' | 'windows' | 'other' }>('accessibility-permission-changed', (e) => {
+            if (cancelled) return;
             const { granted, platform } = e.payload;
             useBindingKeyStore.getState().setPermission(granted, platform);
         }).then((u) => {
@@ -554,9 +570,18 @@ function GlobalTab() {
             else unlisten = u;
         }).catch(() => { /* swallow */ });
 
+        listen<KeyCounterHealth>('key-counter-health-changed', (e) => {
+            if (cancelled || !isKeyCounterHealth(e.payload)) return;
+            useBindingKeyStore.getState().setListenerHealth(e.payload);
+        }).then((u) => {
+            if (cancelled) u();
+            else unlistenHealth = u;
+        }).catch(() => { /* swallow */ });
+
         return () => {
             cancelled = true;
             unlisten();
+            unlistenHealth();
         };
     }, []);
 
@@ -582,6 +607,14 @@ function GlobalTab() {
     const displayScalePercent = scaleDragPercent ?? scalePercent;
     const minPct = Math.round(MIN_SCALE * 100);
     const maxPct = Math.round(MAX_SCALE * 100);
+    const showListenerBanner = bk.permissionGranted && bk.listenerRunning === false;
+    const retryListener = () => {
+        void invoke<KeyCounterHealth>('restart_key_counter_listener')
+            .then((health) => {
+                useBindingKeyStore.getState().setListenerHealth(health);
+            })
+            .catch(() => {});
+    };
 
     return (
         <div className="settings-content-scroll">
@@ -639,6 +672,23 @@ function GlobalTab() {
                             <button onClick={() => { void invoke('open_accessibility_settings'); }}>
                                 打开系统设置
                             </button>
+                        </div>
+                    )}
+                    {showListenerBanner && (
+                        <div className="bk-perm-banner bk-health-banner" role="status">
+                            <span className="bk-perm-msg">已授予权限，但监听器未启动</span>
+                            <button onClick={retryListener}>重试监听</button>
+                            <button onClick={() => { void invoke('open_accessibility_settings'); }}>
+                                打开系统设置
+                            </button>
+                            {bk.listenerError && (
+                                <span className="bk-health-detail">{bk.listenerError}</span>
+                            )}
+                            {bk.listenerDiagnostic?.codeSignIdentifier && (
+                                <span className="bk-health-detail">
+                                    签名：{bk.listenerDiagnostic.codeSignIdentifier}
+                                </span>
+                            )}
                         </div>
                     )}
                     <div className="card-row">
