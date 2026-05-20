@@ -1,0 +1,290 @@
+.checkin-editor-panel {
+    box-sizing: border-box;
+    width: 460px;
+    max-height: min(898px, calc(100vh - 48px));
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px;
+    overflow: auto;
+    border-radius: 24px;
+    background: #fffdfbee;
+    box-shadow: inset 0 0 0 1px #efdccd, 0 18px 36px rgba(91, 70, 54, 0.16);
+    color: #5b4636;
+    font-family: MaokenAssortedSans, sans-serif;
+}
+
+.checkin-editor-head,
+.checkin-editor-section-head,
+.checkin-editor-selected-row,
+.checkin-editor-actions,
+.checkin-editor-carry {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.checkin-editor-title-wrap {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.checkin-editor-title-wrap h2 {
+    margin: 0;
+    color: #5b4636;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.checkin-editor-title-wrap p,
+.checkin-editor-section-head span,
+.checkin-editor-section p {
+    margin: 0;
+    color: #a28b79;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.checkin-editor-status {
+    flex: 0 0 auto;
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: #ffe5d9;
+    color: #d15f3d;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.checkin-editor-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+    border: 1px solid #efdccd;
+    border-radius: 18px;
+    background: #ffffffb8;
+}
+
+.checkin-editor-section strong {
+    color: #5b4636;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.checkin-editor-week-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 6px;
+}
+
+.checkin-editor-week-grid button {
+    min-width: 0;
+    height: 44px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    border: 1px solid #e8d9cd;
+    border-radius: 14px;
+    background: #fff7f0;
+    color: #5b4636;
+    cursor: pointer;
+}
+
+.checkin-editor-week-grid button span {
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1.05;
+}
+
+.checkin-editor-week-grid button small {
+    color: #a28b79;
+    font-size: 9px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.checkin-editor-week-grid button.active {
+    border-color: #d15f3d;
+    background: #ffe5d9;
+    color: #d15f3d;
+}
+
+.checkin-editor-selected-row > button,
+.checkin-editor-actions button,
+.checkin-editor-primary,
+.checkin-editor-carry {
+    border: 1px solid #efdccd;
+    border-radius: 999px;
+    background: #ffffffcc;
+    color: #a28b79;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.checkin-editor-selected-row > button {
+    flex: 0 0 auto;
+    padding: 7px 10px;
+}
+
+.checkin-editor-selected-row > button.active {
+    border-color: #a7f3d0;
+    background: #dcfce7;
+    color: #34a853;
+}
+
+.checkin-editor-items-section {
+    min-height: 300px;
+}
+
+.checkin-editor-primary,
+.checkin-editor-actions button {
+    padding: 7px 10px;
+}
+
+.checkin-editor-primary,
+.checkin-editor-actions button:last-child {
+    border-color: #d15f3d;
+    background: #d15f3d;
+    color: white;
+}
+
+.checkin-editor-items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.checkin-editor-item-row {
+    display: grid;
+    grid-template-columns: 78px minmax(0, 1fr) 70px auto;
+    align-items: end;
+    gap: 8px;
+    padding: 9px;
+    border: 1px solid #f0d3bc;
+    border-radius: 14px;
+    background: #fff7f0;
+}
+
+.checkin-editor-item-row label {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.checkin-editor-item-row label span {
+    color: #a28b79;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.checkin-editor-item-row input,
+.checkin-editor-item-row select {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    height: 30px;
+    border: 1px solid #e8d9cd;
+    border-radius: 10px;
+    background: #ffffffcc;
+    color: #5b4636;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.checkin-editor-item-row input {
+    padding: 0 8px;
+}
+
+.checkin-editor-item-row select {
+    padding: 0 6px;
+}
+
+.checkin-editor-item-row button {
+    height: 30px;
+    padding: 0 8px;
+    border: 1px solid #efdccd;
+    border-radius: 999px;
+    background: #ffffffcc;
+    color: #a28b79;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.checkin-editor-empty,
+.checkin-editor-rest-state {
+    min-height: 139px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px dashed #f0d3bc;
+    border-radius: 16px;
+    background: #fffdfbe6;
+    color: #a28b79;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.checkin-editor-rest-state {
+    border-style: solid;
+    border-color: #a7f3d0;
+    background: #ecfdf3;
+}
+
+.checkin-editor-rest-state span {
+    color: #214e34;
+    font-size: 17px;
+    font-weight: 800;
+}
+
+.checkin-editor-rest-state p {
+    width: 300px;
+    color: #52745e;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.checkin-editor-carry {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 18px;
+    background: #fff7f0;
+    text-align: left;
+}
+
+.checkin-editor-carry span {
+    color: #5b4636;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.checkin-editor-carry strong {
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: #ffe5d9;
+    color: #d15f3d;
+    font-size: 10px;
+}
+
+.checkin-editor-carry.active strong {
+    background: #dcfce7;
+    color: #34a853;
+}
+
+.checkin-editor-actions {
+    justify-content: flex-end;
+}
