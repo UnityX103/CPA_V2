@@ -12,6 +12,14 @@ interface AccessibilityStatus {
 
 type BindingKeyPlatform = AccessibilityStatus['platform'];
 
+export type MouseButton = 'left' | 'middle' | 'right';
+
+export type BindingInput =
+    | { kind: 'keyboard'; code: number }
+    | { kind: 'mouse'; button: MouseButton };
+
+export type InputPressedEvent = BindingInput;
+
 export interface KeyCounterHealth {
     permissionGranted: boolean;
     platform: 'macos' | 'windows' | 'other';
@@ -34,6 +42,7 @@ export interface BindingKeyEntry {
     id: string;
     label: string;
     keyCode: number;
+    input?: BindingInput | null;
     pressCount: number;
     enabled: boolean;
 }
@@ -58,7 +67,8 @@ interface BindingKeyActions {
     setSynced: (id: string | null) => void;
     beginCapture: (id: string) => void;
     cancelCapture: () => void;
-    completeCapture: (keyCode: number, label: string) => void;
+    completeCapture: (input: BindingInput, label: string) => void;
+    incrementByInput: (input: BindingInput) => void;
     incrementByKeyCode: (keyCode: number) => void;
     resetCount: (id: string) => void;
     setPermission: (granted: boolean, platform: 'macos' | 'windows' | 'other') => void;
@@ -91,13 +101,39 @@ const WINDOWS_KEYCODE_LABELS: Record<number, string> = {
     86: 'V', 87: 'W', 88: 'X', 89: 'Y', 90: 'Z',
 };
 
+export const MOUSE_BUTTON_LABELS: Record<MouseButton, string> = {
+    left: '鼠标左键',
+    middle: '鼠标中键',
+    right: '鼠标右键',
+};
+
 export function labelForKeyCode(keyCode: number, platform: BindingKeyPlatform | null = 'macos'): string {
     const labels = platform === 'windows' ? WINDOWS_KEYCODE_LABELS : MAC_KEYCODE_LABELS;
     return labels[keyCode] ?? `Key#${keyCode}`;
 }
 
+export function inputForLegacyKeyCode(keyCode: number): BindingInput | null {
+    return keyCode >= 0 ? { kind: 'keyboard', code: keyCode } : null;
+}
+
+export function labelForInput(input: BindingInput, platform: BindingKeyPlatform | null = 'macos'): string {
+    return input.kind === 'keyboard'
+        ? labelForKeyCode(input.code, platform)
+        : MOUSE_BUTTON_LABELS[input.button];
+}
+
+export function inputsEqual(a: BindingInput | null | undefined, b: BindingInput | null | undefined): boolean {
+    if (!a || !b || a.kind !== b.kind) return false;
+    if (a.kind === 'keyboard') return a.code === (b as { kind: 'keyboard'; code: number }).code;
+    return a.button === (b as { kind: 'mouse'; button: MouseButton }).button;
+}
+
+export function normalizeEntryInput(entry: Pick<BindingKeyEntry, 'input' | 'keyCode'>): BindingInput | null {
+    return entry.input ?? inputForLegacyKeyCode(entry.keyCode);
+}
+
 export function isVisibleBindingEntry(entry: BindingKeyEntry): boolean {
-    return entry.enabled && entry.keyCode >= 0;
+    return entry.enabled && normalizeEntryInput(entry) !== null;
 }
 
 export function hasVisibleInputCounterEntries(entries: BindingKeyEntry[]): boolean {
@@ -153,9 +189,10 @@ export function createBindingKeyStore(opts: { isSettingsWindow: boolean }): Bind
                 void dispatch({ v: BRIDGE_VERSION, store: 'bindingKey', action: 'beginCapture', args: [id] });
             },
             cancelCapture: () => {},
-            completeCapture: (keyCode, label) => {
-                void dispatch({ v: BRIDGE_VERSION, store: 'bindingKey', action: 'completeCapture', args: [keyCode, label] });
+            completeCapture: (input, label) => {
+                void dispatch({ v: BRIDGE_VERSION, store: 'bindingKey', action: 'completeCapture', args: [input as never, label] });
             },
+            incrementByInput: () => {},
             incrementByKeyCode: () => {},
             resetCount: () => {},
             setPermission: (granted, platform) =>
@@ -181,6 +218,7 @@ export function createBindingKeyStore(opts: { isSettingsWindow: boolean }): Bind
                 id,
                 label: '未绑定',
                 keyCode: -1,
+                input: null,
                 pressCount: 0,
                 enabled: true,
             };
@@ -202,23 +240,36 @@ export function createBindingKeyStore(opts: { isSettingsWindow: boolean }): Bind
         setSynced: (id) => set({ syncedKeyId: id }),
         beginCapture: (id) => set({ capturingId: id }),
         cancelCapture: () => set({ capturingId: null }),
-        completeCapture: (keyCode, label) => {
+        completeCapture: (input, label) => {
             const id = get().capturingId;
             if (!id) return;
             set((s) => ({
                 entries: s.entries.map((e) =>
-                    e.id === id ? { ...e, keyCode, label, pressCount: 0 } : e,
+                    e.id === id
+                        ? {
+                            ...e,
+                            keyCode: input.kind === 'keyboard' ? input.code : -1,
+                            input,
+                            label,
+                            pressCount: 0,
+                        }
+                        : e,
                 ),
                 capturingId: null,
             }));
         },
-        incrementByKeyCode: (keyCode) => {
-            if (keyCode < 0) return;
+        incrementByInput: (input) => {
             set((s) => ({
                 entries: s.entries.map((e) =>
-                    e.keyCode >= 0 && e.keyCode === keyCode && e.enabled ? { ...e, pressCount: e.pressCount + 1 } : e,
+                    e.enabled && inputsEqual(normalizeEntryInput(e), input)
+                        ? { ...e, pressCount: e.pressCount + 1 }
+                        : e,
                 ),
             }));
+        },
+        incrementByKeyCode: (keyCode) => {
+            if (keyCode < 0) return;
+            get().incrementByInput({ kind: 'keyboard', code: keyCode });
         },
         resetCount: (id) => {
             set((s) => ({
@@ -243,9 +294,22 @@ function applyHealth(health: KeyCounterHealth) {
     useBindingKeyStore.getState().setListenerHealth(health);
 }
 
+function isInputPressedEvent(value: unknown): value is InputPressedEvent {
+    if (!value || typeof value !== 'object') return false;
+    const payload = value as Partial<InputPressedEvent>;
+    if (payload.kind === 'keyboard') {
+        return Number.isInteger(payload.code) && payload.code >= 0;
+    }
+    if (payload.kind === 'mouse') {
+        return payload.button === 'left' || payload.button === 'middle' || payload.button === 'right';
+    }
+    return false;
+}
+
 export function useBindingKeyListener() {
     useEffect(() => {
         let unlistenKey = () => {};
+        let unlistenInput = () => {};
         let unlistenHealth = () => {};
         let unlistenPerm = () => {};
         let cancelled = false;
@@ -281,13 +345,29 @@ export function useBindingKeyListener() {
 
         window.addEventListener('focus', refreshOnFocus);
 
-        listen<number>('key-pressed', (event) => {
+        listen<InputPressedEvent>('input-pressed', (event) => {
+            if (!isInputPressedEvent(event.payload)) return;
             const store = useBindingKeyStore.getState();
-            const keyCode = Number(event.payload);
+            const input = event.payload;
             if (store.capturingId) {
-                store.completeCapture(keyCode, labelForKeyCode(keyCode, store.platform));
+                store.completeCapture(input, labelForInput(input, store.platform));
             } else {
-                store.incrementByKeyCode(keyCode);
+                store.incrementByInput(input);
+            }
+        }).then((un) => {
+            if (cancelled) un();
+            else unlistenInput = un;
+        }).catch(() => {});
+
+        listen<number>('key-pressed', (event) => {
+            const keyCode = Number(event.payload);
+            if (!Number.isInteger(keyCode) || keyCode < 0) return;
+            const input: BindingInput = { kind: 'keyboard', code: keyCode };
+            const store = useBindingKeyStore.getState();
+            if (store.capturingId) {
+                store.completeCapture(input, labelForInput(input, store.platform));
+            } else {
+                store.incrementByInput(input);
             }
         }).then((un) => {
             if (cancelled) un();
@@ -312,6 +392,7 @@ export function useBindingKeyListener() {
         return () => {
             cancelled = true;
             window.removeEventListener('focus', refreshOnFocus);
+            unlistenInput();
             unlistenKey();
             unlistenHealth();
             unlistenPerm();
