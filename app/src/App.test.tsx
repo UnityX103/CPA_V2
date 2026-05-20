@@ -197,7 +197,7 @@ describe('main App window composition', () => {
         render(<App />);
 
         await Promise.resolve();
-        expect(invokeMock).not.toHaveBeenCalled();
+        expect(invokeMock).not.toHaveBeenCalledWith('resize_scaled_window', expect.anything());
 
         resolveSettings({ uiScale: 1.5, showActiveAppWindowTitle: true });
 

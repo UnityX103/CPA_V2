@@ -5,13 +5,13 @@ import { useSettingsStore } from './domain/settings';
 import { CheckinPlanEditorPanel } from './ui/CheckinPlanEditorPanel';
 
 export default function CheckinEditorApp() {
-    useBridgeClient();
-    useCheckinEditorWindowSize();
+    const bridgeReady = useBridgeClient();
+    useCheckinEditorWindowSize(bridgeReady);
     const uiScale = useSettingsStore((s) => s.uiScale);
 
     return (
         <div className="checkin-editor-window-root" style={{ '--app-ui-scale': String(uiScale) } as CSSProperties}>
-            <CheckinPlanEditorPanel />
+            {bridgeReady ? <CheckinPlanEditorPanel /> : null}
         </div>
     );
 }

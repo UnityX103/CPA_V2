@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { todayCheckinHeightForItemCount } from './domain/checkinWindow';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const capabilitiesPath = path.join(here, '../src-tauri/capabilities/default.json');
@@ -67,6 +68,18 @@ describe('daily check-in window configuration', () => {
         expect(checkinWindowSource).toMatch(/CHECKIN_EDITOR_MIN_HEIGHT\s*=\s*420/);
         expect(checkinWindowSource).toMatch(/useCheckinEditorWindowSize/);
         expect(checkinWindowSource).toMatch(/label:\s*'checkin-editor'[\s\S]*baseWidth:\s*CHECKIN_EDITOR_BASE_WIDTH[\s\S]*baseHeight:\s*CHECKIN_EDITOR_BASE_HEIGHT[\s\S]*minWidth:\s*CHECKIN_EDITOR_MIN_WIDTH[\s\S]*minHeight:\s*CHECKIN_EDITOR_MIN_HEIGHT[\s\S]*center:\s*true/);
-        expect(editorSource).toMatch(/useCheckinEditorWindowSize\(\)/);
+        expect(editorSource).toMatch(/useCheckinEditorWindowSize\(bridgeReady\)/);
+    });
+
+    it('sizes the today check-in webview from the effective item count', () => {
+        const checkinWindowSource = readFileSync(checkinWindowTsPath, 'utf8');
+        const todaySource = readFileSync(path.join(here, 'TodayCheckinApp.tsx'), 'utf8');
+
+        expect(todayCheckinHeightForItemCount(0)).toBe(289);
+        expect(todayCheckinHeightForItemCount(1)).toBe(289);
+        expect(todayCheckinHeightForItemCount(3)).toBe(409);
+        expect(checkinWindowSource).toMatch(/useTodayCheckinWindowSize/);
+        expect(checkinWindowSource).toMatch(/todayCheckinHeightForItemCount\(itemCount\)/);
+        expect(todaySource).toMatch(/useTodayCheckinWindowSize\(bridgeReady\)/);
     });
 });
