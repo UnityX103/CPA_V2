@@ -4,7 +4,7 @@ import type { ConnectionStatus, RemotePlayer } from '../network';
 import type { PomodoroEndActionMode, PomodoroEndActionVideo } from '../pomodoro';
 import type { ActiveAppInfo } from '../activeApp';
 import type { AppUpdateSnapshot } from '../appUpdate';
-import type { WeeklyCheckinPlan } from '../checkin';
+import type { DailyCheckinRecord, WeeklyCheckinPlan } from '../checkin';
 
 export const EVT_STATE_REQUEST = 'app:state:request';
 export const EVT_STATE = 'app:state';
@@ -45,6 +45,11 @@ export interface BridgeSnapshot {
         syncedKeyId: string | null;
     };
     appUpdate: AppUpdateSnapshot;
+    checkin: {
+        weeklyPlan: WeeklyCheckinPlan;
+        dailyRecords: Record<string, DailyCheckinRecord>;
+        lastError: string | null;
+    };
 }
 
 export type DispatchPayload =

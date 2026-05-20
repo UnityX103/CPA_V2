@@ -65,6 +65,17 @@ describe('bridge protocol', () => {
                 lastCheckedAt: 1700000000000,
                 errorMessage: null,
             },
+            checkin: {
+                weeklyPlan: defaultWeeklyPlan('2026-05-18'),
+                dailyRecords: {
+                    '2026-05-18': {
+                        date: '2026-05-18',
+                        countsByItemId: { 'pomodoro-focus': 2 },
+                        processedPomodoroEndEventIds: [101],
+                    },
+                },
+                lastError: null,
+            },
         };
         expect(snap.v).toBe(1);
         expect(snap.pomodoro.endActionMode).toBe(sampleEndActionMode);
@@ -72,6 +83,7 @@ describe('bridge protocol', () => {
         expect(snap.settings.autostartEnabled).toBe(true);
         expect('targetMonitorIndex' in snap.settings).toBe(false);
         expect(snap.appUpdate.status).toBe('upToDate');
+        expect(snap.checkin.dailyRecords['2026-05-18'].countsByItemId['pomodoro-focus']).toBe(2);
     });
 
     it('DispatchPayload accepts every action shape', () => {
