@@ -28,14 +28,17 @@ describe('createBindingKeyStore — settings-window mode', () => {
         spy.mockRestore();
     });
 
-    it('completeCapture dispatches the captured key back to the authoritative main store', () => {
+    it('completeCapture dispatches the captured input back to the authoritative main store', () => {
         const spy = vi.spyOn(dispatchMod, 'dispatch').mockResolvedValue();
         const store = createBindingKeyStore({ isSettingsWindow: true });
 
-        store.getState().completeCapture(32, 'Space');
+        store.getState().completeCapture({ kind: 'keyboard', code: 32 }, 'Space');
 
         expect(spy).toHaveBeenCalledWith(expect.objectContaining({
-            v: BRIDGE_VERSION, store: 'bindingKey', action: 'completeCapture', args: [32, 'Space'],
+            v: BRIDGE_VERSION,
+            store: 'bindingKey',
+            action: 'completeCapture',
+            args: [{ kind: 'keyboard', code: 32 }, 'Space'],
         }));
         spy.mockRestore();
     });

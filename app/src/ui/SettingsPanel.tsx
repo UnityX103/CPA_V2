@@ -25,6 +25,7 @@ import {
     normalizeEntryInput,
     useBindingKeyStore,
     type BindingInput,
+    type MouseButton,
     type KeyCounterHealth,
 } from '../domain/bindingKey';
 import { useAppUpdateStore, type AppUpdateStatus } from '../domain/appUpdate';
@@ -57,7 +58,7 @@ function isKeyCounterHealth(value: unknown): value is KeyCounterHealth {
     return typeof health.permissionGranted === 'boolean' && typeof health.listenerRunning === 'boolean';
 }
 
-function inputForPointerButton(button: number): BindingInput | null {
+function inputForPointerButton(button: number): { kind: 'mouse'; button: MouseButton } | null {
     if (button === 0) return { kind: 'mouse', button: 'left' };
     if (button === 1) return { kind: 'mouse', button: 'middle' };
     if (button === 2) return { kind: 'mouse', button: 'right' };

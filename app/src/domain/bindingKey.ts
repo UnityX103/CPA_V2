@@ -298,7 +298,8 @@ function isInputPressedEvent(value: unknown): value is InputPressedEvent {
     if (!value || typeof value !== 'object') return false;
     const payload = value as Partial<InputPressedEvent>;
     if (payload.kind === 'keyboard') {
-        return Number.isInteger(payload.code) && payload.code >= 0;
+        const code = payload.code;
+        return Number.isInteger(code) && typeof code === 'number' && code >= 0;
     }
     if (payload.kind === 'mouse') {
         return payload.button === 'left' || payload.button === 'middle' || payload.button === 'right';
