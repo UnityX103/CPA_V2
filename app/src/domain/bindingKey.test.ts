@@ -159,7 +159,25 @@ describe('useBindingKeyListener — permission event', () => {
     });
 
     it('flips permissionGranted when accessibility-permission-changed fires', async () => {
-        invokeMock.mockResolvedValue({ granted: true, platform: 'macos' });
+        invokeMock.mockImplementation((command: string) => {
+            if (command === 'accessibility_status') {
+                return Promise.resolve({ granted: true, platform: 'macos' });
+            }
+            if (command === 'key_counter_health') {
+                return Promise.resolve({
+                    permissionGranted: true,
+                    platform: 'macos',
+                    listenerRunning: true,
+                    lastStartError: null,
+                    lastStartedAtMs: 1770000000000,
+                    lastStoppedAtMs: null,
+                    bundleIdentifier: 'com.nanzhai.cpa',
+                    executablePath: '/Applications/桌宠番茄钟.app/Contents/MacOS/app',
+                    codeSignIdentifier: 'app-461de596266994b3',
+                });
+            }
+            return Promise.resolve();
+        });
         const handlers: Record<string, (e: { payload: unknown }) => void> = {};
         listenMock.mockImplementation((event: string, cb: (e: { payload: unknown }) => void) => {
             handlers[event] = cb;
@@ -180,5 +198,101 @@ describe('useBindingKeyListener — permission event', () => {
         // And back true
         handlers['accessibility-permission-changed']({ payload: { granted: true, platform: 'macos' } });
         expect(useBindingKeyStore.getState().permissionGranted).toBe(true);
+    });
+
+    it('loads key counter health and reacts to health change events', async () => {
+        invokeMock.mockImplementation((command: string) => {
+            if (command === 'accessibility_status') {
+                return Promise.resolve({ granted: true, platform: 'macos' });
+            }
+            if (command === 'key_counter_health') {
+                return Promise.resolve({
+                    permissionGranted: true,
+                    platform: 'macos',
+                    listenerRunning: true,
+                    lastStartError: null,
+                    lastStartedAtMs: 1770000000000,
+                    lastStoppedAtMs: null,
+                    bundleIdentifier: 'com.nanzhai.cpa',
+                    executablePath: '/Applications/桌宠番茄钟.app/Contents/MacOS/app',
+                    codeSignIdentifier: 'app-461de596266994b3',
+                });
+            }
+            return Promise.resolve();
+        });
+        const handlers: Record<string, (e: { payload: unknown }) => void> = {};
+        listenMock.mockImplementation((event: string, cb: (e: { payload: unknown }) => void) => {
+            handlers[event] = cb;
+            return Promise.resolve(() => {});
+        });
+
+        const { useBindingKeyListener, useBindingKeyStore } = await import('./bindingKey');
+        renderHook(() => useBindingKeyListener());
+        await new Promise((r) => setTimeout(r, 0));
+
+        expect(invokeMock).toHaveBeenCalledWith('key_counter_health');
+        expect(useBindingKeyStore.getState().listenerRunning).toBe(true);
+
+        handlers['key-counter-health-changed']({
+            payload: {
+                permissionGranted: true,
+                platform: 'macos',
+                listenerRunning: false,
+                lastStartError: 'tap failed',
+                lastStartedAtMs: null,
+                lastStoppedAtMs: 1770000001000,
+                bundleIdentifier: 'com.nanzhai.cpa',
+                executablePath: '/Applications/桌宠番茄钟.app/Contents/MacOS/app',
+                codeSignIdentifier: 'app-461de596266994b3',
+            },
+        });
+        expect(useBindingKeyStore.getState().listenerRunning).toBe(false);
+        expect(useBindingKeyStore.getState().listenerError).toBe('tap failed');
+    });
+
+    it('restarts the listener on window focus when permission is granted but listener is stopped', async () => {
+        invokeMock.mockImplementation((command: string) => {
+            if (command === 'accessibility_status') {
+                return Promise.resolve({ granted: true, platform: 'macos' });
+            }
+            if (command === 'key_counter_health') {
+                return Promise.resolve({
+                    permissionGranted: true,
+                    platform: 'macos',
+                    listenerRunning: false,
+                    lastStartError: 'tap failed',
+                    lastStartedAtMs: null,
+                    lastStoppedAtMs: 1770000001000,
+                    bundleIdentifier: 'com.nanzhai.cpa',
+                    executablePath: '/Applications/桌宠番茄钟.app/Contents/MacOS/app',
+                    codeSignIdentifier: 'app-461de596266994b3',
+                });
+            }
+            if (command === 'restart_key_counter_listener') {
+                return Promise.resolve({
+                    permissionGranted: true,
+                    platform: 'macos',
+                    listenerRunning: true,
+                    lastStartError: null,
+                    lastStartedAtMs: 1770000002000,
+                    lastStoppedAtMs: 1770000001000,
+                    bundleIdentifier: 'com.nanzhai.cpa',
+                    executablePath: '/Applications/桌宠番茄钟.app/Contents/MacOS/app',
+                    codeSignIdentifier: 'app-461de596266994b3',
+                });
+            }
+            return Promise.resolve();
+        });
+        listenMock.mockResolvedValue(() => {});
+
+        const { useBindingKeyListener, useBindingKeyStore } = await import('./bindingKey');
+        renderHook(() => useBindingKeyListener());
+        await new Promise((r) => setTimeout(r, 0));
+
+        window.dispatchEvent(new Event('focus'));
+        await new Promise((r) => setTimeout(r, 0));
+
+        expect(invokeMock).toHaveBeenCalledWith('restart_key_counter_listener');
+        expect(useBindingKeyStore.getState().listenerRunning).toBe(true);
     });
 });

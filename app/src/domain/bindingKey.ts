@@ -239,9 +239,15 @@ export const useBindingKeyStore: BindingKeyStore = createBindingKeyStore({
     isSettingsWindow: detectIsSettingsWindow(),
 });
 
+function applyHealth(health: KeyCounterHealth) {
+    useBindingKeyStore.getState().setListenerHealth(health);
+}
+
 export function useBindingKeyListener() {
     useEffect(() => {
         let unlistenKey = () => {};
+        let unlistenHealth = () => {};
+        let unlistenPerm = () => {};
         let cancelled = false;
 
         // 启动时拉一次状态；后续翻转走 accessibility-permission-changed 事件
@@ -249,6 +255,31 @@ export function useBindingKeyListener() {
             if (cancelled) return;
             useBindingKeyStore.getState().setPermission(s.granted, s.platform);
         }).catch(() => { /* 非 Tauri 环境（vitest jsdom）下静默 */ });
+
+        const loadHealth = () =>
+            invoke<KeyCounterHealth>('key_counter_health')
+                .then((health) => {
+                    if (cancelled) return null;
+                    applyHealth(health);
+                    return health;
+                })
+                .catch(() => null);
+
+        void loadHealth();
+
+        const refreshOnFocus = () => {
+            void loadHealth().then((health) => {
+                if (cancelled || !health?.permissionGranted || health.listenerRunning) return;
+                invoke<KeyCounterHealth>('restart_key_counter_listener')
+                    .then((restartedHealth) => {
+                        if (cancelled) return;
+                        applyHealth(restartedHealth);
+                    })
+                    .catch(() => {});
+            });
+        };
+
+        window.addEventListener('focus', refreshOnFocus);
 
         listen<number>('key-pressed', (event) => {
             const store = useBindingKeyStore.getState();
@@ -262,7 +293,12 @@ export function useBindingKeyListener() {
             unlistenKey = un;
         });
 
-        let unlistenPerm = () => {};
+        listen<KeyCounterHealth>('key-counter-health-changed', (event) => {
+            applyHealth(event.payload);
+        }).then((un) => {
+            unlistenHealth = un;
+        });
+
         listen<{ granted: boolean; platform: 'macos' | 'windows' | 'other' }>('accessibility-permission-changed', (event) => {
             const { granted, platform } = event.payload;
             useBindingKeyStore.getState().setPermission(granted, platform);
@@ -272,7 +308,9 @@ export function useBindingKeyListener() {
 
         return () => {
             cancelled = true;
+            window.removeEventListener('focus', refreshOnFocus);
             unlistenKey();
+            unlistenHealth();
             unlistenPerm();
         };
     }, []);
