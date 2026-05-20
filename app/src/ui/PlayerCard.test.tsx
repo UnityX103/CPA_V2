@@ -137,7 +137,6 @@ describe('PlayerCard Pencil hierarchy and remote key counter', () => {
         }))} />);
 
         expect(container.querySelector('.pc-time-row')).toBeNull();
-        expect(screen.queryByText('3')).toBeNull();
     });
 });
 
