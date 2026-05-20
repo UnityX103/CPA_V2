@@ -9,25 +9,56 @@ import { useBridgeHost } from './domain/bridge/host';
 import { useInputCounterWindowController } from './domain/inputCounterWindow';
 import { MAIN_WINDOW_BASE_SIZE, useScaledWindowSize } from './domain/scaledWindow';
 import { useAppUpdateStore } from './domain/appUpdate';
-import { useSettingsStore } from './domain/settings';
+import { MAX_SCALE, MIN_SCALE, useSettingsStore } from './domain/settings';
 import { loadPersistedSettings, savePersistedSettings } from './domain/settingsPersistence';
 import { readAutostartEnabled } from './domain/autostart';
 
-function getSettingsHydrationSignature() {
+function clampStartupScale(scale: number): number {
+    if (!Number.isFinite(scale)) return 1.0;
+    return Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale));
+}
+
+function buildStartupSettingsSnapshot(
+    settings: Awaited<ReturnType<typeof loadPersistedSettings>>,
+    initialSettings: ReturnType<typeof getStartupSettingsState>,
+    confirmedAutostartEnabled: boolean,
+) {
+    const {
+        uiScale,
+        committedUiScale,
+        showActiveAppWindowTitle,
+    } = useSettingsStore.getState();
+    const scaleChanged = uiScale !== initialSettings.uiScale
+        || committedUiScale !== initialSettings.committedUiScale;
+    const titleVisibilityChanged = showActiveAppWindowTitle !== initialSettings.showActiveAppWindowTitle;
+    const persistedScale = clampStartupScale(settings?.uiScale ?? committedUiScale);
+
+    const snapshot = {
+        uiScale: scaleChanged
+            ? committedUiScale
+            : persistedScale,
+        showActiveAppWindowTitle: titleVisibilityChanged
+            ? showActiveAppWindowTitle
+            : settings?.showActiveAppWindowTitle ?? showActiveAppWindowTitle,
+        autostartEnabled: confirmedAutostartEnabled,
+    };
+
+    return { snapshot, shouldApplyScale: !scaleChanged };
+}
+
+function getStartupSettingsState() {
     const {
         uiScale,
         committedUiScale,
         showActiveAppWindowTitle,
         autostartEnabled,
-        dangerousChange,
     } = useSettingsStore.getState();
-    return JSON.stringify({
+    return {
         uiScale,
         committedUiScale,
         showActiveAppWindowTitle,
         autostartEnabled,
-        dangerousChange,
-    });
+    };
 }
 
 export default function App() {
@@ -49,27 +80,31 @@ export default function App() {
 
     useEffect(() => {
         let cancelled = false;
-        const initialSettingsSignature = getSettingsHydrationSignature();
         loadPersistedSettings()
             .then(async (settings) => {
                 if (cancelled) return;
                 const fallbackAutostartEnabled = settings?.autostartEnabled ?? false;
+                const initialSettings = getStartupSettingsState();
                 const confirmedAutostartEnabled = await readAutostartEnabled(fallbackAutostartEnabled);
                 if (cancelled) return;
-                if (getSettingsHydrationSignature() !== initialSettingsSignature) {
+                if (useSettingsStore.getState().autostartEnabled !== initialSettings.autostartEnabled) {
                     setSettingsHydrated(true);
                     return;
                 }
 
-                const currentSettings = useSettingsStore.getState();
-                const snapshot = {
-                    uiScale: settings?.uiScale ?? currentSettings.committedUiScale,
-                    showActiveAppWindowTitle: settings?.showActiveAppWindowTitle
-                        ?? currentSettings.showActiveAppWindowTitle,
-                    autostartEnabled: confirmedAutostartEnabled,
-                };
+                const { snapshot, shouldApplyScale } = buildStartupSettingsSnapshot(
+                    settings,
+                    initialSettings,
+                    confirmedAutostartEnabled,
+                );
 
-                useSettingsStore.getState().hydrateSettings(snapshot);
+                useSettingsStore.setState({
+                    ...(shouldApplyScale
+                        ? { uiScale: snapshot.uiScale, committedUiScale: snapshot.uiScale }
+                        : {}),
+                    showActiveAppWindowTitle: snapshot.showActiveAppWindowTitle,
+                    autostartEnabled: snapshot.autostartEnabled,
+                });
                 if (confirmedAutostartEnabled !== fallbackAutostartEnabled) {
                     void savePersistedSettings(snapshot);
                 }

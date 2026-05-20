@@ -246,4 +246,40 @@ describe('main App window composition', () => {
         expect(useSettingsStore.getState().autostartEnabled).toBe(true);
         expect(savePersistedSettingsMock).not.toHaveBeenCalled();
     });
+
+    it('reconciles autostart while preserving unrelated settings changed during native read', async () => {
+        let resolveAutostart!: (value: boolean) => void;
+        loadPersistedSettingsMock.mockResolvedValue({
+            uiScale: 1.25,
+            showActiveAppWindowTitle: true,
+            autostartEnabled: false,
+        });
+        readAutostartEnabledMock.mockReturnValue(new Promise((resolve) => {
+            resolveAutostart = resolve;
+        }));
+
+        render(<App />);
+
+        await waitFor(() => expect(readAutostartEnabledMock).toHaveBeenCalledWith(false));
+
+        useSettingsStore.setState({
+            uiScale: 1.5,
+            committedUiScale: 1.5,
+            showActiveAppWindowTitle: false,
+        });
+
+        await act(async () => {
+            resolveAutostart(true);
+        });
+
+        await waitFor(() => expect(useSettingsStore.getState().autostartEnabled).toBe(true));
+        expect(useSettingsStore.getState().uiScale).toBe(1.5);
+        expect(useSettingsStore.getState().committedUiScale).toBe(1.5);
+        expect(useSettingsStore.getState().showActiveAppWindowTitle).toBe(false);
+        expect(savePersistedSettingsMock).toHaveBeenCalledWith({
+            uiScale: 1.5,
+            showActiveAppWindowTitle: false,
+            autostartEnabled: true,
+        });
+    });
 });
