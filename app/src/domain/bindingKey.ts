@@ -12,6 +12,24 @@ interface AccessibilityStatus {
 
 type BindingKeyPlatform = AccessibilityStatus['platform'];
 
+export interface KeyCounterHealth {
+    permissionGranted: boolean;
+    platform: 'macos' | 'windows' | 'other';
+    listenerRunning: boolean;
+    lastStartError: string | null;
+    lastStartedAtMs: number | null;
+    lastStoppedAtMs: number | null;
+    bundleIdentifier: string | null;
+    executablePath: string | null;
+    codeSignIdentifier: string | null;
+}
+
+interface ListenerDiagnostic {
+    bundleIdentifier: string | null;
+    executablePath: string | null;
+    codeSignIdentifier: string | null;
+}
+
 export interface BindingKeyEntry {
     id: string;
     label: string;
@@ -27,6 +45,9 @@ interface BindingKeyState {
     capturingId: string | null;
     permissionGranted: boolean;
     platform: 'macos' | 'windows' | 'other' | null;
+    listenerRunning: boolean | null;
+    listenerError: string | null;
+    listenerDiagnostic: ListenerDiagnostic | null;
 }
 
 interface BindingKeyActions {
@@ -41,6 +62,7 @@ interface BindingKeyActions {
     incrementByKeyCode: (keyCode: number) => void;
     resetCount: (id: string) => void;
     setPermission: (granted: boolean, platform: 'macos' | 'windows' | 'other') => void;
+    setListenerHealth: (health: KeyCounterHealth) => void;
 }
 
 let nextId = 0;
@@ -84,6 +106,23 @@ export function hasVisibleInputCounterEntries(entries: BindingKeyEntry[]): boole
 
 export type BindingKeyStore = UseBoundStore<StoreApi<BindingKeyState & BindingKeyActions>>;
 
+function listenerHealthPatch(health: KeyCounterHealth): Pick<
+    BindingKeyState,
+    'permissionGranted' | 'platform' | 'listenerRunning' | 'listenerError' | 'listenerDiagnostic'
+> {
+    return {
+        permissionGranted: health.permissionGranted,
+        platform: health.platform,
+        listenerRunning: health.listenerRunning,
+        listenerError: health.lastStartError,
+        listenerDiagnostic: {
+            bundleIdentifier: health.bundleIdentifier,
+            executablePath: health.executablePath,
+            codeSignIdentifier: health.codeSignIdentifier,
+        },
+    };
+}
+
 export function createBindingKeyStore(opts: { isSettingsWindow: boolean }): BindingKeyStore {
     if (opts.isSettingsWindow) {
         return create<BindingKeyState & BindingKeyActions>((set) => ({
@@ -93,6 +132,9 @@ export function createBindingKeyStore(opts: { isSettingsWindow: boolean }): Bind
             capturingId: null,
             permissionGranted: true,
             platform: null,
+            listenerRunning: null,
+            listenerError: null,
+            listenerDiagnostic: null,
             setPanelEnabled: (enabled) => {
                 void dispatch({ v: BRIDGE_VERSION, store: 'bindingKey', action: 'setPanelEnabled', args: [enabled] });
             },
@@ -118,6 +160,7 @@ export function createBindingKeyStore(opts: { isSettingsWindow: boolean }): Bind
             resetCount: () => {},
             setPermission: (granted, platform) =>
                 set({ permissionGranted: granted, platform }),
+            setListenerHealth: (health) => set(listenerHealthPatch(health)),
         }));
     }
     return create<BindingKeyState & BindingKeyActions>((set, get) => ({
@@ -127,6 +170,9 @@ export function createBindingKeyStore(opts: { isSettingsWindow: boolean }): Bind
         capturingId: null,
         permissionGranted: true,
         platform: null,
+        listenerRunning: null,
+        listenerError: null,
+        listenerDiagnostic: null,
 
         setPanelEnabled: (enabled) => set({ panelEnabled: enabled }),
         addEntry: () => {
@@ -180,6 +226,7 @@ export function createBindingKeyStore(opts: { isSettingsWindow: boolean }): Bind
             }));
         },
         setPermission: (granted, platform) => set({ permissionGranted: granted, platform }),
+        setListenerHealth: (health) => set(listenerHealthPatch(health)),
     }));
 }
 

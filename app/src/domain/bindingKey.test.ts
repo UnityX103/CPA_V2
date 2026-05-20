@@ -70,11 +70,45 @@ describe('createBindingKeyStore — permission state', () => {
         expect(store.getState().platform).toBe(null);
     });
 
+    it('defaults listener health to unknown before fetch', () => {
+        const store = createBindingKeyStore({ isSettingsWindow: false });
+        expect(store.getState().listenerRunning).toBe(null);
+        expect(store.getState().listenerError).toBe(null);
+        expect(store.getState().listenerDiagnostic).toBe(null);
+    });
+
     it('setPermission updates both fields', () => {
         const store = createBindingKeyStore({ isSettingsWindow: false });
         store.getState().setPermission(false, 'macos');
         expect(store.getState().permissionGranted).toBe(false);
         expect(store.getState().platform).toBe('macos');
+    });
+
+    it('setListenerHealth mirrors listener status and diagnostics', () => {
+        const store = createBindingKeyStore({ isSettingsWindow: false });
+        store.getState().setListenerHealth({
+            permissionGranted: true,
+            platform: 'macos',
+            listenerRunning: false,
+            lastStartError: '[key_counter] CGEventTap create failed',
+            lastStartedAtMs: null,
+            lastStoppedAtMs: 1770000000000,
+            bundleIdentifier: 'com.nanzhai.cpa',
+            executablePath: '/Applications/桌宠番茄钟.app/Contents/MacOS/app',
+            codeSignIdentifier: 'app-461de596266994b3',
+        });
+
+        expect(store.getState()).toEqual(expect.objectContaining({
+            permissionGranted: true,
+            platform: 'macos',
+            listenerRunning: false,
+            listenerError: '[key_counter] CGEventTap create failed',
+            listenerDiagnostic: {
+                bundleIdentifier: 'com.nanzhai.cpa',
+                executablePath: '/Applications/桌宠番茄钟.app/Contents/MacOS/app',
+                codeSignIdentifier: 'app-461de596266994b3',
+            },
+        }));
     });
 
     it('toggles the independent input counter panel visibility flag', () => {
