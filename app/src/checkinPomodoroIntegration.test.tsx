@@ -178,4 +178,23 @@ describe('checkin Pomodoro integration', () => {
         expect(useCheckinStore.getState().dailyRecords['2026-05-19']).toBeUndefined();
         expect(useCheckinWindowController).toHaveBeenCalledTimes(1);
     });
+
+    it('counts later Pomodoro sessions after reset because end event ids keep increasing', () => {
+        render(<App />);
+
+        act(() => {
+            usePomodoroStore.getState().applySettings(1, 60, 4, true, false);
+            usePomodoroStore.getState().start();
+            usePomodoroStore.getState().tick(1);
+        });
+        act(() => {
+            usePomodoroStore.getState().reset();
+            usePomodoroStore.getState().start();
+            usePomodoroStore.getState().tick(1);
+        });
+
+        const record = useCheckinStore.getState().dailyRecords['2026-05-19'];
+        expect(record.countsByItemId.pomo).toBe(2);
+        expect(record.processedPomodoroEndEventIds).toEqual([1, 2]);
+    });
 });

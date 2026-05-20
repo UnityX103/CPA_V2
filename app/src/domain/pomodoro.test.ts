@@ -137,6 +137,25 @@ describe('PomodoroTimerSystem.tick', () => {
             triggeredBy: 'timer',
         });
     });
+
+    it('keeps end event ids unique across reset and restart in the same store', () => {
+        const store = freshStore();
+        store.getState().applySettings(1, 60, 4, true, false);
+        store.getState().start();
+        store.getState().tick(1);
+        expect(store.getState().lastEndEvent?.id).toBe(1);
+
+        store.getState().reset();
+        store.getState().start();
+        store.getState().tick(1);
+
+        expect(store.getState().lastEndEvent).toEqual({
+            id: 2,
+            fromPhase: 'focus',
+            toPhase: 'break',
+            triggeredBy: 'timer',
+        });
+    });
 });
 
 describe('PomodoroTimerSystem.skip', () => {
