@@ -120,6 +120,7 @@ export function applyDispatch(payload: DispatchPayload): void {
                 case 'setUiScale': s.setUiScale(...payload.args); return;
                 case 'previewDangerousUiScale': s.previewDangerousUiScale(...payload.args); return;
                 case 'setShowActiveAppWindowTitle': s.setShowActiveAppWindowTitle(...payload.args); return;
+                case 'setAutostartEnabled': void s.setAutostartEnabled(...payload.args); return;
                 case 'applyDangerousChange': s.applyDangerousChange(...payload.args); return;
                 case 'revertDangerousChange': s.revertDangerousChange(...payload.args); return;
             }

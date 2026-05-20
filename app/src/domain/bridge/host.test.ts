@@ -260,6 +260,25 @@ describe('applyDispatch', () => {
         expect(useSettingsStore.getState().showActiveAppWindowTitle).toBe(false);
     });
 
+    it('routes autostart setting to the authoritative settings store', () => {
+        const original = useSettingsStore.getState().setAutostartEnabled;
+        const setAutostartEnabled = vi.fn();
+        useSettingsStore.setState({ setAutostartEnabled });
+
+        try {
+            applyDispatch({
+                v: BRIDGE_VERSION,
+                store: 'settings',
+                action: 'setAutostartEnabled',
+                args: [true],
+            });
+
+            expect(setAutostartEnabled).toHaveBeenCalledWith(true);
+        } finally {
+            useSettingsStore.setState({ setAutostartEnabled: original });
+        }
+    });
+
     it('routes pomodoro/applySettings to usePomodoroStore.applySettings', () => {
         applyDispatch({ v: BRIDGE_VERSION, store: 'pomodoro', action: 'applySettings', args: [900, 180, 5, true, true] });
 

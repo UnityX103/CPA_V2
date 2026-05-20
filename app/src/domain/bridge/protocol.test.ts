@@ -76,6 +76,7 @@ describe('bridge protocol', () => {
             { v: 1, store: 'settings',   action: 'setUiScale',     args: [1.5] },
             { v: 1, store: 'settings',   action: 'previewDangerousUiScale', args: [1.5] },
             { v: 1, store: 'settings',   action: 'setShowActiveAppWindowTitle', args: [false] },
+            { v: 1, store: 'settings',   action: 'setAutostartEnabled', args: [true] },
             { v: 1, store: 'settings',   action: 'applyDangerousChange', args: ['pending-id'] },
             { v: 1, store: 'settings',   action: 'revertDangerousChange', args: ['pending-id'] },
             { v: 1, store: 'pomodoro',   action: 'applySettings',  args: [1500, 300, 4, true, false] },
@@ -95,8 +96,8 @@ describe('bridge protocol', () => {
             { v: 1, store: 'appUpdate',  action: 'checkNow',       args: [] },
             { v: 1, store: 'appUpdate',  action: 'restartForUpdate', args: [] },
         ];
-        expect(samples).toHaveLength(21);
-        expect(samples[6]).toEqual({
+        expect(samples).toHaveLength(22);
+        expect(samples[7]).toEqual({
             v: 1,
             store: 'pomodoro',
             action: 'applyEndActionSettings',
