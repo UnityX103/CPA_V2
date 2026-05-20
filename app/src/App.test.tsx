@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom/vitest';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useSettingsStore } from './domain/settings';
 
@@ -216,6 +216,34 @@ describe('main App window composition', () => {
 
         await waitFor(() => expect(useSettingsStore.getState().autostartEnabled).toBe(false));
         expect(readAutostartEnabledMock).toHaveBeenCalledWith(false);
+        expect(savePersistedSettingsMock).not.toHaveBeenCalled();
+    });
+
+    it('does not let late startup hydration overwrite early settings changes', async () => {
+        let resolveAutostart!: (value: boolean) => void;
+        loadPersistedSettingsMock.mockResolvedValue({
+            uiScale: 1.25,
+            showActiveAppWindowTitle: false,
+            autostartEnabled: false,
+        });
+        readAutostartEnabledMock.mockReturnValue(new Promise((resolve) => {
+            resolveAutostart = resolve;
+        }));
+
+        render(<App />);
+
+        await waitFor(() => expect(readAutostartEnabledMock).toHaveBeenCalledWith(false));
+
+        useSettingsStore.setState({ autostartEnabled: true });
+
+        await act(async () => {
+            resolveAutostart(false);
+        });
+
+        await waitFor(() => expect(invokeMock).toHaveBeenCalledWith('resize_scaled_window', {
+            args: expect.objectContaining({ label: 'main' }),
+        }));
+        expect(useSettingsStore.getState().autostartEnabled).toBe(true);
         expect(savePersistedSettingsMock).not.toHaveBeenCalled();
     });
 });

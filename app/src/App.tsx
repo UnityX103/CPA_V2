@@ -13,6 +13,23 @@ import { useSettingsStore } from './domain/settings';
 import { loadPersistedSettings, savePersistedSettings } from './domain/settingsPersistence';
 import { readAutostartEnabled } from './domain/autostart';
 
+function getSettingsHydrationSignature() {
+    const {
+        uiScale,
+        committedUiScale,
+        showActiveAppWindowTitle,
+        autostartEnabled,
+        dangerousChange,
+    } = useSettingsStore.getState();
+    return JSON.stringify({
+        uiScale,
+        committedUiScale,
+        showActiveAppWindowTitle,
+        autostartEnabled,
+        dangerousChange,
+    });
+}
+
 export default function App() {
     useStateSync();
     useActiveAppListener();
@@ -32,12 +49,17 @@ export default function App() {
 
     useEffect(() => {
         let cancelled = false;
+        const initialSettingsSignature = getSettingsHydrationSignature();
         loadPersistedSettings()
             .then(async (settings) => {
                 if (cancelled) return;
                 const fallbackAutostartEnabled = settings?.autostartEnabled ?? false;
                 const confirmedAutostartEnabled = await readAutostartEnabled(fallbackAutostartEnabled);
                 if (cancelled) return;
+                if (getSettingsHydrationSignature() !== initialSettingsSignature) {
+                    setSettingsHydrated(true);
+                    return;
+                }
 
                 const currentSettings = useSettingsStore.getState();
                 const snapshot = {
