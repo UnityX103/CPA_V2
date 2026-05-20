@@ -10,7 +10,8 @@ import { useInputCounterWindowController } from './domain/inputCounterWindow';
 import { MAIN_WINDOW_BASE_SIZE, useScaledWindowSize } from './domain/scaledWindow';
 import { useAppUpdateStore } from './domain/appUpdate';
 import { useSettingsStore } from './domain/settings';
-import { loadPersistedSettings } from './domain/settingsPersistence';
+import { loadPersistedSettings, savePersistedSettings } from './domain/settingsPersistence';
+import { readAutostartEnabled } from './domain/autostart';
 
 export default function App() {
     useStateSync();
@@ -32,10 +33,23 @@ export default function App() {
     useEffect(() => {
         let cancelled = false;
         loadPersistedSettings()
-            .then((settings) => {
+            .then(async (settings) => {
                 if (cancelled) return;
-                if (settings) {
-                    useSettingsStore.getState().hydrateSettings(settings);
+                const fallbackAutostartEnabled = settings?.autostartEnabled ?? false;
+                const confirmedAutostartEnabled = await readAutostartEnabled(fallbackAutostartEnabled);
+                if (cancelled) return;
+
+                const currentSettings = useSettingsStore.getState();
+                const snapshot = {
+                    uiScale: settings?.uiScale ?? currentSettings.committedUiScale,
+                    showActiveAppWindowTitle: settings?.showActiveAppWindowTitle
+                        ?? currentSettings.showActiveAppWindowTitle,
+                    autostartEnabled: confirmedAutostartEnabled,
+                };
+
+                useSettingsStore.getState().hydrateSettings(snapshot);
+                if (confirmedAutostartEnabled !== fallbackAutostartEnabled) {
+                    void savePersistedSettings(snapshot);
                 }
                 setSettingsHydrated(true);
             })

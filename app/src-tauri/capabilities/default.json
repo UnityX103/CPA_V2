@@ -11,6 +11,9 @@
     "core:window:allow-start-dragging",
     "core:webview:allow-create-webview-window",
     "core:event:default",
+    "autostart:allow-enable",
+    "autostart:allow-disable",
+    "autostart:allow-is-enabled",
     "dialog:allow-open",
     "dialog:allow-message"
   ]

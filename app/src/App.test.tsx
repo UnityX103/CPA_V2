@@ -8,6 +8,8 @@ const {
     hydrateAppUpdate,
     invokeMock,
     loadPersistedSettingsMock,
+    readAutostartEnabledMock,
+    savePersistedSettingsMock,
     startAutomaticChecks,
     useStateSync,
     useActiveAppListener,
@@ -30,6 +32,8 @@ const {
         hydrateAppUpdate,
         invokeMock: vi.fn(),
         loadPersistedSettingsMock: vi.fn(),
+        readAutostartEnabledMock: vi.fn(),
+        savePersistedSettingsMock: vi.fn(),
         startAutomaticChecks,
         useStateSync: vi.fn(),
         useActiveAppListener: vi.fn(),
@@ -47,7 +51,11 @@ vi.mock('./domain/bindingKey', () => ({ useBindingKeyListener }));
 vi.mock('./domain/bridge/host', () => ({ useBridgeHost }));
 vi.mock('./domain/inputCounterWindow', () => ({ useInputCounterWindowController }));
 vi.mock('./domain/appUpdate', () => ({ useAppUpdateStore }));
-vi.mock('./domain/settingsPersistence', () => ({ loadPersistedSettings: loadPersistedSettingsMock }));
+vi.mock('./domain/autostart', () => ({ readAutostartEnabled: readAutostartEnabledMock }));
+vi.mock('./domain/settingsPersistence', () => ({
+    loadPersistedSettings: loadPersistedSettingsMock,
+    savePersistedSettings: savePersistedSettingsMock,
+}));
 vi.mock('./ui/PomodoroPanel', () => ({
     PomodoroPanel: () => <div data-testid="pomodoro-panel" />,
 }));
@@ -76,7 +84,17 @@ beforeEach(() => {
     useInputCounterWindowController.mockClear();
     loadPersistedSettingsMock.mockReset();
     loadPersistedSettingsMock.mockResolvedValue({ uiScale: 1.5, showActiveAppWindowTitle: true });
-    useSettingsStore.setState({ uiScale: 1, committedUiScale: 1, dangerousChange: null });
+    readAutostartEnabledMock.mockReset();
+    readAutostartEnabledMock.mockResolvedValue(false);
+    savePersistedSettingsMock.mockReset();
+    savePersistedSettingsMock.mockResolvedValue(undefined);
+    useSettingsStore.setState({
+        uiScale: 1,
+        committedUiScale: 1,
+        showActiveAppWindowTitle: true,
+        autostartEnabled: false,
+        dangerousChange: null,
+    });
 });
 
 afterEach(() => {
@@ -168,5 +186,36 @@ describe('main App window composition', () => {
         expect(invokeMock).not.toHaveBeenCalledWith('resize_scaled_window', {
             args: expect.objectContaining({ label: 'main', scale: 1 }),
         });
+    });
+
+    it('hydrates autostart from the confirmed native plugin state', async () => {
+        loadPersistedSettingsMock.mockResolvedValue({
+            uiScale: 1.25,
+            showActiveAppWindowTitle: false,
+            autostartEnabled: false,
+        });
+        readAutostartEnabledMock.mockResolvedValue(true);
+
+        render(<App />);
+
+        await waitFor(() => expect(useSettingsStore.getState().autostartEnabled).toBe(true));
+        expect(readAutostartEnabledMock).toHaveBeenCalledWith(false);
+        expect(savePersistedSettingsMock).toHaveBeenCalledWith({
+            uiScale: 1.25,
+            showActiveAppWindowTitle: false,
+            autostartEnabled: true,
+        });
+    });
+
+    it('keeps autostart off when no persisted settings exist', async () => {
+        useSettingsStore.setState({ autostartEnabled: true });
+        loadPersistedSettingsMock.mockResolvedValue(null);
+        readAutostartEnabledMock.mockResolvedValue(false);
+
+        render(<App />);
+
+        await waitFor(() => expect(useSettingsStore.getState().autostartEnabled).toBe(false));
+        expect(readAutostartEnabledMock).toHaveBeenCalledWith(false);
+        expect(savePersistedSettingsMock).not.toHaveBeenCalled();
     });
 });
