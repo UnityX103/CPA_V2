@@ -4055,6 +4055,37 @@
         },
         {
           "type": "frame",
+          "id": "MlcD6",
+          "name": "gspAutostart",
+          "width": "fill_container",
+          "fill": "#F6F7F8",
+          "cornerRadius": 16,
+          "padding": 16,
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "z31cAI",
+              "name": "gsp-autostart-label",
+              "fill": "#9CA3AF",
+              "content": "开机自启动",
+              "fontFamily": "MaokenAssortedSans",
+              "fontSize": 12,
+              "fontWeight": "600"
+            },
+            {
+              "id": "g2HvE",
+              "type": "ref",
+              "ref": "NGo9f",
+              "name": "gsp-autostart-toggle",
+              "fill": "#D1D5DB",
+              "justifyContent": "start"
+            }
+          ]
+        },
+        {
+          "type": "frame",
           "id": "PgdON",
           "name": "gspAutoUpdate",
           "width": "fill_container",
