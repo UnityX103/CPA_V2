@@ -6,12 +6,14 @@ const STORE_KEY = 'settings';
 export interface PersistedSettings {
     uiScale: number;
     showActiveAppWindowTitle: boolean;
+    autostartEnabled: boolean;
 }
 
 interface PersistedSettingsV1 {
     v: 1;
     uiScale: number;
     showActiveAppWindowTitle?: boolean;
+    autostartEnabled?: boolean;
 }
 
 function isPersistedSettingsV1(value: unknown): value is PersistedSettingsV1 {
@@ -23,6 +25,10 @@ function isPersistedSettingsV1(value: unknown): value is PersistedSettingsV1 {
         && (
             candidate.showActiveAppWindowTitle === undefined
             || typeof candidate.showActiveAppWindowTitle === 'boolean'
+        )
+        && (
+            candidate.autostartEnabled === undefined
+            || typeof candidate.autostartEnabled === 'boolean'
         );
 }
 
@@ -38,6 +44,7 @@ export async function loadPersistedSettings(): Promise<PersistedSettings | null>
         return {
             uiScale: value.uiScale,
             showActiveAppWindowTitle: value.showActiveAppWindowTitle ?? true,
+            autostartEnabled: value.autostartEnabled ?? false,
         };
     } catch (err) {
         console.warn('[settingsPersistence] load failed', err);
@@ -52,6 +59,7 @@ export async function savePersistedSettings(settings: PersistedSettings): Promis
             v: 1,
             uiScale: settings.uiScale,
             showActiveAppWindowTitle: settings.showActiveAppWindowTitle,
+            autostartEnabled: settings.autostartEnabled,
         } satisfies PersistedSettingsV1);
         await store.save();
     } catch (err) {

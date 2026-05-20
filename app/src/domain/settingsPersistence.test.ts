@@ -18,12 +18,18 @@ describe('settingsPersistence', () => {
     });
 
     it('loads persisted v1 settings', async () => {
-        store.get.mockResolvedValue({ v: 1, uiScale: 1.75, showActiveAppWindowTitle: false });
+        store.get.mockResolvedValue({
+            v: 1,
+            uiScale: 1.75,
+            showActiveAppWindowTitle: false,
+            autostartEnabled: true,
+        });
         const { loadPersistedSettings } = await import('./settingsPersistence');
 
         await expect(loadPersistedSettings()).resolves.toEqual({
             uiScale: 1.75,
             showActiveAppWindowTitle: false,
+            autostartEnabled: true,
         });
     });
 
@@ -34,6 +40,7 @@ describe('settingsPersistence', () => {
         await expect(loadPersistedSettings()).resolves.toEqual({
             uiScale: 1.75,
             showActiveAppWindowTitle: true,
+            autostartEnabled: false,
         });
     });
 
@@ -44,15 +51,32 @@ describe('settingsPersistence', () => {
         await expect(loadPersistedSettings()).resolves.toBeNull();
     });
 
+    it('ignores malformed autostart settings', async () => {
+        store.get.mockResolvedValue({
+            v: 1,
+            uiScale: 1.75,
+            showActiveAppWindowTitle: true,
+            autostartEnabled: 'yes',
+        });
+        const { loadPersistedSettings } = await import('./settingsPersistence');
+
+        await expect(loadPersistedSettings()).resolves.toBeNull();
+    });
+
     it('saves persisted v1 settings', async () => {
         const { savePersistedSettings } = await import('./settingsPersistence');
 
-        await savePersistedSettings({ uiScale: 2, showActiveAppWindowTitle: false });
+        await savePersistedSettings({
+            uiScale: 2,
+            showActiveAppWindowTitle: false,
+            autostartEnabled: true,
+        });
 
         expect(store.set).toHaveBeenCalledWith('settings', {
             v: 1,
             uiScale: 2,
             showActiveAppWindowTitle: false,
+            autostartEnabled: true,
         });
         expect(store.save).toHaveBeenCalledTimes(1);
     });

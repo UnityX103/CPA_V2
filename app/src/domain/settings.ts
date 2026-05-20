@@ -2,6 +2,7 @@ import { create, type StoreApi, type UseBoundStore } from 'zustand';
 import { dispatch } from './bridge/dispatch';
 import { BRIDGE_VERSION } from './bridge/protocol';
 import { savePersistedSettings } from './settingsPersistence';
+import { applyAutostartEnabled } from './autostart';
 
 export type SettingsTab = 'pomodoro' | 'online' | 'pet' | 'global';
 export type DangerousSettingKind = 'uiScale';
@@ -19,18 +20,21 @@ export interface SettingsState {
     uiScale: number;
     committedUiScale: number;
     showActiveAppWindowTitle: boolean;
+    autostartEnabled: boolean;
     dangerousChange: DangerousChange | null;
 }
 
 export interface PersistedSettingsSnapshot {
     uiScale: number;
     showActiveAppWindowTitle?: boolean;
+    autostartEnabled?: boolean;
 }
 
 interface SettingsActions {
     setActiveTab: (tab: SettingsTab) => void;
     setUiScale: (scale: number) => void;
     setShowActiveAppWindowTitle: (enabled: boolean) => void;
+    setAutostartEnabled: (enabled: boolean) => Promise<void> | void;
     previewDangerousUiScale: (scale: number) => void;
     applyDangerousChange: (id: string) => void;
     revertDangerousChange: (id: string) => void;
@@ -62,6 +66,7 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
             uiScale: 1.0,
             committedUiScale: 1.0,
             showActiveAppWindowTitle: true,
+            autostartEnabled: false,
             dangerousChange: null,
             setActiveTab: (tab) => set({ activeTab: tab }),
             setUiScale: (scale) => {
@@ -69,6 +74,14 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
             },
             setShowActiveAppWindowTitle: (enabled) => {
                 void dispatch({ v: BRIDGE_VERSION, store: 'settings', action: 'setShowActiveAppWindowTitle', args: [enabled] });
+            },
+            setAutostartEnabled: (enabled) => {
+                void dispatch({
+                    v: BRIDGE_VERSION,
+                    store: 'settings',
+                    action: 'setAutostartEnabled',
+                    args: [enabled],
+                } as Parameters<typeof dispatch>[0]);
             },
             previewDangerousUiScale: (scale) => {
                 void dispatch({ v: BRIDGE_VERSION, store: 'settings', action: 'previewDangerousUiScale', args: [scale] });
@@ -85,6 +98,7 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
                     uiScale,
                     committedUiScale: uiScale,
                     showActiveAppWindowTitle: snapshot.showActiveAppWindowTitle ?? true,
+                    autostartEnabled: snapshot.autostartEnabled ?? false,
                     dangerousChange: null,
                 });
             },
@@ -95,6 +109,7 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
         uiScale: 1.0,
         committedUiScale: 1.0,
         showActiveAppWindowTitle: true,
+        autostartEnabled: false,
         dangerousChange: null,
         setActiveTab: (tab) => set({ activeTab: tab }),
         setUiScale: (scale) => {
@@ -107,6 +122,18 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
             void savePersistedSettings({
                 uiScale: state.committedUiScale,
                 showActiveAppWindowTitle: enabled,
+                autostartEnabled: state.autostartEnabled,
+            });
+        },
+        setAutostartEnabled: async (enabled) => {
+            const fallback = get().autostartEnabled;
+            const confirmed = await applyAutostartEnabled(enabled, fallback);
+            set({ autostartEnabled: confirmed });
+            const state = get();
+            void savePersistedSettings({
+                uiScale: state.committedUiScale,
+                showActiveAppWindowTitle: state.showActiveAppWindowTitle,
+                autostartEnabled: confirmed,
             });
         },
         previewDangerousUiScale: (scale) => {
@@ -134,6 +161,7 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
             void savePersistedSettings({
                 uiScale: committedUiScale,
                 showActiveAppWindowTitle: get().showActiveAppWindowTitle,
+                autostartEnabled: get().autostartEnabled,
             });
         },
         revertDangerousChange: (id) => {
@@ -147,6 +175,7 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
                 uiScale,
                 committedUiScale: uiScale,
                 showActiveAppWindowTitle: snapshot.showActiveAppWindowTitle ?? true,
+                autostartEnabled: snapshot.autostartEnabled ?? false,
                 dangerousChange: null,
             });
         },

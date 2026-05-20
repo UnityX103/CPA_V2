@@ -1,4 +1,19 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import { vi } from 'vitest';
+
+const settingsMocks = vi.hoisted(() => ({
+    savePersistedSettings: vi.fn(),
+    applyAutostartEnabled: vi.fn(),
+}));
+
+vi.mock('./settingsPersistence', () => ({
+    savePersistedSettings: settingsMocks.savePersistedSettings,
+}));
+
+vi.mock('./autostart', () => ({
+    applyAutostartEnabled: settingsMocks.applyAutostartEnabled,
+}));
+
 import {
     useSettingsStore,
     MIN_SCALE,
@@ -9,14 +24,17 @@ import {
 import { createSettingsStore } from './settings';
 import * as dispatchMod from './bridge/dispatch';
 import { BRIDGE_VERSION } from './bridge/protocol';
-import { vi } from 'vitest';
 
 beforeEach(() => {
+    settingsMocks.savePersistedSettings.mockReset();
+    settingsMocks.applyAutostartEnabled.mockReset();
+    settingsMocks.applyAutostartEnabled.mockImplementation((enabled) => Promise.resolve(enabled));
     useSettingsStore.setState({
         activeTab: 'pomodoro',
         uiScale: 1.0,
         committedUiScale: 1.0,
         showActiveAppWindowTitle: true,
+        autostartEnabled: false,
         dangerousChange: null,
     });
 });
@@ -129,6 +147,46 @@ describe('useSettingsStore', () => {
         expect(useSettingsStore.getState().uiScale).toBe(1.25);
         expect(useSettingsStore.getState().showActiveAppWindowTitle).toBe(false);
     });
+
+    it('defaults autostartEnabled to false', () => {
+        expect(useSettingsStore.getState().autostartEnabled).toBe(false);
+
+        const settingsWindowStore = createSettingsStore({ isSettingsWindow: true });
+        expect(settingsWindowStore.getState().autostartEnabled).toBe(false);
+    });
+
+    it('hydrates autostartEnabled from persisted settings', () => {
+        useSettingsStore.getState().hydrateSettings({ uiScale: 1.25, autostartEnabled: true });
+
+        expect(useSettingsStore.getState().autostartEnabled).toBe(true);
+    });
+
+    it('defaults missing persisted autostartEnabled to false during hydration', () => {
+        useSettingsStore.setState({ autostartEnabled: true });
+
+        useSettingsStore.getState().hydrateSettings({ uiScale: 1.25 });
+
+        expect(useSettingsStore.getState().autostartEnabled).toBe(false);
+    });
+
+    it('setAutostartEnabled applies native setting and persists confirmed value', async () => {
+        settingsMocks.applyAutostartEnabled.mockResolvedValue(true);
+        useSettingsStore.setState({
+            committedUiScale: 1.5,
+            showActiveAppWindowTitle: false,
+            autostartEnabled: false,
+        });
+
+        await useSettingsStore.getState().setAutostartEnabled(true);
+
+        expect(settingsMocks.applyAutostartEnabled).toHaveBeenCalledWith(true, false);
+        expect(useSettingsStore.getState().autostartEnabled).toBe(true);
+        expect(settingsMocks.savePersistedSettings).toHaveBeenCalledWith({
+            uiScale: 1.5,
+            showActiveAppWindowTitle: false,
+            autostartEnabled: true,
+        });
+    });
 });
 
 describe('createSettingsStore — settings-window mode', () => {
@@ -201,6 +259,22 @@ describe('createSettingsStore — settings-window mode', () => {
             store: 'settings',
             action: 'setShowActiveAppWindowTitle',
             args: [false],
+        }));
+        spy.mockRestore();
+    });
+
+    it('setAutostartEnabled dispatches instead of mutating local state', () => {
+        const spy = vi.spyOn(dispatchMod, 'dispatch').mockResolvedValue();
+        const store = createSettingsStore({ isSettingsWindow: true });
+
+        void store.getState().setAutostartEnabled(true);
+
+        expect(store.getState().autostartEnabled).toBe(false);
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({
+            v: BRIDGE_VERSION,
+            store: 'settings',
+            action: 'setAutostartEnabled',
+            args: [true],
         }));
         spy.mockRestore();
     });
