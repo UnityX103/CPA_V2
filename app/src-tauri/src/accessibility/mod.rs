@@ -28,6 +28,10 @@ struct ListenerState {
     last_stopped_at_ms: Option<u64>,
 }
 
+fn listener_slot_occupied(state: &ListenerState) -> bool {
+    state.running || state.stop.is_some()
+}
+
 /// Holds the current key_counter listener state. Stop flags are replaced
 /// atomically when (re)spawning.
 #[derive(Default)]
@@ -106,7 +110,7 @@ impl ListenerHandle {
         // Phase 1: commit the new stop flag inside the lock and release before spawning.
         let stop = {
             let mut guard = self.inner.lock().unwrap();
-            if guard.running {
+            if listener_slot_occupied(&guard) {
                 return;
             }
             let stop = Arc::new(AtomicBool::new(false));
@@ -188,6 +192,18 @@ impl ListenerHandle {
         guard.running = true;
         guard.last_start_error = None;
         guard.last_started_at_ms = Some(now_ms());
+    }
+
+    fn mark_starting_for_test(&self) {
+        let mut guard = self.inner.lock().unwrap();
+        guard.stop = Some(Arc::new(AtomicBool::new(false)));
+        guard.running = false;
+        guard.last_start_error = None;
+    }
+
+    fn listener_slot_occupied_for_test(&self) -> bool {
+        let guard = self.inner.lock().unwrap();
+        listener_slot_occupied(&guard)
     }
 
     fn health_snapshot_for_test(&self, status: AccessibilityStatus) -> KeyCounterHealth {
@@ -351,7 +367,6 @@ pub fn restart_key_counter_listener(
     if !current_status().granted {
         return handle.health_snapshot();
     }
-    handle.stop();
     handle.ensure_running(&app);
     handle.health_snapshot()
 }
@@ -423,8 +438,8 @@ pub fn start_watcher(app: AppHandle, handle: Arc<ListenerHandle>, stop: Arc<Atom
                     handle.ensure_running(&app);
                 } else {
                     handle.stop();
+                    emit_health(&app, &handle);
                 }
-                emit_health(&app, &handle);
                 last = status.granted;
             }
         }
@@ -582,5 +597,16 @@ mod tests {
         });
         assert!(!health.listener_running);
         assert!(health.last_stopped_at_ms.is_some());
+    }
+
+    #[test]
+    fn listener_handle_treats_starting_stop_token_as_occupied() {
+        let handle = super::ListenerHandle::default();
+        assert!(!handle.listener_slot_occupied_for_test());
+
+        handle.mark_starting_for_test();
+
+        assert!(!handle.is_running());
+        assert!(handle.listener_slot_occupied_for_test());
     }
 }
