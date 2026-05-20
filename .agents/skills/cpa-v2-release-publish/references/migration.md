@@ -29,7 +29,7 @@ CPA_UPDATER_PRIVATE_KEY_PATH     Tauri updater private key
 CPA_UPDATER_PASSWORD_PATH        Password for the updater private key
 CPA_UPDATER_PUBLIC_KEY_PATH      Public updater key, safe to inspect
 GITHUB_SSH_KEY_PATH              GitHub SSH private key for git push
-REMOTE_NANZHAI_SSH_KEY_PATH      SSH private key for 139.159.233.218, needed for Nanzhai CDN upload
+REMOTE_NANZHAI_SSH_KEY_PATH      Legacy SSH private key for 139.159.233.218, not used for new releases
 ```
 
 Also restore `gh auth login`; the GitHub token is stored by GitHub CLI/keychain and should not be copied as plaintext.

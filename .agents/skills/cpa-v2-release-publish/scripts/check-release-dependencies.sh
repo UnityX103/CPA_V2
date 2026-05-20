@@ -49,7 +49,7 @@ check_file "updater private key" "${CPA_UPDATER_PRIVATE_KEY_PATH:-}" || failed=1
 check_file "updater password file" "${CPA_UPDATER_PASSWORD_PATH:-}" || failed=1
 check_file "updater public key" "${CPA_UPDATER_PUBLIC_KEY_PATH:-}" || failed=1
 check_file "github ssh key" "${GITHUB_SSH_KEY_PATH:-}" || failed=1
-check_file "remote nanzhai ssh key" "${REMOTE_NANZHAI_SSH_KEY_PATH:-}" || true
+check_file "legacy nanzhai ssh key" "${REMOTE_NANZHAI_SSH_KEY_PATH:-}" || true
 echo
 
 check_cmd git || failed=1

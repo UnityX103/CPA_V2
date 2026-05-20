@@ -38,11 +38,11 @@ describe('updater configuration', () => {
         expect(cargoPackageVersion(cargo)).toBe(conf.version);
     });
 
-    it('creates signed updater artifacts and points at the stable CDN manifest', () => {
+    it('creates signed updater artifacts and points at the GitHub Release manifest', () => {
         const conf = readJson(tauriConfPath);
         expect(conf.bundle?.createUpdaterArtifacts).toBe(true);
         expect(conf.plugins?.updater?.endpoints).toEqual([
-            'https://updates.nanzhaigame.cn/cpa/stable/latest.json',
+            'https://github.com/UnityX103/CPA_V2/releases/latest/download/latest.json',
         ]);
         expect(conf.plugins?.updater?.pubkey).toEqual(expect.any(String));
         expect(conf.plugins.updater.pubkey.length).toBeGreaterThan(40);

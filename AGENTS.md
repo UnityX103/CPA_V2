@@ -40,10 +40,9 @@ CPA_V2/
 - Single test file: `cd Server && node --test test/protocol.test.js`
 
 ### Updater release publishing
-- The updater CDN endpoint is `https://updates.nanzhaigame.cn/cpa/stable/latest.json`.
-- Publish generated files from `app/release-updates/` to the CDN path backing `updates.nanzhaigame.cn/cpa/`.
-- The target server for CDN publishing is the Huawei personal server `root@139.159.233.218`.
-- SSH credentials are not stored in this repo. `ServerAI/CLAUDE.md` references `.ssh/KeyPair-1c90.pem`; confirm the local key path before uploading.
+- The updater endpoint is `https://github.com/UnityX103/CPA_V2/releases/latest/download/latest.json`.
+- Publish generated files from `app/release-updates/` as GitHub Release assets on `UnityX103/CPA_V2`; do not use `updates.nanzhaigame.cn` for new releases.
+- GitHub credentials are not stored in this repo. Use `gh auth status` before publishing, and keep release keys inside the ignored `cpa-v2-release/` credential pack.
 - For Windows updater packages, `latest.json` must include `windows-x86_64-nsis` and `windows-x86_64` platform keys in addition to macOS keys.
 
 ## Architecture: state layering (borrowed from Unity QFramework)
