@@ -103,6 +103,44 @@ describe('PlayerCard active app metadata', () => {
     });
 });
 
+describe('PlayerCard Pencil hierarchy and remote key counter', () => {
+    it('places the pin button inside the content stack so epxz9 is relative to D3ZIc', () => {
+        const { container } = render(<PlayerCard player={player(state())} />);
+        const content = container.querySelector('.pc-content');
+        const pin = screen.getByRole('button', { name: '固定远端玩家卡牌' });
+
+        expect(content).toBeTruthy();
+        expect(content?.contains(pin)).toBe(true);
+        expect(pin.parentElement).toBe(content);
+    });
+
+    it('renders oCExj key counter pill when the remote player broadcasts a synced key', () => {
+        const { container } = render(<PlayerCard player={player(state({
+            bindingKey: { keyLabel: 'Space', pressCount: 7 },
+        }))} />);
+
+        const timeRow = container.querySelector('.pc-time-row');
+        expect(timeRow).toBeTruthy();
+        expect(screen.getByText('Space')).toBeTruthy();
+        expect(screen.getByText('7')).toBeTruthy();
+    });
+
+    it('hides oCExj key counter pill when bindingKey is null or has an empty label', () => {
+        const { container, rerender } = render(<PlayerCard player={player(state({
+            bindingKey: null,
+        }))} />);
+
+        expect(container.querySelector('.pc-time-row')).toBeNull();
+
+        rerender(<PlayerCard player={player(state({
+            bindingKey: { keyLabel: '   ', pressCount: 3 },
+        }))} />);
+
+        expect(container.querySelector('.pc-time-row')).toBeNull();
+        expect(screen.queryByText('3')).toBeNull();
+    });
+});
+
 describe('PlayerCard native window drag', () => {
     it('starts native drag from the card background', () => {
         const { container } = render(<PlayerCard player={player(state())} />);
