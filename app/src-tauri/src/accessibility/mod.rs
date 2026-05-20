@@ -111,30 +111,46 @@ impl ListenerHandle {
             }
             let stop = Arc::new(AtomicBool::new(false));
             guard.stop = Some(stop.clone());
-            guard.running = true;
             guard.last_start_error = None;
-            guard.last_started_at_ms = Some(now_ms());
             stop
         };
         // Phase 2: spawn outside the lock so a long thread-spawn or future re-entry
         // through the same handle cannot deadlock against this Mutex.
         let app_handle = app.clone();
-        if let Err(error) = crate::key_counter::spawn_listener(stop.clone(), move |keycode| {
+        let result = crate::key_counter::spawn_listener(stop.clone(), move |keycode| {
             let _ = app_handle.emit("key-pressed", keycode);
-        }) {
-            eprintln!("{error}");
-            let mut guard = self.inner.lock().unwrap();
-            if guard
-                .stop
-                .as_ref()
-                .is_some_and(|current| Arc::ptr_eq(current, &stop))
-            {
-                guard.stop = None;
-                guard.running = false;
-                guard.last_start_error = Some(error.to_string());
-                guard.last_stopped_at_ms = Some(now_ms());
+        });
+
+        match result {
+            Ok(()) => {
+                let mut guard = self.inner.lock().unwrap();
+                if guard
+                    .stop
+                    .as_ref()
+                    .is_some_and(|current| Arc::ptr_eq(current, &stop))
+                {
+                    guard.running = true;
+                    guard.last_start_error = None;
+                    guard.last_started_at_ms = Some(now_ms());
+                }
+            }
+            Err(error) => {
+                eprintln!("{error}");
+                let mut guard = self.inner.lock().unwrap();
+                if guard
+                    .stop
+                    .as_ref()
+                    .is_some_and(|current| Arc::ptr_eq(current, &stop))
+                {
+                    guard.stop = None;
+                    guard.running = false;
+                    guard.last_start_error = Some(error);
+                    guard.last_stopped_at_ms = Some(now_ms());
+                }
             }
         }
+
+        emit_health(app, self);
     }
 
     /// Signal the running listener to stop (no-op if not running).
@@ -154,6 +170,10 @@ impl ListenerHandle {
             guard.last_stopped_at_ms = Some(now_ms());
         }
     }
+}
+
+fn emit_health(app: &AppHandle, handle: &ListenerHandle) {
+    let _ = app.emit("key-counter-health-changed", handle.health_snapshot());
 }
 
 #[cfg(test)]
@@ -318,6 +338,24 @@ pub fn key_counter_listening(handle: tauri::State<'_, Arc<ListenerHandle>>) -> b
     handle.is_running()
 }
 
+#[tauri::command]
+pub fn key_counter_health(handle: tauri::State<'_, Arc<ListenerHandle>>) -> KeyCounterHealth {
+    handle.health_snapshot()
+}
+
+#[tauri::command]
+pub fn restart_key_counter_listener(
+    app: AppHandle,
+    handle: tauri::State<'_, Arc<ListenerHandle>>,
+) -> KeyCounterHealth {
+    if !current_status().granted {
+        return handle.health_snapshot();
+    }
+    handle.stop();
+    handle.ensure_running(&app);
+    handle.health_snapshot()
+}
+
 use std::time::Duration;
 
 #[cfg(target_os = "macos")]
@@ -386,6 +424,7 @@ pub fn start_watcher(app: AppHandle, handle: Arc<ListenerHandle>, stop: Arc<Atom
                 } else {
                     handle.stop();
                 }
+                emit_health(&app, &handle);
                 last = status.granted;
             }
         }

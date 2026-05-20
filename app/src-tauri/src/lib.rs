@@ -556,6 +556,8 @@ pub fn run() {
             accessibility::accessibility_status,
             accessibility::open_accessibility_settings,
             accessibility::key_counter_listening,
+            accessibility::key_counter_health,
+            accessibility::restart_key_counter_listener,
             accessibility::request_accessibility_permission,
             video_files::validate_custom_video_path,
             video_files::prepare_custom_alpha_video_path,

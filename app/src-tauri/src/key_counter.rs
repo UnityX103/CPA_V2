@@ -17,7 +17,9 @@ where
         CGEvent, CGEventTap, CGEventTapLocation, CGEventTapOptions, CGEventTapPlacement,
         CGEventType, CallbackResult, EventField,
     };
+    use std::sync::mpsc;
 
+    let (install_tx, install_rx) = mpsc::channel::<Result<(), String>>();
     std::thread::spawn(move || {
         let tap = match CGEventTap::new(
             CGEventTapLocation::HID,
@@ -32,7 +34,11 @@ where
         ) {
             Ok(tap) => tap,
             Err(_) => {
-                eprintln!("[key_counter] CGEventTap create failed; Accessibility permission may be missing");
+                let message =
+                    "[key_counter] CGEventTap create failed; Accessibility permission may be missing"
+                        .to_string();
+                let _ = install_tx.send(Err(message.clone()));
+                eprintln!("{message}");
                 return;
             }
         };
@@ -40,7 +46,9 @@ where
         let loop_source = match tap.mach_port().create_runloop_source(0) {
             Ok(src) => src,
             Err(_) => {
-                eprintln!("[key_counter] failed to create CFRunLoop source");
+                let message = "[key_counter] failed to create CFRunLoop source".to_string();
+                let _ = install_tx.send(Err(message.clone()));
+                eprintln!("{message}");
                 return;
             }
         };
@@ -50,6 +58,7 @@ where
             run_loop.add_source(&loop_source, kCFRunLoopCommonModes);
             tap.enable();
         }
+        let _ = install_tx.send(Ok(()));
 
         while !stop.load(Ordering::Relaxed) {
             unsafe {
@@ -60,7 +69,9 @@ where
         let _ = loop_source;
         let _ = tap;
     });
-    Ok(())
+    install_rx.recv().map_err(|err| {
+        format!("[key_counter] macOS event tap install status channel closed: {err}")
+    })?
 }
 
 #[cfg(target_os = "windows")]
