@@ -376,6 +376,7 @@ describe('bridge host subscription signatures', () => {
             uiScale: 1.25,
             committedUiScale: 1.25,
             showActiveAppWindowTitle: true,
+            autostartEnabled: false,
             dangerousChange: null,
             activeTab: 'pomodoro',
         };
