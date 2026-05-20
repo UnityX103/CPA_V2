@@ -5,6 +5,8 @@
   "windows": [
     "main",
     "settings",
+    "today-checkin",
+    "checkin-editor",
     "pomodoro-video-player",
     "input-counter",
     "remote-player-0",

@@ -290,9 +290,11 @@ describe('buildSnapshot', () => {
 });
 
 describe('bridge host mirror targets', () => {
-    it('emits snapshots to settings, input-counter, and all fixed remote player windows', () => {
+    it('emits snapshots to settings, check-in windows, input-counter, and all fixed remote player windows', () => {
         expect(MIRROR_WINDOW_LABELS).toEqual([
             'settings',
+            'today-checkin',
+            'checkin-editor',
             'input-counter',
             ...REMOTE_PLAYER_WINDOW_LABELS,
         ]);

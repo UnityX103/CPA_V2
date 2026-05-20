@@ -240,6 +240,8 @@ export function applyDispatch(payload: DispatchPayload): void {
 
 export const MIRROR_WINDOW_LABELS = [
     'settings',
+    'today-checkin',
+    'checkin-editor',
     'input-counter',
     ...REMOTE_PLAYER_WINDOW_LABELS,
 ] as const;

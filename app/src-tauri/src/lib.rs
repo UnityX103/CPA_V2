@@ -213,6 +213,10 @@ const SETTINGS_MIN_W: f64 = 360.0;
 const SETTINGS_MIN_H: f64 = 320.0;
 const INPUT_COUNTER_W: f64 = 128.0;
 const INPUT_COUNTER_H: f64 = 84.0;
+const TODAY_CHECKIN_W: f64 = 278.0;
+const TODAY_CHECKIN_H: f64 = 289.0;
+const CHECKIN_EDITOR_W: f64 = 460.0;
+const CHECKIN_EDITOR_H: f64 = 898.0;
 
 /// 计算设置窗口在主窗口所在 monitor 的中心位置（物理像素）。
 /// 多显示器下保证设置窗弹在用户当前屏，而非系统主屏。
@@ -300,6 +304,64 @@ fn build_input_counter_window_hidden(
     Ok(w)
 }
 
+fn build_today_checkin_window_hidden(
+    app: &tauri::AppHandle,
+) -> Result<tauri::WebviewWindow, tauri::Error> {
+    let url = WebviewUrl::App("index.html?window=today-checkin".into());
+    let w = WebviewWindowBuilder::new(app, "today-checkin", url)
+        .title("今日打卡")
+        .inner_size(TODAY_CHECKIN_W, TODAY_CHECKIN_H)
+        .resizable(false)
+        .transparent(true)
+        .decorations(false)
+        .shadow(false)
+        .skip_taskbar(true)
+        .visible(false)
+        .always_on_top(true)
+        .build()?;
+    window_helpers::install_first_mouse_only(&w);
+    let _ = window_helpers::set_always_on_top_native(&w, true);
+
+    let w_for_hide = w.clone();
+    w.on_window_event(move |event| {
+        if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+            api.prevent_close();
+            let _ = w_for_hide.hide();
+        }
+    });
+
+    Ok(w)
+}
+
+fn build_checkin_editor_window_hidden(
+    app: &tauri::AppHandle,
+) -> Result<tauri::WebviewWindow, tauri::Error> {
+    let url = WebviewUrl::App("index.html?window=checkin-editor".into());
+    let w = WebviewWindowBuilder::new(app, "checkin-editor", url)
+        .title("打卡计划")
+        .inner_size(CHECKIN_EDITOR_W, CHECKIN_EDITOR_H)
+        .resizable(false)
+        .transparent(true)
+        .decorations(false)
+        .shadow(false)
+        .skip_taskbar(true)
+        .visible(false)
+        .always_on_top(true)
+        .build()?;
+    window_helpers::install_first_mouse_only(&w);
+    let _ = window_helpers::set_always_on_top_native(&w, true);
+
+    let w_for_hide = w.clone();
+    w.on_window_event(move |event| {
+        if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+            api.prevent_close();
+            let _ = w_for_hide.hide();
+        }
+    });
+
+    Ok(w)
+}
+
 fn install_main_window_exit_on_close(app: tauri::AppHandle) {
     let Some(main) = app.get_webview_window("main") else {
         return;
@@ -365,6 +427,42 @@ async fn resize_input_counter_window(app: tauri::AppHandle, height: f64) -> Resu
     Ok(())
 }
 
+fn show_existing_window(app: tauri::AppHandle, label: &str) -> Result<(), String> {
+    let w = app.get_webview_window(label).ok_or_else(|| {
+        format!("{label} window not built — setup() probably failed; check stderr")
+    })?;
+    let _ = window_helpers::set_always_on_top_native(&w, true);
+    w.show().map_err(|e| e.to_string())?;
+    w.set_focus().map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+async fn open_today_checkin_window(app: tauri::AppHandle) -> Result<(), String> {
+    show_existing_window(app, "today-checkin")
+}
+
+#[tauri::command]
+async fn open_checkin_editor_window(app: tauri::AppHandle) -> Result<(), String> {
+    show_existing_window(app, "checkin-editor")
+}
+
+#[tauri::command]
+async fn close_today_checkin_window(app: tauri::AppHandle) -> Result<(), String> {
+    if let Some(w) = app.get_webview_window("today-checkin") {
+        w.hide().map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+#[tauri::command]
+async fn close_checkin_editor_window(app: tauri::AppHandle) -> Result<(), String> {
+    if let Some(w) = app.get_webview_window("checkin-editor") {
+        w.hide().map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
 #[tauri::command]
 fn resize_scaled_window(
     app: tauri::AppHandle,
@@ -409,6 +507,12 @@ pub fn run() {
             }
             if let Err(e) = build_input_counter_window_hidden(app.handle()) {
                 eprintln!("[setup] build_input_counter_window_hidden failed: {e}");
+            }
+            if let Err(e) = build_today_checkin_window_hidden(app.handle()) {
+                eprintln!("[setup] build_today_checkin_window_hidden failed: {e}");
+            }
+            if let Err(e) = build_checkin_editor_window_hidden(app.handle()) {
+                eprintln!("[setup] build_checkin_editor_window_hidden failed: {e}");
             }
             install_main_window_exit_on_close(app.handle().clone());
             // Focus restorer: 主窗口拖/resize 末尾把 key 还回 settings (若可见)。
@@ -552,6 +656,10 @@ pub fn run() {
             show_input_counter_window,
             hide_input_counter_window,
             resize_input_counter_window,
+            open_today_checkin_window,
+            open_checkin_editor_window,
+            close_today_checkin_window,
+            close_checkin_editor_window,
             resize_scaled_window,
             accessibility::accessibility_status,
             accessibility::open_accessibility_settings,
