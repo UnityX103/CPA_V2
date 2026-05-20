@@ -1,7 +1,7 @@
 # Daily Check-in Panels Design
 
-**Date**: 2026-05-20  
-**Status**: Approved by delegated defaults  
+**Date**: 2026-05-20
+**Status**: Approved by delegated defaults
 **Design source**: `AUI/PUI.pen` node `g9Gei` (`Daily Check-in Panels`), including `KB3Vp` (`Today Check-in Panel`) and `s6g1w` (`Check-in Plan Editor Panel`)
 
 ## Context

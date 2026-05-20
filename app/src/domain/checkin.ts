@@ -121,7 +121,6 @@ export function effectivePlanForDate(state: CheckinState, date: string): Checkin
         cursor = addDays(cursor, -1);
         const previousPlan = state.weeklyPlan.days[weekdayForDate(cursor)];
         if (previousPlan.kind === 'items') return previousPlan;
-        if (previousPlan.kind === 'rest') break;
     }
 
     return { kind: 'items', items: [] };

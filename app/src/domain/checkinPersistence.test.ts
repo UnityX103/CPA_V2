@@ -83,7 +83,7 @@ describe('checkinPersistence', () => {
         await expect(loadPersistedCheckin()).resolves.toBeNull();
     });
 
-    it('resolves when storage setItem throws', async () => {
+    it('rejects when storage setItem throws so callers can surface lastError', async () => {
         installLocalStorage({
             setItem: vi.fn(() => {
                 throw new Error('storage blocked');
@@ -106,6 +106,6 @@ describe('checkinPersistence', () => {
                 },
             },
             dailyRecords: {},
-        })).resolves.toBeUndefined();
+        })).rejects.toThrow('storage blocked');
     });
 });

@@ -65,7 +65,7 @@ describe('checkin domain', () => {
         expect(summary.totalTarget).toBe(13);
     });
 
-    it('chains inherit days through previous effective items until a rest day stops inheritance', () => {
+    it('chains inherit days through previous effective items while skipping rest days', () => {
         const store = createCheckinStore({ isMirrorWindow: false });
         store.setState({ weeklyPlan: plan({}) });
 
@@ -83,7 +83,23 @@ describe('checkin domain', () => {
             }),
         });
 
-        expect(effectiveItemsForDate(store.getState(), '2026-05-23')).toEqual([]);
+        expect(effectiveItemsForDate(store.getState(), '2026-05-23')).toEqual([
+            { id: 'pomo', title: '专注番茄', type: 'pomodoroFocus', targetCount: 3 },
+        ]);
+    });
+
+    it('resolves inherited days to the nearest previous ordinary plan before a rest day', () => {
+        const store = createCheckinStore({ isMirrorWindow: false });
+        store.setState({
+            weeklyPlan: plan({
+                tue: { kind: 'rest' },
+                wed: { kind: 'inherit' },
+            }),
+        });
+
+        expect(effectiveItemsForDate(store.getState(), '2026-05-20')).toEqual([
+            { id: 'read', title: '阅读', type: 'manual', targetCount: 2 },
+        ]);
     });
 
     it('skips rest days when calculating the current streak', () => {

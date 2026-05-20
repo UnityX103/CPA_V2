@@ -86,9 +86,5 @@ export async function savePersistedCheckin(snapshot: PersistedCheckinSnapshot): 
     const storage = getStorage();
     if (!storage) return;
 
-    try {
-        storage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
-    } catch {
-        // Storage can be present but unusable in restricted browser contexts.
-    }
+    storage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
 }
