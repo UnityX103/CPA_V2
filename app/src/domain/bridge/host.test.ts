@@ -54,6 +54,7 @@ beforeEach(() => {
         uiScale: 1.0,
         committedUiScale: 1.0,
         showActiveAppWindowTitle: true,
+        autostartEnabled: false,
         dangerousChange: null,
         activeTab: 'pomodoro',
     });
@@ -103,12 +104,14 @@ beforeEach(() => {
 describe('buildSnapshot', () => {
     it('reads from every source store and stamps the version', () => {
         useSettingsStore.setState({ uiScale: 1.5, committedUiScale: 1.5 });
+        useSettingsStore.setState({ autostartEnabled: true });
         usePomodoroStore.setState({ autoStartBreak: true });
         useSettingsStore.getState().setShowActiveAppWindowTitle(false);
         const snap = buildSnapshot();
         expect(snap.v).toBe(BRIDGE_VERSION);
         expect(snap.settings.uiScale).toBe(1.5);
         expect(snap.settings.showActiveAppWindowTitle).toBe(false);
+        expect(snap.settings.autostartEnabled).toBe(true);
         expect('targetMonitorIndex' in snap.settings).toBe(false);
         expect(snap.pomodoro.focusDurationSeconds).toBe(usePomodoroStore.getState().focusDurationSeconds);
         expect(snap.pomodoro.autoStartBreak).toBe(true);
@@ -392,10 +395,15 @@ describe('bridge host subscription signatures', () => {
             ...pomodoroTabSettings,
             showActiveAppWindowTitle: false,
         };
+        const autostartSettings: SettingsState = {
+            ...pomodoroTabSettings,
+            autostartEnabled: true,
+        };
 
         expect(settingsSig(pomodoroTabSettings)).toBe(settingsSig(globalTabSettings));
         expect(settingsSig(pomodoroTabSettings)).not.toBe(settingsSig(scaledSettings));
         expect(settingsSig(pomodoroTabSettings)).not.toBe(settingsSig(hiddenTitleSettings));
+        expect(settingsSig(pomodoroTabSettings)).not.toBe(settingsSig(autostartSettings));
     });
 
     it('pomoSig includes end-action settings and ignores transient timer fields', () => {

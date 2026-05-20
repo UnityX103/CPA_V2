@@ -78,6 +78,7 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
             uiScale: s.uiScale,
             committedUiScale: s.committedUiScale,
             showActiveAppWindowTitle: s.showActiveAppWindowTitle,
+            autostartEnabled: s.autostartEnabled,
             dangerousChange: s.dangerousChange,
         },
         pomodoro: {
@@ -189,12 +190,14 @@ export function settingsSig(s: {
     uiScale: number;
     committedUiScale: number;
     showActiveAppWindowTitle: boolean;
+    autostartEnabled: boolean;
     dangerousChange: unknown;
 }): string {
     return JSON.stringify([
         s.uiScale,
         s.committedUiScale,
         s.showActiveAppWindowTitle,
+        s.autostartEnabled,
         s.dangerousChange,
     ]);
 }

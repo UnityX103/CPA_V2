@@ -66,6 +66,7 @@ export function applySnapshotToMirrors(snap: BridgeSnapshot): void {
         uiScale: snap.settings.uiScale,
         committedUiScale: snap.settings.committedUiScale,
         showActiveAppWindowTitle: snap.settings.showActiveAppWindowTitle,
+        autostartEnabled: snap.settings.autostartEnabled,
         dangerousChange: snap.settings.dangerousChange,
     });
     usePomodoroStore.setState({

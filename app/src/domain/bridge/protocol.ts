@@ -16,6 +16,7 @@ export interface BridgeSnapshot {
         uiScale: number;
         committedUiScale: number;
         showActiveAppWindowTitle: boolean;
+        autostartEnabled: boolean;
         dangerousChange: DangerousChange | null;
     };
     pomodoro: {

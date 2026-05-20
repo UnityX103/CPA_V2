@@ -615,6 +615,17 @@ function GlobalTab() {
                     </div>
                 </div>
 
+                <div className="card">
+                    <div className="card-row">
+                        <span className="card-label">开机自启动</span>
+                        <Toggle
+                            checked={settings.autostartEnabled}
+                            onChange={(enabled) => { void settings.setAutostartEnabled(enabled); }}
+                            ariaLabel="开机自启动"
+                        />
+                    </div>
+                </div>
+
                 <AppUpdateSettingsRow />
 
                 {/* gspBindingKey yjJtt */}

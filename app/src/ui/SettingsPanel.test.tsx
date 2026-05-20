@@ -66,6 +66,8 @@ beforeEach(() => {
         activeTab: 'pomodoro',
         uiScale: 1.0,
         committedUiScale: 1.0,
+        showActiveAppWindowTitle: true,
+        autostartEnabled: false,
         dangerousChange: null,
     });
     usePomodoroStore.setState({
@@ -538,20 +540,23 @@ describe('GlobalTab parity with Pdj9C', () => {
         render(<SettingsPanel />);
         expect(screen.getByText('界面缩放')).toBeTruthy();
         expect(screen.getByText('显示打开的文件名')).toBeTruthy();
+        expect(screen.getByText('开机自启动')).toBeTruthy();
         expect(screen.getByText('自动下载并安装更新')).toBeTruthy();
         expect(screen.getByText('按键计数')).toBeTruthy();
         expect(screen.queryByText('目标显示器')).toBeNull();
         expect(screen.queryByText(/显示器 \d+/)).toBeNull();
     });
 
-    it('keeps the app update row between active title and binding key controls', () => {
+    it('keeps autostart between active title and app update controls', () => {
         render(<SettingsPanel />);
 
         const activeTitle = screen.getByText('显示打开的文件名');
+        const autostart = screen.getByText('开机自启动');
         const autoUpdate = screen.getByText('自动下载并安装更新');
         const bindingKey = screen.getByText('按键计数');
 
-        expect(activeTitle.compareDocumentPosition(autoUpdate) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(activeTitle.compareDocumentPosition(autostart) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(autostart.compareDocumentPosition(autoUpdate) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
         expect(autoUpdate.compareDocumentPosition(bindingKey) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
 
@@ -562,6 +567,18 @@ describe('GlobalTab parity with Pdj9C', () => {
         expect(toggle.getAttribute('aria-pressed')).toBe('true');
         fireEvent.click(toggle);
         expect(useSettingsStore.getState().showActiveAppWindowTitle).toBe(false);
+    });
+
+    it('routes autostart toggles to the settings store action', () => {
+        const setAutostartEnabled = vi.fn();
+        useSettingsStore.setState({ setAutostartEnabled });
+        render(<SettingsPanel />);
+
+        const toggle = screen.getByRole('button', { name: '开机自启动' });
+
+        expect(toggle.getAttribute('aria-pressed')).toBe('false');
+        fireEvent.click(toggle);
+        expect(setAutostartEnabled).toHaveBeenCalledWith(true);
     });
 
     it('shows app update status and can disable automatic updates', () => {

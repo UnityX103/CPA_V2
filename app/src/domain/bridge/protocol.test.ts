@@ -37,6 +37,7 @@ describe('bridge protocol', () => {
                 uiScale: 1.5,
                 committedUiScale: 1.0,
                 showActiveAppWindowTitle: true,
+                autostartEnabled: true,
                 dangerousChange: null,
             },
             pomodoro: {
@@ -67,6 +68,7 @@ describe('bridge protocol', () => {
         expect(snap.v).toBe(1);
         expect(snap.pomodoro.endActionMode).toBe(sampleEndActionMode);
         expect(snap.pomodoro.endActionVideo).toEqual(sampleEndActionVideo);
+        expect(snap.settings.autostartEnabled).toBe(true);
         expect('targetMonitorIndex' in snap.settings).toBe(false);
         expect(snap.appUpdate.status).toBe('upToDate');
     });
