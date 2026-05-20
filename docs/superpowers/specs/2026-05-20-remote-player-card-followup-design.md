@@ -134,4 +134,3 @@ Manual verification:
 - Do not add a new WebSocket message type unless the existing broadcast path is proven broken by a failing test.
 - Do not replace independent remote-player windows with `RemoteRoster`.
 - Do not change the active-app icon/title behavior in this pass.
-
