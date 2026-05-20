@@ -7,6 +7,8 @@ use serde::Serialize;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 #[cfg(target_os = "macos")]
+use std::{path::PathBuf, process::Command};
+#[cfg(target_os = "macos")]
 use tauri::Manager;
 use tauri::{AppHandle, Emitter};
 
@@ -17,16 +19,86 @@ mod stub;
 #[cfg(target_os = "windows")]
 mod windows;
 
-/// Holds the current key_counter listener's stop flag (None = listener not running).
-/// Replaced atomically when (re)spawning.
+#[derive(Default)]
+struct ListenerState {
+    stop: Option<Arc<AtomicBool>>,
+    running: bool,
+    last_start_error: Option<String>,
+    last_started_at_ms: Option<u64>,
+    last_stopped_at_ms: Option<u64>,
+}
+
+/// Holds the current key_counter listener state. Stop flags are replaced
+/// atomically when (re)spawning.
 #[derive(Default)]
 pub struct ListenerHandle {
-    inner: Mutex<Option<Arc<AtomicBool>>>,
+    inner: Mutex<ListenerState>,
+}
+
+fn now_ms() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis() as u64
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
+pub struct KeyCounterHealth {
+    pub permission_granted: bool,
+    pub platform: &'static str,
+    pub listener_running: bool,
+    pub last_start_error: Option<String>,
+    pub last_started_at_ms: Option<u64>,
+    pub last_stopped_at_ms: Option<u64>,
+    pub bundle_identifier: Option<String>,
+    pub executable_path: Option<String>,
+    pub code_sign_identifier: Option<String>,
 }
 
 impl ListenerHandle {
     pub fn is_running(&self) -> bool {
-        self.inner.lock().unwrap().is_some()
+        self.inner.lock().unwrap().running
+    }
+
+    #[allow(dead_code)]
+    pub fn health_snapshot(&self) -> KeyCounterHealth {
+        self.health_from_status(current_status())
+    }
+
+    #[allow(dead_code)]
+    fn health_from_status(&self, status: AccessibilityStatus) -> KeyCounterHealth {
+        let (listener_running, last_start_error, last_started_at_ms, last_stopped_at_ms) = {
+            let state = self.inner.lock().unwrap();
+            (
+                state.running,
+                state.last_start_error.clone(),
+                state.last_started_at_ms,
+                state.last_stopped_at_ms,
+            )
+        };
+
+        KeyCounterHealth {
+            permission_granted: status.granted,
+            platform: status.platform,
+            listener_running,
+            last_start_error,
+            last_started_at_ms,
+            last_stopped_at_ms,
+            bundle_identifier: bundle_identifier(),
+            executable_path: executable_path(),
+            code_sign_identifier: code_sign_identifier(),
+        }
+    }
+
+    #[allow(dead_code)]
+    fn record_start_error(&self, error: String) {
+        let mut guard = self.inner.lock().unwrap();
+        guard.stop = None;
+        guard.running = false;
+        guard.last_start_error = Some(error);
+        guard.last_stopped_at_ms = Some(now_ms());
     }
 
     /// Spawn a listener if not already running. Idempotent.
@@ -34,11 +106,14 @@ impl ListenerHandle {
         // Phase 1: commit the new stop flag inside the lock and release before spawning.
         let stop = {
             let mut guard = self.inner.lock().unwrap();
-            if guard.is_some() {
+            if guard.running {
                 return;
             }
             let stop = Arc::new(AtomicBool::new(false));
-            *guard = Some(stop.clone());
+            guard.stop = Some(stop.clone());
+            guard.running = true;
+            guard.last_start_error = None;
+            guard.last_started_at_ms = Some(now_ms());
             stop
         };
         // Phase 2: spawn outside the lock so a long thread-spawn or future re-entry
@@ -50,10 +125,14 @@ impl ListenerHandle {
             eprintln!("{error}");
             let mut guard = self.inner.lock().unwrap();
             if guard
+                .stop
                 .as_ref()
                 .is_some_and(|current| Arc::ptr_eq(current, &stop))
             {
-                *guard = None;
+                guard.stop = None;
+                guard.running = false;
+                guard.last_start_error = Some(error.to_string());
+                guard.last_stopped_at_ms = Some(now_ms());
             }
         }
     }
@@ -66,10 +145,111 @@ impl ListenerHandle {
     /// keys pressed in that window may double-count.
     pub fn stop(&self) {
         let mut guard = self.inner.lock().unwrap();
-        if let Some(stop) = guard.take() {
+        if let Some(stop) = guard.stop.take() {
             stop.store(true, Ordering::Relaxed);
+            guard.running = false;
+            guard.last_stopped_at_ms = Some(now_ms());
+        } else if guard.running {
+            guard.running = false;
+            guard.last_stopped_at_ms = Some(now_ms());
         }
     }
+}
+
+#[cfg(test)]
+impl ListenerHandle {
+    fn record_start_error_for_test(&self, error: String) {
+        self.record_start_error(error);
+    }
+
+    fn mark_running_for_test(&self) {
+        let mut guard = self.inner.lock().unwrap();
+        guard.stop = Some(Arc::new(AtomicBool::new(false)));
+        guard.running = true;
+        guard.last_start_error = None;
+        guard.last_started_at_ms = Some(now_ms());
+    }
+
+    fn health_snapshot_for_test(&self, status: AccessibilityStatus) -> KeyCounterHealth {
+        self.health_from_status(status)
+    }
+}
+
+#[cfg(target_os = "macos")]
+#[allow(dead_code)]
+fn app_bundle_root() -> Option<PathBuf> {
+    let current_exe = std::env::current_exe().ok()?;
+    current_exe
+        .ancestors()
+        .find(|path| path.extension().is_some_and(|extension| extension == "app"))
+        .map(|path| path.to_path_buf())
+}
+
+#[cfg(not(target_os = "macos"))]
+#[allow(dead_code)]
+fn app_bundle_root() -> Option<std::path::PathBuf> {
+    None
+}
+
+#[cfg(target_os = "macos")]
+#[allow(dead_code)]
+fn bundle_identifier() -> Option<String> {
+    let info_plist = app_bundle_root()?.join("Contents").join("Info.plist");
+    let output = Command::new("/usr/libexec/PlistBuddy")
+        .args(["-c", "Print :CFBundleIdentifier"])
+        .arg(info_plist)
+        .output()
+        .ok()?;
+    if !output.status.success() {
+        return None;
+    }
+    let identifier = String::from_utf8(output.stdout).ok()?.trim().to_string();
+    (!identifier.is_empty()).then_some(identifier)
+}
+
+#[cfg(not(target_os = "macos"))]
+#[allow(dead_code)]
+fn bundle_identifier() -> Option<String> {
+    None
+}
+
+#[cfg(target_os = "macos")]
+#[allow(dead_code)]
+fn executable_path() -> Option<String> {
+    std::env::current_exe()
+        .ok()
+        .and_then(|path| path.into_os_string().into_string().ok())
+}
+
+#[cfg(not(target_os = "macos"))]
+#[allow(dead_code)]
+fn executable_path() -> Option<String> {
+    None
+}
+
+#[cfg(target_os = "macos")]
+#[allow(dead_code)]
+fn code_sign_identifier() -> Option<String> {
+    let current_exe = std::env::current_exe().ok()?;
+    let output = Command::new("codesign")
+        .args(["-dv", "--verbose=4"])
+        .arg(current_exe)
+        .output()
+        .ok()?;
+    let stderr = String::from_utf8(output.stderr).ok()?;
+    stderr.lines().find_map(|line| {
+        line.trim()
+            .strip_prefix("Identifier=")
+            .map(str::trim)
+            .filter(|identifier| !identifier.is_empty())
+            .map(ToOwned::to_owned)
+    })
+}
+
+#[cfg(not(target_os = "macos"))]
+#[allow(dead_code)]
+fn code_sign_identifier() -> Option<String> {
+    None
 }
 
 #[derive(Clone, Copy, Debug, Serialize)]
@@ -332,5 +512,36 @@ mod tests {
     fn permission_ui_yield_covers_settings_window() {
         assert!(PERMISSION_UI_WINDOW_LABELS.contains(&"main"));
         assert!(PERMISSION_UI_WINDOW_LABELS.contains(&"settings"));
+    }
+
+    #[test]
+    fn listener_handle_records_start_failure() {
+        let handle = super::ListenerHandle::default();
+        handle.record_start_error_for_test("tap failed".to_string());
+        let health = handle.health_snapshot_for_test(super::AccessibilityStatus {
+            granted: true,
+            platform: "macos",
+        });
+
+        assert!(!health.listener_running);
+        assert_eq!(health.last_start_error.as_deref(), Some("tap failed"));
+        assert!(health.last_stopped_at_ms.is_some());
+    }
+
+    #[test]
+    fn listener_handle_stop_marks_not_running() {
+        let handle = super::ListenerHandle::default();
+        handle.mark_running_for_test();
+        assert!(handle.is_running());
+
+        handle.stop();
+
+        assert!(!handle.is_running());
+        let health = handle.health_snapshot_for_test(super::AccessibilityStatus {
+            granted: true,
+            platform: "macos",
+        });
+        assert!(!health.listener_running);
+        assert!(health.last_stopped_at_ms.is_some());
     }
 }
