@@ -13,6 +13,8 @@ import { useAppUpdateStore } from './domain/appUpdate';
 import { MAX_SCALE, MIN_SCALE, useSettingsStore } from './domain/settings';
 import { loadPersistedSettings, savePersistedSettings } from './domain/settingsPersistence';
 import { readAutostartEnabled } from './domain/autostart';
+import { useCheckinStore } from './domain/checkin';
+import { loadPersistedCheckin, savePersistedCheckin } from './domain/checkinPersistence';
 
 function clampStartupScale(scale: number): number {
     if (!Number.isFinite(scale)) return 1.0;
@@ -60,6 +62,13 @@ function getStartupSettingsState() {
         showActiveAppWindowTitle,
         autostartEnabled,
     };
+}
+
+function todayLocalDate(): string {
+    const now = new Date();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${now.getFullYear()}-${month}-${day}`;
 }
 
 export default function App() {
@@ -120,6 +129,67 @@ export default function App() {
             });
         return () => {
             cancelled = true;
+        };
+    }, []);
+
+    useEffect(() => {
+        let cancelled = false;
+        let unsubscribe = () => {};
+
+        async function hydrateAndSubscribe() {
+            try {
+                const persisted = await loadPersistedCheckin();
+                if (cancelled) return;
+
+                const checkin = useCheckinStore.getState();
+                if (persisted) {
+                    checkin.hydrateCheckin({
+                        weeklyPlan: persisted.weeklyPlan,
+                        dailyRecords: persisted.dailyRecords,
+                    });
+                }
+                const beforeRollForward = useCheckinStore.getState().weeklyPlan;
+                useCheckinStore.getState().rollForwardToDate(todayLocalDate());
+                const afterRollForward = useCheckinStore.getState();
+                if (afterRollForward.weeklyPlan !== beforeRollForward) {
+                    await savePersistedCheckin({
+                        schemaVersion: 1,
+                        weeklyPlan: afterRollForward.weeklyPlan,
+                        dailyRecords: afterRollForward.dailyRecords,
+                    });
+                }
+            } catch (error) {
+                if (!cancelled) {
+                    useCheckinStore.getState().setLastError(String(error));
+                }
+            }
+
+            if (cancelled) return;
+            unsubscribe = useCheckinStore.subscribe((state, previousState) => {
+                if (
+                    state.weeklyPlan === previousState.weeklyPlan
+                    && state.dailyRecords === previousState.dailyRecords
+                ) {
+                    return;
+                }
+
+                void savePersistedCheckin({
+                    schemaVersion: 1,
+                    weeklyPlan: state.weeklyPlan,
+                    dailyRecords: state.dailyRecords,
+                }).catch((error) => {
+                    if (!cancelled) {
+                        useCheckinStore.getState().setLastError(String(error));
+                    }
+                });
+            });
+        }
+
+        void hydrateAndSubscribe();
+
+        return () => {
+            cancelled = true;
+            unsubscribe();
         };
     }, []);
 
