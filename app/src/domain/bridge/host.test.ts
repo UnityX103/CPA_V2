@@ -501,6 +501,7 @@ describe('bridge host subscription signatures', () => {
                 pressCount: 1,
                 enabled: true,
             }],
+            syncedKeyId: 'bk-1',
         };
         const deniedPermission: BindingKeyStateWithPermission = {
             ...base,

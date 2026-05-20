@@ -168,6 +168,10 @@ describe('applySnapshotToMirrors', () => {
         });
         expect(useNetworkStore.getState().status).toBe('joined');
         expect(useNetworkStore.getState().roomCode).toBe('R9');
+        expect(useNetworkStore.getState().players['p-1'].state?.bindingKey).toEqual({
+            keyLabel: 'A',
+            pressCount: 7,
+        });
         expect(useBindingKeyStore.getState().capturingId).toBe('bk-cap');
         expect(useBindingKeyStore.getState().syncedKeyId).toBe('bk-sync');
         expect(useAppUpdateStore.getState()).toMatchObject({

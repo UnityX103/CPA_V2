@@ -66,7 +66,10 @@ beforeEach(() => {
                         bundleId: 'com.jetbrains.rider',
                         windowTitle: 'Plan.md',
                     },
-                    bindingKey: null,
+                    bindingKey: {
+                        keyLabel: 'Space',
+                        pressCount: 7,
+                    },
                 },
             },
         },
@@ -87,6 +90,15 @@ describe('RemotePlayerCardApp', () => {
         expect(screen.getByText('远端玩家')).toBeInTheDocument();
         expect(screen.getByText('Plan.md')).toBeInTheDocument();
         expect(screen.queryByText('本地玩家')).toBeNull();
+    });
+
+    it('renders the remote synced key counter from mirrored network state', async () => {
+        const { default: RemotePlayerCardApp } = await import('./RemotePlayerCardApp');
+
+        render(<RemotePlayerCardApp />);
+
+        expect(screen.getByText('Space')).toBeInTheDocument();
+        expect(screen.getByText('7')).toBeInTheDocument();
     });
 
     it('saves logical card window position on move', async () => {
