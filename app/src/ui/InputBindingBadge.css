@@ -1,0 +1,39 @@
+.input-binding-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+}
+
+.input-binding-badge-key {
+    padding: var(--pill-key-pad-y, 1px) var(--pill-key-pad-x, 4px);
+    border: 1px solid var(--pill-key-stroke);
+    border-radius: var(--pill-key-radius);
+    background: var(--pill-key-bg);
+    color: var(--pill-key-color);
+    font-size: var(--pill-key-size);
+    font-weight: 700;
+    line-height: 1;
+}
+
+.input-binding-badge-mouse {
+    width: 18px;
+    height: 18px;
+}
+
+.mouse-button-icon {
+    width: 18px;
+    height: 18px;
+    display: block;
+}
+
+.mouse-icon-body,
+.mouse-icon-wheel-detail {
+    fill: #5B4636;
+}
+
+.mouse-icon-split,
+.mouse-icon-indicator,
+.mouse-icon-wheel-bg {
+    fill: #FFF3EA;
+}

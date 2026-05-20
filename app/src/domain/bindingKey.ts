@@ -190,7 +190,7 @@ export function createBindingKeyStore(opts: { isSettingsWindow: boolean }): Bind
             },
             cancelCapture: () => {},
             completeCapture: (input, label) => {
-                void dispatch({ v: BRIDGE_VERSION, store: 'bindingKey', action: 'completeCapture', args: [input as never, label] });
+                void dispatch({ v: BRIDGE_VERSION, store: 'bindingKey', action: 'completeCapture', args: [input, label] });
             },
             incrementByInput: () => {},
             incrementByKeyCode: () => {},

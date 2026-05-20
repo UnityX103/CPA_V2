@@ -160,6 +160,27 @@ describe('InputCounterPanel', () => {
         expect(screen.queryByText('未绑定')).toBeNull();
     });
 
+    it('renders a mouse icon badge for mouse bindings', () => {
+        useBindingKeyStore.setState({
+            panelEnabled: true,
+            entries: [
+                {
+                    id: 'mouse-left',
+                    label: '鼠标左键',
+                    keyCode: -1,
+                    input: { kind: 'mouse', button: 'left' },
+                    pressCount: 5,
+                    enabled: true,
+                },
+            ],
+        });
+
+        render(<InputCounterPanel />);
+
+        expect(screen.getByTestId('mouse-left-icon')).toBeTruthy();
+        expect(screen.getByText('5')).toBeTruthy();
+    });
+
     it('starts native drag from panel background but not from the pin button', () => {
         useBindingKeyStore.setState({
             entries: [

@@ -34,7 +34,10 @@ function clonePlayers(players: Record<string, RemotePlayer>): Record<string, Rem
 }
 
 function cloneEntries(entries: BindingKeyEntry[]): BindingKeyEntry[] {
-    return entries.map((entry) => ({ ...entry }));
+    return entries.map((entry) => ({
+        ...entry,
+        input: entry.input ? { ...entry.input } : entry.input,
+    }));
 }
 
 function hasIconDataProperty(activeApp: ActiveAppInfo): boolean {

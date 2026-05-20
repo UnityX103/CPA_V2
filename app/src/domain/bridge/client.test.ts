@@ -82,6 +82,7 @@ function makeSample(): BridgeSnapshot {
                 id: 'bk-1',
                 label: 'A',
                 keyCode: 0,
+                input: { kind: 'keyboard', code: 0 },
                 pressCount: 2,
                 enabled: true,
             }],
@@ -207,6 +208,7 @@ describe('applySnapshotToMirrors', () => {
         sample.network.players['p-1'].state!.activeApp!.name = 'Mutated App';
         sample.network.players['p-1'].state!.bindingKey!.pressCount = 99;
         sample.bindingKey.entries[0].label = 'Mutated';
+        sample.bindingKey.entries[0].input = { kind: 'mouse', button: 'right' };
 
         expect(usePomodoroStore.getState().endActionVideo.customVideoPath).toBe('/Users/xpy/Videos/focus-complete.mp4');
         expect(useNetworkStore.getState().players['p-1'].playerName).toBe('Player One');
@@ -214,6 +216,7 @@ describe('applySnapshotToMirrors', () => {
         expect(useNetworkStore.getState().players['p-1'].state?.activeApp?.name).toBe('Focus App');
         expect(useNetworkStore.getState().players['p-1'].state?.bindingKey?.pressCount).toBe(7);
         expect(useBindingKeyStore.getState().entries[0].label).toBe('A');
+        expect(useBindingKeyStore.getState().entries[0].input).toEqual({ kind: 'keyboard', code: 0 });
     });
 
     it('ignores snapshots with a mismatched bridge version', () => {

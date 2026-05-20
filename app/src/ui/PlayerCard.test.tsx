@@ -125,6 +125,15 @@ describe('PlayerCard Pencil hierarchy and remote key counter', () => {
         expect(screen.getByText('7')).toBeTruthy();
     });
 
+    it('renders remote mouse binding labels as mouse icons', () => {
+        render(<PlayerCard player={player(state({
+            bindingKey: { keyLabel: '鼠标中键', pressCount: 4 },
+        }))} />);
+
+        expect(screen.getByTestId('mouse-middle-icon')).toBeTruthy();
+        expect(screen.getByText('4')).toBeTruthy();
+    });
+
     it('hides oCExj key counter pill when bindingKey is null or has an empty label', () => {
         const { container, rerender } = render(<PlayerCard player={player(state({
             bindingKey: null,
