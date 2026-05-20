@@ -295,4 +295,43 @@ describe('useBindingKeyListener — permission event', () => {
         expect(invokeMock).toHaveBeenCalledWith('restart_key_counter_listener');
         expect(useBindingKeyStore.getState().listenerRunning).toBe(true);
     });
+
+    it('cleans up listener subscriptions that resolve after unmount', async () => {
+        invokeMock.mockImplementation((command: string) => {
+            if (command === 'accessibility_status') {
+                return Promise.resolve({ granted: true, platform: 'macos' });
+            }
+            if (command === 'key_counter_health') {
+                return Promise.resolve({
+                    permissionGranted: true,
+                    platform: 'macos',
+                    listenerRunning: true,
+                    lastStartError: null,
+                    lastStartedAtMs: 1770000000000,
+                    lastStoppedAtMs: null,
+                    bundleIdentifier: 'com.nanzhai.cpa',
+                    executablePath: '/Applications/桌宠番茄钟.app/Contents/MacOS/app',
+                    codeSignIdentifier: 'app-461de596266994b3',
+                });
+            }
+            return Promise.resolve();
+        });
+        const unlisteners = [vi.fn(), vi.fn(), vi.fn()];
+        const resolvers: Array<(unlisten: () => void) => void> = [];
+        listenMock.mockImplementation(() => new Promise((resolve) => {
+            resolvers.push(resolve);
+        }));
+
+        const { useBindingKeyListener } = await import('./bindingKey');
+        const { unmount } = renderHook(() => useBindingKeyListener());
+
+        expect(resolvers).toHaveLength(3);
+        unmount();
+        resolvers.forEach((resolve, index) => resolve(unlisteners[index]));
+        await new Promise((r) => setTimeout(r, 0));
+
+        expect(unlisteners[0]).toHaveBeenCalledTimes(1);
+        expect(unlisteners[1]).toHaveBeenCalledTimes(1);
+        expect(unlisteners[2]).toHaveBeenCalledTimes(1);
+    });
 });

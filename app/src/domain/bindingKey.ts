@@ -290,21 +290,24 @@ export function useBindingKeyListener() {
                 store.incrementByKeyCode(keyCode);
             }
         }).then((un) => {
-            unlistenKey = un;
-        });
+            if (cancelled) un();
+            else unlistenKey = un;
+        }).catch(() => {});
 
         listen<KeyCounterHealth>('key-counter-health-changed', (event) => {
             applyHealth(event.payload);
         }).then((un) => {
-            unlistenHealth = un;
-        });
+            if (cancelled) un();
+            else unlistenHealth = un;
+        }).catch(() => {});
 
         listen<{ granted: boolean; platform: 'macos' | 'windows' | 'other' }>('accessibility-permission-changed', (event) => {
             const { granted, platform } = event.payload;
             useBindingKeyStore.getState().setPermission(granted, platform);
         }).then((un) => {
-            unlistenPerm = un;
-        });
+            if (cancelled) un();
+            else unlistenPerm = un;
+        }).catch(() => {});
 
         return () => {
             cancelled = true;
