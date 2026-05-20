@@ -83,11 +83,16 @@ export function useStateSync() {
             send();
         });
 
+        const unsubB = useBindingKeyStore.subscribe(() => {
+            send();
+        });
+
         const interval = setInterval(send, 5000);
         return () => {
             unsubP();
             unsubN();
             unsubA();
+            unsubB();
             clearInterval(interval);
         };
     }, []);

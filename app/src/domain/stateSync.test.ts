@@ -100,4 +100,34 @@ describe('stateSync active app metadata', () => {
             },
         }));
     });
+
+    it('sends a state update immediately when the synced binding key count changes', async () => {
+        const sendStateUpdate = vi.fn();
+        useNetworkStore.setState({
+            status: 'joined',
+            roomCode: 'R1',
+            playerId: 'p1',
+            sendStateUpdate,
+        });
+        useBindingKeyStore.setState({
+            entries: [{
+                id: 'bk-1',
+                label: 'Space',
+                keyCode: 49,
+                pressCount: 0,
+                enabled: true,
+            }],
+            syncedKeyId: 'bk-1',
+        });
+        renderHook(() => useStateSync());
+
+        act(() => {
+            useBindingKeyStore.getState().incrementByKeyCode(49);
+        });
+
+        await waitFor(() => expect(sendStateUpdate).toHaveBeenCalled());
+        expect(sendStateUpdate).toHaveBeenLastCalledWith(expect.objectContaining({
+            bindingKey: { keyLabel: 'Space', pressCount: 1 },
+        }));
+    });
 });
