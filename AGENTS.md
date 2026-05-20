@@ -43,6 +43,7 @@ CPA_V2/
 - The updater endpoint is `https://github.com/UnityX103/CPA_V2/releases/latest/download/latest.json`.
 - Publish generated files from `app/release-updates/` as GitHub Release assets on `UnityX103/CPA_V2`; do not use `updates.nanzhaigame.cn` for new releases.
 - GitHub credentials are not stored in this repo. Use `gh auth status` before publishing, and keep release keys inside the ignored `cpa-v2-release/` credential pack.
+- Do not publish macOS packages built with `--no-sign`. The repo defaults to ad-hoc macOS signing (`bundle.macOS.signingIdentity = "-"`) as a minimum resource-seal fix, but polished public downloads require Developer ID signing plus Apple notarization.
 - For Windows updater packages, `latest.json` must include `windows-x86_64-nsis` and `windows-x86_64` platform keys in addition to macOS keys.
 
 ## Architecture: state layering (borrowed from Unity QFramework)

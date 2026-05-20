@@ -41,6 +41,7 @@ describe('updater configuration', () => {
     it('creates signed updater artifacts and points at the GitHub Release manifest', () => {
         const conf = readJson(tauriConfPath);
         expect(conf.bundle?.createUpdaterArtifacts).toBe(true);
+        expect(conf.bundle?.macOS?.signingIdentity).toBe('-');
         expect(conf.plugins?.updater?.endpoints).toEqual([
             'https://github.com/UnityX103/CPA_V2/releases/latest/download/latest.json',
         ]);

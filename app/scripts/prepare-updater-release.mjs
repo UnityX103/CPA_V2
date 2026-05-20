@@ -1,12 +1,15 @@
 import { cp, mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
+import { execFile } from 'node:child_process';
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { promisify } from 'node:util';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_APP_ROOT = resolve(SCRIPT_DIR, '..');
 const DEFAULT_BASE_URL = 'https://github.com/UnityX103/CPA_V2/releases/download';
 const DEFAULT_CHANNEL = 'stable';
+const execFileAsync = promisify(execFile);
 
 function resolveFromAppRoot(appRoot, path) {
     return isAbsolute(path) ? path : resolve(appRoot, path);
@@ -122,6 +125,58 @@ async function listSignatureFiles(dir) {
     return found.sort();
 }
 
+function isUpdaterArtifact(path) {
+    const normalized = path.split(sep).join('/').toLowerCase();
+    return (
+        normalized.endsWith('.app.tar.gz') ||
+        normalized.endsWith('.appimage.tar.gz') ||
+        normalized.endsWith('.nsis.zip') ||
+        normalized.endsWith('.msi.zip') ||
+        normalized.endsWith('.exe') ||
+        normalized.endsWith('.msi')
+    );
+}
+
+async function listUpdaterArtifacts(dir) {
+    const entries = await readdir(dir, { withFileTypes: true });
+    const found = [];
+    for (const entry of entries) {
+        const path = join(dir, entry.name);
+        if (entry.isDirectory()) {
+            found.push(...await listUpdaterArtifacts(path));
+        } else if (entry.isFile() && isUpdaterArtifact(path)) {
+            found.push(path);
+        }
+    }
+    return found.sort();
+}
+
+function hasUpdaterSigningKey() {
+    return Boolean(process.env.TAURI_SIGNING_PRIVATE_KEY || process.env.TAURI_SIGNING_PRIVATE_KEY_PATH);
+}
+
+async function signUpdaterArtifacts(appRoot, bundleDir) {
+    if (!hasUpdaterSigningKey()) return 0;
+    const tauriBin = process.platform === 'win32'
+        ? join(appRoot, 'node_modules', '.bin', 'tauri.cmd')
+        : join(appRoot, 'node_modules', '.bin', 'tauri');
+    const artifacts = await listUpdaterArtifacts(bundleDir);
+    for (const artifact of artifacts) {
+        await execFileAsync(tauriBin, ['signer', 'sign', artifact], {
+            cwd: appRoot,
+            env: process.env,
+        });
+    }
+    return artifacts.length;
+}
+
+async function assertFreshSignature(artifactPath, sigPath) {
+    const [artifactInfo, sigInfo] = await Promise.all([stat(artifactPath), stat(sigPath)]);
+    if (sigInfo.mtimeMs + 1000 < artifactInfo.mtimeMs) {
+        throw new Error(`Signature is older than artifact: ${relative(process.cwd(), sigPath)}`);
+    }
+}
+
 async function copyIfExists(from, to) {
     if (!existsSync(from)) return;
     await mkdir(dirname(to), { recursive: true });
@@ -165,6 +220,7 @@ export async function prepareUpdaterRelease(options = {}) {
         throw new Error(`Bundle directory not found: ${bundleDir}`);
     }
 
+    await signUpdaterArtifacts(appRoot, bundleDir);
     const sigFiles = await listSignatureFiles(bundleDir);
     if (sigFiles.length === 0) {
         throw new Error(`No signed updater artifacts found in ${bundleDir}`);
@@ -176,6 +232,7 @@ export async function prepareUpdaterRelease(options = {}) {
         if (!existsSync(artifactPath)) {
             throw new Error(`Signature has no matching artifact: ${sigPath}`);
         }
+        await assertFreshSignature(artifactPath, sigPath);
         const platform = inferPlatform(artifactPath, options.platform);
         if (platforms[platform]) {
             throw new Error(`Duplicate updater artifact for ${platform}`);

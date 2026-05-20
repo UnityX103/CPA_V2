@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -126,6 +126,24 @@ describe('prepare-updater-release', () => {
             outDir: join(appRoot, 'release'),
             platform: 'darwin-aarch64',
         })).rejects.toThrow(/duplicate updater artifact/i);
+    });
+
+    it('rejects stale signatures left behind by an older bundle', async () => {
+        const appRoot = fixtureProject('0.2.0');
+        const bundleDir = join(appRoot, 'src-tauri', 'target', 'release', 'bundle', 'macos');
+        mkdirSync(bundleDir, { recursive: true });
+        const artifactPath = join(bundleDir, 'deskpet.app.tar.gz');
+        const sigPath = join(bundleDir, 'deskpet.app.tar.gz.sig');
+        writeFileSync(sigPath, 'old-signature');
+        utimesSync(sigPath, new Date('2026-01-01T00:00:00Z'), new Date('2026-01-01T00:00:00Z'));
+        writeFileSync(artifactPath, 'new-artifact');
+
+        await expect(prepareUpdaterRelease({
+            appRoot,
+            bundleDir,
+            outDir: join(appRoot, 'release'),
+            platform: 'darwin-aarch64',
+        })).rejects.toThrow(/signature is older than artifact/i);
     });
 
     it('uses stable ASCII asset names for GitHub release URLs', async () => {
