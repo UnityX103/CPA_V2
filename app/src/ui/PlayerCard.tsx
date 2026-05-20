@@ -26,7 +26,13 @@ export function PlayerCard({ player }: PlayerCardProps) {
     const activeApp = player.state?.activeApp ?? null;
     const appName = activeApp?.windowTitle?.trim() || activeApp?.name?.trim() || '待加入';
     const appIcon = activeApp?.iconDataUrl || null;
-    const binding = player.state?.bindingKey ?? null;
+    const rawBinding = player.state?.bindingKey ?? null;
+    const binding = rawBinding && rawBinding.keyLabel.trim()
+        ? {
+            keyLabel: rawBinding.keyLabel.trim(),
+            pressCount: Math.max(0, Number.isFinite(rawBinding.pressCount) ? Math.trunc(rawBinding.pressCount) : 0),
+        }
+        : null;
 
     const onCardPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
         if (!shouldStartWindowDrag(e.button, e.target)) return;
@@ -68,16 +74,16 @@ export function PlayerCard({ player }: PlayerCardProps) {
                     </span>
                     <span className="pc-foot-text" title={appName}>{appName}</span>
                 </div>
+                <button
+                    type="button"
+                    className="pc-pin"
+                    aria-label="固定远端玩家卡牌"
+                    title="固定远端玩家卡牌"
+                    data-no-window-drag
+                >
+                    <PinIcon />
+                </button>
             </div>
-            <button
-                type="button"
-                className="pc-pin"
-                aria-label="固定远端玩家卡牌"
-                title="固定远端玩家卡牌"
-                data-no-window-drag
-            >
-                <PinIcon />
-            </button>
         </div>
     );
 }

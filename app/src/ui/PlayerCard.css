@@ -171,9 +171,9 @@
     display: block;
 }
 
-/* pin btn epxz9: design absolute (110, 50) inside D3ZIc (pc-content-stack 125×66).
- * Pin right edge 132 > stack width 125 → design intentionally overflows the content stack into
- * the card padding zone; drqFB's clip:true (.pc-card overflow:hidden) keeps it inside card box. */
+/* pin btn epxz9: absolute (110, 50) inside D3ZIc / .pc-content.
+ * Keeping the button as a .pc-content child makes Pencil's coordinates resolve
+ * from the same containing block; .pc-card clipping still bounds the overflow. */
 .pc-pin {
     position: absolute;
     left: 110px;
