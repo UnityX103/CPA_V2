@@ -6,6 +6,7 @@ import {
     appUpdateSig,
     bindingKeySig,
     buildSnapshot,
+    MIRROR_WINDOW_LABELS,
     networkSig,
     pomoSig,
     settingsSig,
@@ -17,6 +18,7 @@ import { useBindingKeyStore } from '../bindingKey';
 import { useActiveAppStore } from '../activeApp';
 import { BRIDGE_VERSION } from './protocol';
 import { useAppUpdateStore } from '../appUpdate';
+import { REMOTE_PLAYER_WINDOW_LABELS } from '../remotePlayerWindowLabels';
 
 type BindingKeySigInput = Parameters<typeof bindingKeySig>[0];
 type BindingKeyStateWithPermission = BindingKeySigInput & {
@@ -234,6 +236,16 @@ describe('buildSnapshot', () => {
         const snap = buildSnapshot();
         // @ts-expect-error remainingSeconds is intentionally absent from the snapshot type
         expect(snap.pomodoro.remainingSeconds).toBeUndefined();
+    });
+});
+
+describe('bridge host mirror targets', () => {
+    it('emits snapshots to settings, input-counter, and all fixed remote player windows', () => {
+        expect(MIRROR_WINDOW_LABELS).toEqual([
+            'settings',
+            'input-counter',
+            ...REMOTE_PLAYER_WINDOW_LABELS,
+        ]);
     });
 });
 

@@ -7,6 +7,7 @@ import { useNetworkStore, type RemotePlayer } from '../network';
 import { useBindingKeyStore, type BindingKeyEntry } from '../bindingKey';
 import { useActiveAppStore, type ActiveAppInfo } from '../activeApp';
 import { useAppUpdateStore, type AppUpdateSnapshot } from '../appUpdate';
+import { REMOTE_PLAYER_WINDOW_LABELS } from '../remotePlayerWindowLabels';
 import {
     BRIDGE_VERSION,
     EVT_DISPATCH,
@@ -171,7 +172,11 @@ export function applyDispatch(payload: DispatchPayload): void {
     }
 }
 
-const MIRROR_WINDOW_LABELS = ['settings', 'input-counter'] as const;
+export const MIRROR_WINDOW_LABELS = [
+    'settings',
+    'input-counter',
+    ...REMOTE_PLAYER_WINDOW_LABELS,
+] as const;
 
 async function sendSnapshot(opts: BuildSnapshotOptions = {}): Promise<void> {
     try {

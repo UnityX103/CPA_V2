@@ -6,6 +6,7 @@ app/src-tauri/gen/
 node_modules/
 dist/
 .next/
+app/tmp/
 
 # OS
 .DS_Store

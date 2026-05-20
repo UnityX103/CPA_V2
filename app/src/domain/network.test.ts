@@ -1,5 +1,11 @@
 import { describe, expect, it, beforeEach, vi } from 'vitest';
-import { useNetworkStore, createNetworkStore } from './network';
+import {
+    DEVELOPMENT_SERVER_URL,
+    PRODUCTION_SERVER_URL,
+    defaultServerUrl,
+    useNetworkStore,
+    createNetworkStore,
+} from './network';
 import * as dispatchMod from './bridge/dispatch';
 import { BRIDGE_VERSION } from './bridge/protocol';
 
@@ -8,6 +14,7 @@ class FakeWebSocket {
     static CONNECTING = 0;
     static CLOSING = 2;
     static CLOSED = 3;
+    static instances: FakeWebSocket[] = [];
 
     readyState = FakeWebSocket.OPEN;
     sent: string[] = [];
@@ -17,6 +24,7 @@ class FakeWebSocket {
     onerror: (() => void) | null = null;
 
     constructor(public url: string) {
+        FakeWebSocket.instances.push(this);
         // 立即视为已 open；测试中无真实异步
         setTimeout(() => this.onopen?.(), 0);
     }
@@ -24,7 +32,13 @@ class FakeWebSocket {
     close() { this.readyState = FakeWebSocket.CLOSED; this.onclose?.(); }
 }
 
+function latestSocket(): FakeWebSocket | undefined {
+    return FakeWebSocket.instances[FakeWebSocket.instances.length - 1];
+}
+
 beforeEach(() => {
+    useNetworkStore.getState().disconnect();
+    FakeWebSocket.instances = [];
     vi.stubGlobal('WebSocket', FakeWebSocket);
     useNetworkStore.setState({
         status: 'idle',
@@ -39,6 +53,12 @@ beforeEach(() => {
 });
 
 describe('NetworkSystem 协议序列化', () => {
+    it('uses the local server in dev mode and the production target server in release mode', () => {
+        expect(defaultServerUrl(false)).toBe(DEVELOPMENT_SERVER_URL);
+        expect(defaultServerUrl(true)).toBe(PRODUCTION_SERVER_URL);
+        expect(PRODUCTION_SERVER_URL).toBe('ws://113.46.152.120:8039');
+    });
+
     // adversarial-review #10 case 3
     it('sendStateUpdate 输出包含 v / type / state / roomCode', async () => {
         const promise = useNetworkStore.getState().createRoom('TEST');
@@ -77,17 +97,86 @@ describe('NetworkSystem 接收校验', () => {
             players: { p1: { playerId: 'p1', playerName: '我', state: null } },
         });
 
-        // 模拟服务器广播一个不存在的 playerId 的状态
-        const ghostMsg = {
-            type: 'player_state_broadcast',
-            roomCode: 'TEST',
-            playerId: 'ghost',
-            state: { pomodoro: { phase: 0, remainingSeconds: 0, currentRound: 0, totalRounds: 0, isRunning: false }, activeApp: null, bindingKey: null },
-        };
-        // 直接调用 dispatch 路径不可见；改为反向检查 players 没有 ghost
-        // （onmessage 已经在内部 if(players[id]) 守门，所以这里只校验初始没有 ghost）
+        latestSocket()?.onmessage?.({
+            data: JSON.stringify({
+                type: 'player_state_broadcast',
+                roomCode: 'TEST',
+                playerId: 'ghost',
+                state: { pomodoro: { phase: 0, remainingSeconds: 0, currentRound: 0, totalRounds: 0, isRunning: false }, activeApp: null, bindingKey: null },
+            }),
+        } as MessageEvent);
+
         expect(useNetworkStore.getState().players['ghost']).toBeUndefined();
-        expect(ghostMsg.playerId).toBe('ghost'); // touch 变量避免 unused 警告
+    });
+
+    it('player_state_broadcast updates an existing player active app from onmessage', async () => {
+        const promise = useNetworkStore.getState().createRoom('TEST');
+        await promise;
+        await new Promise((r) => setTimeout(r, 5));
+
+        useNetworkStore.setState({
+            status: 'joined',
+            roomCode: 'TEST',
+            playerId: 'p1',
+            players: { p1: { playerId: 'p1', playerName: '我', state: null } },
+        });
+
+        const state = {
+            pomodoro: { phase: 0, remainingSeconds: 1200, currentRound: 1, totalRounds: 4, isRunning: true },
+            activeApp: {
+                name: 'Safari',
+                bundleId: 'com.apple.Safari',
+                windowTitle: 'Apple - Safari',
+                iconDataUrl: 'data:image/png;base64,QUFB',
+            },
+            bindingKey: null,
+        };
+
+        latestSocket()?.onmessage?.({
+            data: JSON.stringify({
+                type: 'player_state_broadcast',
+                roomCode: 'TEST',
+                playerId: 'p1',
+                state,
+            }),
+        } as MessageEvent);
+
+        expect(useNetworkStore.getState().players.p1.state?.activeApp).toEqual(state.activeApp);
+    });
+
+    it('player_state_broadcast can seed a player from a real room snapshot message', async () => {
+        const promise = useNetworkStore.getState().createRoom('TEST');
+        await promise;
+        await new Promise((r) => setTimeout(r, 5));
+
+        const state = {
+            pomodoro: { phase: 0, remainingSeconds: 1200, currentRound: 1, totalRounds: 4, isRunning: true },
+            activeApp: {
+                name: 'Safari',
+                bundleId: 'com.apple.Safari',
+                windowTitle: 'Apple - Safari',
+                iconDataUrl: 'data:image/png;base64,QUFB',
+            },
+            bindingKey: null,
+        };
+
+        latestSocket()?.onmessage?.({
+            data: JSON.stringify({
+                type: 'room_snapshot',
+                roomCode: 'TEST',
+                players: [{ playerId: 'p1', playerName: '远端玩家', state: null }],
+            }),
+        } as MessageEvent);
+        latestSocket()?.onmessage?.({
+            data: JSON.stringify({
+                type: 'player_state_broadcast',
+                roomCode: 'TEST',
+                playerId: 'p1',
+                state,
+            }),
+        } as MessageEvent);
+
+        expect(useNetworkStore.getState().players.p1.state?.activeApp).toEqual(state.activeApp);
     });
 });
 

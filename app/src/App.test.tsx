@@ -16,6 +16,7 @@ const {
     useBindingKeyListener,
     useBridgeHost,
     useInputCounterWindowController,
+    useRemotePlayerWindowController,
     useAppUpdateStore,
 } = vi.hoisted(() => {
     const appUpdateCleanup = vi.fn();
@@ -40,6 +41,7 @@ const {
         useBindingKeyListener: vi.fn(),
         useBridgeHost: vi.fn(),
         useInputCounterWindowController: vi.fn(),
+        useRemotePlayerWindowController: vi.fn(),
         useAppUpdateStore,
     };
 });
@@ -50,6 +52,7 @@ vi.mock('./domain/activeApp', () => ({ useActiveAppListener }));
 vi.mock('./domain/bindingKey', () => ({ useBindingKeyListener }));
 vi.mock('./domain/bridge/host', () => ({ useBridgeHost }));
 vi.mock('./domain/inputCounterWindow', () => ({ useInputCounterWindowController }));
+vi.mock('./domain/remotePlayerWindows', () => ({ useRemotePlayerWindowController }));
 vi.mock('./domain/appUpdate', () => ({ useAppUpdateStore }));
 vi.mock('./domain/autostart', () => ({ readAutostartEnabled: readAutostartEnabledMock }));
 vi.mock('./domain/settingsPersistence', () => ({
@@ -82,6 +85,7 @@ beforeEach(() => {
     useBindingKeyListener.mockClear();
     useBridgeHost.mockClear();
     useInputCounterWindowController.mockClear();
+    useRemotePlayerWindowController.mockClear();
     loadPersistedSettingsMock.mockReset();
     loadPersistedSettingsMock.mockResolvedValue({ uiScale: 1.5, showActiveAppWindowTitle: true });
     readAutostartEnabledMock.mockReset();
@@ -112,6 +116,7 @@ describe('main App window composition', () => {
         expect(useBindingKeyListener).toHaveBeenCalledTimes(1);
         expect(useBridgeHost).toHaveBeenCalledTimes(1);
         expect(useInputCounterWindowController).toHaveBeenCalledTimes(1);
+        expect(useRemotePlayerWindowController).toHaveBeenCalledTimes(1);
     });
 
     it('renders the app update restart notice layer', () => {

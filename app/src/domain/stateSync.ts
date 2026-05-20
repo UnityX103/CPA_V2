@@ -22,7 +22,12 @@ function buildRemoteState(): RemoteState {
             isRunning: p.isRunning,
         },
         activeApp: active
-            ? { name: active.name, bundleId: active.bundle_id }
+            ? {
+                name: active.name,
+                bundleId: active.bundle_id,
+                windowTitle: active.window_title ?? null,
+                iconDataUrl: active.icon_data_url ?? null,
+            }
             : null,
         // 只把被标记同步的那条 entry 推到房间；未选时整个字段为 null，
         // 协议层与对端 PlayerCard 都已按 null 隐藏 KeyCounterPill
@@ -30,6 +35,10 @@ function buildRemoteState(): RemoteState {
             ? { keyLabel: synced.label, pressCount: synced.pressCount }
             : null,
     };
+}
+
+export function buildRemoteStateForTest(): RemoteState {
+    return buildRemoteState();
 }
 
 // 重新加入房间后第一帧必须广播状态：用 (roomCode, playerId) 作为 key 前缀，
@@ -70,10 +79,15 @@ export function useStateSync() {
             }
         });
 
+        const unsubA = useActiveAppStore.subscribe(() => {
+            send();
+        });
+
         const interval = setInterval(send, 5000);
         return () => {
             unsubP();
             unsubN();
+            unsubA();
             clearInterval(interval);
         };
     }, []);

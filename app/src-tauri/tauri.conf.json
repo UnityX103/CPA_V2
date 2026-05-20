@@ -28,7 +28,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self' ipc: http://ipc.localhost; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: asset: http://asset.localhost; media-src 'self' blob: asset: http://asset.localhost; connect-src 'self' ipc: http://ipc.localhost ws://127.0.0.1:* ws://localhost:*"
+      "csp": "default-src 'self' ipc: http://ipc.localhost; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: asset: http://asset.localhost; media-src 'self' blob: asset: http://asset.localhost; connect-src 'self' ipc: http://ipc.localhost ws://127.0.0.1:* ws://localhost:* ws://113.46.152.120:8039"
     },
     "macOSPrivateApi": true
   },
@@ -48,7 +48,7 @@
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEQ2ODE2ODVGM0Y1RkQ2MjUKUldRbDFsOC9YMmlCMXU0Y2NxQmYxVWRVcDFuQTNMZW1lWmx6VUJsUHpLL0JLMk0xRE8yaVdpV0EK",
       "endpoints": [
-        "https://github.com/UnityX103/CPA_V2/releases/latest/download/latest.json"
+        "https://updates.nanzhaigame.cn/cpa/stable/latest.json"
       ],
       "windows": {
         "installMode": "passive"

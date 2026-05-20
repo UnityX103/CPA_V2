@@ -45,7 +45,7 @@ const TARGETS: Target[] = [
     {
         id: 'vnYnS',
         label: '设置面板 vnYnS (460×394→440)',
-        image: '/dev-align/vnYnS.png',
+        image: 'dev-align/vnYnS.png',
         width: 460,
         height: 394,
         render: () => <SettingsPanel />,
@@ -54,7 +54,7 @@ const TARGETS: Target[] = [
     {
         id: 'YRqeB',
         label: '番茄面板 YRqeB (233×155)',
-        image: '/dev-align/YRqeB.png',
+        image: 'dev-align/YRqeB.png',
         width: 233,
         height: 155,
         render: () => <PomodoroPanel />,
@@ -62,7 +62,7 @@ const TARGETS: Target[] = [
     {
         id: 'drqFB',
         label: '玩家卡片 drqFB (153×94)',
-        image: '/dev-align/drqFB.png',
+        image: 'dev-align/drqFB.png',
         width: 153,
         height: 94,
         render: () => <PlayerCard player={MOCK_PLAYER} />,
@@ -78,9 +78,18 @@ const TABS: Array<{ id: SettingsTab; label: string }> = [
     { id: 'global', label: '全局' },
 ];
 
+function initialTargetId(): string {
+    const target = new URLSearchParams(window.location.search).get('target');
+    return TARGETS.some((item) => item.id === target) ? target! : TARGETS[0].id;
+}
+
+function initialMode(): Mode {
+    return new URLSearchParams(window.location.search).get('mode') === 'overlay' ? 'overlay' : 'side';
+}
+
 export default function DevAlignApp() {
-    const [targetId, setTargetId] = useState(TARGETS[0].id);
-    const [mode, setMode] = useState<Mode>('side');
+    const [targetId, setTargetId] = useState(initialTargetId);
+    const [mode, setMode] = useState<Mode>(initialMode);
     const [opacity, setOpacity] = useState(50);
     const [showGrid, setShowGrid] = useState(false);
     const [bg, setBg] = useState<'checker' | 'white' | 'dark'>('checker');
