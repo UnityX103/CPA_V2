@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { usePomodoroStore, type PomodoroEndEvent } from '../domain/pomodoro';
 import { resolvePomodoroEndAction } from '../domain/pomodoroEndAction';
+import { focusAppWindow } from '../domain/focusWindow';
 import {
     customVideoSrc,
     showCustomVideoMissingMessage,
@@ -46,6 +47,9 @@ export function PomodoroEndActionLayer() {
                 clearPopupTimeout();
                 const title = popupTitle(event);
                 setPopup(title);
+                void focusAppWindow('main').catch((error) => {
+                    console.warn('[pomodoro-end] focus main window failed', error);
+                });
                 popupTimeout.current = window.setTimeout(() => {
                     if (disposed.current || requestSeq !== latestRequestSeq.current) return;
                     setPopup((current) => current === title ? null : current);
@@ -82,7 +86,7 @@ export function PomodoroEndActionLayer() {
                         ) {
                             return;
                         }
-                        setPopup(popupTitle(event));
+                        showTopPopup();
                     });
                     return;
                 }

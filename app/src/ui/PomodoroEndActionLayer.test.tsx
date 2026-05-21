@@ -3,7 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { usePomodoroStore, type PomodoroEndEvent } from '../domain/pomodoro';
 import { PomodoroEndActionLayer } from './PomodoroEndActionLayer';
 
-const { openPomodoroVideoWindowMock, resolvePomodoroEndActionMock } = vi.hoisted(() => ({
+const { focusAppWindowMock, openPomodoroVideoWindowMock, resolvePomodoroEndActionMock } = vi.hoisted(() => ({
+    focusAppWindowMock: vi.fn(),
     openPomodoroVideoWindowMock: vi.fn(),
     resolvePomodoroEndActionMock: vi.fn(),
 }));
@@ -14,6 +15,10 @@ vi.mock('../domain/pomodoroEndAction', () => ({
 
 vi.mock('../domain/pomodoroVideoWindow', () => ({
     openPomodoroVideoWindow: openPomodoroVideoWindowMock,
+}));
+
+vi.mock('../domain/focusWindow', () => ({
+    focusAppWindow: focusAppWindowMock,
 }));
 
 vi.mock('../domain/videoFiles', () => ({
@@ -43,6 +48,8 @@ function endEvent(id: number, overrides: Partial<PomodoroEndEvent> = {}): Pomodo
 }
 
 beforeEach(() => {
+    focusAppWindowMock.mockReset();
+    focusAppWindowMock.mockResolvedValue(undefined);
     openPomodoroVideoWindowMock.mockReset();
     openPomodoroVideoWindowMock.mockResolvedValue(undefined);
     resolvePomodoroEndActionMock.mockReset();
@@ -72,6 +79,7 @@ describe('PomodoroEndActionLayer', () => {
         });
 
         expect(await screen.findByText('专注结束')).toBeTruthy();
+        expect(focusAppWindowMock).toHaveBeenCalledWith('main');
         expect(openPomodoroVideoWindowMock).not.toHaveBeenCalled();
     });
 
@@ -91,6 +99,7 @@ describe('PomodoroEndActionLayer', () => {
         await vi.waitFor(() => {
             expect(openPomodoroVideoWindowMock).toHaveBeenCalledWith(action);
         });
+        expect(focusAppWindowMock).not.toHaveBeenCalled();
         expect(screen.queryByRole('dialog')).toBeNull();
         expect(screen.queryByLabelText('播放 千千')).toBeNull();
     });
@@ -109,6 +118,7 @@ describe('PomodoroEndActionLayer', () => {
         });
 
         expect(await screen.findByText('专注结束')).toBeTruthy();
+        expect(focusAppWindowMock).toHaveBeenCalledWith('main');
     });
 
     it('shows only a top popup when a break ends even if video is configured', async () => {
@@ -129,6 +139,7 @@ describe('PomodoroEndActionLayer', () => {
         });
 
         expect(await screen.findByText('休息结束')).toBeTruthy();
+        expect(focusAppWindowMock).toHaveBeenCalledWith('main');
         expect(resolvePomodoroEndActionMock).not.toHaveBeenCalled();
         expect(openPomodoroVideoWindowMock).not.toHaveBeenCalled();
     });
@@ -151,6 +162,7 @@ describe('PomodoroEndActionLayer', () => {
         });
 
         expect(await screen.findByText('番茄钟完成')).toBeTruthy();
+        expect(focusAppWindowMock).toHaveBeenCalledWith('main');
         expect(resolvePomodoroEndActionMock).not.toHaveBeenCalled();
         expect(openPomodoroVideoWindowMock).not.toHaveBeenCalled();
     });
