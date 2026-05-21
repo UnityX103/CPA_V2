@@ -5,9 +5,7 @@ const STORE_KEY = 'settings';
 
 export interface PersistedSettings {
     uiScale: number;
-    showActiveAppWindowTitle: boolean;
     autostartEnabled: boolean;
-    autoPinOnFocusEnd: boolean;
 }
 
 interface PersistedSettingsV1 {
@@ -49,9 +47,7 @@ export async function loadPersistedSettings(): Promise<PersistedSettings | null>
         if (!isPersistedSettingsV1(value)) return null;
         return {
             uiScale: value.uiScale,
-            showActiveAppWindowTitle: value.showActiveAppWindowTitle ?? true,
             autostartEnabled: value.autostartEnabled ?? false,
-            autoPinOnFocusEnd: value.autoPinOnFocusEnd ?? true,
         };
     } catch (err) {
         console.warn('[settingsPersistence] load failed', err);
@@ -65,9 +61,7 @@ export async function savePersistedSettings(settings: PersistedSettings): Promis
         await store.set(STORE_KEY, {
             v: 1,
             uiScale: settings.uiScale,
-            showActiveAppWindowTitle: settings.showActiveAppWindowTitle,
             autostartEnabled: settings.autostartEnabled,
-            autoPinOnFocusEnd: settings.autoPinOnFocusEnd,
         } satisfies PersistedSettingsV1);
         await store.save();
     } catch (err) {
