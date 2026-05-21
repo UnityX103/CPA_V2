@@ -8,7 +8,6 @@ import {
     INPUT_COUNTER_BASE_WIDTH,
     useScaledWindowSize,
 } from '../domain/scaledWindow';
-import { useSettingsStore } from '../domain/settings';
 import { InputBindingBadge } from './InputBindingBadge';
 import { shouldStartWindowDrag } from './windowDrag';
 import './InputCounterPanel.css';
@@ -26,13 +25,10 @@ export function InputCounterPanel() {
     const panelEnabled = useBindingKeyStore((s) => s.panelEnabled);
     const entries = useBindingKeyStore((s) => s.entries);
     const activeApp = useActiveAppStore((s) => s.current);
-    const showActiveAppWindowTitle = useSettingsStore((s) => s.showActiveAppWindowTitle);
     const [isPinned, setPinned] = useState(false);
 
     const boundEntries = useMemo(() => entries.filter(isVisibleBindingEntry), [entries]);
-    const appLabel = (
-        showActiveAppWindowTitle ? activeApp?.window_title?.trim() : ''
-    ) || activeApp?.name?.trim() || '未聚焦应用';
+    const appLabel = activeApp?.name?.trim() || '未聚焦应用';
     const appIcon = activeApp?.icon_data_url || null;
 
     const baseHeight = windowHeightForPills(boundEntries.length);

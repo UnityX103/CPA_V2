@@ -748,33 +748,11 @@ function GlobalTab() {
 
                 <div className="card">
                     <div className="card-row">
-                        <span className="card-label">显示打开的文件名</span>
-                        <Toggle
-                            checked={settings.showActiveAppWindowTitle}
-                            onChange={settings.setShowActiveAppWindowTitle}
-                            ariaLabel="显示打开的文件名"
-                        />
-                    </div>
-                </div>
-
-                <div className="card">
-                    <div className="card-row">
                         <span className="card-label">开机自启动</span>
                         <Toggle
                             checked={settings.autostartEnabled}
                             onChange={(enabled) => { void settings.setAutostartEnabled(enabled); }}
                             ariaLabel="开机自启动"
-                        />
-                    </div>
-                </div>
-
-                <div className="card">
-                    <div className="card-row">
-                        <span className="card-label">专注结束后自动置顶</span>
-                        <Toggle
-                            checked={settings.autoPinOnFocusEnd}
-                            onChange={settings.setAutoPinOnFocusEnd}
-                            ariaLabel="专注结束后自动置顶"
                         />
                     </div>
                 </div>

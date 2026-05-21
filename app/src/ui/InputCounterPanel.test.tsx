@@ -36,7 +36,6 @@ beforeEach(() => {
     });
     useActiveAppStore.setState({ current: null });
     useSettingsStore.setState({
-        showActiveAppWindowTitle: true,
         uiScale: 1,
     });
 });
@@ -98,7 +97,7 @@ describe('InputCounterPanel', () => {
         });
     });
 
-    it('falls back from window title to app name and then a placeholder label', () => {
+    it('falls back from app name to a placeholder label', () => {
         useBindingKeyStore.setState({
             entries: [
                 { id: 'space', label: 'Space', keyCode: 49, pressCount: 47, enabled: true },
@@ -120,13 +119,12 @@ describe('InputCounterPanel', () => {
         expect(screen.getByText('未聚焦应用')).toBeInTheDocument();
     });
 
-    it('uses the app name instead of the window title when title display is disabled', () => {
+    it('always uses the app name instead of the window title', () => {
         useBindingKeyStore.setState({
             entries: [
                 { id: 'space', label: 'Space', keyCode: 49, pressCount: 47, enabled: true },
             ],
         });
-        useSettingsStore.setState({ showActiveAppWindowTitle: false });
         useActiveAppStore.setState({
             current: {
                 name: 'Excel',

@@ -66,9 +66,7 @@ beforeEach(() => {
         activeTab: 'pomodoro',
         uiScale: 1.0,
         committedUiScale: 1.0,
-        showActiveAppWindowTitle: true,
         autostartEnabled: false,
-        autoPinOnFocusEnd: true,
         dangerousChange: null,
     });
     usePomodoroStore.setState({
@@ -617,13 +615,14 @@ describe('GlobalTab parity with Pdj9C', () => {
         useSettingsStore.setState({ activeTab: 'global' });
     });
 
-    it('renders global controls without the obsolete target display setting', () => {
+    it('renders global controls without obsolete settings', () => {
         render(<SettingsPanel />);
         expect(screen.getByText('界面缩放')).toBeTruthy();
-        expect(screen.getByText('显示打开的文件名')).toBeTruthy();
         expect(screen.getByText('开机自启动')).toBeTruthy();
         expect(screen.getByText('自动下载并安装更新')).toBeTruthy();
         expect(screen.getByText('按键计数')).toBeTruthy();
+        expect(screen.queryByText('显示打开的文件名')).toBeNull();
+        expect(screen.queryByText('专注结束后自动置顶')).toBeNull();
         expect(screen.queryByText('目标显示器')).toBeNull();
         expect(screen.queryByText(/显示器 \d+/)).toBeNull();
     });
@@ -634,52 +633,15 @@ describe('GlobalTab parity with Pdj9C', () => {
         expect(screen.getByRole('button', { name: /添加输入/ })).toBeTruthy();
     });
 
-    it('keeps autostart between active title and app update controls', () => {
+    it('keeps autostart before app update controls', () => {
         render(<SettingsPanel />);
 
-        const activeTitle = screen.getByText('显示打开的文件名');
         const autostart = screen.getByText('开机自启动');
         const autoUpdate = screen.getByText('自动下载并安装更新');
         const bindingKey = screen.getByText('按键计数');
 
-        expect(activeTitle.compareDocumentPosition(autostart) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
         expect(autostart.compareDocumentPosition(autoUpdate) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
         expect(autoUpdate.compareDocumentPosition(bindingKey) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    });
-
-    it('shows auto pin on focus end between autostart and automatic updates', () => {
-        useSettingsStore.setState({ activeTab: 'global' });
-        render(<SettingsPanel />);
-
-        const autostart = screen.getByText('开机自启动');
-        const autoPin = screen.getByText('专注结束后自动置顶');
-        const autoUpdate = screen.getByText('自动下载并安装更新');
-
-        expect(autostart.compareDocumentPosition(autoPin) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-        expect(autoPin.compareDocumentPosition(autoUpdate) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    });
-
-    it('routes auto pin on focus end toggles to the settings store action', () => {
-        const setAutoPinOnFocusEnd = vi.fn();
-        useSettingsStore.setState({
-            activeTab: 'global',
-            autoPinOnFocusEnd: true,
-            setAutoPinOnFocusEnd,
-        });
-        render(<SettingsPanel />);
-
-        fireEvent.click(screen.getByRole('button', { name: '专注结束后自动置顶' }));
-
-        expect(setAutoPinOnFocusEnd).toHaveBeenCalledWith(false);
-    });
-
-    it('toggles whether active app window titles are shown', () => {
-        render(<SettingsPanel />);
-        const toggle = screen.getByRole('button', { name: '显示打开的文件名' });
-
-        expect(toggle.getAttribute('aria-pressed')).toBe('true');
-        fireEvent.click(toggle);
-        expect(useSettingsStore.getState().showActiveAppWindowTitle).toBe(false);
     });
 
     it('routes autostart toggles to the settings store action', () => {
