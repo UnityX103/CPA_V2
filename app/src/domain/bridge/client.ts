@@ -144,6 +144,10 @@ export function applySnapshotToMirrors(snap: BridgeSnapshot): void {
         accountUser: snap.network.accountUser ? { ...snap.network.accountUser } : null,
         accountToken: snap.network.accountToken,
         accountError: snap.network.accountError,
+        cloudSyncStatus: snap.network.cloudSyncStatus,
+        cloudData: snap.network.cloudData ? JSON.parse(JSON.stringify(snap.network.cloudData)) : null,
+        cloudDataUpdatedAt: snap.network.cloudDataUpdatedAt,
+        cloudError: snap.network.cloudError,
     });
     useActiveAppStore.setState({
         current: cloneActiveAppForMirror(snap.activeApp),

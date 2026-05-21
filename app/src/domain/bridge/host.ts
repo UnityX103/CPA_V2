@@ -159,6 +159,10 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
             accountUser: n.accountUser ? { ...n.accountUser } : null,
             accountToken: n.accountToken,
             accountError: n.accountError,
+            cloudSyncStatus: n.cloudSyncStatus,
+            cloudData: n.cloudData ? JSON.parse(JSON.stringify(n.cloudData)) : null,
+            cloudDataUpdatedAt: n.cloudDataUpdatedAt,
+            cloudError: n.cloudError,
         },
         activeApp: cloneActiveApp(a.current, opts),
         bindingKey: {
@@ -322,6 +326,10 @@ export function networkSig(s: {
     accountUser: { userId: string; username: string } | null;
     accountToken: string | null;
     accountError: string | null;
+    cloudSyncStatus: string;
+    cloudData: unknown;
+    cloudDataUpdatedAt: number | null;
+    cloudError: string | null;
 }): string {
     return JSON.stringify([
         s.autoConnect,
@@ -335,6 +343,10 @@ export function networkSig(s: {
         s.accountUser,
         s.accountToken,
         s.accountError,
+        s.cloudSyncStatus,
+        s.cloudData,
+        s.cloudDataUpdatedAt,
+        s.cloudError,
     ]);
 }
 

@@ -6,6 +6,7 @@ import {
     loadPersistedAccountSession,
     savePersistedAccountSession,
 } from './accountPersistence';
+import type { CloudAccountData } from './cloudAccountData';
 
 export const PROTOCOL_VERSION = 1;
 export const DEVELOPMENT_SERVER_URL = 'ws://127.0.0.1:8039';
@@ -50,6 +51,7 @@ export interface RemotePlayer {
 
 export type ConnectionStatus = 'idle' | 'connecting' | 'joined' | 'reconnecting' | 'error';
 export type AccountStatus = 'guest' | 'checking' | 'creating' | 'loggingIn' | 'loggedIn' | 'error';
+export type CloudSyncStatus = 'idle' | 'pulling' | 'saving' | 'synced' | 'offline' | 'conflict' | 'error';
 
 export interface AccountUser {
     userId: string;
@@ -69,6 +71,10 @@ export interface NetworkStateShape {
     accountUser: AccountUser | null;
     accountToken: string | null;
     accountError: string | null;
+    cloudSyncStatus: CloudSyncStatus;
+    cloudData: CloudAccountData | null;
+    cloudDataUpdatedAt: number | null;
+    cloudError: string | null;
 }
 
 interface NetworkActions {
@@ -84,6 +90,8 @@ interface NetworkActions {
     login: (username: string, password: string) => Promise<void>;
     restoreAccountSession: () => Promise<void>;
     logout: () => void;
+    requestUserData: () => void;
+    saveUserData: (data: CloudAccountData, baseUpdatedAt: number | null) => void;
 }
 
 interface NetworkInternal {
@@ -146,6 +154,10 @@ const INITIAL_STATE: NetworkStateShape = {
     accountUser: null,
     accountToken: null,
     accountError: null,
+    cloudSyncStatus: 'idle',
+    cloudData: null,
+    cloudDataUpdatedAt: null,
+    cloudError: null,
 };
 
 export function createNetworkStore(opts: { isSettingsWindow: boolean }): NetworkStore {
@@ -182,6 +194,8 @@ export function createNetworkStore(opts: { isSettingsWindow: boolean }): Network
             logout: () => {
                 void dispatch({ v: BRIDGE_VERSION, store: 'network', action: 'logout', args: [] });
             },
+            requestUserData: () => {},
+            saveUserData: () => {},
         }));
     }
     return create<NetworkStateShape & NetworkActions>((set, get) => {
@@ -214,11 +228,16 @@ export function createNetworkStore(opts: { isSettingsWindow: boolean }): Network
                             accountUser: user,
                             accountToken: token,
                             accountError: null,
+                            cloudSyncStatus: 'pulling',
+                            cloudError: null,
                             playerName: currentPlayerName && currentPlayerName !== '我'
                                 ? get().playerName
                                 : user.username,
                         });
                         void savePersistedAccountSession({ token, username: user.username });
+                        if (!send(internal.socket, { type: 'user_data_get' })) {
+                            set({ cloudSyncStatus: 'offline', cloudError: 'CONNECTION_ERROR' });
+                        }
                         break;
                     }
                     case 'auth_logged_out':
@@ -228,6 +247,10 @@ export function createNetworkStore(opts: { isSettingsWindow: boolean }): Network
                             accountUser: null,
                             accountToken: null,
                             accountError: null,
+                            cloudSyncStatus: 'idle',
+                            cloudData: null,
+                            cloudDataUpdatedAt: null,
+                            cloudError: null,
                         });
                         void clearPersistedAccountSession();
                         break;
@@ -268,6 +291,25 @@ export function createNetworkStore(opts: { isSettingsWindow: boolean }): Network
                         }
                         break;
                     }
+                    case 'user_data_snapshot': {
+                        const data = (msg.data ?? null) as CloudAccountData | null;
+                        set({
+                            cloudSyncStatus: 'synced',
+                            cloudData: data,
+                            cloudDataUpdatedAt: data?.updatedAt ?? null,
+                            cloudError: null,
+                        });
+                        break;
+                    }
+                    case 'user_data_saved': {
+                        const updatedAt = Number.isInteger(msg.updatedAt) ? msg.updatedAt : null;
+                        set({
+                            cloudSyncStatus: 'synced',
+                            cloudDataUpdatedAt: updatedAt,
+                            cloudError: null,
+                        });
+                        break;
+                    }
                     case 'error': {
                         const error = msg.error ?? 'INTERNAL_ERROR';
                         if (error === 'INVALID_SESSION') {
@@ -278,8 +320,20 @@ export function createNetworkStore(opts: { isSettingsWindow: boolean }): Network
                                 accountToken: null,
                                 accountError: error,
                                 lastError: error,
+                                cloudSyncStatus: 'idle',
+                                cloudData: null,
+                                cloudDataUpdatedAt: null,
+                                cloudError: null,
                             });
                             void clearPersistedAccountSession();
+                            break;
+                        }
+                        if (error === 'USER_DATA_CONFLICT') {
+                            set({ cloudSyncStatus: 'conflict', cloudError: error, lastError: error });
+                            break;
+                        }
+                        if (error === 'INVALID_USER_DATA') {
+                            set({ cloudSyncStatus: 'error', cloudError: error, lastError: error });
                             break;
                         }
                         if (isAccountErrorCode(error) || isAccountBusyStatus(get().accountStatus)) {
@@ -406,12 +460,32 @@ export function createNetworkStore(opts: { isSettingsWindow: boolean }): Network
             sendStateUpdate: (state) => {
                 send(internal.socket, { type: 'player_state_update', state, roomCode: get().roomCode });
             },
+            requestUserData: () => {
+                if (get().accountStatus !== 'loggedIn') return;
+                const didSend = send(internal.socket, { type: 'user_data_get' });
+                set({
+                    cloudSyncStatus: didSend ? 'pulling' : 'offline',
+                    cloudError: didSend ? null : 'CONNECTION_ERROR',
+                });
+            },
+            saveUserData: (data, baseUpdatedAt) => {
+                if (get().accountStatus !== 'loggedIn') return;
+                const didSend = send(internal.socket, {
+                    type: 'user_data_save',
+                    baseUpdatedAt,
+                    data,
+                });
+                set({
+                    cloudSyncStatus: didSend ? 'saving' : 'offline',
+                    cloudError: didSend ? null : 'CONNECTION_ERROR',
+                });
+            },
             disconnect: () => {
                 clearTimers();
                 internal.generation += 1;
                 internal.socket?.close();
                 internal.socket = null;
-                set({ status: 'idle', players: {}, playerId: null });
+                set({ status: 'idle', players: {}, playerId: null, cloudSyncStatus: 'idle' });
             },
             createAccount: async (username, password) => {
                 set({ accountStatus: 'creating', accountError: null, lastError: null });
@@ -460,6 +534,10 @@ export function createNetworkStore(opts: { isSettingsWindow: boolean }): Network
                     accountUser: null,
                     accountToken: null,
                     accountError: null,
+                    cloudSyncStatus: 'idle',
+                    cloudData: null,
+                    cloudDataUpdatedAt: null,
+                    cloudError: null,
                 });
             },
         };

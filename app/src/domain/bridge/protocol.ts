@@ -1,10 +1,11 @@
 import type { BindingInput, BindingKeyEntry } from '../bindingKey';
 import type { DangerousChange } from '../settings';
-import type { AccountStatus, AccountUser, ConnectionStatus, RemotePlayer } from '../network';
+import type { AccountStatus, AccountUser, CloudSyncStatus, ConnectionStatus, RemotePlayer } from '../network';
 import type { PomodoroEndActionMode, PomodoroEndActionVideo } from '../pomodoro';
 import type { ActiveAppInfo } from '../activeApp';
 import type { AppUpdateSnapshot } from '../appUpdate';
 import type { DailyCheckinRecord, WeeklyCheckinPlan } from '../checkin';
+import type { CloudAccountData } from '../cloudAccountData';
 
 export const EVT_STATE_REQUEST = 'app:state:request';
 export const EVT_STATE = 'app:state';
@@ -41,6 +42,10 @@ export interface BridgeSnapshot {
         accountUser: AccountUser | null;
         accountToken: string | null;
         accountError: string | null;
+        cloudSyncStatus: CloudSyncStatus;
+        cloudData: CloudAccountData | null;
+        cloudDataUpdatedAt: number | null;
+        cloudError: string | null;
     };
     activeApp: ActiveAppInfo | null;
     bindingKey: {

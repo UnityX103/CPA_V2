@@ -48,6 +48,47 @@ function latestSocket(): FakeWebSocket | undefined {
     return FakeWebSocket.instances[FakeWebSocket.instances.length - 1];
 }
 
+function sentMessages(socket: FakeWebSocket | undefined) {
+    return socket?.sent.map((raw) => JSON.parse(raw)) ?? [];
+}
+
+function makeCloudSnapshot() {
+    return {
+        schemaVersion: 1,
+        updatedAt: 10,
+        pomodoro: {
+            focusDurationSeconds: 1500,
+            breakDurationSeconds: 300,
+            totalRounds: 4,
+            autoStartBreak: false,
+            endActionMode: 'playVideo',
+            endActionVideo: { sourceKind: 'builtin', builtinVideoId: 'default', customVideoPath: '' },
+        },
+        settings: {
+            uiScale: 1,
+            showActiveAppWindowTitle: true,
+            autostartEnabled: false,
+            autoPinOnFocusEnd: true,
+        },
+        checkin: {
+            weeklyPlan: {
+                weekStartDate: '2026-05-18',
+                carryToNextWeek: true,
+                days: {
+                    mon: { kind: 'items', items: [] },
+                    tue: { kind: 'inherit' },
+                    wed: { kind: 'inherit' },
+                    thu: { kind: 'inherit' },
+                    fri: { kind: 'inherit' },
+                    sat: { kind: 'inherit' },
+                    sun: { kind: 'rest' },
+                },
+            },
+            dailyRecords: {},
+        },
+    };
+}
+
 beforeEach(() => {
     useNetworkStore.getState().disconnect();
     FakeWebSocket.instances = [];
@@ -65,6 +106,10 @@ beforeEach(() => {
         accountUser: null,
         accountToken: null,
         accountError: null,
+        cloudSyncStatus: 'idle',
+        cloudData: null,
+        cloudDataUpdatedAt: null,
+        cloudError: null,
     });
     persistedSession.load.mockReset();
     persistedSession.save.mockReset();
@@ -247,6 +292,63 @@ describe('NetworkSystem account auth', () => {
         expect(useNetworkStore.getState().status).toBe('idle');
         expect(useNetworkStore.getState().playerName).toBe('Alice');
         expect(persistedSession.save).toHaveBeenCalledWith({ token: 'token-1', username: 'Alice' });
+    });
+
+    it('requests user data after auth_ok and handles user_data_snapshot', async () => {
+        const snapshot = makeCloudSnapshot();
+
+        await useNetworkStore.getState().login('Alice', 'secret');
+        await new Promise((r) => setTimeout(r, 5));
+        const socket = latestSocket();
+        expect(sentMessages(socket)).toContainEqual({
+            v: 1,
+            type: 'auth_login',
+            username: 'Alice',
+            password: 'secret',
+        });
+
+        socket?.onmessage?.({
+            data: JSON.stringify({
+                v: 1,
+                type: 'auth_ok',
+                user: { userId: 'u1', username: 'Alice' },
+                token: 'token',
+            }),
+        } as MessageEvent);
+        expect(sentMessages(socket)).toContainEqual({ v: 1, type: 'user_data_get' });
+
+        socket?.onmessage?.({
+            data: JSON.stringify({ v: 1, type: 'user_data_snapshot', data: snapshot }),
+        } as MessageEvent);
+        expect(useNetworkStore.getState().cloudData).toEqual(snapshot);
+        expect(useNetworkStore.getState().cloudSyncStatus).toBe('synced');
+    });
+
+    it('sends user_data_save with the current baseUpdatedAt', async () => {
+        const snapshot = makeCloudSnapshot();
+
+        await useNetworkStore.getState().login('Alice', 'secret');
+        await new Promise((r) => setTimeout(r, 5));
+        const socket = latestSocket();
+        socket?.onmessage?.({
+            data: JSON.stringify({
+                v: 1,
+                type: 'auth_ok',
+                user: { userId: 'u1', username: 'Alice' },
+                token: 'token',
+            }),
+        } as MessageEvent);
+        socket?.sent.splice(0);
+        useNetworkStore.setState({ cloudDataUpdatedAt: 10 });
+
+        useNetworkStore.getState().saveUserData(snapshot, 10);
+
+        expect(sentMessages(socket)).toContainEqual({
+            v: 1,
+            type: 'user_data_save',
+            baseUpdatedAt: 10,
+            data: snapshot,
+        });
     });
 
     it('login sends auth_login and invalid session clears account state', async () => {
