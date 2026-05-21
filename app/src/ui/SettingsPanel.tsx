@@ -417,6 +417,24 @@ function accountErrorText(error: string): string {
     }
 }
 
+function cloudSyncStatusText(status: ReturnType<typeof useNetworkStore.getState>['cloudSyncStatus']): string {
+    switch (status) {
+        case 'pulling':
+        case 'saving':
+            return '云同步中';
+        case 'synced':
+            return '已同步';
+        case 'offline':
+            return '离线保存中';
+        case 'conflict':
+            return '数据冲突已合并';
+        case 'error':
+            return '同步失败';
+        default:
+            return '本地保存';
+    }
+}
+
 function OnlineTab() {
     const net = useNetworkStore();
     const [name, setName] = useState(net.playerName);
@@ -486,7 +504,12 @@ function OnlineTab() {
                         </>
                     ) : (
                         <div className="account-summary">
-                            <span className="account-name">{net.accountUser!.username}</span>
+                            <span className="account-identity">
+                                <span className="account-name">{net.accountUser!.username}</span>
+                                <span className="cloud-sync-status">
+                                    {cloudSyncStatusText(net.cloudSyncStatus)}
+                                </span>
+                            </span>
                             <button className="btn btn-secondary btn-fit" onClick={net.logout}>
                                 退出登录
                             </button>

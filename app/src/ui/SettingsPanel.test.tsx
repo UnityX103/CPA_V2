@@ -516,6 +516,10 @@ describe('OnlineTab parity with 8Le5R', () => {
             accountUser: null,
             accountToken: null,
             accountError: null,
+            cloudSyncStatus: 'idle',
+            cloudData: null,
+            cloudDataUpdatedAt: null,
+            cloudError: null,
         });
     });
 
@@ -609,6 +613,20 @@ describe('OnlineTab parity with 8Le5R', () => {
         expect(screen.getByText('Alice')).toBeTruthy();
         expect(screen.getByRole('button', { name: '退出登录' })).toBeTruthy();
         expect((screen.getByRole('button', { name: '创建房间' }) as HTMLButtonElement).disabled).toBe(false);
+    });
+
+    it('renders cloud sync status in the logged-in account card', () => {
+        useNetworkStore.setState({
+            accountStatus: 'loggedIn',
+            accountUser: { userId: 'u1', username: 'Alice' },
+            accountToken: 'token',
+            cloudSyncStatus: 'saving',
+            cloudError: null,
+        });
+
+        render(<SettingsPanel />);
+
+        expect(screen.getByText('云同步中')).toBeTruthy();
     });
 });
 
