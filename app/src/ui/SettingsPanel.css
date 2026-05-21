@@ -1,6 +1,6 @@
 /* SettingsPanel ←→ PUI.pen vnYnS (Unified Settings Panel) + 子面板
- * 外壳: 460x440（设计稿 vnYnS 是 460x394，+46px 高度让 Pomodoro/Global tab 不滚动；
- *        WSnlp 视频文件行按设计 enabled:false 直接不渲染。）
+ * 外壳: 初始窗口 460x440，内容随 settings window 宽度/高度自适应；
+ *        WSnlp 视频文件行按设计 enabled:false 直接不渲染。
  * padding 20, gap 16, radius 20, fill #FFFFFF, stroke 1px #F1E5D8
  * head 8QyVE: title (font 18/700) + closeBtn UAbZg
  * body 3kLAl: sidebar(71) + content
@@ -16,8 +16,8 @@
 
 .settings-panel {
     position: relative;
-    width: 460px;
-    height: 440px;
+    width: 100%;
+    min-height: 100%;
     background: var(--settings-bg);
     border: 1px solid var(--settings-stroke);
     border-radius: var(--settings-radius);
@@ -28,6 +28,7 @@
     box-shadow: var(--shadow-dialog);
     box-sizing: border-box;
     z-index: 100;
+    min-width: 0;
 }
 
 /* ----- head ----- */
@@ -81,6 +82,7 @@
     display: flex;
     gap: 0;
     flex: 1;
+    min-height: 0;
     overflow: hidden;
 }
 
@@ -120,6 +122,8 @@
 .settings-content {
     position: relative;
     flex: 1;
+    min-width: 0;
+    min-height: 0;
     padding: 16px;
     overflow: hidden;
     box-sizing: border-box;
@@ -129,6 +133,7 @@
 
 .settings-content-scroll {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
     padding-right: 4px;
 }
@@ -178,17 +183,19 @@
     display: flex;
     flex-direction: column;
     gap: var(--settings-card-gap);
+    min-width: 0;
 }
 
 .card-tight { gap: 6px; }
 .card-grid {
     flex-direction: row;
+    flex-wrap: wrap;
     gap: var(--settings-card-gap-tight);
     background: transparent;
     padding: 0;
 }
 
-.card-grid > .card { flex: 1; }
+.card-grid > .card { flex: 1 1 140px; }
 
 .card-row {
     display: flex;
@@ -299,6 +306,10 @@
     font-size: var(--input-text-size);
     font-weight: 500;
     color: var(--input-text);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .dropdown-chevron {
@@ -418,6 +429,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
     width: 100%;
 }
 
@@ -425,6 +438,7 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
+    min-width: 0;
 }
 
 .online-room-name {
@@ -647,6 +661,7 @@
     display: flex;
     gap: 8px;
     align-items: center;
+    flex-wrap: wrap;
 }
 
 /* ===== pomoFooter JpJcn: vertical, gap 10 ===== */
@@ -663,6 +678,7 @@
     justify-content: space-between;
     padding: var(--settings-row-pad-y) var(--settings-row-pad-x);
     gap: 8px;
+    flex-wrap: wrap;
 }
 
 .pomo-row.is-disabled { opacity: 0.5; pointer-events: none; }
@@ -745,3 +761,35 @@
     cursor: pointer;
 }
 .bk-perm-banner button:hover { opacity: 0.85; }
+
+@media (max-width: 420px) {
+    .settings-panel {
+        padding: 14px;
+        gap: 12px;
+    }
+
+    .settings-body {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .settings-nav {
+        width: 100%;
+        flex-direction: row;
+        overflow-x: auto;
+        padding: 0;
+    }
+
+    .settings-tab {
+        flex: 1 0 auto;
+        text-align: center;
+    }
+
+    .settings-content {
+        padding: 0;
+    }
+
+    .apply-row {
+        padding: 0;
+    }
+}

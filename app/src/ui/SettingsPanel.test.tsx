@@ -9,6 +9,13 @@ import { useNetworkStore } from '../domain/network';
 import { useBindingKeyStore } from '../domain/bindingKey';
 import { SettingsPanel } from './SettingsPanel';
 
+function cssRule(css: string, selector: string): string {
+    const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const ruleMatch = css.match(new RegExp(`${escaped}\\s*\\{[^}]*\\}`));
+    expect(ruleMatch, `${selector} rule not found`).toBeTruthy();
+    return ruleMatch![0];
+}
+
 const { startDragging, invokeMock, listenMock } = vi.hoisted(() => ({
     startDragging: vi.fn(),
     invokeMock: vi.fn(),
@@ -68,14 +75,45 @@ describe('SettingsPanel close button', () => {
 });
 
 describe('SettingsPanel geometry', () => {
-    it('CSS pins the 460 × 440 shell (vnYnS 460×394 + 46px to fit Pomodoro tab without scroll, WSnlp collapsed per design)', () => {
-        const here = path.dirname(fileURLToPath(import.meta.url));
+    const here = path.dirname(fileURLToPath(import.meta.url));
+
+    it('CSS lets the shell adapt to window width and stretch with window height', () => {
         const css = readFileSync(path.join(here, 'SettingsPanel.css'), 'utf8');
-        const ruleMatch = css.match(/\.settings-panel\s*\{[^}]*\}/);
-        expect(ruleMatch, '.settings-panel rule not found').toBeTruthy();
-        const rule = ruleMatch![0];
-        expect(rule).toMatch(/width:\s*460px\s*;/);
-        expect(rule).toMatch(/height:\s*440px\s*;/);
+        const rule = cssRule(css, '.settings-panel');
+        expect(rule).toMatch(/width:\s*100%\s*;/);
+        expect(rule).not.toMatch(/width:\s*\d+px\s*;/);
+        expect(rule).toMatch(/min-height:\s*100%\s*;/);
+        expect(rule).not.toMatch(/height:\s*\d+px\s*;/);
+    });
+
+    it('settings window is resizable and has minimum bounds instead of a locked shell', () => {
+        const libRs = readFileSync(path.join(here, '../../src-tauri/src/lib.rs'), 'utf8');
+        expect(libRs).toMatch(/\.resizable\(true\)/);
+        expect(libRs).toMatch(/\.min_inner_size\(\s*SETTINGS_MIN_W,\s*SETTINGS_MIN_H\s*\)/);
+        expect(libRs).not.toMatch(/\.resizable\(false\)/);
+    });
+
+    it('content flex areas can shrink and wrap instead of forcing a fixed width', () => {
+        const css = readFileSync(path.join(here, 'SettingsPanel.css'), 'utf8');
+        expect(cssRule(css, '.settings-panel')).toMatch(/min-width:\s*0\s*;/);
+        expect(cssRule(css, '.settings-body')).toMatch(/min-height:\s*0\s*;/);
+        expect(cssRule(css, '.settings-content')).toMatch(/min-width:\s*0\s*;/);
+        expect(cssRule(css, '.settings-content')).toMatch(/min-height:\s*0\s*;/);
+        expect(cssRule(css, '.settings-content-scroll')).toMatch(/min-height:\s*0\s*;/);
+        expect(cssRule(css, '.card')).toMatch(/min-width:\s*0\s*;/);
+        expect(cssRule(css, '.card-grid')).toMatch(/flex-wrap:\s*wrap\s*;/);
+        expect(cssRule(css, '.card-grid > .card')).toMatch(/flex:\s*1\s+1\s+140px\s*;/);
+        expect(cssRule(css, '.card-actions')).toMatch(/flex-wrap:\s*wrap\s*;/);
+        expect(cssRule(css, '.pomo-row')).toMatch(/flex-wrap:\s*wrap\s*;/);
+        expect(cssRule(css, '.online-room-head')).toMatch(/flex-wrap:\s*wrap\s*;/);
+    });
+
+    it('narrow settings widths stack the sidebar above the content', () => {
+        const css = readFileSync(path.join(here, 'SettingsPanel.css'), 'utf8');
+        expect(css).toMatch(/@media\s*\(\s*max-width:\s*420px\s*\)/);
+        expect(css).toMatch(/\.settings-body\s*\{[^}]*flex-direction:\s*column\s*;/);
+        expect(css).toMatch(/\.settings-nav\s*\{[^}]*width:\s*100%\s*;[^}]*flex-direction:\s*row\s*;/);
+        expect(css).toMatch(/\.settings-tab\s*\{[^}]*flex:\s*1\s+0\s+auto\s*;/);
     });
 });
 
