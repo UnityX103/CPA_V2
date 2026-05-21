@@ -377,6 +377,164 @@
       "children": [
         {
           "type": "frame",
+          "id": "vNS1P",
+          "name": "onlAccountCard",
+          "width": "fill_container",
+          "fill": "#F6F7F8",
+          "cornerRadius": 16,
+          "layout": "vertical",
+          "gap": 12,
+          "padding": 16,
+          "children": [
+            {
+              "type": "text",
+              "id": "YsxSQ",
+              "name": "onlAccountTitle",
+              "fill": "#1A1A1A",
+              "content": "账号",
+              "fontFamily": "MaokenAssortedSans",
+              "fontSize": 14,
+              "fontWeight": "700"
+            },
+            {
+              "type": "frame",
+              "id": "eUJW2",
+              "name": "onlAccountNameRow",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 6,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "cq7yd",
+                  "name": "onlAccountNameLabel",
+                  "fill": "#6B7280",
+                  "content": "账号",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 12,
+                  "fontWeight": "600"
+                },
+                {
+                  "id": "JJBl0",
+                  "type": "ref",
+                  "ref": "brmHc",
+                  "name": "onlAccountNameInput",
+                  "width": "fill_container",
+                  "descendants": {
+                    "nYjoR": {
+                      "content": "用户名"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "y5Jyh",
+              "name": "onlAccountPasswordRow",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 6,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "DanC6",
+                  "name": "onlAccountPasswordLabel",
+                  "fill": "#6B7280",
+                  "content": "密码",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 12,
+                  "fontWeight": "600"
+                },
+                {
+                  "id": "iWBeV",
+                  "type": "ref",
+                  "ref": "brmHc",
+                  "name": "onlAccountPasswordInput",
+                  "width": "fill_container",
+                  "descendants": {
+                    "nYjoR": {
+                      "content": "密码"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "bkhFs",
+              "name": "onlAccountActions",
+              "width": "fill_container",
+              "gap": 8,
+              "children": [
+                {
+                  "id": "TTzwm",
+                  "type": "ref",
+                  "ref": "RPLJq",
+                  "name": "onlCreateAccountBtn",
+                  "width": "fill_container",
+                  "descendants": {
+                    "zgOkx": {
+                      "content": "创建账号"
+                    }
+                  }
+                },
+                {
+                  "id": "N3g1Vn",
+                  "type": "ref",
+                  "ref": "Za5wE",
+                  "name": "onlLoginBtn",
+                  "width": "fill_container",
+                  "descendants": {
+                    "oNDTH": {
+                      "content": "登录"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "qrczI",
+          "x": 0,
+          "y": 0,
+          "name": "onlAccountSummaryCard",
+          "enabled": false,
+          "width": "fill_container(0)",
+          "fill": "#F6F7F8",
+          "cornerRadius": 16,
+          "padding": 16,
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "GoBJi",
+              "name": "onlAccountSummaryName",
+              "fill": "#1A1A1A",
+              "content": "Alice",
+              "fontFamily": "MaokenAssortedSans",
+              "fontSize": 14,
+              "fontWeight": "700"
+            },
+            {
+              "id": "F7HMJN",
+              "type": "ref",
+              "ref": "RPLJq",
+              "name": "onlLogoutBtn",
+              "width": "fit_content",
+              "descendants": {
+                "zgOkx": {
+                  "content": "退出登录"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
           "id": "FUrip",
           "name": "onlAutoRow",
           "width": "fill_container",
@@ -3717,17 +3875,23 @@
       "x": 2354,
       "y": 779,
       "descendants": {
+        "vNS1P": {
+          "enabled": false
+        },
+        "qrczI": {
+          "enabled": true
+        },
         "EK2CF": {
           "enabled": false
         },
         "E3S4e": {
           "flipX": false,
           "flipY": false,
-          "width": 574,
+          "width": "fill_container",
           "height": "fit_content",
           "x": 0,
-          "y": 304,
-          "enabled": false
+          "y": 378,
+          "enabled": true
         }
       }
     },
@@ -3739,6 +3903,12 @@
       "x": 2978,
       "y": 779,
       "descendants": {
+        "vNS1P": {
+          "enabled": false
+        },
+        "qrczI": {
+          "enabled": true
+        },
         "ArRDI": {
           "enabled": false
         },
@@ -7582,6 +7752,25 @@
           ]
         }
       ]
+    },
+    {
+      "id": "HDQMl",
+      "type": "ref",
+      "ref": "8Le5R",
+      "name": "onlPanel/logged-out",
+      "x": 1741,
+      "y": 3879,
+      "descendants": {
+        "ArRDI": {
+          "enabled": false
+        },
+        "EK2CF": {
+          "enabled": false
+        },
+        "E3S4e": {
+          "enabled": false
+        }
+      }
     }
   ],
   "themes": {

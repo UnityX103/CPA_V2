@@ -271,7 +271,7 @@ function normalizeAccountCredentials(message)
         Array.from(password).length > 128
     )
     {
-        throw new ProtocolError('INVALID_MESSAGE', '账号或密码格式不正确');
+        throw new ProtocolError('INVALID_ACCOUNT_INPUT', '账号或密码格式不正确');
     }
     return { username, password };
 }

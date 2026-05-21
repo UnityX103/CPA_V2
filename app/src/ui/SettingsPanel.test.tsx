@@ -519,15 +519,37 @@ describe('OnlineTab parity with 8Le5R', () => {
         });
     });
 
-    it('renders onlHistCard (历史房间) below the join form when not joined', () => {
+    it('renders onlHistCard (历史房间) below the join form when logged in and not joined', () => {
+        useNetworkStore.setState({
+            accountStatus: 'loggedIn',
+            accountUser: { userId: 'u1', username: 'Alice' },
+            accountToken: 'token',
+        });
+
         render(<SettingsPanel />);
         expect(screen.getByText('历史房间')).toBeTruthy();
     });
 
-    it('renders onlBusyOverlay when status is connecting', () => {
-        useNetworkStore.setState({ status: 'connecting' });
+    it('renders onlBusyOverlay when logged in and joining room', () => {
+        useNetworkStore.setState({
+            status: 'connecting',
+            accountStatus: 'loggedIn',
+            accountUser: { userId: 'u1', username: 'Alice' },
+            accountToken: 'token',
+        });
         render(<SettingsPanel />);
         expect(screen.getByText('正在加入房间…')).toBeTruthy();
+    });
+
+    it('does not render room busy overlay while creating an account', () => {
+        useNetworkStore.setState({
+            status: 'connecting',
+            accountStatus: 'creating',
+        });
+
+        render(<SettingsPanel />);
+
+        expect(screen.queryByText('正在加入房间…')).toBeNull();
     });
 
     it('does NOT render busy overlay when idle', () => {
@@ -535,16 +557,17 @@ describe('OnlineTab parity with 8Le5R', () => {
         expect(screen.queryByText('正在加入房间…')).toBeNull();
     });
 
-    it('renders account login controls while logged out and disables room actions', () => {
+    it('renders account login controls while logged out and hides room controls', () => {
         render(<SettingsPanel />);
 
         expect(screen.getByLabelText('账号')).toBeTruthy();
         expect(screen.getByLabelText('密码')).toBeTruthy();
         expect(screen.getByRole('button', { name: '登录' })).toBeTruthy();
         expect(screen.getByRole('button', { name: '创建账号' })).toBeTruthy();
-        expect((screen.getByRole('button', { name: '创建房间' }) as HTMLButtonElement).disabled).toBe(true);
-        expect((screen.getByRole('button', { name: '加入房间' }) as HTMLButtonElement).disabled).toBe(true);
-        expect(screen.getByText('登录后可创建或加入联机房间')).toBeTruthy();
+        expect(screen.queryByRole('button', { name: '创建房间' })).toBeNull();
+        expect(screen.queryByRole('button', { name: '加入房间' })).toBeNull();
+        expect(screen.queryByText('历史房间')).toBeNull();
+        expect(screen.queryByPlaceholderText('ROOM-001')).toBeNull();
     });
 
     it('routes login and create account actions to the network store', () => {
@@ -560,6 +583,18 @@ describe('OnlineTab parity with 8Le5R', () => {
 
         expect(createAccount).toHaveBeenCalledWith('Alice', 'secret');
         expect(login).toHaveBeenCalledWith('Alice', 'secret');
+    });
+
+    it('renders account errors as Chinese copy', () => {
+        useNetworkStore.setState({
+            accountStatus: 'guest',
+            accountError: 'INVALID_CREDENTIALS',
+        });
+
+        render(<SettingsPanel />);
+
+        expect(screen.getByText('用户名或密码错误')).toBeTruthy();
+        expect(screen.queryByText('INVALID_CREDENTIALS')).toBeNull();
     });
 
     it('renders logged-in account state and enables room actions', () => {

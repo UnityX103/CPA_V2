@@ -398,6 +398,25 @@ function pathBasename(path: string): string {
  * Online Settings (8Le5R)
  * ============================================================ */
 
+function accountErrorText(error: string): string {
+    switch (error) {
+        case 'USERNAME_TAKEN':
+            return '用户名已存在';
+        case 'INVALID_CREDENTIALS':
+            return '用户名或密码错误';
+        case 'INVALID_ACCOUNT_INPUT':
+            return '账号或密码格式不正确';
+        case 'INVALID_SESSION':
+            return '登录已失效，请重新登录';
+        case 'AUTH_REQUIRED':
+            return '请先登录账号';
+        case 'CONNECTION_ERROR':
+            return '无法连接服务器';
+        default:
+            return '操作失败，请稍后重试';
+    }
+}
+
 function OnlineTab() {
     const net = useNetworkStore();
     const [name, setName] = useState(net.playerName);
@@ -411,10 +430,11 @@ function OnlineTab() {
         net.accountStatus === 'checking' ||
         net.accountStatus === 'creating' ||
         net.accountStatus === 'loggingIn';
+    const accountError = net.accountError ? accountErrorText(net.accountError) : null;
     // reconnecting is shown inline as a banner inside the joined-room card (see onlReconnectBanner).
-    // connecting is shown as a full-card overlay (3aoUs onlBusyOverlay) during the initial join.
+    // connecting is shown as a full-card overlay (3aoUs onlBusyOverlay) during the initial room join.
     const reconnecting = net.status === 'reconnecting';
-    const connecting = net.status === 'connecting';
+    const connecting = net.status === 'connecting' && isLoggedIn && !accountBusy;
 
     return (
         <div className="settings-content-scroll online-tab-root">
@@ -462,7 +482,7 @@ function OnlineTab() {
                                     登录
                                 </button>
                             </div>
-                            {net.accountError && <div className="error-text">{net.accountError}</div>}
+                            {accountError && <div className="error-text">{accountError}</div>}
                         </>
                     ) : (
                         <div className="account-summary">
@@ -480,7 +500,7 @@ function OnlineTab() {
                     <Toggle checked={net.autoConnect} onChange={net.setAutoConnect} />
                 </div>
 
-                {!isJoined && (
+                {isLoggedIn && !isJoined && (
                     <>
                         {/* onlJoinCard ArRDI */}
                         <div className="card">
@@ -520,7 +540,6 @@ function OnlineTab() {
                                     加入房间
                                 </button>
                             </div>
-                            {!isLoggedIn && <div className="online-auth-hint">登录后可创建或加入联机房间</div>}
                             {net.lastError && <div className="error-text">{net.lastError}</div>}
                         </div>
 

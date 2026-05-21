@@ -116,6 +116,21 @@ function normalizeAccountUser(value: unknown): AccountUser | null {
     return { userId: candidate.userId, username: candidate.username.trim() };
 }
 
+function isAccountErrorCode(error: string): boolean {
+    return error === 'USERNAME_TAKEN'
+        || error === 'INVALID_CREDENTIALS'
+        || error === 'INVALID_ACCOUNT_INPUT'
+        || error === 'AUTH_REQUIRED';
+}
+
+function isAccountBusyStatus(status: AccountStatus): boolean {
+    return status === 'checking' || status === 'creating' || status === 'loggingIn';
+}
+
+function idleStatusWhenNotInRoom(state: NetworkStateShape): ConnectionStatus {
+    return state.playerId ? state.status : 'idle';
+}
+
 export type NetworkStore = UseBoundStore<StoreApi<NetworkStateShape & NetworkActions>>;
 
 const INITIAL_STATE: NetworkStateShape = {
@@ -194,6 +209,7 @@ export function createNetworkStore(opts: { isSettingsWindow: boolean }): Network
                         }
                         const currentPlayerName = get().playerName.trim();
                         set({
+                            status: idleStatusWhenNotInRoom(get()),
                             accountStatus: 'loggedIn',
                             accountUser: user,
                             accountToken: token,
@@ -207,6 +223,7 @@ export function createNetworkStore(opts: { isSettingsWindow: boolean }): Network
                     }
                     case 'auth_logged_out':
                         set({
+                            status: 'idle',
                             accountStatus: 'guest',
                             accountUser: null,
                             accountToken: null,
@@ -255,6 +272,7 @@ export function createNetworkStore(opts: { isSettingsWindow: boolean }): Network
                         const error = msg.error ?? 'INTERNAL_ERROR';
                         if (error === 'INVALID_SESSION') {
                             set({
+                                status: 'idle',
                                 accountStatus: 'guest',
                                 accountUser: null,
                                 accountToken: null,
@@ -264,13 +282,8 @@ export function createNetworkStore(opts: { isSettingsWindow: boolean }): Network
                             void clearPersistedAccountSession();
                             break;
                         }
-                        if (
-                            error === 'USERNAME_TAKEN' ||
-                            error === 'INVALID_CREDENTIALS' ||
-                            error === 'INVALID_ACCOUNT_INPUT' ||
-                            error === 'AUTH_REQUIRED'
-                        ) {
-                            set({ accountStatus: 'error', accountError: error, lastError: error });
+                        if (isAccountErrorCode(error) || isAccountBusyStatus(get().accountStatus)) {
+                            set({ status: 'idle', accountStatus: 'guest', accountError: error, lastError: error });
                             break;
                         }
                         set({ lastError: error });
@@ -321,7 +334,12 @@ export function createNetworkStore(opts: { isSettingsWindow: boolean }): Network
                     };
                     socket.onerror = () => {
                         if (generation !== internal.generation) return;
-                        set({ status: 'error', lastError: 'CONNECTION_ERROR' });
+                        const next: Partial<NetworkStateShape> = { status: 'error', lastError: 'CONNECTION_ERROR' };
+                        if (isAccountBusyStatus(get().accountStatus)) {
+                            next.accountStatus = 'guest';
+                            next.accountError = 'CONNECTION_ERROR';
+                        }
+                        set(next);
                     };
                     socket.onclose = () => {
                         if (generation !== internal.generation) return;
