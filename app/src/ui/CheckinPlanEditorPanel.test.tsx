@@ -4,11 +4,21 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useCheckinStore, type WeeklyCheckinPlan } from '../domain/checkin';
 import { CheckinPlanEditorPanel } from './CheckinPlanEditorPanel';
 
-const { invokeMock } = vi.hoisted(() => ({
+const { invokeMock, startDraggingMock } = vi.hoisted(() => ({
     invokeMock: vi.fn(),
+    startDraggingMock: vi.fn(),
 }));
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: invokeMock }));
+
+vi.mock('@tauri-apps/api/window', () => ({
+    getCurrentWindow: () => ({
+        startDragging: () => {
+            startDraggingMock();
+            return Promise.resolve();
+        },
+    }),
+}));
 
 const basePlan: WeeklyCheckinPlan = {
     weekStartDate: '2026-05-18',
@@ -35,6 +45,7 @@ function resetCheckinStore() {
 describe('CheckinPlanEditorPanel', () => {
     beforeEach(() => {
         invokeMock.mockReset();
+        startDraggingMock.mockReset();
         invokeMock.mockResolvedValue(undefined);
         resetCheckinStore();
     });
@@ -124,5 +135,38 @@ describe('CheckinPlanEditorPanel', () => {
 
         expect(screen.getByDisplayValue('喝水')).toBeInTheDocument();
         expect(screen.getByDisplayValue('3')).toBeInTheDocument();
+    });
+
+    it('starts native drag from the editor background', () => {
+        render(<CheckinPlanEditorPanel />);
+
+        fireEvent.pointerDown(screen.getByTestId('checkin-plan-editor-panel'), { button: 0 });
+
+        expect(startDraggingMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not start native drag from non-primary pointer buttons', () => {
+        render(<CheckinPlanEditorPanel />);
+
+        fireEvent.pointerDown(screen.getByTestId('checkin-plan-editor-panel'), { button: 2 });
+
+        expect(startDraggingMock).not.toHaveBeenCalled();
+    });
+
+    it('does not start native drag from editor buttons', () => {
+        render(<CheckinPlanEditorPanel />);
+
+        fireEvent.pointerDown(screen.getByRole('button', { name: '新增栏目' }), { button: 0 });
+
+        expect(startDraggingMock).not.toHaveBeenCalled();
+    });
+
+    it('does not start native drag from editor inputs or selects', () => {
+        render(<CheckinPlanEditorPanel />);
+
+        fireEvent.pointerDown(screen.getByLabelText('阅读 名称'), { button: 0 });
+        fireEvent.pointerDown(screen.getByLabelText('阅读 类型'), { button: 0 });
+
+        expect(startDraggingMock).not.toHaveBeenCalled();
     });
 });
