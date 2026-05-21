@@ -14,6 +14,7 @@ const {
     savePersistedCheckinMock,
     savePersistedSettingsMock,
     startAutomaticChecks,
+    restoreAccountSession,
     useStateSync,
     useActiveAppListener,
     useBindingKeyListener,
@@ -41,6 +42,7 @@ const {
         savePersistedCheckinMock: vi.fn(),
         savePersistedSettingsMock: vi.fn(),
         startAutomaticChecks,
+        restoreAccountSession: vi.fn(() => Promise.resolve()),
         useStateSync: vi.fn(),
         useActiveAppListener: vi.fn(),
         useBindingKeyListener: vi.fn(),
@@ -59,6 +61,13 @@ vi.mock('./domain/bridge/host', () => ({ useBridgeHost }));
 vi.mock('./domain/inputCounterWindow', () => ({ useInputCounterWindowController }));
 vi.mock('./domain/remotePlayerWindows', () => ({ useRemotePlayerWindowController }));
 vi.mock('./domain/appUpdate', () => ({ useAppUpdateStore }));
+vi.mock('./domain/network', () => ({
+    useNetworkStore: {
+        getState: vi.fn(() => ({
+            restoreAccountSession,
+        })),
+    },
+}));
 vi.mock('./domain/autostart', () => ({ readAutostartEnabled: readAutostartEnabledMock }));
 vi.mock('./domain/settingsPersistence', () => ({
     loadPersistedSettings: loadPersistedSettingsMock,
@@ -103,6 +112,8 @@ beforeEach(() => {
     useBridgeHost.mockClear();
     useInputCounterWindowController.mockClear();
     useRemotePlayerWindowController.mockClear();
+    restoreAccountSession.mockClear();
+    restoreAccountSession.mockResolvedValue(undefined);
     loadPersistedCheckinMock.mockReset();
     loadPersistedCheckinMock.mockResolvedValue(null);
     savePersistedCheckinMock.mockReset();
@@ -149,6 +160,12 @@ describe('main App window composition', () => {
         render(<App />);
 
         expect(screen.getByTestId('app-update-ready-notice')).toBeInTheDocument();
+    });
+
+    it('restores persisted account session on startup', async () => {
+        render(<App />);
+
+        await waitFor(() => expect(restoreAccountSession).toHaveBeenCalledTimes(1));
     });
 
     it('hydrates app update settings before starting automatic checks', async () => {

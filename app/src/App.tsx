@@ -17,6 +17,7 @@ import { readAutostartEnabled } from './domain/autostart';
 import { useCheckinStore } from './domain/checkin';
 import { loadPersistedCheckin, savePersistedCheckin } from './domain/checkinPersistence';
 import { usePomodoroStore } from './domain/pomodoro';
+import { useNetworkStore } from './domain/network';
 
 function clampStartupScale(scale: number): number {
     if (!Number.isFinite(scale)) return 1.0;
@@ -91,6 +92,10 @@ export default function App() {
         minHeight: MAIN_WINDOW_BASE_SIZE.height,
         enabled: settingsHydrated,
     });
+
+    useEffect(() => {
+        void useNetworkStore.getState().restoreAccountSession();
+    }, []);
 
     useEffect(() => {
         let cancelled = false;
