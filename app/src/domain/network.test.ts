@@ -317,6 +317,28 @@ describe('NetworkSystem account auth', () => {
         expect(useNetworkStore.getState().lastError).toBe('AUTH_REQUIRED');
         expect(latestSocket()).toBeUndefined();
     });
+
+    it('returns account actions to a retryable guest state after account errors', async () => {
+        await useNetworkStore.getState().createAccount('Alice', 'secret');
+        await new Promise((r) => setTimeout(r, 5));
+
+        latestSocket()?.onmessage?.({
+            data: JSON.stringify({ type: 'error', error: 'USERNAME_TAKEN' }),
+        } as MessageEvent);
+
+        expect(useNetworkStore.getState().accountStatus).toBe('guest');
+        expect(useNetworkStore.getState().accountError).toBe('USERNAME_TAKEN');
+
+        await useNetworkStore.getState().login('Alice', 'wrong');
+        await new Promise((r) => setTimeout(r, 5));
+
+        latestSocket()?.onmessage?.({
+            data: JSON.stringify({ type: 'error', error: 'INVALID_CREDENTIALS' }),
+        } as MessageEvent);
+
+        expect(useNetworkStore.getState().accountStatus).toBe('guest');
+        expect(useNetworkStore.getState().accountError).toBe('INVALID_CREDENTIALS');
+    });
 });
 
 describe('createNetworkStore — settings-window mode', () => {

@@ -116,6 +116,17 @@ function normalizeAccountUser(value: unknown): AccountUser | null {
     return { userId: candidate.userId, username: candidate.username.trim() };
 }
 
+function isAccountErrorCode(error: string): boolean {
+    return error === 'USERNAME_TAKEN'
+        || error === 'INVALID_CREDENTIALS'
+        || error === 'INVALID_ACCOUNT_INPUT'
+        || error === 'AUTH_REQUIRED';
+}
+
+function isAccountBusyStatus(status: AccountStatus): boolean {
+    return status === 'checking' || status === 'creating' || status === 'loggingIn';
+}
+
 export type NetworkStore = UseBoundStore<StoreApi<NetworkStateShape & NetworkActions>>;
 
 const INITIAL_STATE: NetworkStateShape = {
@@ -265,12 +276,9 @@ export function createNetworkStore(opts: { isSettingsWindow: boolean }): Network
                             break;
                         }
                         if (
-                            error === 'USERNAME_TAKEN' ||
-                            error === 'INVALID_CREDENTIALS' ||
-                            error === 'INVALID_ACCOUNT_INPUT' ||
-                            error === 'AUTH_REQUIRED'
+                            isAccountErrorCode(error)
                         ) {
-                            set({ accountStatus: 'error', accountError: error, lastError: error });
+                            set({ accountStatus: 'guest', accountError: error, lastError: error });
                             break;
                         }
                         set({ lastError: error });
@@ -321,7 +329,12 @@ export function createNetworkStore(opts: { isSettingsWindow: boolean }): Network
                     };
                     socket.onerror = () => {
                         if (generation !== internal.generation) return;
-                        set({ status: 'error', lastError: 'CONNECTION_ERROR' });
+                        const next: Partial<NetworkStateShape> = { status: 'error', lastError: 'CONNECTION_ERROR' };
+                        if (isAccountBusyStatus(get().accountStatus)) {
+                            next.accountStatus = 'guest';
+                            next.accountError = 'CONNECTION_ERROR';
+                        }
+                        set(next);
                     };
                     socket.onclose = () => {
                         if (generation !== internal.generation) return;
