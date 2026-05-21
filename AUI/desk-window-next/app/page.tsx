@@ -6,6 +6,7 @@ import { PetSettingsPanel } from "@/components/PetSettingsPanel";
 import { PomodoroSettingsPanel } from "@/components/PomodoroSettingsPanel";
 import { OnlineSettingsPanel } from "@/components/OnlineSettingsPanel";
 import { GlobalSettingsPanel } from "@/components/GlobalSettingsPanel";
+import { CheckinPlanEditorPanel } from "@/components/CheckinPlanEditorPanel";
 
 /**
  * Preview index — renders each ported component at exact design pixel size on a neutral canvas
@@ -20,6 +21,7 @@ import { GlobalSettingsPanel } from "@/components/GlobalSettingsPanel";
  *   gs1Tv Pomodoro Settings Panel — ✓
  *   8Le5R Online Settings Panel — ✓
  *   Pdj9C Global Settings Panel  — ✓
+ *   s6g1w Check-in Plan Editor Panel — HTML sync
  */
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -170,6 +172,10 @@ export default function Page() {
         <SettingsPanel activeTab="global" showApply>
           <GlobalSettingsPanel />
         </SettingsPanel>
+      </Section>
+
+      <Section title="s6g1w · Check-in Plan Editor Panel · 460×898">
+        <CheckinPlanEditorPanel />
       </Section>
     </main>
   );

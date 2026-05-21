@@ -24,7 +24,20 @@ const basePlan: WeeklyCheckinPlan = {
     weekStartDate: '2026-05-18',
     carryToNextWeek: true,
     days: {
-        mon: { kind: 'items', items: [{ id: 'read', title: '阅读', type: 'manual', targetCount: 2 }] },
+        mon: {
+            kind: 'items',
+            items: [
+                {
+                    id: 'read',
+                    title: '阅读',
+                    type: 'manual',
+                    targetCount: 2,
+                    icon: 'bookOpen',
+                    perUseAmount: 30,
+                    perUseUnit: '分钟',
+                },
+            ],
+        },
         tue: { kind: 'inherit' },
         wed: { kind: 'inherit' },
         thu: { kind: 'inherit' },
@@ -58,6 +71,7 @@ describe('CheckinPlanEditorPanel', () => {
         render(<CheckinPlanEditorPanel />);
 
         fireEvent.click(screen.getByRole('button', { name: '新增栏目' }));
+        fireEvent.click(screen.getByRole('button', { name: /通用/ }));
         fireEvent.change(screen.getByLabelText('新栏目名称'), { target: { value: '喝水' } });
 
         let monday = useCheckinStore.getState().weeklyPlan.days.mon;
@@ -80,13 +94,16 @@ describe('CheckinPlanEditorPanel', () => {
         render(<CheckinPlanEditorPanel />);
 
         fireEvent.click(screen.getByRole('button', { name: '新增栏目' }));
+        fireEvent.click(screen.getByRole('button', { name: /通用/ }));
         fireEvent.change(screen.getByLabelText('新栏目名称'), { target: { value: '喝水' } });
         fireEvent.click(screen.getByRole('button', { name: '取消' }));
 
         const monday = useCheckinStore.getState().weeklyPlan.days.mon;
         expect(monday.kind).toBe('items');
         if (monday.kind === 'items') {
-            expect(monday.items).toEqual([{ id: 'read', title: '阅读', type: 'manual', targetCount: 2 }]);
+            expect(monday.items).toEqual([
+                expect.objectContaining({ id: 'read', title: '阅读', type: 'manual', targetCount: 2 }),
+            ]);
         }
         expect(invokeMock).toHaveBeenCalledWith('close_checkin_editor_window');
     });
@@ -113,6 +130,97 @@ describe('CheckinPlanEditorPanel', () => {
         fireEvent.click(screen.getByRole('button', { name: '保存计划' }));
 
         expect(useCheckinStore.getState().weeklyPlan.carryToNextWeek).toBe(false);
+    });
+
+    it('prevents adding a second pomodoro item for the selected day', () => {
+        useCheckinStore.setState({
+            weeklyPlan: {
+                ...structuredClone(basePlan),
+                days: {
+                    ...structuredClone(basePlan.days),
+                    mon: {
+                        kind: 'items',
+                        items: [
+                            {
+                                id: 'focus',
+                                title: '专注番茄',
+                                type: 'pomodoroFocus',
+                                targetCount: 4,
+                                icon: 'clock',
+                                perUseAmount: 25,
+                                perUseUnit: '分钟',
+                            },
+                            {
+                                id: 'read',
+                                title: '阅读',
+                                type: 'manual',
+                                targetCount: 2,
+                                icon: 'bookOpen',
+                                perUseAmount: 30,
+                                perUseUnit: '分钟',
+                            },
+                        ],
+                    },
+                },
+            },
+        });
+        render(<CheckinPlanEditorPanel />);
+
+        fireEvent.click(screen.getByRole('button', { name: '新增栏目' }));
+
+        expect(screen.getByRole('button', { name: /番茄钟/ })).toBeDisabled();
+    });
+
+    it('edits an item icon through the row icon picker', () => {
+        render(<CheckinPlanEditorPanel />);
+
+        fireEvent.click(screen.getByRole('button', { name: '更换 阅读 图标' }));
+        fireEvent.click(screen.getByRole('menuitem', { name: '咖啡' }));
+        fireEvent.click(screen.getByRole('button', { name: '保存计划' }));
+
+        const monday = useCheckinStore.getState().weeklyPlan.days.mon;
+        expect(monday.kind).toBe('items');
+        if (monday.kind === 'items') {
+            expect(monday.items[0].icon).toBe('coffee');
+        }
+    });
+
+    it('edits the per-use metric represented by Pencil node YVc3O', () => {
+        render(<CheckinPlanEditorPanel />);
+
+        fireEvent.change(screen.getByLabelText('阅读 每次数量'), { target: { value: '45' } });
+        fireEvent.change(screen.getByLabelText('阅读 每次单位'), { target: { value: '页' } });
+        fireEvent.click(screen.getByRole('button', { name: '保存计划' }));
+
+        const monday = useCheckinStore.getState().weeklyPlan.days.mon;
+        expect(monday.kind).toBe('items');
+        if (monday.kind === 'items') {
+            expect(monday.items[0]).toMatchObject({
+                perUseAmount: 45,
+                perUseUnit: '页',
+            });
+        }
+    });
+
+    it('keeps row edits in the draft until save and discards them on cancel', () => {
+        render(<CheckinPlanEditorPanel />);
+
+        fireEvent.change(screen.getByLabelText('阅读 标题'), { target: { value: '深度阅读' } });
+        fireEvent.change(screen.getByLabelText('深度阅读 每日目标'), { target: { value: '5' } });
+
+        const beforeCancel = useCheckinStore.getState().weeklyPlan.days.mon;
+        expect(beforeCancel.kind).toBe('items');
+        if (beforeCancel.kind === 'items') {
+            expect(beforeCancel.items[0]).toMatchObject({ title: '阅读', targetCount: 2 });
+        }
+
+        fireEvent.click(screen.getByRole('button', { name: '取消' }));
+
+        const afterCancel = useCheckinStore.getState().weeklyPlan.days.mon;
+        expect(afterCancel.kind).toBe('items');
+        if (afterCancel.kind === 'items') {
+            expect(afterCancel.items[0]).toMatchObject({ title: '阅读', targetCount: 2 });
+        }
     });
 
     it('syncs the draft when the bridge snapshot updates the source plan before editing', () => {
@@ -164,8 +272,8 @@ describe('CheckinPlanEditorPanel', () => {
     it('does not start native drag from editor inputs or selects', () => {
         render(<CheckinPlanEditorPanel />);
 
-        fireEvent.pointerDown(screen.getByLabelText('阅读 名称'), { button: 0 });
-        fireEvent.pointerDown(screen.getByLabelText('阅读 类型'), { button: 0 });
+        fireEvent.pointerDown(screen.getByLabelText('阅读 标题'), { button: 0 });
+        fireEvent.pointerDown(screen.getByLabelText('阅读 每日目标'), { button: 0 });
 
         expect(startDraggingMock).not.toHaveBeenCalled();
     });

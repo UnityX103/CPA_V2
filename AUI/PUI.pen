@@ -6617,11 +6617,13 @@
                               "alignItems": "center",
                               "children": [
                                 {
-                                  "type": "ellipse",
-                                  "id": "W0QrF",
-                                  "fill": "#E08C10",
-                                  "width": 10,
-                                  "height": 10
+                                  "type": "icon_font",
+                                  "id": "JuN0z",
+                                  "width": 14,
+                                  "height": 14,
+                                  "iconFontName": "book-open",
+                                  "iconFontFamily": "lucide",
+                                  "fill": "#E08C10"
                                 },
                                 {
                                   "type": "frame",
@@ -6800,11 +6802,13 @@
                               "alignItems": "center",
                               "children": [
                                 {
-                                  "type": "ellipse",
-                                  "id": "x2XuxY",
-                                  "fill": "#7C3AED",
-                                  "width": 10,
-                                  "height": 10
+                                  "type": "icon_font",
+                                  "id": "REZZP",
+                                  "width": 14,
+                                  "height": 14,
+                                  "iconFontName": "droplet",
+                                  "iconFontFamily": "lucide",
+                                  "fill": "#7C3AED"
                                 },
                                 {
                                   "type": "frame",
@@ -6983,11 +6987,13 @@
                               "alignItems": "center",
                               "children": [
                                 {
-                                  "type": "ellipse",
-                                  "id": "hbyK8",
-                                  "fill": "#D15F3D",
-                                  "width": 10,
-                                  "height": 10
+                                  "type": "icon_font",
+                                  "id": "I22cG",
+                                  "width": 14,
+                                  "height": 14,
+                                  "iconFontName": "timer-reset",
+                                  "iconFontFamily": "lucide",
+                                  "fill": "#D15F3D"
                                 },
                                 {
                                   "type": "frame",
@@ -7012,7 +7018,7 @@
                                       "fill": "#6B7280",
                                       "textGrowth": "fixed-width",
                                       "width": "fill_container",
-                                      "content": "系统默认专注项，名称固定不可改",
+                                      "content": "每次 25 分钟，目标 4 次",
                                       "fontFamily": "MaokenAssortedSans",
                                       "fontSize": 11,
                                       "fontWeight": "500"

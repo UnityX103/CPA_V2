@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="648" height="132" viewBox="0 0 648 132" fill="none">
+  <rect width="648" height="132" rx="20" fill="#FFFDFB"/>
+  <g transform="translate(18 18)"><image href="icon-activity.svg" width="72" height="72"/><text x="36" y="99" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="700" fill="#5B4636">活力</text></g>
+  <g transform="translate(124 18)"><image href="icon-dumbbell.svg" width="72" height="72"/><text x="36" y="99" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="700" fill="#5B4636">运动</text></g>
+  <g transform="translate(230 18)"><image href="icon-book-open.svg" width="72" height="72"/><text x="36" y="99" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="700" fill="#5B4636">阅读</text></g>
+  <g transform="translate(336 18)"><image href="icon-droplet.svg" width="72" height="72"/><text x="36" y="99" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="700" fill="#5B4636">喝水</text></g>
+  <g transform="translate(442 18)"><image href="icon-list-checks.svg" width="72" height="72"/><text x="36" y="99" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="700" fill="#5B4636">清单</text></g>
+  <g transform="translate(548 18)"><image href="icon-sparkle.svg" width="72" height="72"/><text x="36" y="99" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="700" fill="#5B4636">星光</text></g>
+</svg>
