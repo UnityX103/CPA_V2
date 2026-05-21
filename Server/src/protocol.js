@@ -3,6 +3,10 @@ import { RoomManagerError } from './RoomManager.js';
 export const PROTOCOL_VERSION = 1;
 
 const SUPPORTED_CLIENT_MESSAGE_TYPES = new Set([
+    'auth_create',
+    'auth_login',
+    'auth_session',
+    'auth_logout',
     'create_room',
     'join_room',
     'leave_room',
@@ -53,6 +57,34 @@ export function parseClientMessage(rawMessage)
 
     switch (parsedMessage.type)
     {
+        case 'auth_create':
+            return {
+                v: PROTOCOL_VERSION,
+                type: 'auth_create',
+                ...normalizeAccountCredentials(parsedMessage)
+            };
+
+        case 'auth_login':
+            return {
+                v: PROTOCOL_VERSION,
+                type: 'auth_login',
+                ...normalizeAccountCredentials(parsedMessage)
+            };
+
+        case 'auth_session':
+            return {
+                v: PROTOCOL_VERSION,
+                type: 'auth_session',
+                token: normalizeAuthToken(parsedMessage.token)
+            };
+
+        case 'auth_logout':
+            return {
+                v: PROTOCOL_VERSION,
+                type: 'auth_logout',
+                token: normalizeAuthToken(parsedMessage.token)
+            };
+
         case 'create_room':
             return {
                 v: PROTOCOL_VERSION,
@@ -187,6 +219,23 @@ export function createErrorMessage(error)
     };
 }
 
+export function createAuthOkMessage({ user, token })
+{
+    return {
+        type: 'auth_ok',
+        user: {
+            userId: String(user.userId),
+            username: String(user.username)
+        },
+        token: String(token)
+    };
+}
+
+export function createAuthLoggedOutMessage()
+{
+    return { type: 'auth_logged_out' };
+}
+
 export function createIconNeedMessage({ bundleId })
 {
     return { type: 'icon_need', bundleId };
@@ -205,6 +254,38 @@ function normalizePlayerName(playerName)
     }
 
     return playerName.trim();
+}
+
+function normalizeAccountCredentials(message)
+{
+    const username = typeof message.username === 'string'
+        ? message.username.trim()
+        : '';
+    const password = typeof message.password === 'string'
+        ? message.password
+        : '';
+    if (
+        Array.from(username).length < 1 ||
+        Array.from(username).length > 32 ||
+        Array.from(password).length < 1 ||
+        Array.from(password).length > 128
+    )
+    {
+        throw new ProtocolError('INVALID_MESSAGE', '账号或密码格式不正确');
+    }
+    return { username, password };
+}
+
+function normalizeAuthToken(token)
+{
+    const normalizedToken = typeof token === 'string'
+        ? token.trim()
+        : '';
+    if (!normalizedToken)
+    {
+        throw new ProtocolError('INVALID_MESSAGE', 'token 不能为空');
+    }
+    return normalizedToken;
 }
 
 function normalizeRequiredRoomCode(roomCode)

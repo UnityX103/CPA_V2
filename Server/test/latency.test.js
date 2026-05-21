@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
 import { once } from 'node:events';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import test from 'node:test';
 
 import { WebSocket } from 'ws';
@@ -75,13 +78,36 @@ function createMessageCollector(socket)
     };
 }
 
-test('state_update 端到端广播延迟不超过 500ms', async (t) =>
+async function authClient(socket, inbox, username)
 {
-    const app = await createPomodoroServer({
+    sendJson(socket, {
+        type: 'auth_create',
+        username,
+        password: 'secret'
+    });
+    return inbox.waitFor('auth_ok');
+}
+
+async function createTestServer(t, options = {})
+{
+    const dir = await mkdtemp(join(tmpdir(), 'cpa-server-auth-'));
+    t.after(async () =>
+    {
+        await rm(dir, { recursive: true, force: true });
+    });
+    return createPomodoroServer({
         port: 0,
         heartbeatIntervalMs: 5000,
-        initTimeoutMs: 1000
+        initTimeoutMs: 1000,
+        logger: { warn() {}, error() {} },
+        authFilePath: join(dir, 'accounts.json'),
+        ...options
     });
+}
+
+test('state_update 端到端广播延迟不超过 500ms', async (t) =>
+{
+    const app = await createTestServer(t);
 
     t.after(async () =>
     {
@@ -98,6 +124,9 @@ test('state_update 端到端广播延迟不超过 500ms', async (t) =>
         clientA.close();
         clientB.close();
     });
+
+    await authClient(clientA, inboxA, 'latency-a');
+    await authClient(clientB, inboxB, 'latency-b');
 
     sendJson(clientA, {
         type: 'create_room',

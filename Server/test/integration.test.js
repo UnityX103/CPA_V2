@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
 import { once } from 'node:events';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import test from 'node:test';
 
 import { WebSocket } from 'ws';
@@ -75,13 +78,62 @@ function createMessageCollector(socket)
     };
 }
 
-test('两个客户端可以完成 create/join/state_update/leave 流程', async (t) =>
+async function authClient(socket, inbox, username)
 {
-    const app = await createPomodoroServer({
+    sendJson(socket, {
+        type: 'auth_create',
+        username,
+        password: 'secret'
+    });
+    return inbox.waitFor('auth_ok');
+}
+
+async function createTestServer(t, options = {})
+{
+    const dir = await mkdtemp(join(tmpdir(), 'cpa-server-auth-'));
+    t.after(async () =>
+    {
+        await rm(dir, { recursive: true, force: true });
+    });
+    return createPomodoroServer({
         port: 0,
         heartbeatIntervalMs: 5000,
-        initTimeoutMs: 1000
+        initTimeoutMs: 1000,
+        logger: { warn() {}, error() {} },
+        authFilePath: join(dir, 'accounts.json'),
+        ...options
     });
+}
+
+test('room creation and join require an authenticated account', async (t) =>
+{
+    const app = await createTestServer(t);
+
+    t.after(async () =>
+    {
+        await app.close();
+    });
+
+    const client = await openClient(app.url);
+    const inbox = createMessageCollector(client);
+
+    t.after(() =>
+    {
+        client.close();
+    });
+
+    sendJson(client, { type: 'create_room', playerName: 'Guest' });
+    const createError = await inbox.waitFor('error');
+    assert.equal(createError.error, 'AUTH_REQUIRED');
+
+    sendJson(client, { type: 'join_room', roomCode: 'ABCDEF', playerName: 'Guest' });
+    const joinError = await inbox.waitFor('error');
+    assert.equal(joinError.error, 'AUTH_REQUIRED');
+});
+
+test('两个客户端可以完成 create/join/state_update/leave 流程', async (t) =>
+{
+    const app = await createTestServer(t);
 
     t.after(async () =>
     {
@@ -98,6 +150,9 @@ test('两个客户端可以完成 create/join/state_update/leave 流程', async 
         clientA.close();
         clientB.close();
     });
+
+    await authClient(clientA, inboxA, 'host-flow-a');
+    await authClient(clientB, inboxB, 'guest-flow-b');
 
     sendJson(clientA, {
         type: 'create_room',
@@ -162,11 +217,7 @@ test('两个客户端可以完成 create/join/state_update/leave 流程', async 
 // 服务端把字段静默丢掉 → 其他玩家面板上 PlayerCard 的 KeyCounterPill 永远不显示。
 test('player_state_broadcast 把 bindingKey 透传给其它玩家，远端按键同步可见', async (t) =>
 {
-    const app = await createPomodoroServer({
-        port: 0,
-        heartbeatIntervalMs: 5000,
-        initTimeoutMs: 1000
-    });
+    const app = await createTestServer(t);
     t.after(async () => { await app.close(); });
 
     const clientA = await openClient(app.url);
@@ -174,6 +225,9 @@ test('player_state_broadcast 把 bindingKey 透传给其它玩家，远端按键
     const inboxA = createMessageCollector(clientA);
     const inboxB = createMessageCollector(clientB);
     t.after(() => { clientA.close(); clientB.close(); });
+
+    await authClient(clientA, inboxA, 'binding-a');
+    await authClient(clientB, inboxB, 'binding-b');
 
     sendJson(clientA, { type: 'create_room', playerName: 'A' });
     const roomCreated = await inboxA.waitFor('room_created');
@@ -211,16 +265,14 @@ test('player_state_broadcast 把 bindingKey 透传给其它玩家，远端按键
 
 test('room_snapshot 把已有玩家的 bindingKey 透传给新进来的玩家（cloneRemoteState 路径）', async (t) =>
 {
-    const app = await createPomodoroServer({
-        port: 0,
-        heartbeatIntervalMs: 5000,
-        initTimeoutMs: 1000
-    });
+    const app = await createTestServer(t);
     t.after(async () => { await app.close(); });
 
     const clientA = await openClient(app.url);
     const inboxA = createMessageCollector(clientA);
     t.after(() => { clientA.close(); });
+
+    await authClient(clientA, inboxA, 'snapshot-a');
 
     sendJson(clientA, { type: 'create_room', playerName: 'A' });
     const roomCreated = await inboxA.waitFor('room_created');
@@ -240,6 +292,8 @@ test('room_snapshot 把已有玩家的 bindingKey 透传给新进来的玩家（
     const inboxB = createMessageCollector(clientB);
     t.after(() => { clientB.close(); });
 
+    await authClient(clientB, inboxB, 'snapshot-b');
+
     sendJson(clientB, { type: 'join_room', roomCode: roomCreated.roomCode, playerName: 'B' });
     await inboxB.waitFor('room_joined');
     const snapshot = await inboxB.waitFor('room_snapshot');
@@ -251,11 +305,7 @@ test('room_snapshot 把已有玩家的 bindingKey 透传给新进来的玩家（
 
 test('player_state_broadcast and room_snapshot preserve active app title and icon data', async (t) =>
 {
-    const app = await createPomodoroServer({
-        port: 0,
-        heartbeatIntervalMs: 5000,
-        initTimeoutMs: 1000
-    });
+    const app = await createTestServer(t);
     t.after(async () => { await app.close(); });
 
     const clientA = await openClient(app.url);
@@ -263,6 +313,9 @@ test('player_state_broadcast and room_snapshot preserve active app title and ico
     const inboxA = createMessageCollector(clientA);
     const inboxB = createMessageCollector(clientB);
     t.after(() => { clientA.close(); clientB.close(); });
+
+    await authClient(clientA, inboxA, 'active-a');
+    await authClient(clientB, inboxB, 'active-b');
 
     sendJson(clientA, { type: 'create_room', playerName: 'A' });
     const roomCreated = await inboxA.waitFor('room_created');
@@ -297,6 +350,8 @@ test('player_state_broadcast and room_snapshot preserve active app title and ico
     const inboxC = createMessageCollector(clientC);
     t.after(() => { clientC.close(); });
 
+    await authClient(clientC, inboxC, 'active-c');
+
     sendJson(clientC, { type: 'join_room', roomCode: roomCreated.roomCode, playerName: 'C' });
     await inboxC.waitFor('room_joined');
     const snapshot = await inboxC.waitFor('room_snapshot');
@@ -309,11 +364,7 @@ test('player_state_broadcast and room_snapshot preserve active app title and ico
 
 test('图标流程：state_update → icon_need → icon_upload → icon_broadcast', async (t) =>
 {
-    const app = await createPomodoroServer({
-        port: 0,
-        heartbeatIntervalMs: 5000,
-        initTimeoutMs: 1000
-    });
+    const app = await createTestServer(t);
 
     t.after(async () => { await app.close(); });
 
@@ -325,6 +376,9 @@ test('图标流程：state_update → icon_need → icon_upload → icon_broadca
     t.after(() => { clientA.close(); clientB.close(); });
 
     // A 创建房间，B 加入
+    await authClient(clientA, inboxA, 'icon-a');
+    await authClient(clientB, inboxB, 'icon-b');
+
     sendJson(clientA, { type: 'create_room', playerName: 'A' });
     const roomCreated = await inboxA.waitFor('room_created');
     await inboxA.waitFor('room_snapshot');
