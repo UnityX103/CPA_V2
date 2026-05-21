@@ -4057,6 +4057,35 @@
         },
         {
           "type": "frame",
+          "id": "yYYts",
+          "name": "gspAutoPinOnFocusEnd",
+          "width": "fill_container",
+          "fill": "#F6F7F8",
+          "cornerRadius": 16,
+          "padding": 16,
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "U9gkWn",
+              "name": "gsp-auto-pin-focus-end-label",
+              "fill": "#9CA3AF",
+              "content": "专注结束后自动置顶",
+              "fontFamily": "MaokenAssortedSans",
+              "fontSize": 12,
+              "fontWeight": "600"
+            },
+            {
+              "id": "EngrO",
+              "type": "ref",
+              "ref": "NGo9f",
+              "name": "gsp-auto-pin-focus-end-toggle"
+            }
+          ]
+        },
+        {
+          "type": "frame",
           "id": "JZWq5",
           "name": "gspDailyPlan",
           "width": "fill_container",
