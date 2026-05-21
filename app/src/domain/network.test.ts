@@ -9,6 +9,18 @@ import {
 import * as dispatchMod from './bridge/dispatch';
 import { BRIDGE_VERSION } from './bridge/protocol';
 
+const persistedSession = vi.hoisted(() => ({
+    load: vi.fn(),
+    save: vi.fn(),
+    clear: vi.fn(),
+}));
+
+vi.mock('./accountPersistence', () => ({
+    loadPersistedAccountSession: persistedSession.load,
+    savePersistedAccountSession: persistedSession.save,
+    clearPersistedAccountSession: persistedSession.clear,
+}));
+
 class FakeWebSocket {
     static OPEN = 1;
     static CONNECTING = 0;
@@ -49,7 +61,14 @@ beforeEach(() => {
         playerId: null,
         players: {},
         lastError: null,
+        accountStatus: 'guest',
+        accountUser: null,
+        accountToken: null,
+        accountError: null,
     });
+    persistedSession.load.mockReset();
+    persistedSession.save.mockReset();
+    persistedSession.clear.mockReset();
 });
 
 describe('NetworkSystem 协议序列化', () => {
@@ -61,6 +80,11 @@ describe('NetworkSystem 协议序列化', () => {
 
     // adversarial-review #10 case 3
     it('sendStateUpdate 输出包含 v / type / state / roomCode', async () => {
+        useNetworkStore.setState({
+            accountStatus: 'loggedIn',
+            accountUser: { userId: 'u1', username: 'Alice' },
+            accountToken: 'token-1',
+        });
         const promise = useNetworkStore.getState().createRoom('TEST');
         await promise;
         await new Promise((r) => setTimeout(r, 5));
@@ -86,6 +110,11 @@ describe('NetworkSystem 协议序列化', () => {
 describe('NetworkSystem 接收校验', () => {
     // adversarial-review #10 case 4
     it('player_state_broadcast 找不到对应 player 时不会创建幽灵条目', async () => {
+        useNetworkStore.setState({
+            accountStatus: 'loggedIn',
+            accountUser: { userId: 'u1', username: 'Alice' },
+            accountToken: 'token-1',
+        });
         const promise = useNetworkStore.getState().createRoom('TEST');
         await promise;
         await new Promise((r) => setTimeout(r, 5));
@@ -110,6 +139,11 @@ describe('NetworkSystem 接收校验', () => {
     });
 
     it('player_state_broadcast updates an existing player active app from onmessage', async () => {
+        useNetworkStore.setState({
+            accountStatus: 'loggedIn',
+            accountUser: { userId: 'u1', username: 'Alice' },
+            accountToken: 'token-1',
+        });
         const promise = useNetworkStore.getState().createRoom('TEST');
         await promise;
         await new Promise((r) => setTimeout(r, 5));
@@ -145,6 +179,11 @@ describe('NetworkSystem 接收校验', () => {
     });
 
     it('player_state_broadcast can seed a player from a real room snapshot message', async () => {
+        useNetworkStore.setState({
+            accountStatus: 'loggedIn',
+            accountUser: { userId: 'u1', username: 'Alice' },
+            accountToken: 'token-1',
+        });
         const promise = useNetworkStore.getState().createRoom('TEST');
         await promise;
         await new Promise((r) => setTimeout(r, 5));
@@ -180,6 +219,106 @@ describe('NetworkSystem 接收校验', () => {
     });
 });
 
+describe('NetworkSystem account auth', () => {
+    it('createAccount sends auth_create and stores auth_ok', async () => {
+        const promise = useNetworkStore.getState().createAccount('Alice', 'secret');
+        await promise;
+        await new Promise((r) => setTimeout(r, 5));
+
+        const socket = latestSocket();
+        expect(JSON.parse(socket?.sent[0] ?? '{}')).toEqual({
+            v: 1,
+            type: 'auth_create',
+            username: 'Alice',
+            password: 'secret',
+        });
+
+        socket?.onmessage?.({
+            data: JSON.stringify({
+                type: 'auth_ok',
+                user: { userId: 'u1', username: 'Alice' },
+                token: 'token-1',
+            }),
+        } as MessageEvent);
+
+        expect(useNetworkStore.getState().accountStatus).toBe('loggedIn');
+        expect(useNetworkStore.getState().accountUser).toEqual({ userId: 'u1', username: 'Alice' });
+        expect(useNetworkStore.getState().accountToken).toBe('token-1');
+        expect(useNetworkStore.getState().playerName).toBe('Alice');
+        expect(persistedSession.save).toHaveBeenCalledWith({ token: 'token-1', username: 'Alice' });
+    });
+
+    it('login sends auth_login and invalid session clears account state', async () => {
+        await useNetworkStore.getState().login('Alice', 'secret');
+        await new Promise((r) => setTimeout(r, 5));
+        expect(JSON.parse(latestSocket()?.sent[0] ?? '{}').type).toBe('auth_login');
+
+        latestSocket()?.onmessage?.({
+            data: JSON.stringify({ type: 'error', error: 'INVALID_SESSION' }),
+        } as MessageEvent);
+
+        expect(useNetworkStore.getState().accountStatus).toBe('guest');
+        expect(useNetworkStore.getState().accountToken).toBeNull();
+        expect(persistedSession.clear).toHaveBeenCalled();
+    });
+
+    it('restoreAccountSession sends auth_session for saved tokens and clears missing sessions', async () => {
+        persistedSession.load.mockResolvedValueOnce({ token: 'token-1', username: 'Alice' });
+
+        await useNetworkStore.getState().restoreAccountSession();
+        await new Promise((r) => setTimeout(r, 5));
+
+        expect(JSON.parse(latestSocket()?.sent[0] ?? '{}')).toEqual({
+            v: 1,
+            type: 'auth_session',
+            token: 'token-1',
+        });
+        expect(useNetworkStore.getState().accountStatus).toBe('checking');
+
+        useNetworkStore.getState().disconnect();
+        FakeWebSocket.instances = [];
+        persistedSession.load.mockResolvedValueOnce(null);
+
+        await useNetworkStore.getState().restoreAccountSession();
+
+        expect(latestSocket()).toBeUndefined();
+        expect(useNetworkStore.getState().accountStatus).toBe('guest');
+    });
+
+    it('logout leaves rooms, sends auth_logout, and clears account state', async () => {
+        useNetworkStore.setState({
+            status: 'joined',
+            roomCode: 'ABCDEF',
+            accountStatus: 'loggedIn',
+            accountUser: { userId: 'u1', username: 'Alice' },
+            accountToken: 'token-1',
+        });
+        await useNetworkStore.getState().login('Alice', 'secret');
+        await new Promise((r) => setTimeout(r, 5));
+        useNetworkStore.setState({
+            status: 'joined',
+            roomCode: 'ABCDEF',
+        });
+        latestSocket()?.sent.splice(0);
+
+        useNetworkStore.getState().logout();
+
+        const sentTypes = latestSocket()?.sent.map((raw) => JSON.parse(raw).type);
+        expect(sentTypes).toContain('leave_room');
+        expect(sentTypes).toContain('auth_logout');
+        expect(useNetworkStore.getState().accountStatus).toBe('guest');
+        expect(useNetworkStore.getState().accountToken).toBeNull();
+    });
+
+    it('does not send room messages while logged out', async () => {
+        await useNetworkStore.getState().createRoom('ABCDEF');
+        await new Promise((r) => setTimeout(r, 5));
+
+        expect(useNetworkStore.getState().lastError).toBe('AUTH_REQUIRED');
+        expect(latestSocket()).toBeUndefined();
+    });
+});
+
 describe('createNetworkStore — settings-window mode', () => {
     it('joinRoom dispatches instead of opening a socket', async () => {
         const spy = vi.spyOn(dispatchMod, 'dispatch').mockResolvedValue();
@@ -206,6 +345,30 @@ describe('createNetworkStore — settings-window mode', () => {
         expect(spy).toHaveBeenCalledWith(expect.objectContaining({ v: BRIDGE_VERSION, store: 'network', action: 'leaveRoom',      args: [] }));
         expect(spy).toHaveBeenCalledWith(expect.objectContaining({ v: BRIDGE_VERSION, store: 'network', action: 'setAutoConnect', args: [true] }));
         expect(spy).toHaveBeenCalledWith(expect.objectContaining({ v: BRIDGE_VERSION, store: 'network', action: 'setPlayerName',  args: ['alice'] }));
+        spy.mockRestore();
+    });
+
+    it('account actions dispatch to the main window', async () => {
+        const spy = vi.spyOn(dispatchMod, 'dispatch').mockResolvedValue();
+        const store = createNetworkStore({ isSettingsWindow: true });
+
+        await store.getState().createAccount('Alice', 'secret');
+        await store.getState().login('Alice', 'secret');
+        await store.getState().restoreAccountSession();
+        store.getState().logout();
+
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({
+            v: BRIDGE_VERSION, store: 'network', action: 'createAccount', args: ['Alice', 'secret'],
+        }));
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({
+            v: BRIDGE_VERSION, store: 'network', action: 'login', args: ['Alice', 'secret'],
+        }));
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({
+            v: BRIDGE_VERSION, store: 'network', action: 'restoreAccountSession', args: [],
+        }));
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({
+            v: BRIDGE_VERSION, store: 'network', action: 'logout', args: [],
+        }));
         spy.mockRestore();
     });
 });

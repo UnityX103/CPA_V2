@@ -706,6 +706,39 @@
     flex-wrap: wrap;
 }
 
+.account-card {
+    gap: 10px;
+}
+
+.account-field {
+    background: transparent;
+    padding: 0;
+}
+
+.account-summary {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.account-name {
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 700;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.online-auth-hint {
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 1.4;
+}
+
 /* ===== pomoFooter JpJcn: vertical, gap 10 ===== */
 .pomo-footer {
     display: flex;

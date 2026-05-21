@@ -1,6 +1,11 @@
 import { create, type StoreApi, type UseBoundStore } from 'zustand';
 import { dispatch } from './bridge/dispatch';
 import { BRIDGE_VERSION } from './bridge/protocol';
+import {
+    clearPersistedAccountSession,
+    loadPersistedAccountSession,
+    savePersistedAccountSession,
+} from './accountPersistence';
 
 export const PROTOCOL_VERSION = 1;
 export const DEVELOPMENT_SERVER_URL = 'ws://127.0.0.1:8039';
@@ -44,6 +49,12 @@ export interface RemotePlayer {
 }
 
 export type ConnectionStatus = 'idle' | 'connecting' | 'joined' | 'reconnecting' | 'error';
+export type AccountStatus = 'guest' | 'checking' | 'creating' | 'loggingIn' | 'loggedIn' | 'error';
+
+export interface AccountUser {
+    userId: string;
+    username: string;
+}
 
 export interface NetworkStateShape {
     status: ConnectionStatus;
@@ -54,6 +65,10 @@ export interface NetworkStateShape {
     playerId: string | null;
     players: Record<string, RemotePlayer>;
     lastError: string | null;
+    accountStatus: AccountStatus;
+    accountUser: AccountUser | null;
+    accountToken: string | null;
+    accountError: string | null;
 }
 
 interface NetworkActions {
@@ -65,6 +80,10 @@ interface NetworkActions {
     leaveRoom: () => void;
     sendStateUpdate: (state: RemoteState) => void;
     disconnect: () => void;
+    createAccount: (username: string, password: string) => Promise<void>;
+    login: (username: string, password: string) => Promise<void>;
+    restoreAccountSession: () => Promise<void>;
+    logout: () => void;
 }
 
 interface NetworkInternal {
@@ -89,6 +108,14 @@ function send(socket: WebSocket | null, message: object): boolean {
     return true;
 }
 
+function normalizeAccountUser(value: unknown): AccountUser | null {
+    if (!value || typeof value !== 'object') return null;
+    const candidate = value as Partial<AccountUser>;
+    if (typeof candidate.userId !== 'string' || !candidate.userId) return null;
+    if (typeof candidate.username !== 'string' || !candidate.username.trim()) return null;
+    return { userId: candidate.userId, username: candidate.username.trim() };
+}
+
 export type NetworkStore = UseBoundStore<StoreApi<NetworkStateShape & NetworkActions>>;
 
 const INITIAL_STATE: NetworkStateShape = {
@@ -100,6 +127,10 @@ const INITIAL_STATE: NetworkStateShape = {
     playerId: null,
     players: {},
     lastError: null,
+    accountStatus: 'guest',
+    accountUser: null,
+    accountToken: null,
+    accountError: null,
 };
 
 export function createNetworkStore(opts: { isSettingsWindow: boolean }): NetworkStore {
@@ -124,6 +155,18 @@ export function createNetworkStore(opts: { isSettingsWindow: boolean }): Network
             },
             sendStateUpdate: () => {},
             disconnect: () => {},
+            createAccount: async (username, password) => {
+                void dispatch({ v: BRIDGE_VERSION, store: 'network', action: 'createAccount', args: [username, password] });
+            },
+            login: async (username, password) => {
+                void dispatch({ v: BRIDGE_VERSION, store: 'network', action: 'login', args: [username, password] });
+            },
+            restoreAccountSession: async () => {
+                void dispatch({ v: BRIDGE_VERSION, store: 'network', action: 'restoreAccountSession', args: [] });
+            },
+            logout: () => {
+                void dispatch({ v: BRIDGE_VERSION, store: 'network', action: 'logout', args: [] });
+            },
         }));
     }
     return create<NetworkStateShape & NetworkActions>((set, get) => {
@@ -142,6 +185,35 @@ export function createNetworkStore(opts: { isSettingsWindow: boolean }): Network
             try {
                 const msg = JSON.parse(raw.data as string);
                 switch (msg.type) {
+                    case 'auth_ok': {
+                        const user = normalizeAccountUser(msg.user);
+                        const token = typeof msg.token === 'string' ? msg.token : '';
+                        if (!user || !token) {
+                            set({ accountStatus: 'error', accountError: 'INVALID_SESSION' });
+                            break;
+                        }
+                        const currentPlayerName = get().playerName.trim();
+                        set({
+                            accountStatus: 'loggedIn',
+                            accountUser: user,
+                            accountToken: token,
+                            accountError: null,
+                            playerName: currentPlayerName && currentPlayerName !== '我'
+                                ? get().playerName
+                                : user.username,
+                        });
+                        void savePersistedAccountSession({ token, username: user.username });
+                        break;
+                    }
+                    case 'auth_logged_out':
+                        set({
+                            accountStatus: 'guest',
+                            accountUser: null,
+                            accountToken: null,
+                            accountError: null,
+                        });
+                        void clearPersistedAccountSession();
+                        break;
                     case 'room_created':
                     case 'room_joined':
                         set({
@@ -180,7 +252,28 @@ export function createNetworkStore(opts: { isSettingsWindow: boolean }): Network
                         break;
                     }
                     case 'error': {
-                        set({ lastError: msg.error ?? 'INTERNAL_ERROR' });
+                        const error = msg.error ?? 'INTERNAL_ERROR';
+                        if (error === 'INVALID_SESSION') {
+                            set({
+                                accountStatus: 'guest',
+                                accountUser: null,
+                                accountToken: null,
+                                accountError: error,
+                                lastError: error,
+                            });
+                            void clearPersistedAccountSession();
+                            break;
+                        }
+                        if (
+                            error === 'USERNAME_TAKEN' ||
+                            error === 'INVALID_CREDENTIALS' ||
+                            error === 'INVALID_ACCOUNT_INPUT' ||
+                            error === 'AUTH_REQUIRED'
+                        ) {
+                            set({ accountStatus: 'error', accountError: error, lastError: error });
+                            break;
+                        }
+                        set({ lastError: error });
                         break;
                     }
                     case 'pong':
@@ -266,10 +359,18 @@ export function createNetworkStore(opts: { isSettingsWindow: boolean }): Network
             setPlayerName: (name) => set({ playerName: name }),
 
             createRoom: async (roomCode) => {
+                if (get().accountStatus !== 'loggedIn') {
+                    set({ lastError: 'AUTH_REQUIRED', accountError: 'AUTH_REQUIRED' });
+                    return;
+                }
                 const socket = await ensureSocket();
                 send(socket, { type: 'create_room', playerName: get().playerName, roomCode: roomCode ?? '' });
             },
             joinRoom: async (roomCode) => {
+                if (get().accountStatus !== 'loggedIn') {
+                    set({ lastError: 'AUTH_REQUIRED', accountError: 'AUTH_REQUIRED' });
+                    return;
+                }
                 const socket = await ensureSocket();
                 send(socket, { type: 'join_room', roomCode, playerName: get().playerName });
             },
@@ -293,6 +394,55 @@ export function createNetworkStore(opts: { isSettingsWindow: boolean }): Network
                 internal.socket?.close();
                 internal.socket = null;
                 set({ status: 'idle', players: {}, playerId: null });
+            },
+            createAccount: async (username, password) => {
+                set({ accountStatus: 'creating', accountError: null, lastError: null });
+                const socket = await ensureSocket();
+                send(socket, { type: 'auth_create', username, password });
+            },
+            login: async (username, password) => {
+                set({ accountStatus: 'loggingIn', accountError: null, lastError: null });
+                const socket = await ensureSocket();
+                send(socket, { type: 'auth_login', username, password });
+            },
+            restoreAccountSession: async () => {
+                const session = await loadPersistedAccountSession();
+                if (!session) {
+                    set({
+                        accountStatus: 'guest',
+                        accountUser: null,
+                        accountToken: null,
+                        accountError: null,
+                    });
+                    return;
+                }
+                set({ accountStatus: 'checking', accountToken: session.token, accountError: null });
+                const socket = await ensureSocket();
+                send(socket, { type: 'auth_session', token: session.token });
+            },
+            logout: () => {
+                const token = get().accountToken;
+                clearTimers();
+                if (get().status === 'joined') {
+                    send(internal.socket, { type: 'leave_room' });
+                }
+                if (token) {
+                    send(internal.socket, { type: 'auth_logout', token });
+                }
+                internal.generation += 1;
+                internal.socket?.close();
+                internal.socket = null;
+                void clearPersistedAccountSession();
+                set({
+                    status: 'idle',
+                    roomCode: '',
+                    players: {},
+                    playerId: null,
+                    accountStatus: 'guest',
+                    accountUser: null,
+                    accountToken: null,
+                    accountError: null,
+                });
             },
         };
     });

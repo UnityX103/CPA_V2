@@ -154,6 +154,10 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
             status: n.status,
             players: clonePlayers(n.players),
             lastError: n.lastError,
+            accountStatus: n.accountStatus,
+            accountUser: n.accountUser ? { ...n.accountUser } : null,
+            accountToken: n.accountToken,
+            accountError: n.accountError,
         },
         activeApp: cloneActiveApp(a.current, opts),
         bindingKey: {
@@ -206,6 +210,10 @@ export function applyDispatch(payload: DispatchPayload): void {
                 case 'leaveRoom':      n.leaveRoom(); return;
                 case 'setAutoConnect': n.setAutoConnect(...payload.args); return;
                 case 'setPlayerName':  n.setPlayerName(...payload.args); return;
+                case 'createAccount':  void n.createAccount(...payload.args); return;
+                case 'login':          void n.login(...payload.args); return;
+                case 'restoreAccountSession': void n.restoreAccountSession(); return;
+                case 'logout':         n.logout(); return;
             }
             return;
         }
@@ -306,6 +314,10 @@ export function networkSig(s: {
     status: string;
     players: Record<string, RemotePlayer>;
     lastError: string | null;
+    accountStatus: string;
+    accountUser: { userId: string; username: string } | null;
+    accountToken: string | null;
+    accountError: string | null;
 }): string {
     return JSON.stringify([
         s.autoConnect,
@@ -315,6 +327,10 @@ export function networkSig(s: {
         s.status,
         Object.keys(s.players).sort().map((id) => [id, s.players[id]]),
         s.lastError,
+        s.accountStatus,
+        s.accountUser,
+        s.accountToken,
+        s.accountError,
     ]);
 }
 

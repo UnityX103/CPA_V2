@@ -1,6 +1,6 @@
 import type { BindingInput, BindingKeyEntry } from '../bindingKey';
 import type { DangerousChange } from '../settings';
-import type { ConnectionStatus, RemotePlayer } from '../network';
+import type { AccountStatus, AccountUser, ConnectionStatus, RemotePlayer } from '../network';
 import type { PomodoroEndActionMode, PomodoroEndActionVideo } from '../pomodoro';
 import type { ActiveAppInfo } from '../activeApp';
 import type { AppUpdateSnapshot } from '../appUpdate';
@@ -36,6 +36,10 @@ export interface BridgeSnapshot {
         status: ConnectionStatus;
         players: Record<string, RemotePlayer>;
         lastError: string | null;
+        accountStatus: AccountStatus;
+        accountUser: AccountUser | null;
+        accountToken: string | null;
+        accountError: string | null;
     };
     activeApp: ActiveAppInfo | null;
     bindingKey: {
@@ -63,6 +67,8 @@ export type DispatchPayload =
     | { v: typeof BRIDGE_VERSION; store: 'network';    action: 'leaveRoom'; args: [] }
     | { v: typeof BRIDGE_VERSION; store: 'network';    action: 'setAutoConnect'; args: [boolean] }
     | { v: typeof BRIDGE_VERSION; store: 'network';    action: 'setPlayerName'; args: [string] }
+    | { v: typeof BRIDGE_VERSION; store: 'network';    action: 'createAccount' | 'login'; args: [string, string] }
+    | { v: typeof BRIDGE_VERSION; store: 'network';    action: 'restoreAccountSession' | 'logout'; args: [] }
     | { v: typeof BRIDGE_VERSION; store: 'bindingKey'; action: 'beginCapture' | 'removeEntry'; args: [string] }
     | { v: typeof BRIDGE_VERSION; store: 'bindingKey'; action: 'setPanelEnabled'; args: [boolean] }
     | { v: typeof BRIDGE_VERSION; store: 'bindingKey'; action: 'setSynced'; args: [string | null] }

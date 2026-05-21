@@ -402,8 +402,15 @@ function OnlineTab() {
     const net = useNetworkStore();
     const [name, setName] = useState(net.playerName);
     const [code, setCode] = useState(net.roomCode);
+    const [accountName, setAccountName] = useState(net.accountUser?.username ?? '');
+    const [accountPassword, setAccountPassword] = useState('');
 
     const isJoined = net.status === 'joined';
+    const isLoggedIn = net.accountStatus === 'loggedIn' && net.accountUser != null;
+    const accountBusy =
+        net.accountStatus === 'checking' ||
+        net.accountStatus === 'creating' ||
+        net.accountStatus === 'loggingIn';
     // reconnecting is shown inline as a banner inside the joined-room card (see onlReconnectBanner).
     // connecting is shown as a full-card overlay (3aoUs onlBusyOverlay) during the initial join.
     const reconnecting = net.status === 'reconnecting';
@@ -412,6 +419,61 @@ function OnlineTab() {
     return (
         <div className="settings-content-scroll online-tab-root">
             <div className="tab-pane">
+                <div className="card account-card">
+                    <span className="card-title">账号</span>
+                    {!isLoggedIn ? (
+                        <>
+                            <label className="card card-row-stack account-field">
+                                <span className="card-label">账号</span>
+                                <input
+                                    aria-label="账号"
+                                    className="text-input"
+                                    value={accountName}
+                                    onChange={(e) => setAccountName(e.currentTarget.value)}
+                                    placeholder="用户名"
+                                    disabled={accountBusy}
+                                />
+                            </label>
+                            <label className="card card-row-stack account-field">
+                                <span className="card-label">密码</span>
+                                <input
+                                    aria-label="密码"
+                                    className="text-input"
+                                    type="password"
+                                    value={accountPassword}
+                                    onChange={(e) => setAccountPassword(e.currentTarget.value)}
+                                    placeholder="密码"
+                                    disabled={accountBusy}
+                                />
+                            </label>
+                            <div className="card-actions" style={{ width: '100%' }}>
+                                <button
+                                    className="btn btn-secondary btn-block"
+                                    disabled={accountBusy || !accountName || !accountPassword}
+                                    onClick={() => net.createAccount(accountName, accountPassword)}
+                                >
+                                    创建账号
+                                </button>
+                                <button
+                                    className="btn btn-primary btn-block"
+                                    disabled={accountBusy || !accountName || !accountPassword}
+                                    onClick={() => net.login(accountName, accountPassword)}
+                                >
+                                    登录
+                                </button>
+                            </div>
+                            {net.accountError && <div className="error-text">{net.accountError}</div>}
+                        </>
+                    ) : (
+                        <div className="account-summary">
+                            <span className="account-name">{net.accountUser!.username}</span>
+                            <button className="btn btn-secondary btn-fit" onClick={net.logout}>
+                                退出登录
+                            </button>
+                        </div>
+                    )}
+                </div>
+
                 {/* onlAutoRow FUrip */}
                 <div className="card pomo-row">
                     <span className="pomo-row-label">自动联网</span>
@@ -446,17 +508,19 @@ function OnlineTab() {
                                 <button
                                     className="btn btn-secondary btn-block"
                                     onClick={() => net.createRoom(code)}
+                                    disabled={!isLoggedIn}
                                 >
                                     创建房间
                                 </button>
                                 <button
                                     className="btn btn-primary btn-block"
                                     onClick={() => net.joinRoom(code)}
-                                    disabled={!code}
+                                    disabled={!isLoggedIn || !code}
                                 >
                                     加入房间
                                 </button>
                             </div>
+                            {!isLoggedIn && <div className="online-auth-hint">登录后可创建或加入联机房间</div>}
                             {net.lastError && <div className="error-text">{net.lastError}</div>}
                         </div>
 
