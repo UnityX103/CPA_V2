@@ -2,8 +2,10 @@ import { useState, type ReactNode } from 'react';
 import { PomodoroPanel } from './ui/PomodoroPanel';
 import { PlayerCard } from './ui/PlayerCard';
 import { SettingsPanel } from './ui/SettingsPanel';
+import { CheckinPlanEditorPanel } from './ui/CheckinPlanEditorPanel';
 import { useSettingsStore, type SettingsTab } from './domain/settings';
 import type { RemotePlayer } from './domain/network';
+import type { WeeklyCheckinPlan } from './domain/checkin';
 import './styles/global.css';
 import './DevAlignApp.css';
 
@@ -41,6 +43,51 @@ const MOCK_PLAYER: RemotePlayer = {
     },
 };
 
+const MOCK_CHECKIN_PLAN: WeeklyCheckinPlan = {
+    weekStartDate: '2026-05-18',
+    carryToNextWeek: true,
+    days: {
+        mon: { kind: 'inherit' },
+        tue: {
+            kind: 'items',
+            items: [
+                {
+                    id: 'read',
+                    title: '阅读',
+                    type: 'manual',
+                    targetCount: 2,
+                    icon: 'bookOpen',
+                    perUseAmount: 30,
+                    perUseUnit: '分钟',
+                },
+                {
+                    id: 'water',
+                    title: '喝水',
+                    type: 'manual',
+                    targetCount: 10,
+                    icon: 'droplet',
+                    perUseAmount: 2,
+                    perUseUnit: '杯',
+                },
+                {
+                    id: 'focus',
+                    title: '专注番茄',
+                    type: 'pomodoroFocus',
+                    targetCount: 4,
+                    icon: 'clock',
+                    perUseAmount: 25,
+                    perUseUnit: '分钟',
+                },
+            ],
+        },
+        wed: { kind: 'inherit' },
+        thu: { kind: 'inherit' },
+        fri: { kind: 'inherit' },
+        sat: { kind: 'rest' },
+        sun: { kind: 'rest' },
+    },
+};
+
 const TARGETS: Target[] = [
     {
         id: 'vnYnS',
@@ -66,6 +113,15 @@ const TARGETS: Target[] = [
         width: 153,
         height: 94,
         render: () => <PlayerCard player={MOCK_PLAYER} />,
+    },
+    {
+        id: 's6g1w-html',
+        label: '打卡计划编辑器 s6g1w HTML sync (460×898)',
+        image: 'dev-align/s6g1w.png',
+        width: 460,
+        height: 898,
+        render: () => <CheckinPlanEditorPanel initialPlan={MOCK_CHECKIN_PLAN} initialSelectedDay="tue" />,
+        note: '左侧为 Pencil s6g1w 导出；右侧为当前 React 编辑器。',
     },
 ];
 

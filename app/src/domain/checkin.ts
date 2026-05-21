@@ -3,6 +3,25 @@ import { dispatch } from './bridge/dispatch';
 import { BRIDGE_VERSION } from './bridge/protocol';
 
 export type CheckinItemType = 'manual' | 'pomodoroFocus';
+export type CheckinItemIcon =
+    | 'activity'
+    | 'dumbbell'
+    | 'bookOpen'
+    | 'droplet'
+    | 'listChecks'
+    | 'sparkle'
+    | 'coffee'
+    | 'moon'
+    | 'sun'
+    | 'leaf'
+    | 'music'
+    | 'pencil'
+    | 'target'
+    | 'flame'
+    | 'heart'
+    | 'apple'
+    | 'clock'
+    | 'meditation';
 export type WeekdayKey = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
 
 export interface CheckinItem {
@@ -10,6 +29,9 @@ export interface CheckinItem {
     title: string;
     type: CheckinItemType;
     targetCount: number;
+    icon?: CheckinItemIcon;
+    perUseAmount?: number;
+    perUseUnit?: string;
 }
 
 export type CheckinDayPlan =
@@ -85,7 +107,18 @@ export function defaultWeeklyPlan(weekStartDate: string): WeeklyCheckinPlan {
         weekStartDate,
         carryToNextWeek: true,
         days: {
-            mon: { kind: 'items', items: [{ id: 'pomodoro-focus', title: '专注番茄', type: 'pomodoroFocus', targetCount: 4 }] },
+            mon: {
+                kind: 'items',
+                items: [{
+                    id: 'pomodoro-focus',
+                    title: '专注番茄',
+                    type: 'pomodoroFocus',
+                    targetCount: 4,
+                    icon: 'clock',
+                    perUseAmount: 25,
+                    perUseUnit: '分钟',
+                }],
+            },
             tue: { kind: 'inherit' },
             wed: { kind: 'inherit' },
             thu: { kind: 'inherit' },

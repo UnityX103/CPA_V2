@@ -4,21 +4,23 @@
     max-height: min(898px, calc(100vh - 48px));
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding: 14px;
+    gap: 10px;
+    padding: 16px;
     overflow: auto;
+    border: 1px solid #efdccd;
     border-radius: 24px;
     background: #fffdfbee;
-    box-shadow: inset 0 0 0 1px #efdccd, 0 18px 36px rgba(91, 70, 54, 0.16);
     color: #5b4636;
     font-family: MaokenAssortedSans, sans-serif;
+    box-shadow: 0 18px 36px rgba(91, 70, 54, 0.12);
 }
 
 .checkin-editor-head,
 .checkin-editor-section-head,
 .checkin-editor-selected-row,
 .checkin-editor-actions,
-.checkin-editor-carry {
+.checkin-editor-carry,
+.checkin-editor-type-card-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -29,22 +31,35 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 3px;
+}
+
+.checkin-editor-title-wrap h2,
+.checkin-editor-title-wrap strong,
+.checkin-editor-section strong {
+    margin: 0;
+    color: #5b4636;
+    font-weight: 800;
+    line-height: 1.12;
 }
 
 .checkin-editor-title-wrap h2 {
-    margin: 0;
-    color: #5b4636;
     font-size: 20px;
     font-weight: 700;
-    line-height: 1.1;
+}
+
+.checkin-editor-title-wrap strong,
+.checkin-editor-section strong {
+    font-size: 13px;
 }
 
 .checkin-editor-title-wrap p,
 .checkin-editor-section-head span,
-.checkin-editor-section p {
+.checkin-editor-note p,
+.checkin-editor-rest-hint p,
+.checkin-editor-type-card p {
     margin: 0;
-    color: #a28b79;
+    color: #6b7280;
     font-size: 11px;
     font-weight: 700;
     line-height: 1.25;
@@ -52,16 +67,27 @@
 
 .checkin-editor-status {
     flex: 0 0 auto;
-    padding: 5px 9px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
     border-radius: 999px;
-    background: #ffe5d9;
+    background: #fff1ee;
     color: #d15f3d;
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 800;
-    line-height: 1.2;
+    line-height: 1;
+}
+
+.checkin-editor-status i {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: currentColor;
 }
 
 .checkin-editor-section {
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -71,90 +97,174 @@
     background: #ffffffb8;
 }
 
-.checkin-editor-section strong {
-    color: #5b4636;
-    font-size: 13px;
-    font-weight: 800;
+.checkin-editor-selected-card {
+    gap: 8px;
+    background: #ffffffcc;
+    border-color: #ead9c8;
 }
 
 .checkin-editor-week-grid {
-    display: grid;
-    grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: 6px;
-}
-
-.checkin-editor-week-grid button {
-    min-width: 0;
-    height: 44px;
     display: flex;
     flex-direction: column;
+    gap: 8px;
+}
+
+.checkin-editor-week-row {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+}
+
+.checkin-editor-day-pill {
+    min-width: 0;
+    height: 30px;
+    flex: 1 1 0;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 1px;
-    border: 1px solid #e8d9cd;
-    border-radius: 14px;
-    background: #fff7f0;
-    color: #5b4636;
-    cursor: pointer;
-}
-
-.checkin-editor-week-grid button span {
-    font-size: 14px;
-    font-weight: 800;
-    line-height: 1.05;
-}
-
-.checkin-editor-week-grid button small {
+    gap: 8px;
+    border: 1px solid #e5e7eb;
+    border-radius: 999px;
+    background: #ffffffcc;
     color: #a28b79;
-    font-size: 9px;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.checkin-editor-day-pill span {
+    color: inherit;
+    font-size: 12px;
     font-weight: 800;
     line-height: 1;
 }
 
-.checkin-editor-week-grid button.active {
-    border-color: #d15f3d;
-    background: #ffe5d9;
-    color: #d15f3d;
+.checkin-editor-day-pill small {
+    color: inherit;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1;
 }
 
-.checkin-editor-selected-row > button,
-.checkin-editor-actions button,
-.checkin-editor-primary,
-.checkin-editor-carry {
-    border: 1px solid #efdccd;
-    border-radius: 999px;
-    background: #ffffffcc;
+.checkin-editor-day-pill.active {
+    border-color: #e5e7eb;
     color: #a28b79;
-    font-size: 11px;
+    background: #ffffffcc;
+}
+
+.checkin-editor-day-pill.complete {
+    border-color: #86efac;
+    color: #2d8f4e;
+    background: #dcfce7;
+}
+
+.checkin-editor-rest-toggle {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border: 1px solid #cbd5e1;
+    border-radius: 999px;
+    background: #f8fafc;
+    color: #64748b;
+    font-family: inherit;
+    font-size: 12px;
     font-weight: 800;
     cursor: pointer;
 }
 
-.checkin-editor-selected-row > button {
-    flex: 0 0 auto;
-    padding: 7px 10px;
+.checkin-editor-rest-toggle i,
+.checkin-editor-carry i {
+    position: relative;
+    width: 48px;
+    height: 28px;
+    border-radius: 999px;
+    background: #cbd5e1;
 }
 
-.checkin-editor-selected-row > button.active {
-    border-color: #a7f3d0;
-    background: #dcfce7;
-    color: #34a853;
+.checkin-editor-rest-toggle i::after,
+.checkin-editor-carry i::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    background: #fff;
+}
+
+.checkin-editor-rest-toggle.active {
+    border-color: #86efac;
+    color: #2d8f4e;
+}
+
+.checkin-editor-rest-toggle.active i,
+.checkin-editor-carry.active i {
+    background: #d15f3d;
+}
+
+.checkin-editor-rest-toggle.active i::after,
+.checkin-editor-carry.active i::after {
+    left: 23px;
+}
+
+.checkin-editor-note,
+.checkin-editor-rest-hint {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px solid #f0d3bc;
+    border-radius: 14px;
+    background: #fff7f0;
+}
+
+.checkin-editor-note .lucide-text-icon {
+    color: #d15f3d;
+    font-size: 14px;
+    font-weight: 800;
 }
 
 .checkin-editor-items-section {
-    min-height: 300px;
+    gap: 12px;
+}
+
+.checkin-editor-plan-badge {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 8px;
+    border-radius: 999px;
+    background: #fff1ee;
+    color: #d15f3d;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1;
 }
 
 .checkin-editor-primary,
-.checkin-editor-actions button {
+.checkin-editor-actions button,
+.checkin-editor-type-option,
+.checkin-editor-row-action {
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.checkin-editor-primary {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
     padding: 7px 10px;
-}
-
-.checkin-editor-primary,
-.checkin-editor-actions button:last-child {
-    border-color: #d15f3d;
+    border: 1px solid #d15f3d;
+    border-radius: 999px;
     background: #d15f3d;
-    color: white;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
 }
 
 .checkin-editor-items {
@@ -163,63 +273,265 @@
     gap: 8px;
 }
 
-.checkin-editor-item-row {
-    display: grid;
-    grid-template-columns: 78px minmax(0, 1fr) 70px auto;
-    align-items: end;
-    gap: 8px;
-    padding: 9px;
-    border: 1px solid #f0d3bc;
-    border-radius: 14px;
+.checkin-editor-type-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+    border: 1px solid #e8c4a8;
+    border-radius: 16px;
     background: #fff7f0;
 }
 
-.checkin-editor-item-row label {
+.checkin-editor-type-card-head > span {
+    color: #d15f3d;
+    font-size: 20px;
+    line-height: 1;
+}
+
+.checkin-editor-type-options {
+    display: flex;
+    gap: 8px;
+}
+
+.checkin-editor-type-option {
+    min-width: 0;
+    flex: 1 1 0;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: 8px;
+    row-gap: 1px;
+    align-items: center;
+    padding: 7px 10px;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    background: #ffffffcc;
+    color: #5b4636;
+    text-align: left;
+}
+
+.checkin-editor-type-option.pomodoro {
+    border-color: #e8c4a8;
+    background: #fffdfb;
+    color: #d15f3d;
+}
+
+.checkin-editor-type-option:disabled {
+    opacity: 0.42;
+    cursor: not-allowed;
+}
+
+.checkin-editor-type-option span {
+    grid-row: span 2;
+    font-size: 20px;
+    line-height: 1;
+}
+
+.checkin-editor-type-option strong {
+    color: currentColor;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.checkin-editor-type-option small {
+    color: #6b7280;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.checkin-editor-item-row {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 86px 86px 18px;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    border: 1px solid color-mix(in srgb, var(--checkin-item-color) 26%, #f0e0d0);
+    border-radius: 14px;
+    background: #fffdfbe6;
+}
+
+.checkin-editor-item-main {
+    min-width: 0;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.checkin-item-icon-button {
+    width: 22px;
+    height: 22px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--checkin-item-color);
+    cursor: pointer;
+}
+
+.checkin-item-icon-glyph {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    background-color: currentColor;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    -webkit-mask-size: contain;
+}
+
+.checkin-editor-item-copy {
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 1px;
 }
 
-.checkin-editor-item-row label span {
+.checkin-editor-item-copy input {
+    width: 100%;
+    min-width: 0;
+    height: 20px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--checkin-item-color);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1.1;
+    outline: none;
+}
+
+.checkin-editor-item-copy p {
+    margin: 0;
+    overflow: hidden;
+    color: #6b7280;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.checkin-icon-picker {
+    position: absolute;
+    z-index: 5;
+    top: 30px;
+    left: 0;
+    width: 196px;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+    padding: 8px;
+    border: 1px solid #efdccd;
+    border-radius: 14px;
+    background: #fffdfb;
+    box-shadow: 0 14px 28px rgba(91, 70, 54, 0.16);
+}
+
+.checkin-icon-picker button {
+    width: 26px;
+    height: 26px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 1px solid #ead9c8;
+    border-radius: 8px;
+    background: #ffffffcc;
+    color: #5b4636;
+    cursor: pointer;
+}
+
+.checkin-item-metric {
+    box-sizing: border-box;
+    width: 86px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 6px 7px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #ffffffcc;
+}
+
+.checkin-item-metric > span:first-child {
     color: #a28b79;
     font-size: 10px;
     font-weight: 800;
     line-height: 1;
 }
 
-.checkin-editor-item-row input,
-.checkin-editor-item-row select {
-    box-sizing: border-box;
+.checkin-item-metric-line {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) max-content;
+    align-items: center;
+    gap: 4px;
     width: 100%;
+    min-height: 24px;
+}
+
+.checkin-item-metric-line input {
     min-width: 0;
-    height: 30px;
-    border: 1px solid #e8d9cd;
-    border-radius: 10px;
-    background: #ffffffcc;
-    color: #5b4636;
-    font-size: 12px;
-    font-weight: 700;
+    height: 24px;
+    box-sizing: border-box;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font-family: inherit;
+    overflow: visible;
+    outline: none;
 }
 
-.checkin-editor-item-row input {
-    padding: 0 8px;
-}
-
-.checkin-editor-item-row select {
-    padding: 0 6px;
-}
-
-.checkin-editor-item-row button {
-    height: 30px;
-    padding: 0 8px;
-    border: 1px solid #efdccd;
-    border-radius: 999px;
-    background: #ffffffcc;
-    color: #a28b79;
-    font-size: 11px;
+.checkin-item-metric-line input[type="number"] {
+    width: 100%;
+    color: var(--checkin-item-color);
+    font-size: 17px;
     font-weight: 800;
-    cursor: pointer;
+    line-height: 24px;
+    appearance: textfield;
+}
+
+.checkin-item-metric-line input[type="number"]::-webkit-outer-spin-button,
+.checkin-item-metric-line input[type="number"]::-webkit-inner-spin-button {
+    margin: 0;
+    appearance: none;
+}
+
+.checkin-item-metric-line input:not([type="number"]) {
+    width: 34px;
+    justify-self: end;
+    color: #6b7280;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 24px;
+    text-align: right;
+}
+
+.checkin-item-metric-line em {
+    min-width: 18px;
+    justify-self: end;
+    color: #6b7280;
+    font-size: 10px;
+    font-style: normal;
+    font-weight: 800;
+    line-height: 24px;
+    text-align: right;
+}
+
+.checkin-editor-row-action {
+    width: 18px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #c0a996;
+    font-size: 17px;
+    font-weight: 800;
+    line-height: 1;
 }
 
 .checkin-editor-empty,
@@ -253,38 +565,78 @@
 
 .checkin-editor-rest-state p {
     width: 300px;
+    margin: 0;
     color: #52745e;
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 700;
+}
+
+.checkin-editor-rest-hint {
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+    color: #2d8f4e;
+}
+
+.checkin-editor-rest-hint .checkin-item-icon-glyph {
+    flex: 0 0 auto;
+    color: #2d8f4e;
+}
+
+.checkin-editor-rest-hint p {
+    color: #5e8b68;
+    font-size: 12px;
+    font-weight: 800;
 }
 
 .checkin-editor-carry {
     width: 100%;
     padding: 10px 12px;
+    border: 1px solid #efdccd;
     border-radius: 18px;
     background: #fff7f0;
+    color: #5b4636;
     text-align: left;
+    cursor: pointer;
 }
 
 .checkin-editor-carry span {
-    color: #5b4636;
-    font-size: 12px;
-    font-weight: 800;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
 .checkin-editor-carry strong {
-    padding: 4px 8px;
-    border-radius: 999px;
-    background: #ffe5d9;
-    color: #d15f3d;
-    font-size: 10px;
+    color: #5b4636;
+    font-size: 13px;
+    font-weight: 800;
 }
 
-.checkin-editor-carry.active strong {
-    background: #dcfce7;
-    color: #34a853;
+.checkin-editor-carry small {
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 700;
 }
 
 .checkin-editor-actions {
     justify-content: flex-end;
+    padding: 4px 0;
+}
+
+.checkin-editor-actions button {
+    width: 104px;
+    height: 36px;
+    border: 1px solid #efdccd;
+    border-radius: 999px;
+    background: #ffffffcc;
+    color: #a28b79;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.checkin-editor-actions .checkin-editor-primary {
+    width: 128px;
+    border-color: #d15f3d;
+    background: #d15f3d;
+    color: #fff;
 }

@@ -8,6 +8,8 @@ import {
     useCheckinStore,
 } from '../domain/checkin';
 import { openCheckinEditorWindow } from '../domain/checkinWindow';
+import { CheckinItemIconGlyph } from './CheckinItemIconGlyph';
+import { resolveCheckinItemIcon } from './checkinItemIcons';
 import { shouldStartWindowDrag } from './windowDrag';
 import './TodayCheckinPanel.css';
 
@@ -73,6 +75,10 @@ export function TodayCheckinPanel() {
 
                             return (
                                 <div key={item.id} className={`today-checkin-item ${done ? 'done' : ''}`}>
+                                    <CheckinItemIconGlyph
+                                        className="today-checkin-item-icon"
+                                        icon={resolveCheckinItemIcon(item)}
+                                    />
                                     <div className="today-checkin-item-copy">
                                         <strong>{item.title}</strong>
                                         <span>{count}/{item.targetCount} 次</span>
