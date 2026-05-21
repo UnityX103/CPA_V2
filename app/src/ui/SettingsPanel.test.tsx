@@ -529,10 +529,26 @@ describe('OnlineTab parity with 8Le5R', () => {
         expect(screen.getByText('历史房间')).toBeTruthy();
     });
 
-    it('renders onlBusyOverlay when status is connecting', () => {
-        useNetworkStore.setState({ status: 'connecting' });
+    it('renders onlBusyOverlay when logged in and joining room', () => {
+        useNetworkStore.setState({
+            status: 'connecting',
+            accountStatus: 'loggedIn',
+            accountUser: { userId: 'u1', username: 'Alice' },
+            accountToken: 'token',
+        });
         render(<SettingsPanel />);
         expect(screen.getByText('正在加入房间…')).toBeTruthy();
+    });
+
+    it('does not render room busy overlay while creating an account', () => {
+        useNetworkStore.setState({
+            status: 'connecting',
+            accountStatus: 'creating',
+        });
+
+        render(<SettingsPanel />);
+
+        expect(screen.queryByText('正在加入房间…')).toBeNull();
     });
 
     it('does NOT render busy overlay when idle', () => {

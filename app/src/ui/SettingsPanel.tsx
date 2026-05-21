@@ -432,9 +432,9 @@ function OnlineTab() {
         net.accountStatus === 'loggingIn';
     const accountError = net.accountError ? accountErrorText(net.accountError) : null;
     // reconnecting is shown inline as a banner inside the joined-room card (see onlReconnectBanner).
-    // connecting is shown as a full-card overlay (3aoUs onlBusyOverlay) during the initial join.
+    // connecting is shown as a full-card overlay (3aoUs onlBusyOverlay) during the initial room join.
     const reconnecting = net.status === 'reconnecting';
-    const connecting = net.status === 'connecting';
+    const connecting = net.status === 'connecting' && isLoggedIn && !accountBusy;
 
     return (
         <div className="settings-content-scroll online-tab-root">
