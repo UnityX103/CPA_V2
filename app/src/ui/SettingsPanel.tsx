@@ -749,6 +749,17 @@ function GlobalTab() {
                     </div>
                 </div>
 
+                <div className="card">
+                    <div className="card-row">
+                        <span className="card-label">专注结束后自动置顶</span>
+                        <Toggle
+                            checked={settings.autoPinOnFocusEnd}
+                            onChange={settings.setAutoPinOnFocusEnd}
+                            ariaLabel="专注结束后自动置顶"
+                        />
+                    </div>
+                </div>
+
                 <AppUpdateSettingsRow />
 
                 {/* gspBindingKey yjJtt */}

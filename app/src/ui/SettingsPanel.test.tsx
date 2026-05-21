@@ -68,6 +68,7 @@ beforeEach(() => {
         committedUiScale: 1.0,
         showActiveAppWindowTitle: true,
         autostartEnabled: false,
+        autoPinOnFocusEnd: true,
         dangerousChange: null,
     });
     usePomodoroStore.setState({
@@ -609,6 +610,32 @@ describe('GlobalTab parity with Pdj9C', () => {
         expect(activeTitle.compareDocumentPosition(autostart) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
         expect(autostart.compareDocumentPosition(autoUpdate) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
         expect(autoUpdate.compareDocumentPosition(bindingKey) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('shows auto pin on focus end between autostart and automatic updates', () => {
+        useSettingsStore.setState({ activeTab: 'global' });
+        render(<SettingsPanel />);
+
+        const autostart = screen.getByText('开机自启动');
+        const autoPin = screen.getByText('专注结束后自动置顶');
+        const autoUpdate = screen.getByText('自动下载并安装更新');
+
+        expect(autostart.compareDocumentPosition(autoPin) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(autoPin.compareDocumentPosition(autoUpdate) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('routes auto pin on focus end toggles to the settings store action', () => {
+        const setAutoPinOnFocusEnd = vi.fn();
+        useSettingsStore.setState({
+            activeTab: 'global',
+            autoPinOnFocusEnd: true,
+            setAutoPinOnFocusEnd,
+        });
+        render(<SettingsPanel />);
+
+        fireEvent.click(screen.getByRole('button', { name: '专注结束后自动置顶' }));
+
+        expect(setAutoPinOnFocusEnd).toHaveBeenCalledWith(false);
     });
 
     it('toggles whether active app window titles are shown', () => {
