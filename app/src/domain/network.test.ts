@@ -244,6 +244,7 @@ describe('NetworkSystem account auth', () => {
         expect(useNetworkStore.getState().accountStatus).toBe('loggedIn');
         expect(useNetworkStore.getState().accountUser).toEqual({ userId: 'u1', username: 'Alice' });
         expect(useNetworkStore.getState().accountToken).toBe('token-1');
+        expect(useNetworkStore.getState().status).toBe('idle');
         expect(useNetworkStore.getState().playerName).toBe('Alice');
         expect(persistedSession.save).toHaveBeenCalledWith({ token: 'token-1', username: 'Alice' });
     });
@@ -338,6 +339,19 @@ describe('NetworkSystem account auth', () => {
 
         expect(useNetworkStore.getState().accountStatus).toBe('guest');
         expect(useNetworkStore.getState().accountError).toBe('INVALID_CREDENTIALS');
+    });
+
+    it('returns account actions to guest after unexpected server errors', async () => {
+        await useNetworkStore.getState().createAccount('Alice', 'secret');
+        await new Promise((r) => setTimeout(r, 5));
+
+        latestSocket()?.onmessage?.({
+            data: JSON.stringify({ type: 'error', error: 'INVALID_MESSAGE' }),
+        } as MessageEvent);
+
+        expect(useNetworkStore.getState().accountStatus).toBe('guest');
+        expect(useNetworkStore.getState().accountError).toBe('INVALID_MESSAGE');
+        expect(useNetworkStore.getState().status).toBe('idle');
     });
 });
 

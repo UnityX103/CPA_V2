@@ -127,6 +127,10 @@ function isAccountBusyStatus(status: AccountStatus): boolean {
     return status === 'checking' || status === 'creating' || status === 'loggingIn';
 }
 
+function idleStatusWhenNotInRoom(state: NetworkStateShape): ConnectionStatus {
+    return state.playerId ? state.status : 'idle';
+}
+
 export type NetworkStore = UseBoundStore<StoreApi<NetworkStateShape & NetworkActions>>;
 
 const INITIAL_STATE: NetworkStateShape = {
@@ -205,6 +209,7 @@ export function createNetworkStore(opts: { isSettingsWindow: boolean }): Network
                         }
                         const currentPlayerName = get().playerName.trim();
                         set({
+                            status: idleStatusWhenNotInRoom(get()),
                             accountStatus: 'loggedIn',
                             accountUser: user,
                             accountToken: token,
@@ -218,6 +223,7 @@ export function createNetworkStore(opts: { isSettingsWindow: boolean }): Network
                     }
                     case 'auth_logged_out':
                         set({
+                            status: 'idle',
                             accountStatus: 'guest',
                             accountUser: null,
                             accountToken: null,
@@ -266,6 +272,7 @@ export function createNetworkStore(opts: { isSettingsWindow: boolean }): Network
                         const error = msg.error ?? 'INTERNAL_ERROR';
                         if (error === 'INVALID_SESSION') {
                             set({
+                                status: 'idle',
                                 accountStatus: 'guest',
                                 accountUser: null,
                                 accountToken: null,
@@ -275,10 +282,8 @@ export function createNetworkStore(opts: { isSettingsWindow: boolean }): Network
                             void clearPersistedAccountSession();
                             break;
                         }
-                        if (
-                            isAccountErrorCode(error)
-                        ) {
-                            set({ accountStatus: 'guest', accountError: error, lastError: error });
+                        if (isAccountErrorCode(error) || isAccountBusyStatus(get().accountStatus)) {
+                            set({ status: 'idle', accountStatus: 'guest', accountError: error, lastError: error });
                             break;
                         }
                         set({ lastError: error });
