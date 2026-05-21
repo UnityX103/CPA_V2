@@ -88,6 +88,43 @@ async function authClient(socket, inbox, username)
     return inbox.waitFor('auth_ok');
 }
 
+function validUserDataPayload()
+{
+    return {
+        schemaVersion: 1,
+        pomodoro: {
+            focusDurationSeconds: 1500,
+            breakDurationSeconds: 300,
+            totalRounds: 4,
+            autoStartBreak: false,
+            endActionMode: 'playVideo',
+            endActionVideo: { sourceKind: 'builtin', builtinVideoId: 'default', customVideoPath: '' }
+        },
+        settings: {
+            uiScale: 1,
+            showActiveAppWindowTitle: true,
+            autostartEnabled: false,
+            autoPinOnFocusEnd: true
+        },
+        checkin: {
+            weeklyPlan: {
+                weekStartDate: '2026-05-18',
+                carryToNextWeek: true,
+                days: {
+                    mon: { kind: 'items', items: [] },
+                    tue: { kind: 'inherit' },
+                    wed: { kind: 'inherit' },
+                    thu: { kind: 'inherit' },
+                    fri: { kind: 'inherit' },
+                    sat: { kind: 'inherit' },
+                    sun: { kind: 'rest' }
+                }
+            },
+            dailyRecords: {}
+        }
+    };
+}
+
 async function createTestServer(t, options = {})
 {
     const dir = await mkdtemp(join(tmpdir(), 'cpa-server-auth-'));
@@ -101,6 +138,7 @@ async function createTestServer(t, options = {})
         initTimeoutMs: 1000,
         logger: { warn() {}, error() {} },
         authFilePath: join(dir, 'accounts.json'),
+        userDataFilePath: join(dir, 'user-data.json'),
         ...options
     });
 }
@@ -129,6 +167,44 @@ test('room creation and join require an authenticated account', async (t) =>
     sendJson(client, { type: 'join_room', roomCode: 'ABCDEF', playerName: 'Guest' });
     const joinError = await inbox.waitFor('error');
     assert.equal(joinError.error, 'AUTH_REQUIRED');
+});
+
+test('authenticated clients can save and load user data', async (t) =>
+{
+    const app = await createTestServer(t);
+    t.after(async () => { await app.close(); });
+
+    const ws = await openClient(app.url);
+    const inbox = createMessageCollector(ws);
+    t.after(() => { ws.close(); });
+
+    await authClient(ws, inbox, 'cloud-sync-a');
+
+    sendJson(ws, {
+        type: 'user_data_save',
+        baseUpdatedAt: null,
+        data: validUserDataPayload()
+    });
+    const saved = await inbox.waitFor('user_data_saved');
+    assert.equal(Number.isInteger(saved.updatedAt), true);
+
+    sendJson(ws, { type: 'user_data_get' });
+    const snapshot = await inbox.waitFor('user_data_snapshot');
+    assert.equal(snapshot.data.pomodoro.focusDurationSeconds, 1500);
+});
+
+test('user_data_get requires authentication', async (t) =>
+{
+    const app = await createTestServer(t);
+    t.after(async () => { await app.close(); });
+
+    const ws = await openClient(app.url);
+    const inbox = createMessageCollector(ws);
+    t.after(() => { ws.close(); });
+
+    sendJson(ws, { type: 'user_data_get' });
+    const error = await inbox.waitFor('error');
+    assert.equal(error.error, 'AUTH_REQUIRED');
 });
 
 test('两个客户端可以完成 create/join/state_update/leave 流程', async (t) =>

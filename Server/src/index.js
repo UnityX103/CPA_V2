@@ -9,6 +9,7 @@ import {
     RoomManager,
     RoomManagerError
 } from './RoomManager.js';
+import { UserDataStore, UserDataStoreError } from './UserDataStore.js';
 import {
     ProtocolError,
     createAuthLoggedOutMessage,
@@ -22,6 +23,8 @@ import {
     createRoomCreatedMessage,
     createRoomJoinedMessage,
     createRoomSnapshotMessage,
+    createUserDataSavedMessage,
+    createUserDataSnapshotMessage,
     encodeMessage,
     parseClientMessage
 } from './protocol.js';
@@ -46,6 +49,9 @@ export async function createPomodoroServer(options = {})
     const roomManager = options.roomManager ?? new RoomManager();
     const authStore = options.authStore ?? new AuthStore({
         filePath: options.authFilePath
+    });
+    const userDataStore = options.userDataStore ?? new UserDataStore({
+        filePath: options.userDataFilePath
     });
     const iconCache = options.iconCache ?? new IconCache({
         maxEntries: options.iconCacheMaxEntries ?? 100,
@@ -86,6 +92,7 @@ export async function createPomodoroServer(options = {})
                     rawMessage,
                     connection,
                     authStore,
+                    userDataStore,
                     roomManager,
                     iconCache,
                     logger,
@@ -225,6 +232,14 @@ async function handleMessage(context)
 
         case 'auth_logout':
             await handleAuthLogout(message, context);
+            return;
+
+        case 'user_data_get':
+            await handleUserDataGet(context);
+            return;
+
+        case 'user_data_save':
+            await handleUserDataSave(message, context);
             return;
 
         case 'create_room':
@@ -378,6 +393,26 @@ function sendAuthOk(context, result)
     context.connection.authToken = result.token;
     context.clearInitTimeout();
     safeSend(context.connection.socket, createAuthOkMessage(result));
+}
+
+async function handleUserDataGet(context)
+{
+    ensureAuthenticated(context.connection);
+    const data = await context.userDataStore.getUserData(context.connection.userId);
+    safeSend(context.connection.socket, createUserDataSnapshotMessage({ data }));
+}
+
+async function handleUserDataSave(message, context)
+{
+    ensureAuthenticated(context.connection);
+    const saved = await context.userDataStore.saveUserData({
+        userId: context.connection.userId,
+        data: message.data,
+        baseUpdatedAt: message.baseUpdatedAt
+    });
+    safeSend(context.connection.socket, createUserDataSavedMessage({
+        updatedAt: saved.updatedAt
+    }));
 }
 
 function handleLeaveRoom(context)
@@ -548,6 +583,11 @@ function handleKnownError(socket, error, logger)
 {
     logger.warn?.('[Server] Request failed:', error);
     if (error instanceof AuthStoreError)
+    {
+        safeSend(socket, createErrorMessage(error.code));
+        return;
+    }
+    if (error instanceof UserDataStoreError)
     {
         safeSend(socket, createErrorMessage(error.code));
         return;

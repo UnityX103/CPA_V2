@@ -431,3 +431,59 @@ test('auth response helpers encode auth_ok and auth_logged_out', async () =>
         type: 'auth_logged_out'
     });
 });
+
+test('parseClientMessage accepts user_data_get', () =>
+{
+    const message = parseClientMessage(JSON.stringify({
+        v: PROTOCOL_VERSION,
+        type: 'user_data_get'
+    }));
+
+    assert.deepEqual(message, { v: PROTOCOL_VERSION, type: 'user_data_get' });
+});
+
+test('parseClientMessage accepts user_data_save with baseUpdatedAt', () =>
+{
+    const message = parseClientMessage(JSON.stringify({
+        v: PROTOCOL_VERSION,
+        type: 'user_data_save',
+        baseUpdatedAt: 1779360000000,
+        data: {
+            schemaVersion: 1,
+            pomodoro: {
+                focusDurationSeconds: 1500,
+                breakDurationSeconds: 300,
+                totalRounds: 4,
+                autoStartBreak: false,
+                endActionMode: 'playVideo',
+                endActionVideo: { sourceKind: 'builtin', builtinVideoId: 'default', customVideoPath: '' }
+            },
+            settings: {
+                uiScale: 1,
+                showActiveAppWindowTitle: true,
+                autostartEnabled: false,
+                autoPinOnFocusEnd: true
+            },
+            checkin: {
+                weeklyPlan: {
+                    weekStartDate: '2026-05-18',
+                    carryToNextWeek: true,
+                    days: {
+                        mon: { kind: 'items', items: [] },
+                        tue: { kind: 'inherit' },
+                        wed: { kind: 'inherit' },
+                        thu: { kind: 'inherit' },
+                        fri: { kind: 'inherit' },
+                        sat: { kind: 'inherit' },
+                        sun: { kind: 'rest' }
+                    }
+                },
+                dailyRecords: {}
+            }
+        }
+    }));
+
+    assert.equal(message.type, 'user_data_save');
+    assert.equal(message.baseUpdatedAt, 1779360000000);
+    assert.equal(message.data.schemaVersion, 1);
+});

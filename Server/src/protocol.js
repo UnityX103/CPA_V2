@@ -7,6 +7,8 @@ const SUPPORTED_CLIENT_MESSAGE_TYPES = new Set([
     'auth_login',
     'auth_session',
     'auth_logout',
+    'user_data_get',
+    'user_data_save',
     'create_room',
     'join_room',
     'leave_room',
@@ -83,6 +85,20 @@ export function parseClientMessage(rawMessage)
                 v: PROTOCOL_VERSION,
                 type: 'auth_logout',
                 token: normalizeAuthToken(parsedMessage.token)
+            };
+
+        case 'user_data_get':
+            return {
+                v: PROTOCOL_VERSION,
+                type: 'user_data_get'
+            };
+
+        case 'user_data_save':
+            return {
+                v: PROTOCOL_VERSION,
+                type: 'user_data_save',
+                baseUpdatedAt: normalizeOptionalUpdatedAt(parsedMessage.baseUpdatedAt),
+                data: normalizeUserDataPayload(parsedMessage.data)
             };
 
         case 'create_room':
@@ -236,6 +252,22 @@ export function createAuthLoggedOutMessage()
     return { type: 'auth_logged_out' };
 }
 
+export function createUserDataSnapshotMessage({ data })
+{
+    return {
+        type: 'user_data_snapshot',
+        data: data ?? null
+    };
+}
+
+export function createUserDataSavedMessage({ updatedAt })
+{
+    return {
+        type: 'user_data_saved',
+        updatedAt
+    };
+}
+
 export function createIconNeedMessage({ bundleId })
 {
     return { type: 'icon_need', bundleId };
@@ -286,6 +318,25 @@ function normalizeAuthToken(token)
         throw new ProtocolError('INVALID_MESSAGE', 'token 不能为空');
     }
     return normalizedToken;
+}
+
+function normalizeOptionalUpdatedAt(value)
+{
+    if (value === null || value === undefined) return null;
+    if (!Number.isInteger(value))
+    {
+        throw new ProtocolError('INVALID_USER_DATA', 'baseUpdatedAt 必须是整数或 null');
+    }
+    return value;
+}
+
+function normalizeUserDataPayload(value)
+{
+    if (!value || typeof value !== 'object')
+    {
+        throw new ProtocolError('INVALID_USER_DATA', '云端数据必须是对象');
+    }
+    return value;
 }
 
 function normalizeRequiredRoomCode(roomCode)
