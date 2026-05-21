@@ -134,9 +134,7 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
         settings: {
             uiScale: s.uiScale,
             committedUiScale: s.committedUiScale,
-            showActiveAppWindowTitle: s.showActiveAppWindowTitle,
             autostartEnabled: s.autostartEnabled,
-            autoPinOnFocusEnd: s.autoPinOnFocusEnd,
             dangerousChange: cloneDangerousChange(s.dangerousChange),
         },
         pomodoro: {
@@ -187,9 +185,7 @@ export function applyDispatch(payload: DispatchPayload): void {
             switch (payload.action) {
                 case 'setUiScale': s.setUiScale(...payload.args); return;
                 case 'previewDangerousUiScale': s.previewDangerousUiScale(...payload.args); return;
-                case 'setShowActiveAppWindowTitle': s.setShowActiveAppWindowTitle(...payload.args); return;
                 case 'setAutostartEnabled': void s.setAutostartEnabled(...payload.args); return;
-                case 'setAutoPinOnFocusEnd': s.setAutoPinOnFocusEnd(...payload.args); return;
                 case 'applyDangerousChange': s.applyDangerousChange(...payload.args); return;
                 case 'revertDangerousChange': s.revertDangerousChange(...payload.args); return;
             }
@@ -275,17 +271,13 @@ async function sendSnapshot(opts: BuildSnapshotOptions = {}): Promise<void> {
 export function settingsSig(s: {
     uiScale: number;
     committedUiScale: number;
-    showActiveAppWindowTitle: boolean;
     autostartEnabled: boolean;
-    autoPinOnFocusEnd: boolean;
     dangerousChange: unknown;
 }): string {
     return JSON.stringify([
         s.uiScale,
         s.committedUiScale,
-        s.showActiveAppWindowTitle,
         s.autostartEnabled,
-        s.autoPinOnFocusEnd,
         s.dangerousChange,
     ]);
 }

@@ -34,9 +34,7 @@ function makeSample(): BridgeSnapshot {
         settings: {
             uiScale: 2.0,
             committedUiScale: 1.0,
-            showActiveAppWindowTitle: false,
             autostartEnabled: true,
-            autoPinOnFocusEnd: false,
             dangerousChange: {
                 id: 'scale-pending',
                 kind: 'uiScale',
@@ -131,9 +129,7 @@ beforeEach(() => {
     useSettingsStore.setState({
         uiScale: 1.0,
         committedUiScale: 1.0,
-        showActiveAppWindowTitle: true,
         autostartEnabled: false,
-        autoPinOnFocusEnd: true,
         dangerousChange: null,
         activeTab: 'pomodoro',
     });
@@ -185,10 +181,10 @@ describe('applySnapshotToMirrors', () => {
         applySnapshotToMirrors(makeSample());
         expect(useSettingsStore.getState().uiScale).toBe(2.0);
         expect(useSettingsStore.getState().committedUiScale).toBe(1.0);
-        expect(useSettingsStore.getState().showActiveAppWindowTitle).toBe(false);
         expect(useSettingsStore.getState().autostartEnabled).toBe(true);
-        expect(useSettingsStore.getState().autoPinOnFocusEnd).toBe(false);
         expect(useSettingsStore.getState().dangerousChange?.id).toBe('scale-pending');
+        expect('showActiveAppWindowTitle' in useSettingsStore.getState()).toBe(false);
+        expect('autoPinOnFocusEnd' in useSettingsStore.getState()).toBe(false);
         expect('targetMonitorIndex' in useSettingsStore.getState()).toBe(false);
         expect(usePomodoroStore.getState().focusDurationSeconds).toBe(600);
         expect(usePomodoroStore.getState().breakDurationSeconds).toBe(120);

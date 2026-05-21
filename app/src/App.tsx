@@ -32,26 +32,16 @@ function buildStartupSettingsSnapshot(
     const {
         uiScale,
         committedUiScale,
-        showActiveAppWindowTitle,
-        autoPinOnFocusEnd,
     } = useSettingsStore.getState();
     const scaleChanged = uiScale !== initialSettings.uiScale
         || committedUiScale !== initialSettings.committedUiScale;
-    const titleVisibilityChanged = showActiveAppWindowTitle !== initialSettings.showActiveAppWindowTitle;
-    const autoPinChanged = autoPinOnFocusEnd !== initialSettings.autoPinOnFocusEnd;
     const persistedScale = clampStartupScale(settings?.uiScale ?? committedUiScale);
 
     const snapshot = {
         uiScale: scaleChanged
             ? committedUiScale
             : persistedScale,
-        showActiveAppWindowTitle: titleVisibilityChanged
-            ? showActiveAppWindowTitle
-            : settings?.showActiveAppWindowTitle ?? showActiveAppWindowTitle,
         autostartEnabled: confirmedAutostartEnabled,
-        autoPinOnFocusEnd: autoPinChanged
-            ? autoPinOnFocusEnd
-            : settings?.autoPinOnFocusEnd ?? autoPinOnFocusEnd,
     };
 
     return { snapshot, shouldApplyScale: !scaleChanged };
@@ -61,16 +51,12 @@ function getStartupSettingsState() {
     const {
         uiScale,
         committedUiScale,
-        showActiveAppWindowTitle,
         autostartEnabled,
-        autoPinOnFocusEnd,
     } = useSettingsStore.getState();
     return {
         uiScale,
         committedUiScale,
-        showActiveAppWindowTitle,
         autostartEnabled,
-        autoPinOnFocusEnd,
     };
 }
 
@@ -128,9 +114,7 @@ export default function App() {
                     ...(shouldApplyScale
                         ? { uiScale: snapshot.uiScale, committedUiScale: snapshot.uiScale }
                         : {}),
-                    showActiveAppWindowTitle: snapshot.showActiveAppWindowTitle,
                     autostartEnabled: snapshot.autostartEnabled,
-                    autoPinOnFocusEnd: snapshot.autoPinOnFocusEnd,
                 });
                 if (confirmedAutostartEnabled !== fallbackAutostartEnabled) {
                     void savePersistedSettings(snapshot);
@@ -235,15 +219,6 @@ export default function App() {
             if (event.fromPhase !== 'focus') return;
 
             useCheckinStore.getState().applyPomodoroFocusCompletion(todayLocalDate(), event.id);
-
-            if (
-                event.toPhase === 'break'
-                && event.triggeredBy === 'timer'
-                && useSettingsStore.getState().autoPinOnFocusEnd
-                && !state.isPinned
-            ) {
-                usePomodoroStore.getState().setPinned(true);
-            }
         });
     }, []);
 
