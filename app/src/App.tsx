@@ -18,6 +18,7 @@ import { useCheckinStore } from './domain/checkin';
 import { loadPersistedCheckin, savePersistedCheckin } from './domain/checkinPersistence';
 import { usePomodoroStore } from './domain/pomodoro';
 import { useNetworkStore } from './domain/network';
+import { useCloudAccountSync } from './domain/cloudAccountSync';
 
 function clampStartupScale(scale: number): number {
     if (!Number.isFinite(scale)) return 1.0;
@@ -83,6 +84,7 @@ function todayLocalDate(): string {
 
 export default function App() {
     useStateSync();
+    useCloudAccountSync();
     useActiveAppListener();
     useBindingKeyListener();
     useBridgeHost();

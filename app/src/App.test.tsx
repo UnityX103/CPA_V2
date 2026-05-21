@@ -17,6 +17,7 @@ const {
     startAutomaticChecks,
     restoreAccountSession,
     useStateSync,
+    useCloudAccountSync,
     useActiveAppListener,
     useBindingKeyListener,
     useBridgeHost,
@@ -45,6 +46,7 @@ const {
         startAutomaticChecks,
         restoreAccountSession: vi.fn(() => Promise.resolve()),
         useStateSync: vi.fn(),
+        useCloudAccountSync: vi.fn(),
         useActiveAppListener: vi.fn(),
         useBindingKeyListener: vi.fn(),
         useBridgeHost: vi.fn(),
@@ -56,6 +58,7 @@ const {
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: invokeMock }));
 vi.mock('./domain/stateSync', () => ({ useStateSync }));
+vi.mock('./domain/cloudAccountSync', () => ({ useCloudAccountSync }));
 vi.mock('./domain/activeApp', () => ({ useActiveAppListener }));
 vi.mock('./domain/bindingKey', () => ({ useBindingKeyListener }));
 vi.mock('./domain/bridge/host', () => ({ useBridgeHost }));
@@ -108,6 +111,7 @@ beforeEach(() => {
     invokeMock.mockReset();
     invokeMock.mockResolvedValue(undefined);
     useStateSync.mockClear();
+    useCloudAccountSync.mockClear();
     useActiveAppListener.mockClear();
     useBindingKeyListener.mockClear();
     useBridgeHost.mockClear();
@@ -162,6 +166,7 @@ describe('main App window composition', () => {
         expect(screen.getByTestId('pomodoro-panel')).toBeInTheDocument();
         expect(screen.queryByTestId('remote-roster')).toBeNull();
         expect(useStateSync).toHaveBeenCalledTimes(1);
+        expect(useCloudAccountSync).toHaveBeenCalledTimes(1);
         expect(useActiveAppListener).toHaveBeenCalledTimes(1);
         expect(useBindingKeyListener).toHaveBeenCalledTimes(1);
         expect(useBridgeHost).toHaveBeenCalledTimes(1);
