@@ -12,6 +12,35 @@ const globalCssPath = path.join(here, 'styles/global.css');
 const checkinWindowTsPath = path.join(here, 'domain/checkinWindow.ts');
 const checkinEditorAppPath = path.join(here, 'CheckinEditorApp.tsx');
 
+function rustFunction(source: string, name: string): { signature: string; body: string } | null {
+    const signatureStart = source.search(new RegExp(`(?:pub(?:\\([^)]*\\))?\\s+)?(?:async\\s+)?fn\\s+${name}\\s*\\(`));
+    if (signatureStart < 0) {
+        return null;
+    }
+
+    const bodyStart = source.indexOf('{', signatureStart);
+    if (bodyStart < 0) {
+        return null;
+    }
+
+    let depth = 0;
+    for (let i = bodyStart; i < source.length; i += 1) {
+        if (source[i] === '{') {
+            depth += 1;
+        } else if (source[i] === '}') {
+            depth -= 1;
+            if (depth === 0) {
+                return {
+                    signature: source.slice(signatureStart, bodyStart),
+                    body: source.slice(bodyStart + 1, i),
+                };
+            }
+        }
+    }
+
+    return null;
+}
+
 describe('daily check-in window configuration', () => {
     it('allows both check-in webview labels in capabilities', () => {
         const capabilities = JSON.parse(readFileSync(capabilitiesPath, 'utf8'));
@@ -42,9 +71,29 @@ describe('daily check-in window configuration', () => {
         expect(source).toMatch(/const CHECKIN_EDITOR_W:\s*f64\s*=\s*460\.0/);
         expect(source).toMatch(/open_today_checkin_window/);
         expect(source).toMatch(/open_checkin_editor_window/);
+        expect(source).toMatch(/fn focus_app_window/);
+        expect(source).toMatch(/match label\.as_str\(\)[\s\S]*"main"[\s\S]*"checkin-editor"/);
         expect(source).toMatch(/async fn close_today_checkin_window/);
         expect(source).toMatch(/async fn close_checkin_editor_window/);
+        expect(source).toMatch(/tauri::generate_handler!\[[\s\S]*focus_app_window/);
         expect(source).toMatch(/close_today_checkin_window,\s*close_checkin_editor_window/s);
+    });
+
+    it('does not pin check-in windows by default or when opening them', () => {
+        const source = readFileSync(libRsPath, 'utf8');
+        const todayBuilder = rustFunction(source, 'build_today_checkin_window_hidden');
+        const editorBuilder = rustFunction(source, 'build_checkin_editor_window_hidden');
+        const todayOpen = rustFunction(source, 'open_today_checkin_window');
+        const editorOpen = rustFunction(source, 'open_checkin_editor_window');
+
+        expect(todayBuilder?.body).toMatch(/\.always_on_top\(false\)/);
+        expect(editorBuilder?.body).toMatch(/\.always_on_top\(false\)/);
+        expect(todayBuilder?.body).not.toMatch(/set_always_on_top_native/);
+        expect(editorBuilder?.body).not.toMatch(/set_always_on_top_native/);
+        expect(todayOpen?.body).not.toMatch(/set_focus\(/);
+        expect(todayOpen?.body).not.toMatch(/set_always_on_top_native/);
+        expect(editorOpen?.body).toMatch(/focus_existing_window\(app,\s*"checkin-editor"\)/);
+        expect(editorOpen?.body).not.toMatch(/set_always_on_top_native/);
     });
 
     it('declares transparent scaled roots for both check-in windows', () => {

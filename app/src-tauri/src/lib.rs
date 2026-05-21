@@ -317,10 +317,9 @@ fn build_today_checkin_window_hidden(
         .shadow(false)
         .skip_taskbar(true)
         .visible(false)
-        .always_on_top(true)
+        .always_on_top(false)
         .build()?;
     window_helpers::install_first_mouse_only(&w);
-    let _ = window_helpers::set_always_on_top_native(&w, true);
 
     let w_for_hide = w.clone();
     w.on_window_event(move |event| {
@@ -346,10 +345,9 @@ fn build_checkin_editor_window_hidden(
         .shadow(false)
         .skip_taskbar(true)
         .visible(false)
-        .always_on_top(true)
+        .always_on_top(false)
         .build()?;
     window_helpers::install_first_mouse_only(&w);
-    let _ = window_helpers::set_always_on_top_native(&w, true);
 
     let w_for_hide = w.clone();
     w.on_window_event(move |event| {
@@ -431,10 +429,25 @@ fn show_existing_window(app: tauri::AppHandle, label: &str) -> Result<(), String
     let w = app.get_webview_window(label).ok_or_else(|| {
         format!("{label} window not built — setup() probably failed; check stderr")
     })?;
-    let _ = window_helpers::set_always_on_top_native(&w, true);
+    w.show().map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+fn focus_existing_window(app: tauri::AppHandle, label: &str) -> Result<(), String> {
+    let w = app.get_webview_window(label).ok_or_else(|| {
+        format!("{label} window not built — setup() probably failed; check stderr")
+    })?;
     w.show().map_err(|e| e.to_string())?;
     w.set_focus().map_err(|e| e.to_string())?;
     Ok(())
+}
+
+#[tauri::command]
+async fn focus_app_window(app: tauri::AppHandle, label: String) -> Result<(), String> {
+    match label.as_str() {
+        "main" | "checkin-editor" => focus_existing_window(app, label.as_str()),
+        _ => Err(format!("{label} window cannot be focused by this command")),
+    }
 }
 
 #[tauri::command]
@@ -444,7 +457,7 @@ async fn open_today_checkin_window(app: tauri::AppHandle) -> Result<(), String> 
 
 #[tauri::command]
 async fn open_checkin_editor_window(app: tauri::AppHandle) -> Result<(), String> {
-    show_existing_window(app, "checkin-editor")
+    focus_existing_window(app, "checkin-editor")
 }
 
 #[tauri::command]
@@ -656,6 +669,7 @@ pub fn run() {
             show_input_counter_window,
             hide_input_counter_window,
             resize_input_counter_window,
+            focus_app_window,
             open_today_checkin_window,
             open_checkin_editor_window,
             close_today_checkin_window,
