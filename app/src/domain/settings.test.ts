@@ -35,6 +35,7 @@ beforeEach(() => {
         committedUiScale: 1.0,
         showActiveAppWindowTitle: true,
         autostartEnabled: false,
+        autoPinOnFocusEnd: true,
         dangerousChange: null,
     });
 });
@@ -169,12 +170,34 @@ describe('useSettingsStore', () => {
         expect(useSettingsStore.getState().autostartEnabled).toBe(false);
     });
 
+    it('defaults autoPinOnFocusEnd to true', () => {
+        expect(useSettingsStore.getState().autoPinOnFocusEnd).toBe(true);
+
+        const settingsWindowStore = createSettingsStore({ isSettingsWindow: true });
+        expect(settingsWindowStore.getState().autoPinOnFocusEnd).toBe(true);
+    });
+
+    it('hydrates autoPinOnFocusEnd from persisted settings', () => {
+        useSettingsStore.getState().hydrateSettings({ uiScale: 1.25, autoPinOnFocusEnd: false });
+
+        expect(useSettingsStore.getState().autoPinOnFocusEnd).toBe(false);
+    });
+
+    it('defaults missing persisted autoPinOnFocusEnd to true during hydration', () => {
+        useSettingsStore.setState({ autoPinOnFocusEnd: false });
+
+        useSettingsStore.getState().hydrateSettings({ uiScale: 1.25 });
+
+        expect(useSettingsStore.getState().autoPinOnFocusEnd).toBe(true);
+    });
+
     it('setAutostartEnabled applies native setting and persists confirmed value', async () => {
         settingsMocks.applyAutostartEnabled.mockResolvedValue(true);
         useSettingsStore.setState({
             committedUiScale: 1.5,
             showActiveAppWindowTitle: false,
             autostartEnabled: false,
+            autoPinOnFocusEnd: true,
         });
 
         await useSettingsStore.getState().setAutostartEnabled(true);
@@ -185,6 +208,26 @@ describe('useSettingsStore', () => {
             uiScale: 1.5,
             showActiveAppWindowTitle: false,
             autostartEnabled: true,
+            autoPinOnFocusEnd: true,
+        });
+    });
+
+    it('setAutoPinOnFocusEnd persists all global settings fields', () => {
+        useSettingsStore.setState({
+            committedUiScale: 1.5,
+            showActiveAppWindowTitle: false,
+            autostartEnabled: true,
+            autoPinOnFocusEnd: true,
+        });
+
+        useSettingsStore.getState().setAutoPinOnFocusEnd(false);
+
+        expect(useSettingsStore.getState().autoPinOnFocusEnd).toBe(false);
+        expect(settingsMocks.savePersistedSettings).toHaveBeenCalledWith({
+            uiScale: 1.5,
+            showActiveAppWindowTitle: false,
+            autostartEnabled: true,
+            autoPinOnFocusEnd: false,
         });
     });
 });
@@ -275,6 +318,22 @@ describe('createSettingsStore — settings-window mode', () => {
             store: 'settings',
             action: 'setAutostartEnabled',
             args: [true],
+        }));
+        spy.mockRestore();
+    });
+
+    it('setAutoPinOnFocusEnd dispatches instead of mutating local state', () => {
+        const spy = vi.spyOn(dispatchMod, 'dispatch').mockResolvedValue();
+        const store = createSettingsStore({ isSettingsWindow: true });
+
+        store.getState().setAutoPinOnFocusEnd(false);
+
+        expect(store.getState().autoPinOnFocusEnd).toBe(true);
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({
+            v: BRIDGE_VERSION,
+            store: 'settings',
+            action: 'setAutoPinOnFocusEnd',
+            args: [false],
         }));
         spy.mockRestore();
     });
