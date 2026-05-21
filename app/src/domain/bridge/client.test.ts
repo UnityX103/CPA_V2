@@ -75,6 +75,10 @@ function makeSample(): BridgeSnapshot {
             accountUser: { userId: 'u-host', username: 'host' },
             accountToken: 'token-host',
             accountError: null,
+            cloudSyncStatus: 'synced',
+            cloudData: null,
+            cloudDataUpdatedAt: null,
+            cloudError: null,
         },
         activeApp: {
             name: 'VS Code',

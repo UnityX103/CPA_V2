@@ -8,6 +8,7 @@ import {
 } from './network';
 import * as dispatchMod from './bridge/dispatch';
 import { BRIDGE_VERSION } from './bridge/protocol';
+import type { CloudAccountData } from './cloudAccountData';
 
 const persistedSession = vi.hoisted(() => ({
     load: vi.fn(),
@@ -52,7 +53,7 @@ function sentMessages(socket: FakeWebSocket | undefined) {
     return socket?.sent.map((raw) => JSON.parse(raw)) ?? [];
 }
 
-function makeCloudSnapshot() {
+function makeCloudSnapshot(): CloudAccountData {
     return {
         schemaVersion: 1,
         updatedAt: 10,
