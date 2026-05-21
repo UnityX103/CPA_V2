@@ -133,10 +133,11 @@ describe('GlobalTab parity with Pdj9C', () => {
         useSettingsStore.setState({ activeTab: 'global' });
     });
 
-    it('renders the three Pdj9C cards', () => {
+    it('renders global controls without the obsolete target display setting', () => {
         render(<SettingsPanel />);
         expect(screen.getByText('界面缩放')).toBeTruthy();
-        expect(screen.getByText('目标显示器')).toBeTruthy();
+        expect(screen.queryByText('目标显示器')).toBeNull();
+        expect(screen.queryByText(/显示器 \d/)).toBeNull();
         expect(screen.getByText('按键计数')).toBeTruthy();
     });
 

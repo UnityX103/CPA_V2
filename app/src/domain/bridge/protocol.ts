@@ -10,7 +10,6 @@ export interface BridgeSnapshot {
     v: typeof BRIDGE_VERSION;
     settings: {
         uiScale: number;
-        targetMonitorIndex: number;
     };
     pomodoro: {
         focusDurationSeconds: number;
@@ -34,7 +33,7 @@ export interface BridgeSnapshot {
 }
 
 export type DispatchPayload =
-    | { v: typeof BRIDGE_VERSION; store: 'settings';   action: 'setUiScale' | 'setTargetMonitor'; args: [number] }
+    | { v: typeof BRIDGE_VERSION; store: 'settings';   action: 'setUiScale'; args: [number] }
     | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'applySettings'; args: [number, number, number, boolean] }
     | { v: typeof BRIDGE_VERSION; store: 'network';    action: 'createRoom' | 'joinRoom'; args: [string] }
     | { v: typeof BRIDGE_VERSION; store: 'network';    action: 'leaveRoom'; args: [] }

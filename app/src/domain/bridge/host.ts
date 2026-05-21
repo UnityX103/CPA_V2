@@ -21,7 +21,7 @@ export function buildSnapshot(): BridgeSnapshot {
     const b = useBindingKeyStore.getState();
     return {
         v: BRIDGE_VERSION,
-        settings: { uiScale: s.uiScale, targetMonitorIndex: s.targetMonitorIndex },
+        settings: { uiScale: s.uiScale },
         pomodoro: {
             focusDurationSeconds: p.focusDurationSeconds,
             breakDurationSeconds: p.breakDurationSeconds,
@@ -53,7 +53,6 @@ export function applyDispatch(payload: DispatchPayload): void {
         case 'settings': {
             const s = useSettingsStore.getState();
             if (payload.action === 'setUiScale') s.setUiScale(...payload.args);
-            else if (payload.action === 'setTargetMonitor') s.setTargetMonitor(...payload.args);
             return;
         }
         case 'pomodoro': {
