@@ -6,6 +6,7 @@ import { useStateSync } from './domain/stateSync';
 import { useActiveAppListener } from './domain/activeApp';
 import { useBindingKeyListener } from './domain/bindingKey';
 import { useBridgeHost } from './domain/bridge/host';
+import { useCheckinWindowController } from './domain/checkinWindow';
 import { useInputCounterWindowController } from './domain/inputCounterWindow';
 import { useRemotePlayerWindowController } from './domain/remotePlayerWindows';
 import { MAIN_WINDOW_BASE_SIZE, useScaledWindowSize } from './domain/scaledWindow';
@@ -13,6 +14,9 @@ import { useAppUpdateStore } from './domain/appUpdate';
 import { MAX_SCALE, MIN_SCALE, useSettingsStore } from './domain/settings';
 import { loadPersistedSettings, savePersistedSettings } from './domain/settingsPersistence';
 import { readAutostartEnabled } from './domain/autostart';
+import { useCheckinStore } from './domain/checkin';
+import { loadPersistedCheckin, savePersistedCheckin } from './domain/checkinPersistence';
+import { usePomodoroStore } from './domain/pomodoro';
 
 function clampStartupScale(scale: number): number {
     if (!Number.isFinite(scale)) return 1.0;
@@ -62,11 +66,19 @@ function getStartupSettingsState() {
     };
 }
 
+function todayLocalDate(): string {
+    const now = new Date();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${now.getFullYear()}-${month}-${day}`;
+}
+
 export default function App() {
     useStateSync();
     useActiveAppListener();
     useBindingKeyListener();
     useBridgeHost();
+    useCheckinWindowController();
     useInputCounterWindowController();
     useRemotePlayerWindowController();
     const uiScale = useSettingsStore((s) => s.uiScale);
@@ -125,6 +137,67 @@ export default function App() {
 
     useEffect(() => {
         let cancelled = false;
+        let unsubscribe = () => {};
+
+        async function hydrateAndSubscribe() {
+            try {
+                const persisted = await loadPersistedCheckin();
+                if (cancelled) return;
+
+                const checkin = useCheckinStore.getState();
+                if (persisted) {
+                    checkin.hydrateCheckin({
+                        weeklyPlan: persisted.weeklyPlan,
+                        dailyRecords: persisted.dailyRecords,
+                    });
+                }
+                const beforeRollForward = useCheckinStore.getState().weeklyPlan;
+                useCheckinStore.getState().rollForwardToDate(todayLocalDate());
+                const afterRollForward = useCheckinStore.getState();
+                if (afterRollForward.weeklyPlan !== beforeRollForward) {
+                    await savePersistedCheckin({
+                        schemaVersion: 1,
+                        weeklyPlan: afterRollForward.weeklyPlan,
+                        dailyRecords: afterRollForward.dailyRecords,
+                    });
+                }
+            } catch (error) {
+                if (!cancelled) {
+                    useCheckinStore.getState().setLastError(String(error));
+                }
+            }
+
+            if (cancelled) return;
+            unsubscribe = useCheckinStore.subscribe((state, previousState) => {
+                if (
+                    state.weeklyPlan === previousState.weeklyPlan
+                    && state.dailyRecords === previousState.dailyRecords
+                ) {
+                    return;
+                }
+
+                void savePersistedCheckin({
+                    schemaVersion: 1,
+                    weeklyPlan: state.weeklyPlan,
+                    dailyRecords: state.dailyRecords,
+                }).catch((error) => {
+                    if (!cancelled) {
+                        useCheckinStore.getState().setLastError(String(error));
+                    }
+                });
+            });
+        }
+
+        void hydrateAndSubscribe();
+
+        return () => {
+            cancelled = true;
+            unsubscribe();
+        };
+    }, []);
+
+    useEffect(() => {
+        let cancelled = false;
         let cleanup = () => {};
 
         useAppUpdateStore.getState().hydrate()
@@ -140,6 +213,16 @@ export default function App() {
             cancelled = true;
             cleanup();
         };
+    }, []);
+
+    useEffect(() => {
+        return usePomodoroStore.subscribe((state, previous) => {
+            const event = state.lastEndEvent;
+            if (!event || event === previous.lastEndEvent) return;
+            if (event.fromPhase !== 'focus') return;
+
+            useCheckinStore.getState().applyPomodoroFocusCompletion(todayLocalDate(), event.id);
+        });
     }, []);
 
     return (

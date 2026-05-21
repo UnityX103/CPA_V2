@@ -1,12 +1,19 @@
 import { useEffect, useState } from 'react';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
-import { useSettingsStore } from '../settings';
+import { useSettingsStore, type DangerousChange } from '../settings';
 import { usePomodoroStore } from '../pomodoro';
 import { useNetworkStore, type RemotePlayer } from '../network';
 import { useBindingKeyStore, type BindingKeyEntry } from '../bindingKey';
 import { useActiveAppStore, type ActiveAppInfo } from '../activeApp';
 import { useAppUpdateStore } from '../appUpdate';
+import {
+    useCheckinStore,
+    type CheckinDayPlan,
+    type DailyCheckinRecord,
+    type WeekdayKey,
+    type WeeklyCheckinPlan,
+} from '../checkin';
 import {
     BRIDGE_VERSION,
     EVT_STATE,
@@ -40,6 +47,50 @@ function cloneEntries(entries: BindingKeyEntry[]): BindingKeyEntry[] {
     }));
 }
 
+function cloneDangerousChange(change: DangerousChange | null): DangerousChange | null {
+    return change ? { ...change } : null;
+}
+
+function cloneCheckinDayPlan(dayPlan: CheckinDayPlan): CheckinDayPlan {
+    if (dayPlan.kind !== 'items') return { ...dayPlan };
+    return {
+        kind: 'items',
+        items: dayPlan.items.map((item) => ({ ...item })),
+    };
+}
+
+function cloneWeeklyCheckinPlan(plan: WeeklyCheckinPlan): WeeklyCheckinPlan {
+    return {
+        weekStartDate: plan.weekStartDate,
+        carryToNextWeek: plan.carryToNextWeek,
+        days: Object.fromEntries(
+            Object.entries(plan.days).map(([day, dayPlan]) => [
+                day,
+                cloneCheckinDayPlan(dayPlan),
+            ]),
+        ) as Record<WeekdayKey, CheckinDayPlan>,
+    };
+}
+
+function cloneDailyCheckinRecord(record: DailyCheckinRecord): DailyCheckinRecord {
+    return {
+        date: record.date,
+        countsByItemId: { ...record.countsByItemId },
+        processedPomodoroEndEventIds: [...record.processedPomodoroEndEventIds],
+    };
+}
+
+function cloneDailyCheckinRecords(
+    records: Record<string, DailyCheckinRecord>,
+): Record<string, DailyCheckinRecord> {
+    return Object.fromEntries(
+        Object.entries(records).map(([date, record]) => [
+            date,
+            cloneDailyCheckinRecord(record),
+        ]),
+    );
+}
+
 function hasIconDataProperty(activeApp: ActiveAppInfo): boolean {
     return Object.prototype.hasOwnProperty.call(activeApp, 'icon_data_url');
 }
@@ -70,7 +121,7 @@ export function applySnapshotToMirrors(snap: BridgeSnapshot): void {
         committedUiScale: snap.settings.committedUiScale,
         showActiveAppWindowTitle: snap.settings.showActiveAppWindowTitle,
         autostartEnabled: snap.settings.autostartEnabled,
-        dangerousChange: snap.settings.dangerousChange,
+        dangerousChange: cloneDangerousChange(snap.settings.dangerousChange),
     });
     usePomodoroStore.setState({
         focusDurationSeconds: snap.pomodoro.focusDurationSeconds,
@@ -99,6 +150,11 @@ export function applySnapshotToMirrors(snap: BridgeSnapshot): void {
         syncedKeyId: snap.bindingKey.syncedKeyId,
     });
     useAppUpdateStore.getState().applySnapshot({ ...snap.appUpdate });
+    useCheckinStore.setState({
+        weeklyPlan: cloneWeeklyCheckinPlan(snap.checkin.weeklyPlan),
+        dailyRecords: cloneDailyCheckinRecords(snap.checkin.dailyRecords),
+        lastError: snap.checkin.lastError,
+    });
 }
 
 export function useBridgeClient(): boolean {

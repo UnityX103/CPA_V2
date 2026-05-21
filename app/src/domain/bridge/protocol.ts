@@ -4,6 +4,7 @@ import type { ConnectionStatus, RemotePlayer } from '../network';
 import type { PomodoroEndActionMode, PomodoroEndActionVideo } from '../pomodoro';
 import type { ActiveAppInfo } from '../activeApp';
 import type { AppUpdateSnapshot } from '../appUpdate';
+import type { DailyCheckinRecord, WeeklyCheckinPlan } from '../checkin';
 
 export const EVT_STATE_REQUEST = 'app:state:request';
 export const EVT_STATE = 'app:state';
@@ -44,6 +45,11 @@ export interface BridgeSnapshot {
         syncedKeyId: string | null;
     };
     appUpdate: AppUpdateSnapshot;
+    checkin: {
+        weeklyPlan: WeeklyCheckinPlan;
+        dailyRecords: Record<string, DailyCheckinRecord>;
+        lastError: string | null;
+    };
 }
 
 export type DispatchPayload =
@@ -63,4 +69,6 @@ export type DispatchPayload =
     | { v: typeof BRIDGE_VERSION; store: 'bindingKey'; action: 'completeCapture'; args: [BindingInput, string] }
     | { v: typeof BRIDGE_VERSION; store: 'bindingKey'; action: 'addEntry'; args: [] }
     | { v: typeof BRIDGE_VERSION; store: 'appUpdate';  action: 'setAutoUpdateEnabled'; args: [boolean] }
-    | { v: typeof BRIDGE_VERSION; store: 'appUpdate';  action: 'checkNow' | 'restartForUpdate'; args: [] };
+    | { v: typeof BRIDGE_VERSION; store: 'appUpdate';  action: 'checkNow' | 'restartForUpdate'; args: [] }
+    | { v: typeof BRIDGE_VERSION; store: 'checkin';    action: 'setWeeklyPlan'; args: [WeeklyCheckinPlan] }
+    | { v: typeof BRIDGE_VERSION; store: 'checkin';    action: 'incrementItem'; args: [string, string] };

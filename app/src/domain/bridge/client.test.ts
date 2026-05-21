@@ -7,6 +7,7 @@ import { useBindingKeyStore } from '../bindingKey';
 import { useActiveAppStore } from '../activeApp';
 import { useAppUpdateStore } from '../appUpdate';
 import { BRIDGE_VERSION, type BridgeSnapshot } from './protocol';
+import { defaultWeeklyPlan, useCheckinStore } from '../checkin';
 
 const sampleRemoteState = {
     pomodoro: {
@@ -98,6 +99,26 @@ function makeSample(): BridgeSnapshot {
             lastCheckedAt: 1700000000000,
             errorMessage: null,
         },
+        checkin: {
+            weeklyPlan: {
+                ...defaultWeeklyPlan('2026-05-18'),
+                days: {
+                    ...defaultWeeklyPlan('2026-05-18').days,
+                    mon: {
+                        kind: 'items',
+                        items: [{ id: 'manual-1', title: 'Read', type: 'manual', targetCount: 2 }],
+                    },
+                },
+            },
+            dailyRecords: {
+                '2026-05-18': {
+                    date: '2026-05-18',
+                    countsByItemId: { 'manual-1': 1 },
+                    processedPomodoroEndEventIds: [42],
+                },
+            },
+            lastError: 'save failed',
+        },
     };
 }
 
@@ -146,6 +167,11 @@ beforeEach(() => {
         lastCheckedAt: null,
         errorMessage: null,
     });
+    useCheckinStore.setState({
+        weeklyPlan: defaultWeeklyPlan('2026-05-18'),
+        dailyRecords: {},
+        lastError: null,
+    });
 });
 
 describe('applySnapshotToMirrors', () => {
@@ -183,12 +209,24 @@ describe('applySnapshotToMirrors', () => {
             lastCheckedAt: 1700000000000,
             errorMessage: null,
         });
+        expect(useCheckinStore.getState().weeklyPlan.days.mon).toEqual({
+            kind: 'items',
+            items: [{ id: 'manual-1', title: 'Read', type: 'manual', targetCount: 2 }],
+        });
+        expect(useCheckinStore.getState().dailyRecords['2026-05-18']).toEqual({
+            date: '2026-05-18',
+            countsByItemId: { 'manual-1': 1 },
+            processedPomodoroEndEventIds: [42],
+        });
+        expect(useCheckinStore.getState().lastError).toBe('save failed');
     });
 
     it('detaches nested mirror state from the incoming snapshot object', () => {
         const sample = makeSample();
         applySnapshotToMirrors(sample);
 
+        expect(useSettingsStore.getState().dangerousChange).toEqual(sample.settings.dangerousChange);
+        expect(useSettingsStore.getState().dangerousChange).not.toBe(sample.settings.dangerousChange);
         expect(usePomodoroStore.getState().endActionVideo).toEqual(sample.pomodoro.endActionVideo);
         expect(usePomodoroStore.getState().endActionVideo).not.toBe(sample.pomodoro.endActionVideo);
         expect(useNetworkStore.getState().players).toEqual(sample.network.players);
@@ -201,7 +239,15 @@ describe('applySnapshotToMirrors', () => {
         expect(useBindingKeyStore.getState().entries).toEqual(sample.bindingKey.entries);
         expect(useBindingKeyStore.getState().entries).not.toBe(sample.bindingKey.entries);
         expect(useBindingKeyStore.getState().entries[0]).not.toBe(sample.bindingKey.entries[0]);
+        expect(useCheckinStore.getState().weeklyPlan).toEqual(sample.checkin.weeklyPlan);
+        expect(useCheckinStore.getState().weeklyPlan).not.toBe(sample.checkin.weeklyPlan);
+        expect(useCheckinStore.getState().weeklyPlan.days).not.toBe(sample.checkin.weeklyPlan.days);
+        expect(useCheckinStore.getState().weeklyPlan.days.mon).not.toBe(sample.checkin.weeklyPlan.days.mon);
+        expect(useCheckinStore.getState().dailyRecords).toEqual(sample.checkin.dailyRecords);
+        expect(useCheckinStore.getState().dailyRecords).not.toBe(sample.checkin.dailyRecords);
+        expect(useCheckinStore.getState().dailyRecords['2026-05-18']).not.toBe(sample.checkin.dailyRecords['2026-05-18']);
 
+        sample.settings.dangerousChange!.nextValue = 1.25;
         sample.pomodoro.endActionVideo.customVideoPath = '/mutated.mp4';
         sample.network.players['p-1'].playerName = 'Mutated';
         sample.network.players['p-1'].state!.pomodoro.remainingSeconds = 1;
@@ -209,7 +255,12 @@ describe('applySnapshotToMirrors', () => {
         sample.network.players['p-1'].state!.bindingKey!.pressCount = 99;
         sample.bindingKey.entries[0].label = 'Mutated';
         sample.bindingKey.entries[0].input = { kind: 'mouse', button: 'right' };
+        sample.checkin.dailyRecords['2026-05-18'].countsByItemId['manual-1'] = 99;
+        if (sample.checkin.weeklyPlan.days.mon.kind === 'items') {
+            sample.checkin.weeklyPlan.days.mon.items[0].title = 'Mutated';
+        }
 
+        expect(useSettingsStore.getState().dangerousChange?.nextValue).toBe(2.0);
         expect(usePomodoroStore.getState().endActionVideo.customVideoPath).toBe('/Users/xpy/Videos/focus-complete.mp4');
         expect(useNetworkStore.getState().players['p-1'].playerName).toBe('Player One');
         expect(useNetworkStore.getState().players['p-1'].state?.pomodoro.remainingSeconds).toBe(42);
@@ -217,6 +268,9 @@ describe('applySnapshotToMirrors', () => {
         expect(useNetworkStore.getState().players['p-1'].state?.bindingKey?.pressCount).toBe(7);
         expect(useBindingKeyStore.getState().entries[0].label).toBe('A');
         expect(useBindingKeyStore.getState().entries[0].input).toEqual({ kind: 'keyboard', code: 0 });
+        expect(useCheckinStore.getState().dailyRecords['2026-05-18'].countsByItemId['manual-1']).toBe(1);
+        const mondayPlan = useCheckinStore.getState().weeklyPlan.days.mon;
+        expect(mondayPlan.kind === 'items' ? mondayPlan.items[0].title : '').toBe('Read');
     });
 
     it('ignores snapshots with a mismatched bridge version', () => {

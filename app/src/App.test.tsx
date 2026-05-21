@@ -2,13 +2,16 @@ import '@testing-library/jest-dom/vitest';
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useSettingsStore } from './domain/settings';
+import { defaultWeeklyPlan, useCheckinStore, type WeeklyCheckinPlan } from './domain/checkin';
 
 const {
     appUpdateCleanup,
     hydrateAppUpdate,
     invokeMock,
+    loadPersistedCheckinMock,
     loadPersistedSettingsMock,
     readAutostartEnabledMock,
+    savePersistedCheckinMock,
     savePersistedSettingsMock,
     startAutomaticChecks,
     useStateSync,
@@ -32,8 +35,10 @@ const {
         appUpdateCleanup,
         hydrateAppUpdate,
         invokeMock: vi.fn(),
+        loadPersistedCheckinMock: vi.fn(),
         loadPersistedSettingsMock: vi.fn(),
         readAutostartEnabledMock: vi.fn(),
+        savePersistedCheckinMock: vi.fn(),
         savePersistedSettingsMock: vi.fn(),
         startAutomaticChecks,
         useStateSync: vi.fn(),
@@ -59,6 +64,10 @@ vi.mock('./domain/settingsPersistence', () => ({
     loadPersistedSettings: loadPersistedSettingsMock,
     savePersistedSettings: savePersistedSettingsMock,
 }));
+vi.mock('./domain/checkinPersistence', () => ({
+    loadPersistedCheckin: loadPersistedCheckinMock,
+    savePersistedCheckin: savePersistedCheckinMock,
+}));
 vi.mock('./ui/PomodoroPanel', () => ({
     PomodoroPanel: () => <div data-testid="pomodoro-panel" />,
 }));
@@ -74,6 +83,14 @@ vi.mock('./ui/RemoteRoster', () => ({
 
 const { default: App } = await import('./App');
 
+function currentWeekStartFor(date: Date): string {
+    const d = new Date(date);
+    d.setHours(12, 0, 0, 0);
+    const diff = (d.getDay() + 6) % 7;
+    d.setDate(d.getDate() - diff);
+    return d.toISOString().slice(0, 10);
+}
+
 beforeEach(() => {
     appUpdateCleanup.mockClear();
     hydrateAppUpdate.mockClear();
@@ -86,6 +103,10 @@ beforeEach(() => {
     useBridgeHost.mockClear();
     useInputCounterWindowController.mockClear();
     useRemotePlayerWindowController.mockClear();
+    loadPersistedCheckinMock.mockReset();
+    loadPersistedCheckinMock.mockResolvedValue(null);
+    savePersistedCheckinMock.mockReset();
+    savePersistedCheckinMock.mockResolvedValue(undefined);
     loadPersistedSettingsMock.mockReset();
     loadPersistedSettingsMock.mockResolvedValue({ uiScale: 1.5, showActiveAppWindowTitle: true });
     readAutostartEnabledMock.mockReset();
@@ -98,6 +119,11 @@ beforeEach(() => {
         showActiveAppWindowTitle: true,
         autostartEnabled: false,
         dangerousChange: null,
+    });
+    useCheckinStore.setState({
+        weeklyPlan: defaultWeeklyPlan(currentWeekStartFor(new Date())),
+        dailyRecords: {},
+        lastError: null,
     });
 });
 
@@ -171,7 +197,7 @@ describe('main App window composition', () => {
         render(<App />);
 
         await Promise.resolve();
-        expect(invokeMock).not.toHaveBeenCalled();
+        expect(invokeMock).not.toHaveBeenCalledWith('resize_scaled_window', expect.anything());
 
         resolveSettings({ uiScale: 1.5, showActiveAppWindowTitle: true });
 
@@ -286,5 +312,40 @@ describe('main App window composition', () => {
             showActiveAppWindowTitle: false,
             autostartEnabled: true,
         });
+    });
+
+    it('persists checkin state after startup roll-forward', async () => {
+        const oldPlan: WeeklyCheckinPlan = {
+            weekStartDate: '2026-05-11',
+            carryToNextWeek: true,
+            days: {
+                mon: {
+                    kind: 'items',
+                    items: [{ id: 'read', title: '阅读', type: 'manual', targetCount: 2 }],
+                },
+                tue: { kind: 'inherit' },
+                wed: { kind: 'inherit' },
+                thu: { kind: 'inherit' },
+                fri: { kind: 'inherit' },
+                sat: { kind: 'inherit' },
+                sun: { kind: 'rest' },
+            },
+        };
+        loadPersistedCheckinMock.mockResolvedValue({
+            schemaVersion: 1,
+            weeklyPlan: oldPlan,
+            dailyRecords: {},
+        });
+
+        render(<App />);
+
+        await waitFor(() => expect(savePersistedCheckinMock).toHaveBeenCalledWith({
+            schemaVersion: 1,
+            weeklyPlan: {
+                ...oldPlan,
+                weekStartDate: currentWeekStartFor(new Date()),
+            },
+            dailyRecords: {},
+        }));
     });
 });

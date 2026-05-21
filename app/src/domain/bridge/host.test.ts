@@ -6,6 +6,7 @@ import {
     appUpdateSig,
     bindingKeySig,
     buildSnapshot,
+    checkinSig,
     MIRROR_WINDOW_LABELS,
     networkSig,
     pomoSig,
@@ -19,6 +20,7 @@ import { useActiveAppStore } from '../activeApp';
 import { BRIDGE_VERSION } from './protocol';
 import { useAppUpdateStore } from '../appUpdate';
 import { REMOTE_PLAYER_WINDOW_LABELS } from '../remotePlayerWindowLabels';
+import { defaultWeeklyPlan, useCheckinStore } from '../checkin';
 
 type BindingKeySigInput = Parameters<typeof bindingKeySig>[0];
 type BindingKeyStateWithPermission = BindingKeySigInput & {
@@ -101,6 +103,11 @@ beforeEach(() => {
         lastCheckedAt: null,
         errorMessage: null,
     });
+    useCheckinStore.setState({
+        weeklyPlan: defaultWeeklyPlan('2026-05-18'),
+        dailyRecords: {},
+        lastError: null,
+    });
 });
 
 describe('buildSnapshot', () => {
@@ -131,9 +138,15 @@ describe('buildSnapshot', () => {
             lastCheckedAt: null,
             errorMessage: null,
         });
+        expect(snap.checkin).toEqual({
+            weeklyPlan: defaultWeeklyPlan('2026-05-18'),
+            dailyRecords: {},
+            lastError: null,
+        });
     });
 
     it('detaches nested snapshot values from source store references', () => {
+        useSettingsStore.getState().previewDangerousUiScale(1.5);
         usePomodoroStore.getState().applyEndActionSettings('playVideo', sampleEndActionVideo);
         useNetworkStore.setState({
             players: {
@@ -154,9 +167,30 @@ describe('buildSnapshot', () => {
                 enabled: true,
             }],
         });
+        useCheckinStore.setState({
+            weeklyPlan: {
+                ...defaultWeeklyPlan('2026-05-18'),
+                days: {
+                    ...defaultWeeklyPlan('2026-05-18').days,
+                    mon: {
+                        kind: 'items',
+                        items: [{ id: 'manual-1', title: 'Read', type: 'manual', targetCount: 2 }],
+                    },
+                },
+            },
+            dailyRecords: {
+                '2026-05-18': {
+                    date: '2026-05-18',
+                    countsByItemId: { 'manual-1': 1 },
+                    processedPomodoroEndEventIds: [42],
+                },
+            },
+        });
 
         const snap = buildSnapshot();
 
+        expect(snap.settings.dangerousChange).toEqual(useSettingsStore.getState().dangerousChange);
+        expect(snap.settings.dangerousChange).not.toBe(useSettingsStore.getState().dangerousChange);
         expect(snap.pomodoro.endActionVideo).toEqual(usePomodoroStore.getState().endActionVideo);
         expect(snap.pomodoro.endActionVideo).not.toBe(usePomodoroStore.getState().endActionVideo);
         expect(snap.network.players).toEqual(useNetworkStore.getState().players);
@@ -169,7 +203,15 @@ describe('buildSnapshot', () => {
         expect(snap.bindingKey.entries).toEqual(useBindingKeyStore.getState().entries);
         expect(snap.bindingKey.entries).not.toBe(useBindingKeyStore.getState().entries);
         expect(snap.bindingKey.entries[0]).not.toBe(useBindingKeyStore.getState().entries[0]);
+        expect(snap.checkin.weeklyPlan).toEqual(useCheckinStore.getState().weeklyPlan);
+        expect(snap.checkin.weeklyPlan).not.toBe(useCheckinStore.getState().weeklyPlan);
+        expect(snap.checkin.weeklyPlan.days).not.toBe(useCheckinStore.getState().weeklyPlan.days);
+        expect(snap.checkin.weeklyPlan.days.mon).not.toBe(useCheckinStore.getState().weeklyPlan.days.mon);
+        expect(snap.checkin.dailyRecords).toEqual(useCheckinStore.getState().dailyRecords);
+        expect(snap.checkin.dailyRecords).not.toBe(useCheckinStore.getState().dailyRecords);
+        expect(snap.checkin.dailyRecords['2026-05-18']).not.toBe(useCheckinStore.getState().dailyRecords['2026-05-18']);
 
+        snap.settings.dangerousChange!.nextValue = 2.0;
         snap.pomodoro.endActionVideo.customVideoPath = '/mutated.mp4';
         snap.network.players['p-1'].playerName = 'Mutated';
         snap.network.players['p-1'].state!.pomodoro.remainingSeconds = 1;
@@ -177,7 +219,12 @@ describe('buildSnapshot', () => {
         snap.network.players['p-1'].state!.bindingKey!.pressCount = 99;
         snap.bindingKey.entries[0].label = 'Mutated';
         snap.bindingKey.entries[0].input = { kind: 'mouse', button: 'right' };
+        snap.checkin.dailyRecords['2026-05-18'].countsByItemId['manual-1'] = 99;
+        if (snap.checkin.weeklyPlan.days.mon.kind === 'items') {
+            snap.checkin.weeklyPlan.days.mon.items[0].title = 'Mutated';
+        }
 
+        expect(useSettingsStore.getState().dangerousChange?.nextValue).toBe(1.5);
         expect(usePomodoroStore.getState().endActionVideo.customVideoPath).toBe('/Users/xpy/Videos/focus-complete.mp4');
         expect(useNetworkStore.getState().players['p-1'].playerName).toBe('Player One');
         expect(useNetworkStore.getState().players['p-1'].state?.pomodoro.remainingSeconds).toBe(42);
@@ -185,6 +232,9 @@ describe('buildSnapshot', () => {
         expect(useNetworkStore.getState().players['p-1'].state?.bindingKey?.pressCount).toBe(7);
         expect(useBindingKeyStore.getState().entries[0].label).toBe('A');
         expect(useBindingKeyStore.getState().entries[0].input).toEqual({ kind: 'keyboard', code: 0 });
+        expect(useCheckinStore.getState().dailyRecords['2026-05-18'].countsByItemId['manual-1']).toBe(1);
+        const mondayPlan = useCheckinStore.getState().weeklyPlan.days.mon;
+        expect(mondayPlan.kind === 'items' ? mondayPlan.items[0].title : '').toBe('Read');
     });
 
     it('includes committed scale and dangerous change state', () => {
@@ -243,9 +293,11 @@ describe('buildSnapshot', () => {
 });
 
 describe('bridge host mirror targets', () => {
-    it('emits snapshots to settings, input-counter, and all fixed remote player windows', () => {
+    it('emits snapshots to settings, check-in windows, input-counter, and all fixed remote player windows', () => {
         expect(MIRROR_WINDOW_LABELS).toEqual([
             'settings',
+            'today-checkin',
+            'checkin-editor',
             'input-counter',
             ...REMOTE_PLAYER_WINDOW_LABELS,
         ]);
@@ -386,6 +438,26 @@ describe('applyDispatch', () => {
         expect(checkNow).toHaveBeenCalledTimes(1);
         expect(restartForUpdate).toHaveBeenCalledTimes(1);
         useAppUpdateStore.setState(original);
+    });
+
+    it('routes checkin plan and item increment actions to the authoritative main store', () => {
+        const nextPlan = defaultWeeklyPlan('2026-05-25');
+
+        applyDispatch({
+            v: BRIDGE_VERSION,
+            store: 'checkin',
+            action: 'setWeeklyPlan',
+            args: [nextPlan],
+        });
+        applyDispatch({
+            v: BRIDGE_VERSION,
+            store: 'checkin',
+            action: 'incrementItem',
+            args: ['2026-05-25', 'pomodoro-focus'],
+        });
+
+        expect(useCheckinStore.getState().weeklyPlan.weekStartDate).toBe('2026-05-25');
+        expect(useCheckinStore.getState().dailyRecords['2026-05-25'].countsByItemId['pomodoro-focus']).toBe(1);
     });
 });
 
@@ -536,6 +608,33 @@ describe('bridge host subscription signatures', () => {
 
         expect(appUpdateSig(base)).not.toBe(appUpdateSig(disabled));
         expect(appUpdateSig(base)).not.toBe(appUpdateSig(checkedLater));
+    });
+
+    it('checkinSig includes mirrored plan, records, and error fields', () => {
+        const base = {
+            weeklyPlan: defaultWeeklyPlan('2026-05-18'),
+            dailyRecords: {
+                '2026-05-18': {
+                    date: '2026-05-18',
+                    countsByItemId: { 'pomodoro-focus': 1 },
+                    processedPomodoroEndEventIds: [1],
+                },
+            },
+            lastError: null,
+        };
+        const nextCount = {
+            ...base,
+            dailyRecords: {
+                '2026-05-18': {
+                    ...base.dailyRecords['2026-05-18'],
+                    countsByItemId: { 'pomodoro-focus': 2 },
+                },
+            },
+        };
+        const nextError = { ...base, lastError: 'save failed' };
+
+        expect(checkinSig(base)).not.toBe(checkinSig(nextCount));
+        expect(checkinSig(base)).not.toBe(checkinSig(nextError));
     });
 
     it('activeAppSig ignores heavy icon data but includes title changes', () => {

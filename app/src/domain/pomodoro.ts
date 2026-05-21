@@ -107,6 +107,7 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
     }
     return create<PomodoroState & PomodoroActions>((set, get) => {
         let accumulator = 0;
+        let nextEndEventId = 1;
 
         function makeEndEvent(
             state: PomodoroState,
@@ -114,7 +115,7 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
             triggeredBy: PomodoroEndEvent['triggeredBy'],
         ): PomodoroEndEvent {
             return {
-                id: (state.lastEndEvent?.id ?? 0) + 1,
+                id: nextEndEventId++,
                 fromPhase: state.currentPhase,
                 toPhase,
                 triggeredBy,

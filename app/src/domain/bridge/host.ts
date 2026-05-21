@@ -1,12 +1,20 @@
 import { useEffect } from 'react';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
-import { useSettingsStore } from '../settings';
+import { useSettingsStore, type DangerousChange } from '../settings';
 import { usePomodoroStore } from '../pomodoro';
 import { useNetworkStore, type RemotePlayer } from '../network';
 import { useBindingKeyStore, type BindingKeyEntry } from '../bindingKey';
 import { useActiveAppStore, type ActiveAppInfo } from '../activeApp';
 import { useAppUpdateStore, type AppUpdateSnapshot } from '../appUpdate';
+import {
+    useCheckinStore,
+    type CheckinDayPlan,
+    type CheckinState,
+    type DailyCheckinRecord,
+    type WeekdayKey,
+    type WeeklyCheckinPlan,
+} from '../checkin';
 import { REMOTE_PLAYER_WINDOW_LABELS } from '../remotePlayerWindowLabels';
 import {
     BRIDGE_VERSION,
@@ -43,6 +51,10 @@ function cloneEntries(entries: BindingKeyEntry[]): BindingKeyEntry[] {
     }));
 }
 
+function cloneDangerousChange(change: DangerousChange | null): DangerousChange | null {
+    return change ? { ...change } : null;
+}
+
 interface BuildSnapshotOptions {
     includeActiveAppIcon?: boolean;
 }
@@ -69,6 +81,46 @@ function appUpdateSnapshot(s: AppUpdateSnapshot): AppUpdateSnapshot {
     };
 }
 
+function cloneCheckinDayPlan(dayPlan: CheckinDayPlan): CheckinDayPlan {
+    if (dayPlan.kind !== 'items') return { ...dayPlan };
+    return {
+        kind: 'items',
+        items: dayPlan.items.map((item) => ({ ...item })),
+    };
+}
+
+function cloneWeeklyCheckinPlan(plan: WeeklyCheckinPlan): WeeklyCheckinPlan {
+    return {
+        weekStartDate: plan.weekStartDate,
+        carryToNextWeek: plan.carryToNextWeek,
+        days: Object.fromEntries(
+            Object.entries(plan.days).map(([day, dayPlan]) => [
+                day,
+                cloneCheckinDayPlan(dayPlan),
+            ]),
+        ) as Record<WeekdayKey, CheckinDayPlan>,
+    };
+}
+
+function cloneDailyCheckinRecord(record: DailyCheckinRecord): DailyCheckinRecord {
+    return {
+        date: record.date,
+        countsByItemId: { ...record.countsByItemId },
+        processedPomodoroEndEventIds: [...record.processedPomodoroEndEventIds],
+    };
+}
+
+function cloneDailyCheckinRecords(
+    records: Record<string, DailyCheckinRecord>,
+): Record<string, DailyCheckinRecord> {
+    return Object.fromEntries(
+        Object.entries(records).map(([date, record]) => [
+            date,
+            cloneDailyCheckinRecord(record),
+        ]),
+    );
+}
+
 export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
     const s = useSettingsStore.getState();
     const p = usePomodoroStore.getState();
@@ -76,6 +128,7 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
     const b = useBindingKeyStore.getState();
     const a = useActiveAppStore.getState();
     const u = useAppUpdateStore.getState();
+    const c = useCheckinStore.getState();
     return {
         v: BRIDGE_VERSION,
         settings: {
@@ -83,7 +136,7 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
             committedUiScale: s.committedUiScale,
             showActiveAppWindowTitle: s.showActiveAppWindowTitle,
             autostartEnabled: s.autostartEnabled,
-            dangerousChange: s.dangerousChange,
+            dangerousChange: cloneDangerousChange(s.dangerousChange),
         },
         pomodoro: {
             focusDurationSeconds: p.focusDurationSeconds,
@@ -110,6 +163,11 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
             syncedKeyId: b.syncedKeyId,
         },
         appUpdate: appUpdateSnapshot(u),
+        checkin: {
+            weeklyPlan: cloneWeeklyCheckinPlan(c.weeklyPlan),
+            dailyRecords: cloneDailyCheckinRecords(c.dailyRecords),
+            lastError: c.lastError,
+        },
     };
 }
 
@@ -172,11 +230,21 @@ export function applyDispatch(payload: DispatchPayload): void {
             }
             return;
         }
+        case 'checkin': {
+            const c = useCheckinStore.getState();
+            switch (payload.action) {
+                case 'setWeeklyPlan': c.setWeeklyPlan(...payload.args); return;
+                case 'incrementItem': c.incrementItem(...payload.args); return;
+            }
+            return;
+        }
     }
 }
 
 export const MIRROR_WINDOW_LABELS = [
     'settings',
+    'today-checkin',
+    'checkin-editor',
     'input-counter',
     ...REMOTE_PLAYER_WINDOW_LABELS,
 ] as const;
@@ -276,6 +344,14 @@ export function appUpdateSig(s: AppUpdateSnapshot): string {
     ]);
 }
 
+export function checkinSig(s: Pick<CheckinState, 'weeklyPlan' | 'dailyRecords' | 'lastError'>): string {
+    return JSON.stringify([
+        s.weeklyPlan,
+        Object.keys(s.dailyRecords).sort().map((date) => [date, s.dailyRecords[date]]),
+        s.lastError,
+    ]);
+}
+
 export function activeAppSig(s: { current: ActiveAppInfo | null }): string {
     if (!s.current) return JSON.stringify(null);
     const { icon_data_url: _iconDataUrl, ...withoutIcon } = s.current;
@@ -311,6 +387,7 @@ export function useBridgeHost(): void {
         let prevNetwork = networkSig(useNetworkStore.getState());
         let prevBindingKey = bindingKeySig(useBindingKeyStore.getState());
         let prevAppUpdate = appUpdateSig(useAppUpdateStore.getState());
+        let prevCheckin = checkinSig(useCheckinStore.getState());
         let prevActiveApp = activeAppSig(useActiveAppStore.getState());
         let prevActiveAppIdentity = activeAppIdentitySig(useActiveAppStore.getState());
         const subs: Array<() => void> = [
@@ -342,6 +419,12 @@ export function useBridgeHost(): void {
                 const sig = appUpdateSig(s);
                 if (sig === prevAppUpdate) return;
                 prevAppUpdate = sig;
+                void sendSnapshot();
+            }),
+            useCheckinStore.subscribe((s) => {
+                const sig = checkinSig(s);
+                if (sig === prevCheckin) return;
+                prevCheckin = sig;
                 void sendSnapshot();
             }),
             useActiveAppStore.subscribe((s) => {
