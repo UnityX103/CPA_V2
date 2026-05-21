@@ -1,5 +1,7 @@
+import type { PointerEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 import {
     type CheckinDayPlan,
     type CheckinItem,
@@ -8,6 +10,7 @@ import {
     type WeeklyCheckinPlan,
     useCheckinStore,
 } from '../domain/checkin';
+import { shouldStartWindowDrag } from './windowDrag';
 import './CheckinPlanEditorPanel.css';
 
 const WEEKDAYS: Array<{ key: WeekdayKey; label: string; shortLabel: string }> = [
@@ -117,8 +120,19 @@ export function CheckinPlanEditorPanel() {
         closeWindow();
     };
 
+    const onPanelPointerDown = (e: PointerEvent<HTMLDivElement>) => {
+        if (!shouldStartWindowDrag(e.button, e.target)) return;
+        void getCurrentWindow().startDragging().catch(() => {
+            /* drag may fail outside the Tauri runtime */
+        });
+    };
+
     return (
-        <div className="checkin-editor-panel" data-testid="checkin-plan-editor-panel">
+        <div
+            className="checkin-editor-panel"
+            data-testid="checkin-plan-editor-panel"
+            onPointerDown={onPanelPointerDown}
+        >
             <header className="checkin-editor-head">
                 <div className="checkin-editor-title-wrap">
                     <h2>本周计划</h2>
