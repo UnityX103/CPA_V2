@@ -8,6 +8,7 @@ const {
     hydrateAppUpdate,
     loadPersistedCheckinMock,
     loadPersistedSettingsMock,
+    openCheckinEditorWindowMock,
     readAutostartEnabledMock,
     savePersistedCheckinMock,
     savePersistedSettingsMock,
@@ -34,6 +35,7 @@ const {
         hydrateAppUpdate,
         loadPersistedCheckinMock: vi.fn(),
         loadPersistedSettingsMock: vi.fn(),
+        openCheckinEditorWindowMock: vi.fn(),
         readAutostartEnabledMock: vi.fn(),
         savePersistedCheckinMock: vi.fn(),
         savePersistedSettingsMock: vi.fn(),
@@ -54,7 +56,10 @@ vi.mock('./domain/stateSync', () => ({ useStateSync }));
 vi.mock('./domain/activeApp', () => ({ useActiveAppListener }));
 vi.mock('./domain/bindingKey', () => ({ useBindingKeyListener }));
 vi.mock('./domain/bridge/host', () => ({ useBridgeHost }));
-vi.mock('./domain/checkinWindow', () => ({ useCheckinWindowController }));
+vi.mock('./domain/checkinWindow', () => ({
+    openCheckinEditorWindow: openCheckinEditorWindowMock,
+    useCheckinWindowController,
+}));
 vi.mock('./domain/inputCounterWindow', () => ({ useInputCounterWindowController }));
 vi.mock('./domain/remotePlayerWindows', () => ({ useRemotePlayerWindowController }));
 vi.mock('./domain/appUpdate', () => ({ useAppUpdateStore }));
@@ -104,6 +109,8 @@ beforeEach(() => {
     savePersistedCheckinMock.mockResolvedValue(undefined);
     loadPersistedSettingsMock.mockReset();
     loadPersistedSettingsMock.mockResolvedValue(null);
+    openCheckinEditorWindowMock.mockReset();
+    openCheckinEditorWindowMock.mockResolvedValue(undefined);
     readAutostartEnabledMock.mockReset();
     readAutostartEnabledMock.mockResolvedValue(false);
     savePersistedSettingsMock.mockReset();
@@ -196,5 +203,44 @@ describe('checkin Pomodoro integration', () => {
         const record = useCheckinStore.getState().dailyRecords['2026-05-19'];
         expect(record.countsByItemId.pomo).toBe(2);
         expect(record.processedPomodoroEndEventIds).toEqual([1, 2]);
+    });
+
+    it('opens the check-in editor when a focus timer naturally ends', () => {
+        render(<App />);
+
+        act(() => {
+            usePomodoroStore.setState({
+                lastEndEvent: { id: 11, fromPhase: 'focus', toPhase: 'break', triggeredBy: 'timer' },
+            });
+        });
+
+        expect(openCheckinEditorWindowMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not open the check-in editor when focus is skipped manually', () => {
+        render(<App />);
+
+        act(() => {
+            usePomodoroStore.setState({
+                lastEndEvent: { id: 12, fromPhase: 'focus', toPhase: 'break', triggeredBy: 'skip' },
+            });
+        });
+
+        expect(openCheckinEditorWindowMock).not.toHaveBeenCalled();
+    });
+
+    it('does not auto-pin the main window when focus naturally ends', () => {
+        const setPinnedSpy = vi.spyOn(usePomodoroStore.getState(), 'setPinned');
+        render(<App />);
+
+        act(() => {
+            usePomodoroStore.setState({
+                lastEndEvent: { id: 13, fromPhase: 'focus', toPhase: 'break', triggeredBy: 'timer' },
+            });
+        });
+
+        expect(setPinnedSpy).not.toHaveBeenCalled();
+        expect(usePomodoroStore.getState().isPinned).toBe(false);
+        setPinnedSpy.mockRestore();
     });
 });
