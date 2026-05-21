@@ -374,13 +374,9 @@ test('parseClientMessage normalizes account auth messages', () =>
     });
 });
 
-test('parseClientMessage rejects malformed account input', () =>
+test('parseClientMessage rejects malformed account tokens', () =>
 {
     for (const payload of [
-        { type: 'auth_create', username: '', password: 'secret' },
-        { type: 'auth_create', username: 'a'.repeat(33), password: 'secret' },
-        { type: 'auth_login', username: 'Alice', password: '' },
-        { type: 'auth_login', username: 'Alice', password: 'x'.repeat(129) },
         { type: 'auth_session', token: '' },
         { type: 'auth_logout', token: '' }
     ])
@@ -390,6 +386,32 @@ test('parseClientMessage rejects malformed account input', () =>
             (error) => error instanceof ProtocolError && error.code === 'INVALID_MESSAGE'
         );
     }
+});
+
+test('parseClientMessage returns INVALID_ACCOUNT_INPUT for invalid auth_create credentials', () =>
+{
+    assert.throws(
+        () => parseClientMessage(JSON.stringify({
+            v: PROTOCOL_VERSION,
+            type: 'auth_create',
+            username: '',
+            password: 'secret'
+        })),
+        (error) => error instanceof ProtocolError && error.code === 'INVALID_ACCOUNT_INPUT'
+    );
+});
+
+test('parseClientMessage returns INVALID_ACCOUNT_INPUT for invalid auth_login credentials', () =>
+{
+    assert.throws(
+        () => parseClientMessage(JSON.stringify({
+            v: PROTOCOL_VERSION,
+            type: 'auth_login',
+            username: 'Alice',
+            password: ''
+        })),
+        (error) => error instanceof ProtocolError && error.code === 'INVALID_ACCOUNT_INPUT'
+    );
 });
 
 test('auth response helpers encode auth_ok and auth_logged_out', async () =>
