@@ -1,5 +1,6 @@
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import type { RemotePlayer, RemoteState } from '../domain/network';
+import { InputBindingBadge } from './InputBindingBadge';
 import { shouldStartWindowDrag } from './windowDrag';
 import './PlayerCard.css';
 
@@ -56,7 +57,7 @@ export function PlayerCard({ player }: PlayerCardProps) {
                     {binding && (
                         <div className="pc-time-row">
                             <span className="pc-pill" title={`${binding.keyLabel} × ${binding.pressCount}`}>
-                                <span className="pc-pill-key">{binding.keyLabel}</span>
+                                <InputBindingBadge label={binding.keyLabel} />
                                 <span className="pc-pill-count">{binding.pressCount}</span>
                             </span>
                         </div>

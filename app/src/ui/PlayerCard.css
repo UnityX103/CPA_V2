@@ -106,20 +106,6 @@
     line-height: 1;
 }
 
-.pc-pill-key {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1px 4px;
-    border-radius: var(--pill-key-radius);
-    background: var(--pill-key-bg);
-    border: 1px solid var(--pill-key-stroke);
-    font-size: var(--pill-key-size);
-    font-weight: 700;
-    color: var(--pill-key-color);
-    line-height: 1;
-}
-
 .pc-pill-count {
     font-size: var(--pill-count-size);
     font-weight: 700;

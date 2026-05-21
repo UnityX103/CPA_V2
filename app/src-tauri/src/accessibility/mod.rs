@@ -121,8 +121,13 @@ impl ListenerHandle {
         // Phase 2: spawn outside the lock so a long thread-spawn or future re-entry
         // through the same handle cannot deadlock against this Mutex.
         let app_handle = app.clone();
-        let result = crate::key_counter::spawn_listener(stop.clone(), move |keycode| {
-            let _ = app_handle.emit("key-pressed", keycode);
+        let result = crate::key_counter::spawn_listener(stop.clone(), move |payload| {
+            let _ = app_handle.emit("input-pressed", &payload);
+            if payload.kind == "keyboard" {
+                if let Some(code) = payload.code {
+                    let _ = app_handle.emit("key-pressed", code);
+                }
+            }
         });
 
         match result {

@@ -547,6 +547,12 @@ describe('GlobalTab parity with Pdj9C', () => {
         expect(screen.queryByText(/显示器 \d+/)).toBeNull();
     });
 
+    it('uses 添加输入 copy for the binding add button', () => {
+        render(<SettingsPanel />);
+
+        expect(screen.getByRole('button', { name: /添加输入/ })).toBeTruthy();
+    });
+
     it('keeps autostart between active title and app update controls', () => {
         render(<SettingsPanel />);
 
@@ -744,8 +750,38 @@ describe('GlobalTab parity with Pdj9C', () => {
         expect(useBindingKeyStore.getState().capturingId).toBe(null);
         expect(useBindingKeyStore.getState().entries[0]).toEqual(expect.objectContaining({
             keyCode: 32,
+            input: { kind: 'keyboard', code: 32 },
             label: 'Space',
             pressCount: 0,
+        }));
+    });
+
+    it('finishes Windows mouse capture from the focused settings window', async () => {
+        invokeMock.mockResolvedValue({ granted: true, platform: 'windows' });
+        useBindingKeyStore.setState({
+            permissionGranted: true,
+            platform: 'windows',
+            entries: [{
+                id: 'capture',
+                label: '未绑定',
+                keyCode: -1,
+                input: null,
+                pressCount: 0,
+                enabled: true,
+            }],
+            capturingId: 'capture',
+        });
+
+        await act(async () => {
+            render(<SettingsPanel />);
+        });
+        await act(async () => {
+            fireEvent.pointerDown(window, { button: 1 });
+        });
+
+        expect(useBindingKeyStore.getState().entries[0]).toEqual(expect.objectContaining({
+            label: '鼠标中键',
+            input: { kind: 'mouse', button: 'middle' },
         }));
     });
 

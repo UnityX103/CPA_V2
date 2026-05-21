@@ -42,20 +42,6 @@
     white-space: nowrap;
 }
 
-.input-counter-key-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: var(--pill-key-pad-y, 1px) var(--pill-key-pad-x, 4px);
-    border: 1px solid var(--pill-key-stroke);
-    border-radius: var(--pill-key-radius);
-    background: var(--pill-key-bg);
-    color: var(--pill-key-color);
-    font-size: var(--pill-key-size);
-    font-weight: 700;
-    line-height: 1;
-}
-
 .input-counter-key-count {
     color: var(--pill-count-color);
     font-size: var(--pill-count-size);

@@ -19,8 +19,17 @@ import {
 } from '../domain/pomodoroVideos';
 import { pickCustomWebmPath } from '../domain/videoFiles';
 import { useNetworkStore } from '../domain/network';
-import { labelForKeyCode, useBindingKeyStore, type KeyCounterHealth } from '../domain/bindingKey';
+import {
+    labelForInput,
+    MOUSE_BUTTON_LABELS,
+    normalizeEntryInput,
+    useBindingKeyStore,
+    type BindingInput,
+    type MouseButton,
+    type KeyCounterHealth,
+} from '../domain/bindingKey';
 import { useAppUpdateStore, type AppUpdateStatus } from '../domain/appUpdate';
+import { InputBindingBadge } from './InputBindingBadge';
 import { shouldStartWindowDrag } from './windowDrag';
 import './SettingsPanel.css';
 
@@ -47,6 +56,13 @@ function isKeyCounterHealth(value: unknown): value is KeyCounterHealth {
     if (!value || typeof value !== 'object') return false;
     const health = value as Partial<KeyCounterHealth>;
     return typeof health.permissionGranted === 'boolean' && typeof health.listenerRunning === 'boolean';
+}
+
+function inputForPointerButton(button: number): { kind: 'mouse'; button: MouseButton } | null {
+    if (button === 0) return { kind: 'mouse', button: 'left' };
+    if (button === 1) return { kind: 'mouse', button: 'middle' };
+    if (button === 2) return { kind: 'mouse', button: 'right' };
+    return null;
 }
 
 export function SettingsPanel() {
@@ -593,14 +609,24 @@ function GlobalTab() {
             if (!keyCode) return;
             event.preventDefault();
             event.stopPropagation();
-            useBindingKeyStore.getState().completeCapture(
-                keyCode,
-                labelForKeyCode(keyCode, 'windows'),
-            );
+            const input: BindingInput = { kind: 'keyboard', code: keyCode };
+            useBindingKeyStore.getState().completeCapture(input, labelForInput(input, 'windows'));
+        };
+
+        const completeWindowsPointerCapture = (event: PointerEvent) => {
+            const input = inputForPointerButton(event.button);
+            if (!input) return;
+            event.preventDefault();
+            event.stopPropagation();
+            useBindingKeyStore.getState().completeCapture(input, MOUSE_BUTTON_LABELS[input.button]);
         };
 
         window.addEventListener('keydown', completeWindowsCapture, true);
-        return () => window.removeEventListener('keydown', completeWindowsCapture, true);
+        window.addEventListener('pointerdown', completeWindowsPointerCapture, true);
+        return () => {
+            window.removeEventListener('keydown', completeWindowsCapture, true);
+            window.removeEventListener('pointerdown', completeWindowsPointerCapture, true);
+        };
     }, [bk.platform, bk.capturingId]);
 
     const scalePercent = Math.round(settings.uiScale * 100);
@@ -707,7 +733,14 @@ function GlobalTab() {
                                         onClick={() => bk.beginCapture(entry.id)}
                                         title="点击重新捕获"
                                     >
-                                        {bk.capturingId === entry.id ? '请按下要绑定的键…' : entry.label}
+                                        {bk.capturingId === entry.id ? (
+                                            '请按下要绑定的键或鼠标按钮…'
+                                        ) : (
+                                            <>
+                                                <InputBindingBadge input={normalizeEntryInput(entry)} label={entry.label} />
+                                                <span className="bk-listener-label">{entry.label}</span>
+                                            </>
+                                        )}
                                         {bk.capturingId !== entry.id && (
                                             <span className="bk-count">{entry.pressCount}</span>
                                         )}
@@ -733,7 +766,7 @@ function GlobalTab() {
                         </div>
                     )}
                     <button className="bk-add" onClick={() => bk.addEntry()}>
-                        <PlusIcon /> 添加按键
+                        <PlusIcon /> 添加输入
                     </button>
                 </div>
             </div>

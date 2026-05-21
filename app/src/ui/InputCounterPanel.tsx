@@ -2,13 +2,14 @@ import { useMemo, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useActiveAppStore } from '../domain/activeApp';
-import { isVisibleBindingEntry, useBindingKeyStore, type BindingKeyEntry } from '../domain/bindingKey';
+import { isVisibleBindingEntry, normalizeEntryInput, useBindingKeyStore, type BindingKeyEntry } from '../domain/bindingKey';
 import {
     INPUT_COUNTER_BASE_HEIGHT,
     INPUT_COUNTER_BASE_WIDTH,
     useScaledWindowSize,
 } from '../domain/scaledWindow';
 import { useSettingsStore } from '../domain/settings';
+import { InputBindingBadge } from './InputBindingBadge';
 import { shouldStartWindowDrag } from './windowDrag';
 import './InputCounterPanel.css';
 
@@ -104,7 +105,7 @@ export function InputCounterPanel() {
 function KeyCounterPill({ entry }: { entry: BindingKeyEntry }) {
     return (
         <div className="input-counter-pill">
-            <span className="input-counter-key-badge">{entry.label}</span>
+            <InputBindingBadge input={normalizeEntryInput(entry)} label={entry.label} />
             <span className="input-counter-key-count">{entry.pressCount}</span>
         </div>
     );

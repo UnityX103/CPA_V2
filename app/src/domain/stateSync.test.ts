@@ -114,6 +114,7 @@ describe('stateSync active app metadata', () => {
                 id: 'bk-1',
                 label: 'Space',
                 keyCode: 49,
+                input: { kind: 'keyboard', code: 49 },
                 pressCount: 0,
                 enabled: true,
             }],
@@ -129,5 +130,26 @@ describe('stateSync active app metadata', () => {
         expect(sendStateUpdate).toHaveBeenLastCalledWith(expect.objectContaining({
             bindingKey: { keyLabel: 'Space', pressCount: 1 },
         }));
+    });
+
+    it('syncs mouse bindings through the existing keyLabel and pressCount payload', () => {
+        useBindingKeyStore.setState({
+            syncedKeyId: 'mouse-left',
+            entries: [
+                {
+                    id: 'mouse-left',
+                    label: '鼠标左键',
+                    keyCode: -1,
+                    input: { kind: 'mouse', button: 'left' },
+                    pressCount: 6,
+                    enabled: true,
+                },
+            ],
+        });
+
+        expect(buildRemoteStateForTest().bindingKey).toEqual({
+            keyLabel: '鼠标左键',
+            pressCount: 6,
+        });
     });
 });

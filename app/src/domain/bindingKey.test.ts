@@ -28,14 +28,17 @@ describe('createBindingKeyStore — settings-window mode', () => {
         spy.mockRestore();
     });
 
-    it('completeCapture dispatches the captured key back to the authoritative main store', () => {
+    it('completeCapture dispatches the captured input back to the authoritative main store', () => {
         const spy = vi.spyOn(dispatchMod, 'dispatch').mockResolvedValue();
         const store = createBindingKeyStore({ isSettingsWindow: true });
 
-        store.getState().completeCapture(32, 'Space');
+        store.getState().completeCapture({ kind: 'keyboard', code: 32 }, 'Space');
 
         expect(spy).toHaveBeenCalledWith(expect.objectContaining({
-            v: BRIDGE_VERSION, store: 'bindingKey', action: 'completeCapture', args: [32, 'Space'],
+            v: BRIDGE_VERSION,
+            store: 'bindingKey',
+            action: 'completeCapture',
+            args: [{ kind: 'keyboard', code: 32 }, 'Space'],
         }));
         spy.mockRestore();
     });
@@ -139,6 +142,53 @@ describe('createBindingKeyStore — permission state', () => {
             { id: 'disabled', label: 'A', keyCode: 0, pressCount: 8, enabled: false },
             { id: 'unbound', label: '未绑定', keyCode: -1, pressCount: 2, enabled: true },
         ]);
+    });
+
+    it('captures and increments typed keyboard input', () => {
+        const store = createBindingKeyStore({ isSettingsWindow: false });
+        const id = store.getState().addEntry();
+
+        store.getState().completeCapture({ kind: 'keyboard', code: 49 }, 'Space');
+        store.getState().incrementByInput({ kind: 'keyboard', code: 49 });
+        store.getState().incrementByInput({ kind: 'keyboard', code: 50 });
+
+        expect(store.getState().entries[0]).toEqual(expect.objectContaining({
+            id,
+            label: 'Space',
+            keyCode: 49,
+            input: { kind: 'keyboard', code: 49 },
+            pressCount: 1,
+        }));
+    });
+
+    it('captures and increments typed mouse input', () => {
+        const store = createBindingKeyStore({ isSettingsWindow: false });
+        store.getState().addEntry();
+
+        store.getState().completeCapture({ kind: 'mouse', button: 'left' }, '鼠标左键');
+        store.getState().incrementByInput({ kind: 'mouse', button: 'left' });
+        store.getState().incrementByInput({ kind: 'mouse', button: 'right' });
+
+        expect(store.getState().entries[0]).toEqual(expect.objectContaining({
+            label: '鼠标左键',
+            keyCode: -1,
+            input: { kind: 'mouse', button: 'left' },
+            pressCount: 1,
+        }));
+    });
+
+    it('derives old keyCode entries as keyboard input for visibility and counting', () => {
+        const store = createBindingKeyStore({ isSettingsWindow: false });
+        store.setState({
+            entries: [
+                { id: 'old', label: 'A', keyCode: 0, pressCount: 2, enabled: true },
+            ],
+        });
+
+        expect(store.getState().entries[0].input).toBeUndefined();
+        store.getState().incrementByInput({ kind: 'keyboard', code: 0 });
+
+        expect(store.getState().entries[0].pressCount).toBe(3);
     });
 });
 
@@ -296,6 +346,65 @@ describe('useBindingKeyListener — permission event', () => {
         expect(useBindingKeyStore.getState().listenerRunning).toBe(true);
     });
 
+    it('captures mouse input from input-pressed events', async () => {
+        const handlers: Record<string, (e: { payload: unknown }) => void> = {};
+        listenMock.mockImplementation((event: string, cb: (e: { payload: unknown }) => void) => {
+            handlers[event] = cb;
+            return Promise.resolve(() => {});
+        });
+        invokeMock.mockResolvedValue({ granted: true, platform: 'macos' });
+
+        const { useBindingKeyListener, useBindingKeyStore } = await import('./bindingKey');
+        useBindingKeyStore.setState({
+            panelEnabled: true,
+            entries: [],
+            syncedKeyId: null,
+            capturingId: null,
+            permissionGranted: true,
+            platform: null,
+        });
+        const id = useBindingKeyStore.getState().addEntry();
+        renderHook(() => useBindingKeyListener());
+        await new Promise((r) => setTimeout(r, 0));
+
+        handlers['input-pressed']({ payload: { kind: 'mouse', button: 'right' } });
+
+        expect(useBindingKeyStore.getState().entries[0]).toEqual(expect.objectContaining({
+            id,
+            label: '鼠标右键',
+            input: { kind: 'mouse', button: 'right' },
+            pressCount: 0,
+        }));
+    });
+
+    it('ignores malformed input-pressed payloads', async () => {
+        const handlers: Record<string, (e: { payload: unknown }) => void> = {};
+        listenMock.mockImplementation((event: string, cb: (e: { payload: unknown }) => void) => {
+            handlers[event] = cb;
+            return Promise.resolve(() => {});
+        });
+        invokeMock.mockResolvedValue({ granted: true, platform: 'macos' });
+
+        const { useBindingKeyListener, useBindingKeyStore } = await import('./bindingKey');
+        useBindingKeyStore.setState({
+            panelEnabled: true,
+            entries: [],
+            syncedKeyId: null,
+            capturingId: null,
+            permissionGranted: true,
+            platform: null,
+        });
+        useBindingKeyStore.getState().addEntry();
+        renderHook(() => useBindingKeyListener());
+        await new Promise((r) => setTimeout(r, 0));
+
+        handlers['input-pressed']({ payload: { kind: 'mouse', button: 'side' } });
+        handlers['input-pressed']({ payload: { kind: 'keyboard', code: -1 } });
+
+        expect(useBindingKeyStore.getState().capturingId).not.toBe(null);
+        expect(useBindingKeyStore.getState().entries[0].label).toBe('未绑定');
+    });
+
     it('cleans up listener subscriptions that resolve after unmount', async () => {
         invokeMock.mockImplementation((command: string) => {
             if (command === 'accessibility_status') {
@@ -316,7 +425,7 @@ describe('useBindingKeyListener — permission event', () => {
             }
             return Promise.resolve();
         });
-        const unlisteners = [vi.fn(), vi.fn(), vi.fn()];
+        const unlisteners = [vi.fn(), vi.fn(), vi.fn(), vi.fn()];
         const resolvers: Array<(unlisten: () => void) => void> = [];
         listenMock.mockImplementation(() => new Promise((resolve) => {
             resolvers.push(resolve);
@@ -325,7 +434,7 @@ describe('useBindingKeyListener — permission event', () => {
         const { useBindingKeyListener } = await import('./bindingKey');
         const { unmount } = renderHook(() => useBindingKeyListener());
 
-        expect(resolvers).toHaveLength(3);
+        expect(resolvers).toHaveLength(4);
         unmount();
         resolvers.forEach((resolve, index) => resolve(unlisteners[index]));
         await new Promise((r) => setTimeout(r, 0));
@@ -333,5 +442,6 @@ describe('useBindingKeyListener — permission event', () => {
         expect(unlisteners[0]).toHaveBeenCalledTimes(1);
         expect(unlisteners[1]).toHaveBeenCalledTimes(1);
         expect(unlisteners[2]).toHaveBeenCalledTimes(1);
+        expect(unlisteners[3]).toHaveBeenCalledTimes(1);
     });
 });
