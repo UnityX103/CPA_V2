@@ -42,6 +42,7 @@ export interface PomodoroActions {
     skip: () => void;
     reset: () => void;
     togglePin: () => void;
+    setPinned: (isPinned: boolean) => void;
     applySettings: (
         focusSeconds: number,
         breakSeconds: number,
@@ -86,6 +87,7 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
             skip: () => {},
             reset: () => {},
             togglePin: () => {},
+            setPinned: () => {},
             applySettings: (focusSeconds, breakSeconds, totalRounds, resetProgress, autoStartBreak) => {
                 void dispatch({
                     v: BRIDGE_VERSION,
@@ -209,6 +211,9 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
                 });
             },
             togglePin: () => set((s) => ({ isPinned: !s.isPinned })),
+            setPinned: (isPinned) => set((s) => (
+                s.isPinned === isPinned ? s : { isPinned }
+            )),
             applySettings: (focusSeconds, breakSeconds, totalRounds, resetProgress, autoStartBreak) => {
                 set({
                     focusDurationSeconds: focusSeconds,

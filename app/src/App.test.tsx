@@ -3,6 +3,7 @@ import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useSettingsStore } from './domain/settings';
 import { defaultWeeklyPlan, useCheckinStore, type WeeklyCheckinPlan } from './domain/checkin';
+import { usePomodoroStore } from './domain/pomodoro';
 
 const {
     appUpdateCleanup,
@@ -108,7 +109,12 @@ beforeEach(() => {
     savePersistedCheckinMock.mockReset();
     savePersistedCheckinMock.mockResolvedValue(undefined);
     loadPersistedSettingsMock.mockReset();
-    loadPersistedSettingsMock.mockResolvedValue({ uiScale: 1.5, showActiveAppWindowTitle: true });
+    loadPersistedSettingsMock.mockResolvedValue({
+        uiScale: 1.5,
+        showActiveAppWindowTitle: true,
+        autostartEnabled: false,
+        autoPinOnFocusEnd: true,
+    });
     readAutostartEnabledMock.mockReset();
     readAutostartEnabledMock.mockResolvedValue(false);
     savePersistedSettingsMock.mockReset();
@@ -118,7 +124,14 @@ beforeEach(() => {
         committedUiScale: 1,
         showActiveAppWindowTitle: true,
         autostartEnabled: false,
+        autoPinOnFocusEnd: true,
         dangerousChange: null,
+    });
+    usePomodoroStore.setState({
+        currentPhase: 'focus',
+        isRunning: false,
+        isPinned: false,
+        lastEndEvent: null,
     });
     useCheckinStore.setState({
         weeklyPlan: defaultWeeklyPlan(currentWeekStartFor(new Date())),
@@ -189,7 +202,12 @@ describe('main App window composition', () => {
     });
 
     it('does not resize with default scale before persisted settings hydrate', async () => {
-        let resolveSettings!: (value: { uiScale: number; showActiveAppWindowTitle: boolean }) => void;
+        let resolveSettings!: (value: {
+            uiScale: number;
+            showActiveAppWindowTitle: boolean;
+            autostartEnabled: boolean;
+            autoPinOnFocusEnd: boolean;
+        }) => void;
         loadPersistedSettingsMock.mockReturnValue(new Promise((resolve) => {
             resolveSettings = resolve;
         }));
@@ -199,7 +217,12 @@ describe('main App window composition', () => {
         await Promise.resolve();
         expect(invokeMock).not.toHaveBeenCalledWith('resize_scaled_window', expect.anything());
 
-        resolveSettings({ uiScale: 1.5, showActiveAppWindowTitle: true });
+        resolveSettings({
+            uiScale: 1.5,
+            showActiveAppWindowTitle: true,
+            autostartEnabled: false,
+            autoPinOnFocusEnd: true,
+        });
 
         await waitFor(() => {
             expect(invokeMock).toHaveBeenCalledWith('resize_scaled_window', {
@@ -224,6 +247,7 @@ describe('main App window composition', () => {
             uiScale: 1.25,
             showActiveAppWindowTitle: false,
             autostartEnabled: false,
+            autoPinOnFocusEnd: true,
         });
         readAutostartEnabledMock.mockResolvedValue(true);
 
@@ -235,7 +259,21 @@ describe('main App window composition', () => {
             uiScale: 1.25,
             showActiveAppWindowTitle: false,
             autostartEnabled: true,
+            autoPinOnFocusEnd: true,
         });
+    });
+
+    it('hydrates auto-pin from persisted settings', async () => {
+        loadPersistedSettingsMock.mockResolvedValue({
+            uiScale: 1.25,
+            showActiveAppWindowTitle: true,
+            autostartEnabled: false,
+            autoPinOnFocusEnd: false,
+        });
+
+        render(<App />);
+
+        await waitFor(() => expect(useSettingsStore.getState().autoPinOnFocusEnd).toBe(false));
     });
 
     it('keeps autostart off when no persisted settings exist', async () => {
@@ -256,6 +294,7 @@ describe('main App window composition', () => {
             uiScale: 1.25,
             showActiveAppWindowTitle: false,
             autostartEnabled: false,
+            autoPinOnFocusEnd: true,
         });
         readAutostartEnabledMock.mockReturnValue(new Promise((resolve) => {
             resolveAutostart = resolve;
@@ -284,6 +323,7 @@ describe('main App window composition', () => {
             uiScale: 1.25,
             showActiveAppWindowTitle: true,
             autostartEnabled: false,
+            autoPinOnFocusEnd: true,
         });
         readAutostartEnabledMock.mockReturnValue(new Promise((resolve) => {
             resolveAutostart = resolve;
@@ -297,6 +337,7 @@ describe('main App window composition', () => {
             uiScale: 1.5,
             committedUiScale: 1.5,
             showActiveAppWindowTitle: false,
+            autoPinOnFocusEnd: false,
         });
 
         await act(async () => {
@@ -311,7 +352,65 @@ describe('main App window composition', () => {
             uiScale: 1.5,
             showActiveAppWindowTitle: false,
             autostartEnabled: true,
+            autoPinOnFocusEnd: false,
         });
+    });
+
+    it('auto-pins the main window after a natural focus completion', async () => {
+        render(<App />);
+
+        await act(async () => {
+            usePomodoroStore.setState({
+                lastEndEvent: { id: 1, fromPhase: 'focus', toPhase: 'break', triggeredBy: 'timer' },
+            });
+        });
+
+        expect(usePomodoroStore.getState().isPinned).toBe(true);
+    });
+
+    it('does not auto-pin when the global setting is disabled', async () => {
+        useSettingsStore.setState({ autoPinOnFocusEnd: false });
+        render(<App />);
+
+        await act(async () => {
+            usePomodoroStore.setState({
+                lastEndEvent: { id: 1, fromPhase: 'focus', toPhase: 'break', triggeredBy: 'timer' },
+            });
+        });
+
+        expect(usePomodoroStore.getState().isPinned).toBe(false);
+    });
+
+    it('does not auto-pin when focus is skipped manually', async () => {
+        render(<App />);
+
+        await act(async () => {
+            usePomodoroStore.setState({
+                lastEndEvent: { id: 1, fromPhase: 'focus', toPhase: 'break', triggeredBy: 'skip' },
+            });
+        });
+
+        expect(usePomodoroStore.getState().isPinned).toBe(false);
+    });
+
+    it('does not rewrite pin state when it is already active', async () => {
+        const originalSetPinned = usePomodoroStore.getState().setPinned;
+        const setPinned = vi.fn(originalSetPinned);
+        usePomodoroStore.setState({ isPinned: true, setPinned });
+
+        try {
+            render(<App />);
+
+            await act(async () => {
+                usePomodoroStore.setState({
+                    lastEndEvent: { id: 1, fromPhase: 'focus', toPhase: 'break', triggeredBy: 'timer' },
+                });
+            });
+
+            expect(setPinned).not.toHaveBeenCalled();
+        } finally {
+            usePomodoroStore.setState({ setPinned: originalSetPinned });
+        }
     });
 
     it('persists checkin state after startup roll-forward', async () => {

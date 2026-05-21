@@ -175,6 +175,21 @@ describe('PomodoroTimerSystem.skip', () => {
     });
 });
 
+describe('Pomodoro pin state', () => {
+    it('setPinned sets an explicit pin state without toggling', () => {
+        const store = freshStore();
+
+        store.getState().setPinned(true);
+        expect(store.getState().isPinned).toBe(true);
+
+        store.getState().setPinned(true);
+        expect(store.getState().isPinned).toBe(true);
+
+        store.getState().setPinned(false);
+        expect(store.getState().isPinned).toBe(false);
+    });
+});
+
 describe('createPomodoroStore — settings-window mode', () => {
     it('applySettings dispatches instead of mutating local state', () => {
         const spy = vi.spyOn(dispatchMod, 'dispatch').mockResolvedValue();
