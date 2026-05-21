@@ -11,13 +11,16 @@ import { useSettingsStore } from './settings';
 
 const SAVE_DEBOUNCE_MS = 1000;
 
-export function useCloudAccountSync() {
+export function useCloudAccountSync(opts: { enabled?: boolean } = {}) {
+    const enabled = opts.enabled ?? true;
     const hydratingRef = useRef(false);
     const lastAppliedCloudKeyRef = useRef('');
     const lastSavedLocalKeyRef = useRef('');
     const saveTimerRef = useRef<number | null>(null);
 
     useEffect(() => {
+        if (!enabled) return () => {};
+
         const stores = {
             pomodoro: usePomodoroStore,
             settings: useSettingsStore,
@@ -112,5 +115,5 @@ export function useCloudAccountSync() {
             unsubSettings();
             unsubCheckin();
         };
-    }, []);
+    }, [enabled]);
 }

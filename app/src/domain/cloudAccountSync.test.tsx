@@ -10,6 +10,7 @@ vi.useFakeTimers();
 describe('useCloudAccountSync', () => {
     beforeEach(() => {
         vi.restoreAllMocks();
+        vi.clearAllTimers();
         useNetworkStore.setState({
             accountStatus: 'guest',
             cloudData: null,
@@ -110,5 +111,23 @@ describe('useCloudAccountSync', () => {
             vi.advanceTimersByTime(1);
         });
         expect(save).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not save default local data before startup hydration has completed', () => {
+        const save = vi.spyOn(useNetworkStore.getState(), 'saveUserData');
+        renderHook(() => useCloudAccountSync({ enabled: false }));
+        save.mockClear();
+
+        act(() => {
+            useNetworkStore.setState({
+                accountStatus: 'loggedIn',
+                accountUser: { userId: 'u1', username: 'Alice' },
+                cloudData: null,
+                cloudDataUpdatedAt: null,
+                cloudSyncStatus: 'synced',
+            });
+        });
+
+        expect(save).not.toHaveBeenCalled();
     });
 });

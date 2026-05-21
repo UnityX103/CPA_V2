@@ -84,7 +84,6 @@ function todayLocalDate(): string {
 
 export default function App() {
     useStateSync();
-    useCloudAccountSync();
     useActiveAppListener();
     useBindingKeyListener();
     useBridgeHost();
@@ -93,6 +92,7 @@ export default function App() {
     useRemotePlayerWindowController();
     const uiScale = useSettingsStore((s) => s.uiScale);
     const [settingsHydrated, setSettingsHydrated] = useState(false);
+    useCloudAccountSync({ enabled: settingsHydrated });
     useScaledWindowSize({
         label: 'main',
         baseWidth: MAIN_WINDOW_BASE_SIZE.width,
