@@ -136,6 +136,7 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
             committedUiScale: s.committedUiScale,
             showActiveAppWindowTitle: s.showActiveAppWindowTitle,
             autostartEnabled: s.autostartEnabled,
+            autoPinOnFocusEnd: s.autoPinOnFocusEnd,
             dangerousChange: cloneDangerousChange(s.dangerousChange),
         },
         pomodoro: {
@@ -188,6 +189,7 @@ export function applyDispatch(payload: DispatchPayload): void {
                 case 'previewDangerousUiScale': s.previewDangerousUiScale(...payload.args); return;
                 case 'setShowActiveAppWindowTitle': s.setShowActiveAppWindowTitle(...payload.args); return;
                 case 'setAutostartEnabled': void s.setAutostartEnabled(...payload.args); return;
+                case 'setAutoPinOnFocusEnd': s.setAutoPinOnFocusEnd(...payload.args); return;
                 case 'applyDangerousChange': s.applyDangerousChange(...payload.args); return;
                 case 'revertDangerousChange': s.revertDangerousChange(...payload.args); return;
             }
@@ -275,6 +277,7 @@ export function settingsSig(s: {
     committedUiScale: number;
     showActiveAppWindowTitle: boolean;
     autostartEnabled: boolean;
+    autoPinOnFocusEnd: boolean;
     dangerousChange: unknown;
 }): string {
     return JSON.stringify([
@@ -282,6 +285,7 @@ export function settingsSig(s: {
         s.committedUiScale,
         s.showActiveAppWindowTitle,
         s.autostartEnabled,
+        s.autoPinOnFocusEnd,
         s.dangerousChange,
     ]);
 }

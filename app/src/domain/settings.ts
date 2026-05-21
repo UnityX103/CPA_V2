@@ -102,7 +102,7 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
                     store: 'settings',
                     action: 'setAutoPinOnFocusEnd',
                     args: [enabled],
-                } as Parameters<typeof dispatch>[0]);
+                });
             },
             previewDangerousUiScale: (scale) => {
                 void dispatch({ v: BRIDGE_VERSION, store: 'settings', action: 'previewDangerousUiScale', args: [scale] });
