@@ -511,6 +511,10 @@ describe('OnlineTab parity with 8Le5R', () => {
             playerId: null,
             players: {},
             lastError: null,
+            accountStatus: 'guest',
+            accountUser: null,
+            accountToken: null,
+            accountError: null,
         });
     });
 
@@ -528,6 +532,47 @@ describe('OnlineTab parity with 8Le5R', () => {
     it('does NOT render busy overlay when idle', () => {
         render(<SettingsPanel />);
         expect(screen.queryByText('正在加入房间…')).toBeNull();
+    });
+
+    it('renders account login controls while logged out and disables room actions', () => {
+        render(<SettingsPanel />);
+
+        expect(screen.getByLabelText('账号')).toBeTruthy();
+        expect(screen.getByLabelText('密码')).toBeTruthy();
+        expect(screen.getByRole('button', { name: '登录' })).toBeTruthy();
+        expect(screen.getByRole('button', { name: '创建账号' })).toBeTruthy();
+        expect((screen.getByRole('button', { name: '创建房间' }) as HTMLButtonElement).disabled).toBe(true);
+        expect((screen.getByRole('button', { name: '加入房间' }) as HTMLButtonElement).disabled).toBe(true);
+        expect(screen.getByText('登录后可创建或加入联机房间')).toBeTruthy();
+    });
+
+    it('routes login and create account actions to the network store', () => {
+        const createAccount = vi.fn(async () => {});
+        const login = vi.fn(async () => {});
+        useNetworkStore.setState({ createAccount, login });
+        render(<SettingsPanel />);
+
+        fireEvent.change(screen.getByLabelText('账号'), { target: { value: 'Alice' } });
+        fireEvent.change(screen.getByLabelText('密码'), { target: { value: 'secret' } });
+        fireEvent.click(screen.getByRole('button', { name: '创建账号' }));
+        fireEvent.click(screen.getByRole('button', { name: '登录' }));
+
+        expect(createAccount).toHaveBeenCalledWith('Alice', 'secret');
+        expect(login).toHaveBeenCalledWith('Alice', 'secret');
+    });
+
+    it('renders logged-in account state and enables room actions', () => {
+        useNetworkStore.setState({
+            accountStatus: 'loggedIn',
+            accountUser: { userId: 'u1', username: 'Alice' },
+            accountToken: 'token',
+        });
+
+        render(<SettingsPanel />);
+
+        expect(screen.getByText('Alice')).toBeTruthy();
+        expect(screen.getByRole('button', { name: '退出登录' })).toBeTruthy();
+        expect((screen.getByRole('button', { name: '创建房间' }) as HTMLButtonElement).disabled).toBe(false);
     });
 });
 

@@ -326,3 +326,86 @@ test('parseClientMessage 拒绝 icon_request.bundleIds 数组中任一超长元�
         (err) => err instanceof ProtocolError && err.code === 'INVALID_MESSAGE'
     );
 });
+
+test('parseClientMessage normalizes account auth messages', () =>
+{
+    assert.deepEqual(parseClientMessage(JSON.stringify({
+        v: PROTOCOL_VERSION,
+        type: 'auth_create',
+        username: ' Alice ',
+        password: 'secret'
+    })), {
+        v: PROTOCOL_VERSION,
+        type: 'auth_create',
+        username: 'Alice',
+        password: 'secret'
+    });
+
+    assert.deepEqual(parseClientMessage(JSON.stringify({
+        v: PROTOCOL_VERSION,
+        type: 'auth_login',
+        username: 'Alice',
+        password: 'secret'
+    })), {
+        v: PROTOCOL_VERSION,
+        type: 'auth_login',
+        username: 'Alice',
+        password: 'secret'
+    });
+
+    assert.deepEqual(parseClientMessage(JSON.stringify({
+        v: PROTOCOL_VERSION,
+        type: 'auth_session',
+        token: ' token '
+    })), {
+        v: PROTOCOL_VERSION,
+        type: 'auth_session',
+        token: 'token'
+    });
+
+    assert.deepEqual(parseClientMessage(JSON.stringify({
+        v: PROTOCOL_VERSION,
+        type: 'auth_logout',
+        token: ' token '
+    })), {
+        v: PROTOCOL_VERSION,
+        type: 'auth_logout',
+        token: 'token'
+    });
+});
+
+test('parseClientMessage rejects malformed account input', () =>
+{
+    for (const payload of [
+        { type: 'auth_create', username: '', password: 'secret' },
+        { type: 'auth_create', username: 'a'.repeat(33), password: 'secret' },
+        { type: 'auth_login', username: 'Alice', password: '' },
+        { type: 'auth_login', username: 'Alice', password: 'x'.repeat(129) },
+        { type: 'auth_session', token: '' },
+        { type: 'auth_logout', token: '' }
+    ])
+    {
+        assert.throws(
+            () => parseClientMessage(JSON.stringify({ v: PROTOCOL_VERSION, ...payload })),
+            (error) => error instanceof ProtocolError && error.code === 'INVALID_MESSAGE'
+        );
+    }
+});
+
+test('auth response helpers encode auth_ok and auth_logged_out', async () =>
+{
+    const { createAuthOkMessage, createAuthLoggedOutMessage } = await import('../src/protocol.js');
+    assert.deepEqual(JSON.parse(encodeMessage(createAuthOkMessage({
+        user: { userId: 'u1', username: 'Alice' },
+        token: 'token'
+    }))), {
+        v: PROTOCOL_VERSION,
+        type: 'auth_ok',
+        user: { userId: 'u1', username: 'Alice' },
+        token: 'token'
+    });
+    assert.deepEqual(JSON.parse(encodeMessage(createAuthLoggedOutMessage())), {
+        v: PROTOCOL_VERSION,
+        type: 'auth_logged_out'
+    });
+});

@@ -70,6 +70,10 @@ function makeSample(): BridgeSnapshot {
                 },
             },
             lastError: null,
+            accountStatus: 'loggedIn',
+            accountUser: { userId: 'u-host', username: 'host' },
+            accountToken: 'token-host',
+            accountError: null,
         },
         activeApp: {
             name: 'VS Code',

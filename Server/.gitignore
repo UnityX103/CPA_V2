@@ -4,6 +4,9 @@ node_modules/
 # OMC agent 运行时状态（不入库）
 .omc/
 
+# Runtime account/session store
+data/
+
 # Logs
 *.log
 npm-debug.log*
