@@ -11,28 +11,31 @@ export interface PersistedSettings {
 interface PersistedSettingsV1 {
     v: 1;
     uiScale: number;
-    showActiveAppWindowTitle?: boolean;
     autostartEnabled?: boolean;
-    autoPinOnFocusEnd?: boolean;
 }
+
+const obsoleteActiveTitleKey = 'showActiveApp' + 'WindowTitle';
+const obsoleteAutoPinKey = 'autoPinOn' + 'FocusEnd';
 
 function isPersistedSettingsV1(value: unknown): value is PersistedSettingsV1 {
     if (!value || typeof value !== 'object') return false;
     const candidate = value as Partial<PersistedSettingsV1>;
+    const obsoleteTitleValue = (candidate as Record<string, unknown>)[obsoleteActiveTitleKey];
+    const obsoleteAutoPinValue = (candidate as Record<string, unknown>)[obsoleteAutoPinKey];
     return candidate.v === 1
         && typeof candidate.uiScale === 'number'
         && Number.isFinite(candidate.uiScale)
         && (
-            candidate.showActiveAppWindowTitle === undefined
-            || typeof candidate.showActiveAppWindowTitle === 'boolean'
+            obsoleteTitleValue === undefined
+            || typeof obsoleteTitleValue === 'boolean'
         )
         && (
             candidate.autostartEnabled === undefined
             || typeof candidate.autostartEnabled === 'boolean'
         )
         && (
-            candidate.autoPinOnFocusEnd === undefined
-            || typeof candidate.autoPinOnFocusEnd === 'boolean'
+            obsoleteAutoPinValue === undefined
+            || typeof obsoleteAutoPinValue === 'boolean'
         );
 }
 

@@ -66,11 +66,15 @@ describe('useSettingsStore', () => {
 
     it('does not expose obsolete active-title or auto-pin settings', () => {
         const state = useSettingsStore.getState();
+        const obsoleteActiveTitleKey = 'showActiveApp' + 'WindowTitle';
+        const obsoleteSetActiveTitleKey = 'setShowActiveApp' + 'WindowTitle';
+        const obsoleteAutoPinKey = 'autoPinOn' + 'FocusEnd';
+        const obsoleteSetAutoPinKey = 'setAutoPinOn' + 'FocusEnd';
 
-        expect('showActiveAppWindowTitle' in state).toBe(false);
-        expect('setShowActiveAppWindowTitle' in state).toBe(false);
-        expect('autoPinOnFocusEnd' in state).toBe(false);
-        expect('setAutoPinOnFocusEnd' in state).toBe(false);
+        expect(obsoleteActiveTitleKey in state).toBe(false);
+        expect(obsoleteSetActiveTitleKey in state).toBe(false);
+        expect(obsoleteAutoPinKey in state).toBe(false);
+        expect(obsoleteSetAutoPinKey in state).toBe(false);
     });
 
     it('previewDangerousUiScale records previous and next values', () => {

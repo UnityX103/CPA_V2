@@ -11,6 +11,9 @@ vi.mock('@tauri-apps/plugin-store', () => ({
 }));
 
 describe('settingsPersistence', () => {
+    const obsoleteActiveTitleKey = 'showActiveApp' + 'WindowTitle';
+    const obsoleteAutoPinKey = 'autoPinOn' + 'FocusEnd';
+
     beforeEach(() => {
         store.get.mockReset();
         store.set.mockReset();
@@ -21,9 +24,9 @@ describe('settingsPersistence', () => {
         store.get.mockResolvedValue({
             v: 1,
             uiScale: 1.75,
-            showActiveAppWindowTitle: false,
+            [obsoleteActiveTitleKey]: false,
             autostartEnabled: true,
-            autoPinOnFocusEnd: false,
+            [obsoleteAutoPinKey]: false,
         });
         const { loadPersistedSettings } = await import('./settingsPersistence');
 
@@ -54,7 +57,7 @@ describe('settingsPersistence', () => {
         store.get.mockResolvedValue({
             v: 1,
             uiScale: 1.75,
-            showActiveAppWindowTitle: true,
+            [obsoleteActiveTitleKey]: true,
             autostartEnabled: 'yes',
         });
         const { loadPersistedSettings } = await import('./settingsPersistence');

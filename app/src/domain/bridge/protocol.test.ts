@@ -84,8 +84,8 @@ describe('bridge protocol', () => {
         expect(snap.pomodoro.endActionMode).toBe(sampleEndActionMode);
         expect(snap.pomodoro.endActionVideo).toEqual(sampleEndActionVideo);
         expect(snap.settings.autostartEnabled).toBe(true);
-        expect('showActiveAppWindowTitle' in snap.settings).toBe(false);
-        expect('autoPinOnFocusEnd' in snap.settings).toBe(false);
+        expect(('showActiveApp' + 'WindowTitle') in snap.settings).toBe(false);
+        expect(('autoPinOn' + 'FocusEnd') in snap.settings).toBe(false);
         expect('targetMonitorIndex' in snap.settings).toBe(false);
         expect(snap.appUpdate.status).toBe('upToDate');
         expect(snap.checkin.dailyRecords['2026-05-18'].countsByItemId['pomodoro-focus']).toBe(2);

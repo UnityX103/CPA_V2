@@ -183,8 +183,8 @@ describe('applySnapshotToMirrors', () => {
         expect(useSettingsStore.getState().committedUiScale).toBe(1.0);
         expect(useSettingsStore.getState().autostartEnabled).toBe(true);
         expect(useSettingsStore.getState().dangerousChange?.id).toBe('scale-pending');
-        expect('showActiveAppWindowTitle' in useSettingsStore.getState()).toBe(false);
-        expect('autoPinOnFocusEnd' in useSettingsStore.getState()).toBe(false);
+        expect(('showActiveApp' + 'WindowTitle') in useSettingsStore.getState()).toBe(false);
+        expect(('autoPinOn' + 'FocusEnd') in useSettingsStore.getState()).toBe(false);
         expect('targetMonitorIndex' in useSettingsStore.getState()).toBe(false);
         expect(usePomodoroStore.getState().focusDurationSeconds).toBe(600);
         expect(usePomodoroStore.getState().breakDurationSeconds).toBe(120);

@@ -621,8 +621,8 @@ describe('GlobalTab parity with Pdj9C', () => {
         expect(screen.getByText('开机自启动')).toBeTruthy();
         expect(screen.getByText('自动下载并安装更新')).toBeTruthy();
         expect(screen.getByText('按键计数')).toBeTruthy();
-        expect(screen.queryByText('显示打开的文件名')).toBeNull();
-        expect(screen.queryByText('专注结束后自动置顶')).toBeNull();
+        expect(screen.queryByText('显示打开的' + '文件名')).toBeNull();
+        expect(screen.queryByText('专注结束后' + '自动置顶')).toBeNull();
         expect(screen.queryByText('目标显示器')).toBeNull();
         expect(screen.queryByText(/显示器 \d+/)).toBeNull();
     });

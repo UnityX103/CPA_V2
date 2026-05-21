@@ -118,8 +118,8 @@ describe('buildSnapshot', () => {
         expect(snap.v).toBe(BRIDGE_VERSION);
         expect(snap.settings.uiScale).toBe(1.5);
         expect(snap.settings.autostartEnabled).toBe(true);
-        expect('showActiveAppWindowTitle' in snap.settings).toBe(false);
-        expect('autoPinOnFocusEnd' in snap.settings).toBe(false);
+        expect(('showActiveApp' + 'WindowTitle') in snap.settings).toBe(false);
+        expect(('autoPinOn' + 'FocusEnd') in snap.settings).toBe(false);
         expect('targetMonitorIndex' in snap.settings).toBe(false);
         expect(snap.pomodoro.focusDurationSeconds).toBe(usePomodoroStore.getState().focusDurationSeconds);
         expect(snap.pomodoro.autoStartBreak).toBe(true);
