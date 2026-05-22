@@ -11,9 +11,11 @@ const {
     invokeMock,
     loadPersistedCheckinMock,
     loadPersistedSettingsMock,
+    loadPersistedUserPreferencesMock,
     readAutostartEnabledMock,
     savePersistedCheckinMock,
     savePersistedSettingsMock,
+    savePersistedUserPreferencesMock,
     startAutomaticChecks,
     restoreAccountSession,
     useStateSync,
@@ -24,15 +26,73 @@ const {
     useInputCounterWindowController,
     useRemotePlayerWindowController,
     useAppUpdateStore,
+    useBindingKeyStore,
+    useNetworkStore,
 } = vi.hoisted(() => {
+    function createMockStore(initialState: Record<string, unknown>): any {
+        let state = { ...initialState };
+        const subscribers = new Set<(next: any, previous: any) => void>();
+        const store = Object.assign(vi.fn((selector?: (value: any) => unknown) => (
+            selector ? selector(state) : state
+        )), {
+            getState: vi.fn(() => state),
+            setState: vi.fn((patch: any) => {
+                const previous = state;
+                const next = typeof patch === 'function' ? patch(state) : patch;
+                state = { ...state, ...next };
+                subscribers.forEach((subscriber) => subscriber(state, previous));
+            }),
+            subscribe: vi.fn((subscriber: (next: any, previous: any) => void) => {
+                subscribers.add(subscriber);
+                return () => subscribers.delete(subscriber);
+            }),
+            reset: (nextState: Record<string, unknown>) => {
+                state = { ...nextState };
+                subscribers.clear();
+            },
+        });
+        return store;
+    }
+
     const appUpdateCleanup = vi.fn();
     const hydrateAppUpdate = vi.fn(() => Promise.resolve());
     const startAutomaticChecks = vi.fn(() => appUpdateCleanup);
-    const useAppUpdateStore = Object.assign(vi.fn(), {
-        getState: vi.fn(() => ({
-            hydrate: hydrateAppUpdate,
-            startAutomaticChecks,
-        })),
+    const restoreAccountSession = vi.fn(() => Promise.resolve());
+    const useAppUpdateStore = createMockStore({
+        autoUpdateEnabled: true,
+        status: 'idle',
+        currentVersion: null,
+        availableVersion: null,
+        releaseNotes: null,
+        lastCheckedAt: null,
+        errorMessage: null,
+        hydrate: hydrateAppUpdate,
+        startAutomaticChecks,
+    });
+    const useBindingKeyStore = createMockStore({
+        panelEnabled: true,
+        entries: [],
+        syncedKeyId: null,
+        capturingId: null,
+    });
+    const useNetworkStore = createMockStore({
+        status: 'idle',
+        serverUrl: 'ws://127.0.0.1:8039',
+        autoConnect: false,
+        roomCode: '',
+        playerName: '我',
+        playerId: null,
+        players: {},
+        lastError: null,
+        accountStatus: 'guest',
+        accountUser: null,
+        accountToken: null,
+        accountError: null,
+        cloudSyncStatus: 'idle',
+        cloudData: null,
+        cloudDataUpdatedAt: null,
+        cloudError: null,
+        restoreAccountSession,
     });
     return {
         appUpdateCleanup,
@@ -40,11 +100,13 @@ const {
         invokeMock: vi.fn(),
         loadPersistedCheckinMock: vi.fn(),
         loadPersistedSettingsMock: vi.fn(),
+        loadPersistedUserPreferencesMock: vi.fn(),
         readAutostartEnabledMock: vi.fn(),
         savePersistedCheckinMock: vi.fn(),
         savePersistedSettingsMock: vi.fn(),
+        savePersistedUserPreferencesMock: vi.fn(),
         startAutomaticChecks,
-        restoreAccountSession: vi.fn(() => Promise.resolve()),
+        restoreAccountSession,
         useStateSync: vi.fn(),
         useCloudAccountSync: vi.fn(),
         useActiveAppListener: vi.fn(),
@@ -53,6 +115,8 @@ const {
         useInputCounterWindowController: vi.fn(),
         useRemotePlayerWindowController: vi.fn(),
         useAppUpdateStore,
+        useBindingKeyStore,
+        useNetworkStore,
     };
 });
 
@@ -60,18 +124,12 @@ vi.mock('@tauri-apps/api/core', () => ({ invoke: invokeMock }));
 vi.mock('./domain/stateSync', () => ({ useStateSync }));
 vi.mock('./domain/cloudAccountSync', () => ({ useCloudAccountSync }));
 vi.mock('./domain/activeApp', () => ({ useActiveAppListener }));
-vi.mock('./domain/bindingKey', () => ({ useBindingKeyListener }));
+vi.mock('./domain/bindingKey', () => ({ useBindingKeyListener, useBindingKeyStore }));
 vi.mock('./domain/bridge/host', () => ({ useBridgeHost }));
 vi.mock('./domain/inputCounterWindow', () => ({ useInputCounterWindowController }));
 vi.mock('./domain/remotePlayerWindows', () => ({ useRemotePlayerWindowController }));
 vi.mock('./domain/appUpdate', () => ({ useAppUpdateStore }));
-vi.mock('./domain/network', () => ({
-    useNetworkStore: {
-        getState: vi.fn(() => ({
-            restoreAccountSession,
-        })),
-    },
-}));
+vi.mock('./domain/network', () => ({ useNetworkStore }));
 vi.mock('./domain/autostart', () => ({ readAutostartEnabled: readAutostartEnabledMock }));
 vi.mock('./domain/settingsPersistence', () => ({
     loadPersistedSettings: loadPersistedSettingsMock,
@@ -80,6 +138,10 @@ vi.mock('./domain/settingsPersistence', () => ({
 vi.mock('./domain/checkinPersistence', () => ({
     loadPersistedCheckin: loadPersistedCheckinMock,
     savePersistedCheckin: savePersistedCheckinMock,
+}));
+vi.mock('./domain/userPreferencesPersistence', () => ({
+    loadPersistedUserPreferences: loadPersistedUserPreferencesMock,
+    savePersistedUserPreferences: savePersistedUserPreferencesMock,
 }));
 vi.mock('./ui/PomodoroPanel', () => ({
     PomodoroPanel: () => <div data-testid="pomodoro-panel" />,
@@ -119,6 +181,42 @@ beforeEach(() => {
     useRemotePlayerWindowController.mockClear();
     restoreAccountSession.mockClear();
     restoreAccountSession.mockResolvedValue(undefined);
+    useNetworkStore.reset({
+        status: 'idle',
+        serverUrl: 'ws://127.0.0.1:8039',
+        autoConnect: false,
+        roomCode: '',
+        playerName: '我',
+        playerId: null,
+        players: {},
+        lastError: null,
+        accountStatus: 'guest',
+        accountUser: null,
+        accountToken: null,
+        accountError: null,
+        cloudSyncStatus: 'idle',
+        cloudData: null,
+        cloudDataUpdatedAt: null,
+        cloudError: null,
+        restoreAccountSession,
+    });
+    useAppUpdateStore.reset({
+        autoUpdateEnabled: true,
+        status: 'idle',
+        currentVersion: null,
+        availableVersion: null,
+        releaseNotes: null,
+        lastCheckedAt: null,
+        errorMessage: null,
+        hydrate: hydrateAppUpdate,
+        startAutomaticChecks,
+    });
+    useBindingKeyStore.reset({
+        panelEnabled: true,
+        entries: [],
+        syncedKeyId: null,
+        capturingId: null,
+    });
     loadPersistedCheckinMock.mockReset();
     loadPersistedCheckinMock.mockResolvedValue(null);
     savePersistedCheckinMock.mockReset();
@@ -128,6 +226,10 @@ beforeEach(() => {
         uiScale: 1.5,
         autostartEnabled: false,
     });
+    loadPersistedUserPreferencesMock.mockReset();
+    loadPersistedUserPreferencesMock.mockResolvedValue(null);
+    savePersistedUserPreferencesMock.mockReset();
+    savePersistedUserPreferencesMock.mockResolvedValue(undefined);
     readAutostartEnabledMock.mockReset();
     readAutostartEnabledMock.mockResolvedValue(false);
     savePersistedSettingsMock.mockReset();
@@ -267,10 +369,11 @@ describe('main App window composition', () => {
 
         await waitFor(() => expect(useSettingsStore.getState().autostartEnabled).toBe(true));
         expect(readAutostartEnabledMock).toHaveBeenCalledWith(false);
-        expect(savePersistedSettingsMock).toHaveBeenCalledWith({
-            uiScale: 1.25,
-            autostartEnabled: true,
-        });
+        await waitFor(() => expect(savePersistedUserPreferencesMock).toHaveBeenCalledWith(
+            expect.objectContaining({
+                settings: { uiScale: 1.25, autostartEnabled: true },
+            }),
+        ));
     });
 
     it('keeps autostart off when no persisted settings exist', async () => {
@@ -283,6 +386,11 @@ describe('main App window composition', () => {
         await waitFor(() => expect(useSettingsStore.getState().autostartEnabled).toBe(false));
         expect(readAutostartEnabledMock).toHaveBeenCalledWith(false);
         expect(savePersistedSettingsMock).not.toHaveBeenCalled();
+        expect(savePersistedUserPreferencesMock).toHaveBeenCalledWith(
+            expect.objectContaining({
+                settings: { uiScale: 1, autostartEnabled: false },
+            }),
+        );
     });
 
     it('does not let late startup hydration overwrite early settings changes', async () => {
@@ -310,6 +418,11 @@ describe('main App window composition', () => {
         }));
         expect(useSettingsStore.getState().autostartEnabled).toBe(true);
         expect(savePersistedSettingsMock).not.toHaveBeenCalled();
+        expect(savePersistedUserPreferencesMock).toHaveBeenCalledWith(
+            expect.objectContaining({
+                settings: expect.objectContaining({ autostartEnabled: true }),
+            }),
+        );
     });
 
     it('reconciles autostart while preserving unrelated settings changed during native read', async () => {
@@ -338,10 +451,67 @@ describe('main App window composition', () => {
         await waitFor(() => expect(useSettingsStore.getState().autostartEnabled).toBe(true));
         expect(useSettingsStore.getState().uiScale).toBe(1.5);
         expect(useSettingsStore.getState().committedUiScale).toBe(1.5);
-        expect(savePersistedSettingsMock).toHaveBeenCalledWith({
-            uiScale: 1.5,
-            autostartEnabled: true,
+        await waitFor(() => expect(savePersistedUserPreferencesMock).toHaveBeenCalledWith(
+            expect.objectContaining({
+                settings: { uiScale: 1.5, autostartEnabled: true },
+            }),
+        ));
+    });
+
+    it('hydrates unified local preferences before restoring account session', async () => {
+        loadPersistedUserPreferencesMock.mockResolvedValue({
+            schemaVersion: 1,
+            pomodoro: {
+                focusDurationSeconds: 900,
+                breakDurationSeconds: 120,
+                totalRounds: 2,
+                autoStartBreak: true,
+                endActionMode: 'topWindow',
+                endActionVideo: { sourceKind: 'builtin', builtinVideoId: 'qianqian', customVideoPath: '' },
+            },
+            settings: {
+                uiScale: 1.25,
+                autostartEnabled: false,
+            },
+            appUpdate: {
+                autoUpdateEnabled: false,
+            },
+            network: {
+                autoConnect: true,
+                playerName: 'Alice',
+            },
+            bindingKey: {
+                panelEnabled: false,
+                entries: [{
+                    id: 'space',
+                    label: 'Space',
+                    keyCode: 49,
+                    input: { kind: 'keyboard', code: 49 },
+                    enabled: true,
+                }],
+                syncedKeyId: 'space',
+            },
+            checkin: {
+                weeklyPlan: defaultWeeklyPlan('2026-05-18'),
+                dailyRecords: {},
+            },
         });
+
+        render(<App />);
+
+        await waitFor(() => expect(restoreAccountSession).toHaveBeenCalledTimes(1));
+        expect(usePomodoroStore.getState().focusDurationSeconds).toBe(900);
+        expect(useAppUpdateStore.getState().autoUpdateEnabled).toBe(false);
+        expect(useNetworkStore.getState().autoConnect).toBe(true);
+        expect(useNetworkStore.getState().playerName).toBe('Alice');
+        expect(useBindingKeyStore.getState().panelEnabled).toBe(false);
+        expect(useBindingKeyStore.getState().entries[0]).toEqual(expect.objectContaining({
+            label: 'Space',
+            pressCount: 0,
+        }));
+        expect(savePersistedUserPreferencesMock.mock.invocationCallOrder[0]).toBeLessThan(
+            restoreAccountSession.mock.invocationCallOrder[0],
+        );
     });
 
     it('persists checkin state after startup roll-forward', async () => {
@@ -369,13 +539,17 @@ describe('main App window composition', () => {
 
         render(<App />);
 
-        await waitFor(() => expect(savePersistedCheckinMock).toHaveBeenCalledWith({
-            schemaVersion: 1,
-            weeklyPlan: {
-                ...oldPlan,
-                weekStartDate: currentWeekStartFor(new Date()),
-            },
-            dailyRecords: {},
-        }));
+        await waitFor(() => expect(savePersistedUserPreferencesMock).toHaveBeenCalledWith(
+            expect.objectContaining({
+                checkin: {
+                    weeklyPlan: {
+                        ...oldPlan,
+                        weekStartDate: currentWeekStartFor(new Date()),
+                    },
+                    dailyRecords: {},
+                },
+            }),
+        ));
+        expect(savePersistedCheckinMock).not.toHaveBeenCalled();
     });
 });

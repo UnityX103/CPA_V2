@@ -8,6 +8,9 @@ import { useCheckinStore } from './checkin';
 import { useNetworkStore } from './network';
 import { usePomodoroStore } from './pomodoro';
 import { useSettingsStore } from './settings';
+import { useAppUpdateStore } from './appUpdate';
+import { useBindingKeyStore } from './bindingKey';
+import { savePersistedUserPreferences } from './userPreferencesPersistence';
 
 const SAVE_DEBOUNCE_MS = 1000;
 
@@ -24,6 +27,9 @@ export function useCloudAccountSync(opts: { enabled?: boolean } = {}) {
         const stores = {
             pomodoro: usePomodoroStore,
             settings: useSettingsStore,
+            appUpdate: useAppUpdateStore,
+            network: useNetworkStore,
+            bindingKey: useBindingKeyStore,
             checkin: useCheckinStore,
         };
 
@@ -52,6 +58,10 @@ export function useCloudAccountSync(opts: { enabled?: boolean } = {}) {
         };
 
         const unsubNetwork = useNetworkStore.subscribe((state, previous) => {
+            if (state.autoConnect !== previous.autoConnect || state.playerName !== previous.playerName) {
+                scheduleSave();
+            }
+
             if (state.accountStatus !== 'loggedIn') {
                 clearTimer();
                 lastAppliedCloudKeyRef.current = '';
@@ -73,6 +83,7 @@ export function useCloudAccountSync(opts: { enabled?: boolean } = {}) {
 
             hydratingRef.current = true;
             hydrateCloudAccountData({ stores, data: state.cloudData });
+            void savePersistedUserPreferences(buildCloudAccountData(stores));
             lastAppliedCloudKeyRef.current = cloudAccountDataKey(state.cloudData);
             lastSavedLocalKeyRef.current = lastAppliedCloudKeyRef.current;
             hydratingRef.current = false;
@@ -100,6 +111,22 @@ export function useCloudAccountSync(opts: { enabled?: boolean } = {}) {
             }
         });
 
+        const unsubAppUpdate = useAppUpdateStore.subscribe((s, p) => {
+            if (s.autoUpdateEnabled !== p.autoUpdateEnabled) {
+                scheduleSave();
+            }
+        });
+
+        const unsubBindingKey = useBindingKeyStore.subscribe((s, p) => {
+            if (
+                s.panelEnabled !== p.panelEnabled ||
+                s.entries !== p.entries ||
+                s.syncedKeyId !== p.syncedKeyId
+            ) {
+                scheduleSave();
+            }
+        });
+
         const unsubCheckin = useCheckinStore.subscribe((s, p) => {
             if (s.weeklyPlan !== p.weeklyPlan || s.dailyRecords !== p.dailyRecords) {
                 scheduleSave();
@@ -111,6 +138,8 @@ export function useCloudAccountSync(opts: { enabled?: boolean } = {}) {
             unsubNetwork();
             unsubPomodoro();
             unsubSettings();
+            unsubAppUpdate();
+            unsubBindingKey();
             unsubCheckin();
         };
     }, [enabled]);

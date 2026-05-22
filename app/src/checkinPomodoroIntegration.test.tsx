@@ -8,10 +8,12 @@ const {
     hydrateAppUpdate,
     loadPersistedCheckinMock,
     loadPersistedSettingsMock,
+    loadPersistedUserPreferencesMock,
     openCheckinEditorWindowMock,
     readAutostartEnabledMock,
     savePersistedCheckinMock,
     savePersistedSettingsMock,
+    savePersistedUserPreferencesMock,
     startAutomaticChecks,
     useActiveAppListener,
     useBindingKeyListener,
@@ -22,23 +24,54 @@ const {
     useStateSync,
     useAppUpdateStore,
 } = vi.hoisted(() => {
+    function createMockStore(initialState: Record<string, unknown>): any {
+        let state = { ...initialState };
+        const subscribers = new Set<(next: any, previous: any) => void>();
+        return Object.assign(vi.fn((selector?: (value: any) => unknown) => (
+            selector ? selector(state) : state
+        )), {
+            getState: vi.fn(() => state),
+            setState: vi.fn((patch: any) => {
+                const previous = state;
+                const next = typeof patch === 'function' ? patch(state) : patch;
+                state = { ...state, ...next };
+                subscribers.forEach((subscriber) => subscriber(state, previous));
+            }),
+            subscribe: vi.fn((subscriber: (next: any, previous: any) => void) => {
+                subscribers.add(subscriber);
+                return () => subscribers.delete(subscriber);
+            }),
+            reset: (nextState: Record<string, unknown>) => {
+                state = { ...nextState };
+                subscribers.clear();
+            },
+        });
+    }
+
     const hydrateAppUpdate = vi.fn(() => Promise.resolve());
     const startAutomaticChecks = vi.fn(() => vi.fn());
-    const useAppUpdateStore = Object.assign(vi.fn(), {
-        getState: vi.fn(() => ({
-            hydrate: hydrateAppUpdate,
-            startAutomaticChecks,
-        })),
+    const useAppUpdateStore = createMockStore({
+        autoUpdateEnabled: true,
+        status: 'idle',
+        currentVersion: null,
+        availableVersion: null,
+        releaseNotes: null,
+        lastCheckedAt: null,
+        errorMessage: null,
+        hydrate: hydrateAppUpdate,
+        startAutomaticChecks,
     });
 
     return {
         hydrateAppUpdate,
         loadPersistedCheckinMock: vi.fn(),
         loadPersistedSettingsMock: vi.fn(),
+        loadPersistedUserPreferencesMock: vi.fn(),
         openCheckinEditorWindowMock: vi.fn(),
         readAutostartEnabledMock: vi.fn(),
         savePersistedCheckinMock: vi.fn(),
         savePersistedSettingsMock: vi.fn(),
+        savePersistedUserPreferencesMock: vi.fn(),
         startAutomaticChecks,
         useActiveAppListener: vi.fn(),
         useBindingKeyListener: vi.fn(),
@@ -54,7 +87,10 @@ const {
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn(() => Promise.resolve()) }));
 vi.mock('./domain/stateSync', () => ({ useStateSync }));
 vi.mock('./domain/activeApp', () => ({ useActiveAppListener }));
-vi.mock('./domain/bindingKey', () => ({ useBindingKeyListener }));
+vi.mock('./domain/bindingKey', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('./domain/bindingKey')>();
+    return { ...actual, useBindingKeyListener };
+});
 vi.mock('./domain/bridge/host', () => ({ useBridgeHost }));
 vi.mock('./domain/checkinWindow', () => ({
     openCheckinEditorWindow: openCheckinEditorWindowMock,
@@ -71,6 +107,10 @@ vi.mock('./domain/settingsPersistence', () => ({
 vi.mock('./domain/checkinPersistence', () => ({
     loadPersistedCheckin: loadPersistedCheckinMock,
     savePersistedCheckin: savePersistedCheckinMock,
+}));
+vi.mock('./domain/userPreferencesPersistence', () => ({
+    loadPersistedUserPreferences: loadPersistedUserPreferencesMock,
+    savePersistedUserPreferences: savePersistedUserPreferencesMock,
 }));
 vi.mock('./ui/PomodoroPanel', () => ({
     PomodoroPanel: () => <div data-testid="pomodoro-panel" />,
@@ -115,8 +155,23 @@ beforeEach(() => {
     readAutostartEnabledMock.mockResolvedValue(false);
     savePersistedSettingsMock.mockReset();
     savePersistedSettingsMock.mockResolvedValue(undefined);
+    loadPersistedUserPreferencesMock.mockReset();
+    loadPersistedUserPreferencesMock.mockResolvedValue(null);
+    savePersistedUserPreferencesMock.mockReset();
+    savePersistedUserPreferencesMock.mockResolvedValue(undefined);
     hydrateAppUpdate.mockClear();
     startAutomaticChecks.mockClear();
+    useAppUpdateStore.reset({
+        autoUpdateEnabled: true,
+        status: 'idle',
+        currentVersion: null,
+        availableVersion: null,
+        releaseNotes: null,
+        lastCheckedAt: null,
+        errorMessage: null,
+        hydrate: hydrateAppUpdate,
+        startAutomaticChecks,
+    });
     useStateSync.mockClear();
     useActiveAppListener.mockClear();
     useBindingKeyListener.mockClear();

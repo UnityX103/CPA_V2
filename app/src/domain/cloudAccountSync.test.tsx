@@ -4,6 +4,14 @@ import { useCloudAccountSync } from './cloudAccountSync';
 import { useNetworkStore } from './network';
 import { usePomodoroStore } from './pomodoro';
 import { defaultWeeklyPlan, useCheckinStore } from './checkin';
+import { useAppUpdateStore } from './appUpdate';
+import { useBindingKeyStore } from './bindingKey';
+
+const savePersistedUserPreferencesMock = vi.hoisted(() => vi.fn(async () => {}));
+
+vi.mock('./userPreferencesPersistence', () => ({
+    savePersistedUserPreferences: savePersistedUserPreferencesMock,
+}));
 
 vi.useFakeTimers();
 
@@ -27,6 +35,22 @@ describe('useCloudAccountSync', () => {
             weeklyPlan: defaultWeeklyPlan('2026-05-18'),
             dailyRecords: {},
         });
+        useAppUpdateStore.setState({
+            autoUpdateEnabled: true,
+            status: 'idle',
+            currentVersion: null,
+            availableVersion: null,
+            releaseNotes: null,
+            lastCheckedAt: null,
+            errorMessage: null,
+        });
+        useBindingKeyStore.setState({
+            panelEnabled: true,
+            entries: [],
+            syncedKeyId: null,
+            capturingId: null,
+        });
+        savePersistedUserPreferencesMock.mockClear();
     });
 
     afterEach(() => {
@@ -74,6 +98,24 @@ describe('useCloudAccountSync', () => {
                         uiScale: 1,
                         autostartEnabled: false,
                     },
+                    appUpdate: {
+                        autoUpdateEnabled: false,
+                    },
+                    network: {
+                        autoConnect: true,
+                        playerName: 'Alice',
+                    },
+                    bindingKey: {
+                        panelEnabled: false,
+                        entries: [{
+                            id: 'space',
+                            label: 'Space',
+                            keyCode: 49,
+                            input: { kind: 'keyboard', code: 49 },
+                            enabled: true,
+                        }],
+                        syncedKeyId: 'space',
+                    },
                     checkin: {
                         weeklyPlan: defaultWeeklyPlan('2026-05-18'),
                         dailyRecords: {},
@@ -85,6 +127,10 @@ describe('useCloudAccountSync', () => {
         });
 
         expect(usePomodoroStore.getState().focusDurationSeconds).toBe(600);
+        expect(useAppUpdateStore.getState().autoUpdateEnabled).toBe(false);
+        expect(useNetworkStore.getState().autoConnect).toBe(true);
+        expect(useBindingKeyStore.getState().panelEnabled).toBe(false);
+        expect(savePersistedUserPreferencesMock).toHaveBeenCalledTimes(1);
         expect(save).not.toHaveBeenCalled();
     });
 
