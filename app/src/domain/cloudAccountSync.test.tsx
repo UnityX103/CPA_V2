@@ -157,6 +157,24 @@ describe('useCloudAccountSync', () => {
         expect(save).toHaveBeenCalledTimes(1);
     });
 
+    it('saves local archive when logged-in durable settings change before cloud debounce fires', () => {
+        renderHook(() => useCloudAccountSync());
+
+        act(() => {
+            useNetworkStore.setState({
+                accountStatus: 'loggedIn',
+                accountUser: { userId: 'u1', username: 'Alice' },
+                cloudSyncStatus: 'synced',
+            });
+            savePersistedUserPreferencesMock.mockClear();
+            usePomodoroStore.getState().applySettings(840, 120, 4, true, false);
+        });
+
+        expect(savePersistedUserPreferencesMock).toHaveBeenCalledWith(expect.objectContaining({
+            pomodoro: expect.objectContaining({ focusDurationSeconds: 840 }),
+        }));
+    });
+
     it('does not save default local data before startup hydration has completed', () => {
         const save = vi.spyOn(useNetworkStore.getState(), 'saveUserData');
         renderHook(() => useCloudAccountSync({ enabled: false }));

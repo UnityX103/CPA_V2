@@ -50,7 +50,7 @@ describe('SettingsApp scaled window sizing', () => {
                     minWidth: 360,
                     minHeight: 320,
                     scale: 1.5,
-                    center: true,
+                    defaultCenter: true,
                 },
             });
         });

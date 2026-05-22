@@ -315,7 +315,7 @@ describe('main App window composition', () => {
                     minWidth: 249,
                     minHeight: 171,
                     scale: 1.5,
-                    center: false,
+                    defaultCenter: false,
                 },
             });
         });
@@ -349,7 +349,7 @@ describe('main App window composition', () => {
                     minWidth: 249,
                     minHeight: 171,
                     scale: 1.5,
-                    center: false,
+                    defaultCenter: false,
                 },
             });
         });
@@ -458,7 +458,7 @@ describe('main App window composition', () => {
         ));
     });
 
-    it('hydrates unified local preferences before restoring account session', async () => {
+    it('hydrates unified local preferences when account restore falls back to guest', async () => {
         loadPersistedUserPreferencesMock.mockResolvedValue({
             schemaVersion: 1,
             pomodoro: {
@@ -496,6 +496,9 @@ describe('main App window composition', () => {
                 dailyRecords: {},
             },
         });
+        restoreAccountSession.mockImplementation(async () => {
+            useNetworkStore.setState({ accountStatus: 'guest' });
+        });
 
         render(<App />);
 
@@ -509,9 +512,93 @@ describe('main App window composition', () => {
             label: 'Space',
             pressCount: 0,
         }));
-        expect(savePersistedUserPreferencesMock.mock.invocationCallOrder[0]).toBeLessThan(
-            restoreAccountSession.mock.invocationCallOrder[0],
-        );
+        expect(restoreAccountSession).toHaveBeenCalledTimes(1);
+        expect(savePersistedUserPreferencesMock).toHaveBeenCalledWith(expect.objectContaining({
+            pomodoro: expect.objectContaining({ focusDurationSeconds: 900 }),
+        }));
+    });
+
+    it('prefers cloud archive when saved session restores successfully', async () => {
+        loadPersistedUserPreferencesMock.mockResolvedValue({
+            schemaVersion: 1,
+            pomodoro: {
+                focusDurationSeconds: 900,
+                breakDurationSeconds: 120,
+                totalRounds: 2,
+                autoStartBreak: false,
+                endActionMode: 'playVideo',
+                endActionVideo: { sourceKind: 'builtin', builtinVideoId: 'default', customVideoPath: '' },
+            },
+            settings: {
+                uiScale: 1.1,
+                autostartEnabled: false,
+            },
+            appUpdate: {
+                autoUpdateEnabled: true,
+            },
+            network: {
+                autoConnect: false,
+                playerName: 'Local',
+            },
+            bindingKey: {
+                panelEnabled: true,
+                entries: [],
+                syncedKeyId: null,
+            },
+            checkin: {
+                weeklyPlan: defaultWeeklyPlan('2026-05-18'),
+                dailyRecords: {},
+            },
+        });
+        restoreAccountSession.mockImplementation(async () => {
+            useNetworkStore.setState({
+                accountStatus: 'loggedIn',
+                accountUser: { userId: 'u1', username: 'Alice' },
+                cloudSyncStatus: 'synced',
+                cloudDataUpdatedAt: 10,
+                cloudData: {
+                    schemaVersion: 1,
+                    updatedAt: 10,
+                    pomodoro: {
+                        focusDurationSeconds: 1800,
+                        breakDurationSeconds: 300,
+                        totalRounds: 3,
+                        autoStartBreak: true,
+                        endActionMode: 'topWindow',
+                        endActionVideo: { sourceKind: 'builtin', builtinVideoId: 'qianqian', customVideoPath: '' },
+                    },
+                    settings: {
+                        uiScale: 1.4,
+                        autostartEnabled: false,
+                    },
+                    appUpdate: {
+                        autoUpdateEnabled: false,
+                    },
+                    network: {
+                        autoConnect: true,
+                        playerName: 'Cloud',
+                    },
+                    bindingKey: {
+                        panelEnabled: false,
+                        entries: [],
+                        syncedKeyId: null,
+                    },
+                    checkin: {
+                        weeklyPlan: defaultWeeklyPlan('2026-05-18'),
+                        dailyRecords: {},
+                    },
+                },
+            });
+        });
+
+        render(<App />);
+
+        await waitFor(() => expect(usePomodoroStore.getState().focusDurationSeconds).toBe(1800));
+        expect(useNetworkStore.getState().playerName).toBe('Cloud');
+        expect(savePersistedUserPreferencesMock).toHaveBeenCalledWith(expect.objectContaining({
+            pomodoro: expect.objectContaining({ focusDurationSeconds: 1800 }),
+            network: expect.objectContaining({ playerName: 'Cloud' }),
+        }));
     });
 
     it('persists checkin state after startup roll-forward', async () => {

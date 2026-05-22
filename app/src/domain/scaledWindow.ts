@@ -39,7 +39,7 @@ export function useScaledWindowSize({
                 minWidth,
                 minHeight,
                 scale,
-                center,
+                defaultCenter: center,
             },
         }).catch((error) => {
             console.error(`[scaled-window] resize ${label} failed`, error);

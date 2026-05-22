@@ -3,6 +3,7 @@ mod active_app;
 mod key_counter;
 mod scaled_window;
 mod video_files;
+mod window_layout;
 mod window_helpers;
 
 use serde::Serialize;
@@ -241,6 +242,36 @@ fn settings_center_position(app: &tauri::AppHandle) -> Result<PhysicalPosition<i
     Ok(PhysicalPosition::new(x, y))
 }
 
+fn window_layout_min_size(label: &str) -> Option<(f64, f64)> {
+    match label {
+        "main" => Some((MAIN_W, MAIN_H)),
+        "settings" => Some((SETTINGS_MIN_W, SETTINGS_MIN_H)),
+        "input-counter" => Some((INPUT_COUNTER_W, INPUT_COUNTER_H)),
+        "today-checkin" => Some((TODAY_CHECKIN_W, TODAY_CHECKIN_H)),
+        "checkin-editor" => Some((CHECKIN_EDITOR_MIN_W, CHECKIN_EDITOR_MIN_H)),
+        _ => None,
+    }
+}
+
+fn apply_saved_window_layout(app: &tauri::AppHandle, label: &str) -> bool {
+    let Some((min_width, min_height)) = window_layout_min_size(label) else {
+        return false;
+    };
+    let Some(window) = app.get_webview_window(label) else {
+        return false;
+    };
+    let Some(layout) = window_layout::load_layout(app, label, min_width, min_height) else {
+        return false;
+    };
+    match window_layout::apply_layout(&window, layout) {
+        Ok(()) => true,
+        Err(e) => {
+            eprintln!("[window_layout] apply {label} failed: {e}");
+            false
+        }
+    }
+}
+
 /// 在 setup() 内同步构建（隐藏的）设置窗口并装好 first-mouse hook。
 /// 调用者必须在主线程（典型上下文：`setup` 闭包内）。失败仅 eprintln，
 /// 让主流程能继续；用户点齿轮时 open_settings_window_impl 会返回明确 Err。
@@ -376,8 +407,10 @@ pub(crate) async fn open_settings_window_impl(app: tauri::AppHandle) -> Result<(
     let w = app.get_webview_window("settings").ok_or_else(|| {
         "settings window not built — setup() probably failed; check stderr".to_string()
     })?;
-    if let Ok(pos) = settings_center_position(&app) {
-        let _ = w.set_position(pos);
+    if !apply_saved_window_layout(&app, "settings") {
+        if let Ok(pos) = settings_center_position(&app) {
+            let _ = w.set_position(pos);
+        }
     }
     w.show().map_err(|e| e.to_string())?;
     w.set_focus().map_err(|e| e.to_string())?;
@@ -402,6 +435,7 @@ async fn show_input_counter_window(app: tauri::AppHandle) -> Result<(), String> 
     let w = app.get_webview_window("input-counter").ok_or_else(|| {
         "input-counter window not built — setup() probably failed; check stderr".to_string()
     })?;
+    apply_saved_window_layout(&app, "input-counter");
     w.show().map_err(|e| e.to_string())?;
     Ok(())
 }
@@ -429,6 +463,7 @@ fn show_existing_window(app: tauri::AppHandle, label: &str) -> Result<(), String
     let w = app.get_webview_window(label).ok_or_else(|| {
         format!("{label} window not built — setup() probably failed; check stderr")
     })?;
+    apply_saved_window_layout(&app, label);
     w.show().map_err(|e| e.to_string())?;
     Ok(())
 }
@@ -437,6 +472,7 @@ fn focus_existing_window(app: tauri::AppHandle, label: &str) -> Result<(), Strin
     let w = app.get_webview_window(label).ok_or_else(|| {
         format!("{label} window not built — setup() probably failed; check stderr")
     })?;
+    apply_saved_window_layout(&app, label);
     w.show().map_err(|e| e.to_string())?;
     w.set_focus().map_err(|e| e.to_string())?;
     Ok(())
@@ -532,6 +568,15 @@ pub fn run() {
             // 配合 build_settings_window_hidden 一起完成 settings 窗口的 lifecycle 闭环。
             if let Some(window) = app.get_webview_window("main") {
                 window_helpers::install_focus_restorer(&window, app.handle().clone());
+            }
+            for label in [
+                "main",
+                "settings",
+                "input-counter",
+                "today-checkin",
+                "checkin-editor",
+            ] {
+                window_layout::install_tracking(app.handle().clone(), label);
             }
             // 1Hz 前台 App 推送：用 AtomicBool 让 App 退出时线程能跳出循环
             // adversarial-review #6 的修复要点；NSWorkspace.frontmostApplication 在

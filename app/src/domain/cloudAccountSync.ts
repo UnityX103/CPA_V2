@@ -50,6 +50,11 @@ export function useCloudAccountSync(opts: { enabled?: boolean } = {}) {
             net.saveUserData(snapshot, net.cloudDataUpdatedAt);
         };
 
+        const saveLocalNow = () => {
+            if (hydratingRef.current) return;
+            void savePersistedUserPreferences(buildCloudAccountData(stores));
+        };
+
         const scheduleSave = () => {
             if (hydratingRef.current) return;
             if (useNetworkStore.getState().accountStatus !== 'loggedIn') return;
@@ -59,6 +64,7 @@ export function useCloudAccountSync(opts: { enabled?: boolean } = {}) {
 
         const unsubNetwork = useNetworkStore.subscribe((state, previous) => {
             if (state.autoConnect !== previous.autoConnect || state.playerName !== previous.playerName) {
+                saveLocalNow();
                 scheduleSave();
             }
 
@@ -98,6 +104,7 @@ export function useCloudAccountSync(opts: { enabled?: boolean } = {}) {
                 s.endActionMode !== p.endActionMode ||
                 s.endActionVideo !== p.endActionVideo
             ) {
+                saveLocalNow();
                 scheduleSave();
             }
         });
@@ -107,12 +114,14 @@ export function useCloudAccountSync(opts: { enabled?: boolean } = {}) {
                 s.committedUiScale !== p.committedUiScale ||
                 s.autostartEnabled !== p.autostartEnabled
             ) {
+                saveLocalNow();
                 scheduleSave();
             }
         });
 
         const unsubAppUpdate = useAppUpdateStore.subscribe((s, p) => {
             if (s.autoUpdateEnabled !== p.autoUpdateEnabled) {
+                saveLocalNow();
                 scheduleSave();
             }
         });
@@ -123,12 +132,14 @@ export function useCloudAccountSync(opts: { enabled?: boolean } = {}) {
                 s.entries !== p.entries ||
                 s.syncedKeyId !== p.syncedKeyId
             ) {
+                saveLocalNow();
                 scheduleSave();
             }
         });
 
         const unsubCheckin = useCheckinStore.subscribe((s, p) => {
             if (s.weeklyPlan !== p.weeklyPlan || s.dailyRecords !== p.dailyRecords) {
+                saveLocalNow();
                 scheduleSave();
             }
         });

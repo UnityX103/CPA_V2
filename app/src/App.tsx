@@ -29,6 +29,11 @@ import {
     loadPersistedUserPreferences,
     savePersistedUserPreferences,
 } from './domain/userPreferencesPersistence';
+import type { CloudAccountData } from './domain/cloudAccountData';
+
+const STARTUP_ACCOUNT_RESTORE_TIMEOUT_MS = 2500;
+
+type StartupArchiveSource = 'local' | 'cloud';
 
 function clampStartupScale(scale: number): number {
     if (!Number.isFinite(scale)) return 1.0;
@@ -89,6 +94,43 @@ function userPreferenceStores(): UserPreferencesStores {
     };
 }
 
+function waitForNetworkStartupResult(
+    timeoutMs = STARTUP_ACCOUNT_RESTORE_TIMEOUT_MS,
+): Promise<StartupArchiveSource> {
+    const current = useNetworkStore.getState();
+    if (current.accountStatus === 'loggedIn' && current.cloudSyncStatus === 'synced') {
+        return Promise.resolve(current.cloudData ? 'cloud' : 'local');
+    }
+    if (current.accountStatus !== 'checking' && current.accountStatus !== 'loggingIn') {
+        return Promise.resolve('local');
+    }
+
+    return new Promise((resolve) => {
+        let settled = false;
+        const finish = (source: StartupArchiveSource) => {
+            if (settled) return;
+            settled = true;
+            window.clearTimeout(timer);
+            unsubscribe();
+            resolve(source);
+        };
+        const timer = window.setTimeout(() => finish('local'), timeoutMs);
+        const unsubscribe = useNetworkStore.subscribe((state) => {
+            if (state.accountStatus === 'loggedIn' && state.cloudSyncStatus === 'synced') {
+                finish(state.cloudData ? 'cloud' : 'local');
+                return;
+            }
+            if (
+                state.accountStatus === 'guest'
+                || state.accountStatus === 'error'
+                || state.cloudSyncStatus === 'offline'
+            ) {
+                finish('local');
+            }
+        });
+    });
+}
+
 export default function App() {
     useStateSync();
     useActiveAppListener();
@@ -108,11 +150,6 @@ export default function App() {
         minHeight: MAIN_WINDOW_BASE_SIZE.height,
         enabled: localHydrated,
     });
-
-    useEffect(() => {
-        if (!localHydrated) return;
-        void useNetworkStore.getState().restoreAccountSession();
-    }, [localHydrated]);
 
     useEffect(() => {
         let cancelled = false;
@@ -179,7 +216,32 @@ export default function App() {
                     ? useSettingsStore.getState().autostartEnabled
                     : confirmedAutostartEnabled;
 
-                if (preferences) {
+                let cloudArchive: CloudAccountData | null = null;
+                try {
+                    await useNetworkStore.getState().restoreAccountSession();
+                    if (!cancelled) {
+                        const source = await waitForNetworkStartupResult();
+                        if (!cancelled && source === 'cloud') {
+                            cloudArchive = useNetworkStore.getState().cloudData;
+                        }
+                    }
+                } catch (error) {
+                    console.warn('[startup] account restore failed; falling back to local archive', error);
+                }
+                if (cancelled) return;
+
+                if (cloudArchive) {
+                    hydrateUserPreferencesSnapshot({
+                        stores,
+                        snapshot: {
+                            ...cloudArchive,
+                            settings: {
+                                ...cloudArchive.settings,
+                                autostartEnabled: startupAutostartEnabled,
+                            },
+                        },
+                    });
+                } else if (preferences) {
                     hydrateUserPreferencesSnapshot({
                         stores,
                         snapshot: {
@@ -216,7 +278,11 @@ export default function App() {
                 if (afterRollForward.weeklyPlan !== beforeRollForward) {
                     await saveLocalSnapshot(stores);
                 }
-                await saveLocalSnapshot(stores);
+                const savedSnapshot = await saveLocalSnapshot(stores);
+                const network = useNetworkStore.getState();
+                if (network.accountStatus === 'loggedIn' && !network.cloudData) {
+                    network.saveUserData(savedSnapshot, network.cloudDataUpdatedAt);
+                }
                 subscribeLocalPreferences(stores);
                 appUpdateCleanup = useAppUpdateStore.getState().startAutomaticChecks();
                 setLocalHydrated(true);
