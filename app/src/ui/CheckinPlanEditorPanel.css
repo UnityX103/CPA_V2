@@ -534,6 +534,7 @@
     line-height: 1;
 }
 
+.checkin-editor-inherit-state,
 .checkin-editor-empty,
 .checkin-editor-rest-state {
     min-height: 139px;
@@ -549,6 +550,29 @@
     text-align: center;
     font-size: 12px;
     font-weight: 800;
+}
+
+.checkin-editor-inherit-state {
+    padding: 18px;
+    border-style: solid;
+    background: #fff7f0;
+    color: #8b6f5c;
+}
+
+.checkin-editor-inherit-state span,
+.checkin-editor-empty span {
+    color: #5b4636;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.checkin-editor-inherit-state p {
+    max-width: 280px;
+    margin: 0;
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.35;
 }
 
 .checkin-editor-rest-state {

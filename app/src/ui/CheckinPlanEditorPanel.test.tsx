@@ -123,6 +123,49 @@ describe('CheckinPlanEditorPanel', () => {
         expect(screen.getByRole('button', { name: '新增栏目' })).toBeInTheDocument();
     });
 
+    it('shows the inherited state for an inherited selected day', () => {
+        render(<CheckinPlanEditorPanel initialSelectedDay="tue" />);
+
+        expect(screen.getByText('已继承前一天计划')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: '基于前一天计划' })).toBeInTheDocument();
+        expect(screen.queryByLabelText('阅读 标题')).not.toBeInTheDocument();
+    });
+
+    it('turns an empty item day into an inherited day when using the previous-day plan button', () => {
+        useCheckinStore.setState({
+            weeklyPlan: {
+                ...structuredClone(basePlan),
+                days: {
+                    ...structuredClone(basePlan.days),
+                    wed: { kind: 'items', items: [] },
+                },
+            },
+        });
+        render(<CheckinPlanEditorPanel initialSelectedDay="wed" />);
+
+        fireEvent.click(screen.getByRole('button', { name: '基于前一天计划' }));
+        fireEvent.click(screen.getByRole('button', { name: '保存计划' }));
+
+        expect(useCheckinStore.getState().weeklyPlan.days.wed).toEqual({ kind: 'inherit' });
+    });
+
+    it('adding a column from an inherited day creates an independent item day', () => {
+        render(<CheckinPlanEditorPanel initialSelectedDay="tue" />);
+
+        fireEvent.click(screen.getByRole('button', { name: '新增栏目' }));
+        fireEvent.click(screen.getByRole('button', { name: /通用/ }));
+        fireEvent.change(screen.getByLabelText('新栏目名称'), { target: { value: '拉伸' } });
+        fireEvent.click(screen.getByRole('button', { name: '保存计划' }));
+
+        const tuesday = useCheckinStore.getState().weeklyPlan.days.tue;
+        expect(tuesday.kind).toBe('items');
+        if (tuesday.kind === 'items') {
+            expect(tuesday.items).toEqual([
+                expect.objectContaining({ title: '拉伸', type: 'manual' }),
+            ]);
+        }
+    });
+
     it('saves the carry-to-next-week toggle with the draft plan', () => {
         render(<CheckinPlanEditorPanel />);
 
