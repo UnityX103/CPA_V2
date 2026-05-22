@@ -26,7 +26,8 @@ pub struct ResizeScaledWindowArgs {
     pub scale: f64,
     pub min_width: f64,
     pub min_height: f64,
-    pub center: bool,
+    #[serde(default, alias = "center")]
+    pub default_center: bool,
 }
 
 pub fn scaled_size(
@@ -129,14 +130,30 @@ fn window_logical_origin(window: &tauri::WebviewWindow) -> Result<(f64, f64), St
 fn monitor_for_window(
     app: &tauri::AppHandle,
     window: &tauri::WebviewWindow,
-    center: bool,
+    default_center: bool,
 ) -> Result<Option<tauri::Monitor>, String> {
-    if center {
+    if default_center {
         if let Some(main) = app.get_webview_window("main") {
             return main.current_monitor().map_err(|e| e.to_string());
         }
     }
     window.current_monitor().map_err(|e| e.to_string())
+}
+
+pub fn origin_for_resize(
+    existing_origin: Option<(f64, f64)>,
+    default_center: bool,
+    monitor: LogicalRect,
+    size: LogicalSizePair,
+) -> (f64, f64) {
+    let origin = existing_origin.unwrap_or_else(|| {
+        if default_center {
+            centered_origin(monitor, size)
+        } else {
+            (monitor.x + WINDOW_EDGE_MARGIN, monitor.y + WINDOW_EDGE_MARGIN)
+        }
+    });
+    clamp_origin_to_monitor(origin, monitor, size, WINDOW_EDGE_MARGIN)
 }
 
 pub fn resize_scaled_window(
@@ -148,30 +165,52 @@ pub fn resize_scaled_window(
     };
 
     let target = scaled_size(args.base_width, args.base_height, args.scale)?;
-    let monitor = monitor_for_window(&app, &window, args.center).unwrap_or(None);
+    let monitor = monitor_for_window(&app, &window, args.default_center).unwrap_or(None);
     let logical_monitor = monitor.as_ref().map(monitor_logical_rect);
-    let target = size_for_monitor(target, args.min_width, args.min_height, logical_monitor);
+    let saved_layout =
+        crate::window_layout::load_layout(&app, &args.label, args.min_width, args.min_height);
+    let preferred_size = if args.label == "settings" {
+        saved_layout
+            .map(|layout| LogicalSizePair {
+                width: layout.width,
+                height: layout.height,
+            })
+            .unwrap_or(target)
+    } else {
+        target
+    };
+    let target = size_for_monitor(
+        preferred_size,
+        args.min_width,
+        args.min_height,
+        logical_monitor,
+    );
 
     window
         .set_size(LogicalSize::new(target.width, target.height))
         .map_err(|e| e.to_string())?;
 
     let Some(logical_monitor) = logical_monitor else {
+        let _ = crate::window_layout::save_current_layout(&app, &window, &args.label);
         return Ok(());
     };
-    let origin = if args.center {
-        centered_origin(logical_monitor, target)
+    let existing_origin = if let Some(layout) = saved_layout {
+        Some((layout.x, layout.y))
+    } else if args.default_center {
+        None
     } else {
-        clamp_origin_to_monitor(
-            window_logical_origin(&window)?,
-            logical_monitor,
-            target,
-            WINDOW_EDGE_MARGIN,
-        )
+        Some(window_logical_origin(&window)?)
     };
+    let origin = origin_for_resize(
+        existing_origin,
+        args.default_center,
+        logical_monitor,
+        target,
+    );
     window
         .set_position(LogicalPosition::new(origin.0, origin.1))
         .map_err(|e| e.to_string())?;
+    let _ = crate::window_layout::save_current_layout(&app, &window, &args.label);
     Ok(())
 }
 
@@ -293,5 +332,21 @@ mod tests {
             WINDOW_EDGE_MARGIN,
         );
         assert_eq!(origin, (676.0, 576.0));
+    }
+
+    #[test]
+    fn resize_origin_prefers_existing_origin_over_default_center() {
+        let monitor = LogicalRect {
+            x: 0.0,
+            y: 0.0,
+            width: 1000.0,
+            height: 800.0,
+        };
+        let size = LogicalSizePair {
+            width: 400.0,
+            height: 300.0,
+        };
+        let origin = origin_for_resize(Some((50.0, 60.0)), true, monitor, size);
+        assert_eq!(origin, (50.0, 60.0));
     }
 }

@@ -74,7 +74,7 @@ describe('useScaledWindowSize', () => {
                     minWidth: 249,
                     minHeight: 171,
                     scale: 1.5,
-                    center: false,
+                    defaultCenter: false,
                 },
             });
         });
@@ -115,7 +115,7 @@ describe('useScaledWindowSize', () => {
                     minWidth: 360,
                     minHeight: 320,
                     scale: 2,
-                    center: true,
+                    defaultCenter: true,
                 },
             });
         });

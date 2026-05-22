@@ -315,7 +315,7 @@ describe('main App window composition', () => {
                     minWidth: 249,
                     minHeight: 171,
                     scale: 1.5,
-                    center: false,
+                    defaultCenter: false,
                 },
             });
         });
@@ -349,7 +349,7 @@ describe('main App window composition', () => {
                     minWidth: 249,
                     minHeight: 171,
                     scale: 1.5,
-                    center: false,
+                    defaultCenter: false,
                 },
             });
         });
