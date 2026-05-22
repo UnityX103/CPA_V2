@@ -91,7 +91,7 @@ describe('InputCounterPanel', () => {
                     minWidth: 128,
                     minHeight: 84,
                     scale: 1.5,
-                    center: false,
+                    defaultCenter: false,
                 },
             });
         });
