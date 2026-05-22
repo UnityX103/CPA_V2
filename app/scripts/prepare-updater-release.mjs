@@ -44,6 +44,35 @@ function githubAssetName(artifactName) {
     return trimmed || artifactName;
 }
 
+function isWindowsPlatform(platform) {
+    return platform.startsWith('windows-');
+}
+
+function artifactMatchesVersion(artifactPath, version, platform) {
+    if (!isWindowsPlatform(platform)) return true;
+    return basename(artifactPath).includes(version);
+}
+
+function windowsStableArtifactName(originalArtifactName, version, platform) {
+    const arch = platform.includes('-x86_64') ? 'x64' : platform.split('-')[1] ?? 'windows';
+    const lower = originalArtifactName.toLowerCase();
+    if (lower.endsWith('.exe')) {
+        return `CPA_V2_${version}_${arch}-setup.exe`;
+    }
+    if (lower.endsWith('.msi')) {
+        return `CPA_V2_${version}_${arch}.msi`;
+    }
+    return githubAssetName(originalArtifactName);
+}
+
+function releaseArtifactName(originalArtifactName, baseUrl, version, platform) {
+    if (!isGithubReleaseDownloadBase(baseUrl)) return originalArtifactName;
+    if (isWindowsPlatform(platform)) {
+        return windowsStableArtifactName(originalArtifactName, version, platform);
+    }
+    return githubAssetName(originalArtifactName);
+}
+
 async function readJson(path) {
     return JSON.parse(await readFile(path, 'utf8'));
 }
@@ -109,6 +138,13 @@ function inferPlatform(artifactPath, forcedPlatform) {
     const installer = platformInstallerFromArtifact(artifactPath);
     const arch = platformArchFromArtifact(artifactPath) ?? platformArch();
     return installer ? `${os}-${arch}-${installer}` : `${os}-${arch}`;
+}
+
+function updaterPlatformKeys(platform) {
+    if (platform === 'windows-x86_64-nsis') {
+        return [platform, 'windows-x86_64'];
+    }
+    return [platform];
 }
 
 async function listSignatureFiles(dir) {
@@ -234,14 +270,17 @@ export async function prepareUpdaterRelease(options = {}) {
         }
         await assertFreshSignature(artifactPath, sigPath);
         const platform = inferPlatform(artifactPath, options.platform);
-        if (platforms[platform]) {
-            throw new Error(`Duplicate updater artifact for ${platform}`);
+        if (!artifactMatchesVersion(artifactPath, version, platform)) {
+            continue;
+        }
+        const platformKeys = updaterPlatformKeys(platform);
+        const duplicatePlatform = platformKeys.find((key) => platforms[key]);
+        if (duplicatePlatform) {
+            throw new Error(`Duplicate updater artifact for ${duplicatePlatform}`);
         }
 
         const originalArtifactName = basename(artifactPath);
-        const artifactName = isGithubReleaseDownloadBase(baseUrl)
-            ? githubAssetName(originalArtifactName)
-            : originalArtifactName;
+        const artifactName = releaseArtifactName(originalArtifactName, baseUrl, version, platform);
         const signatureName = `${artifactName}.sig`;
         const targetArtifact = join(artifactOutDir, artifactName);
         const targetSignature = join(artifactOutDir, signatureName);
@@ -250,10 +289,17 @@ export async function prepareUpdaterRelease(options = {}) {
         await copyIfExists(artifactPath, targetArtifact);
         await copyIfExists(sigPath, targetSignature);
 
-        platforms[platform] = {
+        const platformEntry = {
             signature,
             url: artifactUrl(baseUrl, channel, version, artifactName),
         };
+        for (const platformKey of platformKeys) {
+            platforms[platformKey] = platformEntry;
+        }
+    }
+
+    if (Object.keys(platforms).length === 0) {
+        throw new Error(`No current-version updater artifacts found in ${bundleDir}`);
     }
 
     await mkdir(dirname(latestJsonPath), { recursive: true });

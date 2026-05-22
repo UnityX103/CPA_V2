@@ -45,6 +45,7 @@ CPA_V2/
 - GitHub credentials are not stored in this repo. Use `gh auth status` before publishing, and keep release keys inside the ignored `cpa-v2-release/` credential pack.
 - Do not publish macOS packages built with `--no-sign`. The repo defaults to ad-hoc macOS signing (`bundle.macOS.signingIdentity = "-"`) as a minimum resource-seal fix, but polished public downloads require Developer ID signing plus Apple notarization.
 - For Windows updater packages, `latest.json` must include `windows-x86_64-nsis` and `windows-x86_64` platform keys in addition to macOS keys.
+- Windows release publishing targets **x86_64 NSIS only**. Do not build or publish Windows ARM64 packages unless the user explicitly asks for an ARM64 Windows release.
 
 ## Architecture: state layering (borrowed from Unity QFramework)
 

@@ -38,7 +38,7 @@ describe('updater configuration', () => {
         expect(cargoPackageVersion(cargo)).toBe(conf.version);
     });
 
-    it('creates signed updater artifacts and points at the GitHub Release manifest', () => {
+    it('creates signed updater artifacts and points at the GitHub Releases manifest', () => {
         const conf = readJson(tauriConfPath);
         expect(conf.bundle?.createUpdaterArtifacts).toBe(true);
         expect(conf.bundle?.macOS?.signingIdentity).toBe('-');
