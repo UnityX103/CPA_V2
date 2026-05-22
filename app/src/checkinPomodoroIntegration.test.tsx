@@ -10,6 +10,7 @@ const {
     loadPersistedSettingsMock,
     loadPersistedUserPreferencesMock,
     openCheckinEditorWindowMock,
+    openTodayCheckinWindowMock,
     readAutostartEnabledMock,
     savePersistedCheckinMock,
     savePersistedSettingsMock,
@@ -68,6 +69,7 @@ const {
         loadPersistedSettingsMock: vi.fn(),
         loadPersistedUserPreferencesMock: vi.fn(),
         openCheckinEditorWindowMock: vi.fn(),
+        openTodayCheckinWindowMock: vi.fn(),
         readAutostartEnabledMock: vi.fn(),
         savePersistedCheckinMock: vi.fn(),
         savePersistedSettingsMock: vi.fn(),
@@ -94,6 +96,7 @@ vi.mock('./domain/bindingKey', async (importOriginal) => {
 vi.mock('./domain/bridge/host', () => ({ useBridgeHost }));
 vi.mock('./domain/checkinWindow', () => ({
     openCheckinEditorWindow: openCheckinEditorWindowMock,
+    openTodayCheckinWindow: openTodayCheckinWindowMock,
     useCheckinWindowController,
 }));
 vi.mock('./domain/inputCounterWindow', () => ({ useInputCounterWindowController }));
@@ -151,6 +154,8 @@ beforeEach(() => {
     loadPersistedSettingsMock.mockResolvedValue(null);
     openCheckinEditorWindowMock.mockReset();
     openCheckinEditorWindowMock.mockResolvedValue(undefined);
+    openTodayCheckinWindowMock.mockReset();
+    openTodayCheckinWindowMock.mockResolvedValue(undefined);
     readAutostartEnabledMock.mockReset();
     readAutostartEnabledMock.mockResolvedValue(false);
     savePersistedSettingsMock.mockReset();
@@ -260,7 +265,7 @@ describe('checkin Pomodoro integration', () => {
         expect(record.processedPomodoroEndEventIds).toEqual([1, 2]);
     });
 
-    it('opens the check-in editor when a focus timer naturally ends', () => {
+    it('opens the check-in panel, not the plan editor, when a focus timer naturally ends', () => {
         render(<App />);
 
         act(() => {
@@ -269,7 +274,8 @@ describe('checkin Pomodoro integration', () => {
             });
         });
 
-        expect(openCheckinEditorWindowMock).toHaveBeenCalledTimes(1);
+        expect(openTodayCheckinWindowMock).toHaveBeenCalledTimes(1);
+        expect(openCheckinEditorWindowMock).not.toHaveBeenCalled();
     });
 
     it('does not open the check-in editor when focus is skipped manually', () => {

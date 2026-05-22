@@ -59,3 +59,7 @@ export function useCheckinEditorWindowSize(enabled = true): void {
 export async function openCheckinEditorWindow(): Promise<void> {
     await invoke('open_checkin_editor_window');
 }
+
+export async function openTodayCheckinWindow(): Promise<void> {
+    await invoke('open_today_checkin_window');
+}

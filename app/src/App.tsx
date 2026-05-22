@@ -6,7 +6,7 @@ import { useStateSync } from './domain/stateSync';
 import { useActiveAppListener } from './domain/activeApp';
 import { useBindingKeyListener, useBindingKeyStore } from './domain/bindingKey';
 import { useBridgeHost } from './domain/bridge/host';
-import { openCheckinEditorWindow, useCheckinWindowController } from './domain/checkinWindow';
+import { openTodayCheckinWindow, useCheckinWindowController } from './domain/checkinWindow';
 import { useInputCounterWindowController } from './domain/inputCounterWindow';
 import { useRemotePlayerWindowController } from './domain/remotePlayerWindows';
 import { MAIN_WINDOW_BASE_SIZE, useScaledWindowSize } from './domain/scaledWindow';
@@ -312,8 +312,8 @@ export default function App() {
 
             useCheckinStore.getState().applyPomodoroFocusCompletion(todayLocalDate(), event.id);
             if (event.toPhase === 'break' && event.triggeredBy === 'timer') {
-                void openCheckinEditorWindow().catch((error) => {
-                    console.warn('[checkin] open editor on focus end failed', error);
+                void openTodayCheckinWindow().catch((error) => {
+                    console.warn('[checkin] open panel on focus end failed', error);
                 });
             }
         });
