@@ -58,4 +58,14 @@ describe('main window fit-panel layout', () => {
         expect(source).not.toMatch(/\bunregister_hit_region\b/);
         expect(source).not.toMatch(/\bclear_hit_regions\b/);
     });
+
+    it('defines native minimum sizes for persisted window layout restore', () => {
+        const libRsPath = path.join(here, '../src-tauri/src/lib.rs');
+        const source = readFileSync(libRsPath, 'utf8');
+
+        expect(source).toMatch(/const MAIN_W:\s*f64\s*=\s*249\.0/);
+        expect(source).toMatch(/const MAIN_H:\s*f64\s*=\s*171\.0/);
+        expect(source).toMatch(/const CHECKIN_EDITOR_MIN_W:\s*f64\s*=\s*360\.0/);
+        expect(source).toMatch(/const CHECKIN_EDITOR_MIN_H:\s*f64\s*=\s*420\.0/);
+    });
 });

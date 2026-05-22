@@ -208,6 +208,8 @@ fn pomodoro_video_screen_rect(app: tauri::AppHandle) -> Result<VideoScreenRect, 
     fallback_video_screen_rect(&app)
 }
 
+const MAIN_W: f64 = 249.0;
+const MAIN_H: f64 = 171.0;
 const SETTINGS_W: f64 = 460.0;
 const SETTINGS_H: f64 = 440.0;
 const SETTINGS_MIN_W: f64 = 360.0;
@@ -218,6 +220,8 @@ const TODAY_CHECKIN_W: f64 = 278.0;
 const TODAY_CHECKIN_H: f64 = 289.0;
 const CHECKIN_EDITOR_W: f64 = 460.0;
 const CHECKIN_EDITOR_H: f64 = 898.0;
+const CHECKIN_EDITOR_MIN_W: f64 = 360.0;
+const CHECKIN_EDITOR_MIN_H: f64 = 420.0;
 
 /// 计算设置窗口在主窗口所在 monitor 的中心位置（物理像素）。
 /// 多显示器下保证设置窗弹在用户当前屏，而非系统主屏。
