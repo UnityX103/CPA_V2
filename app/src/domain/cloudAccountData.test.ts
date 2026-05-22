@@ -15,14 +15,14 @@ describe('cloudAccountData', () => {
         const checkin = createCheckinStore({ isMirrorWindow: false });
 
         pomodoro.getState().applySettings(1200, 180, 3, true, true);
-        settings.getState().setShowActiveAppWindowTitle(false);
+        settings.getState().hydrateSettings({ uiScale: 1.25, autostartEnabled: true });
         checkin.getState().setWeeklyPlan(defaultWeeklyPlan('2026-05-18'));
 
         const snapshot = buildCloudAccountData({ pomodoro, settings, checkin });
 
         expect(snapshot.schemaVersion).toBe(1);
         expect(snapshot.pomodoro.focusDurationSeconds).toBe(1200);
-        expect(snapshot.settings.showActiveAppWindowTitle).toBe(false);
+        expect(snapshot.settings).toEqual({ uiScale: 1.25, autostartEnabled: true });
         expect(snapshot.checkin.weeklyPlan.weekStartDate).toBe('2026-05-18');
     });
 
@@ -47,9 +47,7 @@ describe('cloudAccountData', () => {
                 },
                 settings: {
                     uiScale: 1.5,
-                    showActiveAppWindowTitle: false,
                     autostartEnabled: false,
-                    autoPinOnFocusEnd: false,
                 },
                 checkin: {
                     weeklyPlan: defaultWeeklyPlan('2026-05-18'),
@@ -78,9 +76,7 @@ describe('cloudAccountData', () => {
             },
             settings: {
                 uiScale: 1,
-                showActiveAppWindowTitle: true,
                 autostartEnabled: false,
-                autoPinOnFocusEnd: true,
             },
             checkin: {
                 weeklyPlan: defaultWeeklyPlan('2026-05-18'),

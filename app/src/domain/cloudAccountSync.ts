@@ -94,9 +94,7 @@ export function useCloudAccountSync(opts: { enabled?: boolean } = {}) {
         const unsubSettings = useSettingsStore.subscribe((s, p) => {
             if (
                 s.committedUiScale !== p.committedUiScale ||
-                s.showActiveAppWindowTitle !== p.showActiveAppWindowTitle ||
-                s.autostartEnabled !== p.autostartEnabled ||
-                s.autoPinOnFocusEnd !== p.autoPinOnFocusEnd
+                s.autostartEnabled !== p.autostartEnabled
             ) {
                 scheduleSave();
             }

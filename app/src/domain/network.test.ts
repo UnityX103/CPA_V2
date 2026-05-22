@@ -67,9 +67,7 @@ function makeCloudSnapshot(): CloudAccountData {
         },
         settings: {
             uiScale: 1,
-            showActiveAppWindowTitle: true,
             autostartEnabled: false,
-            autoPinOnFocusEnd: true,
         },
         checkin: {
             weeklyPlan: {

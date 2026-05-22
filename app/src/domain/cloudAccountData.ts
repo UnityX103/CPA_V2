@@ -6,7 +6,7 @@ import type {
     PomodoroEndActionVideo,
     PomodoroState,
 } from './pomodoro';
-import type { SettingsState } from './settings';
+import type { PersistedSettingsSnapshot, SettingsState } from './settings';
 
 export interface CloudAccountData {
     schemaVersion: 1;
@@ -21,9 +21,7 @@ export interface CloudAccountData {
     };
     settings: {
         uiScale: number;
-        showActiveAppWindowTitle: boolean;
         autostartEnabled: boolean;
-        autoPinOnFocusEnd: boolean;
     };
     checkin: {
         weeklyPlan: WeeklyCheckinPlan;
@@ -33,12 +31,7 @@ export interface CloudAccountData {
 
 type PomodoroStore = UseBoundStore<StoreApi<PomodoroState & PomodoroActions>>;
 type SettingsStore = UseBoundStore<StoreApi<SettingsState & {
-    hydrateSettings: (snapshot: {
-        uiScale: number;
-        showActiveAppWindowTitle?: boolean;
-        autostartEnabled?: boolean;
-        autoPinOnFocusEnd?: boolean;
-    }) => void;
+    hydrateSettings: (snapshot: PersistedSettingsSnapshot) => void;
 }>>;
 type CheckinStore = UseBoundStore<StoreApi<CheckinState & {
     hydrateCheckin: (snapshot: Pick<CheckinState, 'weeklyPlan' | 'dailyRecords'>) => void;
@@ -66,9 +59,7 @@ export function buildCloudAccountData(stores: CloudStores): CloudAccountData {
         },
         settings: {
             uiScale: s.committedUiScale,
-            showActiveAppWindowTitle: s.showActiveAppWindowTitle,
             autostartEnabled: s.autostartEnabled,
-            autoPinOnFocusEnd: s.autoPinOnFocusEnd,
         },
         checkin: {
             weeklyPlan: cloneWeeklyPlan(c.weeklyPlan),

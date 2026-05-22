@@ -72,9 +72,7 @@ describe('useCloudAccountSync', () => {
                     },
                     settings: {
                         uiScale: 1,
-                        showActiveAppWindowTitle: true,
                         autostartEnabled: false,
-                        autoPinOnFocusEnd: true,
                     },
                     checkin: {
                         weeklyPlan: defaultWeeklyPlan('2026-05-18'),
