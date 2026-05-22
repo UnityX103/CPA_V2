@@ -55,6 +55,40 @@ function resetCheckinStore() {
     });
 }
 
+function setMultiItemMonday() {
+    useCheckinStore.setState({
+        weeklyPlan: {
+            ...structuredClone(basePlan),
+            days: {
+                ...structuredClone(basePlan.days),
+                mon: {
+                    kind: 'items',
+                    items: [
+                        {
+                            id: 'read',
+                            title: '阅读',
+                            type: 'manual',
+                            targetCount: 2,
+                            icon: 'bookOpen',
+                            perUseAmount: 30,
+                            perUseUnit: '分钟',
+                        },
+                        {
+                            id: 'water',
+                            title: '喝水',
+                            type: 'manual',
+                            targetCount: 3,
+                            icon: 'droplet',
+                            perUseAmount: 1,
+                            perUseUnit: '杯',
+                        },
+                    ],
+                },
+            },
+        },
+    });
+}
+
 describe('CheckinPlanEditorPanel', () => {
     beforeEach(() => {
         invokeMock.mockReset();
@@ -121,6 +155,49 @@ describe('CheckinPlanEditorPanel', () => {
 
         expect(screen.queryByText('当天休息')).not.toBeInTheDocument();
         expect(screen.getByRole('button', { name: '新增栏目' })).toBeInTheDocument();
+    });
+
+    it('shows the inherited state for an inherited selected day', () => {
+        render(<CheckinPlanEditorPanel initialSelectedDay="tue" />);
+
+        expect(screen.getByText('已继承前一天计划')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: '基于前一天计划' })).toBeInTheDocument();
+        expect(screen.queryByLabelText('阅读 标题')).not.toBeInTheDocument();
+    });
+
+    it('turns an empty item day into an inherited day when using the previous-day plan button', () => {
+        useCheckinStore.setState({
+            weeklyPlan: {
+                ...structuredClone(basePlan),
+                days: {
+                    ...structuredClone(basePlan.days),
+                    wed: { kind: 'items', items: [] },
+                },
+            },
+        });
+        render(<CheckinPlanEditorPanel initialSelectedDay="wed" />);
+
+        fireEvent.click(screen.getByRole('button', { name: '基于前一天计划' }));
+        fireEvent.click(screen.getByRole('button', { name: '保存计划' }));
+
+        expect(useCheckinStore.getState().weeklyPlan.days.wed).toEqual({ kind: 'inherit' });
+    });
+
+    it('adding a column from an inherited day creates an independent item day', () => {
+        render(<CheckinPlanEditorPanel initialSelectedDay="tue" />);
+
+        fireEvent.click(screen.getByRole('button', { name: '新增栏目' }));
+        fireEvent.click(screen.getByRole('button', { name: /通用/ }));
+        fireEvent.change(screen.getByLabelText('新栏目名称'), { target: { value: '拉伸' } });
+        fireEvent.click(screen.getByRole('button', { name: '保存计划' }));
+
+        const tuesday = useCheckinStore.getState().weeklyPlan.days.tue;
+        expect(tuesday.kind).toBe('items');
+        if (tuesday.kind === 'items') {
+            expect(tuesday.items).toEqual([
+                expect.objectContaining({ title: '拉伸', type: 'manual' }),
+            ]);
+        }
     });
 
     it('saves the carry-to-next-week toggle with the draft plan', () => {
@@ -243,6 +320,56 @@ describe('CheckinPlanEditorPanel', () => {
 
         expect(screen.getByDisplayValue('喝水')).toBeInTheDocument();
         expect(screen.getByDisplayValue('3')).toBeInTheDocument();
+    });
+
+    it('opens a row context menu and deletes only after choosing delete', () => {
+        setMultiItemMonday();
+        render(<CheckinPlanEditorPanel />);
+
+        fireEvent.contextMenu(screen.getByTestId('checkin-item-row-read'));
+        expect(screen.getByRole('menuitem', { name: '删除栏目' })).toBeInTheDocument();
+
+        let monday = useCheckinStore.getState().weeklyPlan.days.mon;
+        expect(monday.kind).toBe('items');
+        if (monday.kind === 'items') {
+            expect(monday.items.map((item) => item.id)).toEqual(['read', 'water']);
+        }
+
+        fireEvent.click(screen.getByRole('menuitem', { name: '删除栏目' }));
+        fireEvent.click(screen.getByRole('button', { name: '保存计划' }));
+
+        monday = useCheckinStore.getState().weeklyPlan.days.mon;
+        expect(monday.kind).toBe('items');
+        if (monday.kind === 'items') {
+            expect(monday.items.map((item) => item.id)).toEqual(['water']);
+        }
+    });
+
+    it('uses the right-side grip to reorder rows instead of deleting them', () => {
+        setMultiItemMonday();
+        render(<CheckinPlanEditorPanel />);
+
+        fireEvent.click(screen.getByRole('button', { name: '调整 喝水 顺序' }));
+        fireEvent.click(screen.getByRole('menuitem', { name: '上移' }));
+        fireEvent.click(screen.getByRole('button', { name: '保存计划' }));
+
+        const monday = useCheckinStore.getState().weeklyPlan.days.mon;
+        expect(monday.kind).toBe('items');
+        if (monday.kind === 'items') {
+            expect(monday.items.map((item) => item.id)).toEqual(['water', 'read']);
+        }
+    });
+
+    it('closes row menus when switching days', () => {
+        setMultiItemMonday();
+        render(<CheckinPlanEditorPanel />);
+
+        fireEvent.contextMenu(screen.getByTestId('checkin-item-row-read'));
+        expect(screen.getByRole('menuitem', { name: '删除栏目' })).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: '周二' }));
+
+        expect(screen.queryByRole('menuitem', { name: '删除栏目' })).not.toBeInTheDocument();
     });
 
     it('starts native drag from the editor background', () => {
