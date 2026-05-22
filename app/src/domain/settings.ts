@@ -19,25 +19,19 @@ export interface SettingsState {
     activeTab: SettingsTab;
     uiScale: number;
     committedUiScale: number;
-    showActiveAppWindowTitle: boolean;
     autostartEnabled: boolean;
-    autoPinOnFocusEnd: boolean;
     dangerousChange: DangerousChange | null;
 }
 
 export interface PersistedSettingsSnapshot {
     uiScale: number;
-    showActiveAppWindowTitle?: boolean;
     autostartEnabled?: boolean;
-    autoPinOnFocusEnd?: boolean;
 }
 
 interface SettingsActions {
     setActiveTab: (tab: SettingsTab) => void;
     setUiScale: (scale: number) => void;
-    setShowActiveAppWindowTitle: (enabled: boolean) => void;
     setAutostartEnabled: (enabled: boolean) => Promise<void> | void;
-    setAutoPinOnFocusEnd: (enabled: boolean) => void;
     previewDangerousUiScale: (scale: number) => void;
     applyDangerousChange: (id: string) => void;
     revertDangerousChange: (id: string) => void;
@@ -65,9 +59,7 @@ function createDangerousChangeId(): string {
 function persistedSnapshot(state: SettingsState): PersistedSettings {
     return {
         uiScale: state.committedUiScale,
-        showActiveAppWindowTitle: state.showActiveAppWindowTitle,
         autostartEnabled: state.autostartEnabled,
-        autoPinOnFocusEnd: state.autoPinOnFocusEnd,
     };
 }
 
@@ -77,16 +69,11 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
             activeTab: 'pomodoro',
             uiScale: 1.0,
             committedUiScale: 1.0,
-            showActiveAppWindowTitle: true,
             autostartEnabled: false,
-            autoPinOnFocusEnd: true,
             dangerousChange: null,
             setActiveTab: (tab) => set({ activeTab: tab }),
             setUiScale: (scale) => {
                 void dispatch({ v: BRIDGE_VERSION, store: 'settings', action: 'setUiScale', args: [scale] });
-            },
-            setShowActiveAppWindowTitle: (enabled) => {
-                void dispatch({ v: BRIDGE_VERSION, store: 'settings', action: 'setShowActiveAppWindowTitle', args: [enabled] });
             },
             setAutostartEnabled: (enabled) => {
                 void dispatch({
@@ -95,14 +82,6 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
                     action: 'setAutostartEnabled',
                     args: [enabled],
                 } as Parameters<typeof dispatch>[0]);
-            },
-            setAutoPinOnFocusEnd: (enabled) => {
-                void dispatch({
-                    v: BRIDGE_VERSION,
-                    store: 'settings',
-                    action: 'setAutoPinOnFocusEnd',
-                    args: [enabled],
-                });
             },
             previewDangerousUiScale: (scale) => {
                 void dispatch({ v: BRIDGE_VERSION, store: 'settings', action: 'previewDangerousUiScale', args: [scale] });
@@ -118,9 +97,7 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
                 set({
                     uiScale,
                     committedUiScale: uiScale,
-                    showActiveAppWindowTitle: snapshot.showActiveAppWindowTitle ?? true,
                     autostartEnabled: snapshot.autostartEnabled ?? false,
-                    autoPinOnFocusEnd: snapshot.autoPinOnFocusEnd ?? true,
                     dangerousChange: null,
                 });
             },
@@ -130,27 +107,17 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
         activeTab: 'pomodoro',
         uiScale: 1.0,
         committedUiScale: 1.0,
-        showActiveAppWindowTitle: true,
         autostartEnabled: false,
-        autoPinOnFocusEnd: true,
         dangerousChange: null,
         setActiveTab: (tab) => set({ activeTab: tab }),
         setUiScale: (scale) => {
             const uiScale = clampScale(scale);
             set({ uiScale, committedUiScale: uiScale, dangerousChange: null });
         },
-        setShowActiveAppWindowTitle: (enabled) => {
-            set({ showActiveAppWindowTitle: enabled });
-            void savePersistedSettings(persistedSnapshot(get()));
-        },
         setAutostartEnabled: async (enabled) => {
             const fallback = get().autostartEnabled;
             const confirmed = await applyAutostartEnabled(enabled, fallback);
             set({ autostartEnabled: confirmed });
-            void savePersistedSettings(persistedSnapshot(get()));
-        },
-        setAutoPinOnFocusEnd: (enabled) => {
-            set({ autoPinOnFocusEnd: enabled });
             void savePersistedSettings(persistedSnapshot(get()));
         },
         previewDangerousUiScale: (scale) => {
@@ -187,9 +154,7 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
             set({
                 uiScale,
                 committedUiScale: uiScale,
-                showActiveAppWindowTitle: snapshot.showActiveAppWindowTitle ?? true,
                 autostartEnabled: snapshot.autostartEnabled ?? false,
-                autoPinOnFocusEnd: snapshot.autoPinOnFocusEnd ?? true,
                 dangerousChange: null,
             });
         },

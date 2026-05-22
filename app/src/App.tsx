@@ -6,7 +6,7 @@ import { useStateSync } from './domain/stateSync';
 import { useActiveAppListener } from './domain/activeApp';
 import { useBindingKeyListener } from './domain/bindingKey';
 import { useBridgeHost } from './domain/bridge/host';
-import { useCheckinWindowController } from './domain/checkinWindow';
+import { openCheckinEditorWindow, useCheckinWindowController } from './domain/checkinWindow';
 import { useInputCounterWindowController } from './domain/inputCounterWindow';
 import { useRemotePlayerWindowController } from './domain/remotePlayerWindows';
 import { MAIN_WINDOW_BASE_SIZE, useScaledWindowSize } from './domain/scaledWindow';
@@ -33,26 +33,16 @@ function buildStartupSettingsSnapshot(
     const {
         uiScale,
         committedUiScale,
-        showActiveAppWindowTitle,
-        autoPinOnFocusEnd,
     } = useSettingsStore.getState();
     const scaleChanged = uiScale !== initialSettings.uiScale
         || committedUiScale !== initialSettings.committedUiScale;
-    const titleVisibilityChanged = showActiveAppWindowTitle !== initialSettings.showActiveAppWindowTitle;
-    const autoPinChanged = autoPinOnFocusEnd !== initialSettings.autoPinOnFocusEnd;
     const persistedScale = clampStartupScale(settings?.uiScale ?? committedUiScale);
 
     const snapshot = {
         uiScale: scaleChanged
             ? committedUiScale
             : persistedScale,
-        showActiveAppWindowTitle: titleVisibilityChanged
-            ? showActiveAppWindowTitle
-            : settings?.showActiveAppWindowTitle ?? showActiveAppWindowTitle,
         autostartEnabled: confirmedAutostartEnabled,
-        autoPinOnFocusEnd: autoPinChanged
-            ? autoPinOnFocusEnd
-            : settings?.autoPinOnFocusEnd ?? autoPinOnFocusEnd,
     };
 
     return { snapshot, shouldApplyScale: !scaleChanged };
@@ -62,16 +52,12 @@ function getStartupSettingsState() {
     const {
         uiScale,
         committedUiScale,
-        showActiveAppWindowTitle,
         autostartEnabled,
-        autoPinOnFocusEnd,
     } = useSettingsStore.getState();
     return {
         uiScale,
         committedUiScale,
-        showActiveAppWindowTitle,
         autostartEnabled,
-        autoPinOnFocusEnd,
     };
 }
 
@@ -130,9 +116,7 @@ export default function App() {
                     ...(shouldApplyScale
                         ? { uiScale: snapshot.uiScale, committedUiScale: snapshot.uiScale }
                         : {}),
-                    showActiveAppWindowTitle: snapshot.showActiveAppWindowTitle,
                     autostartEnabled: snapshot.autostartEnabled,
-                    autoPinOnFocusEnd: snapshot.autoPinOnFocusEnd,
                 });
                 if (confirmedAutostartEnabled !== fallbackAutostartEnabled) {
                     void savePersistedSettings(snapshot);
@@ -237,14 +221,10 @@ export default function App() {
             if (event.fromPhase !== 'focus') return;
 
             useCheckinStore.getState().applyPomodoroFocusCompletion(todayLocalDate(), event.id);
-
-            if (
-                event.toPhase === 'break'
-                && event.triggeredBy === 'timer'
-                && useSettingsStore.getState().autoPinOnFocusEnd
-                && !state.isPinned
-            ) {
-                usePomodoroStore.getState().setPinned(true);
+            if (event.toPhase === 'break' && event.triggeredBy === 'timer') {
+                void openCheckinEditorWindow().catch((error) => {
+                    console.warn('[checkin] open editor on focus end failed', error);
+                });
             }
         });
     }, []);

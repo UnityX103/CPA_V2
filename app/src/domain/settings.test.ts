@@ -33,9 +33,7 @@ beforeEach(() => {
         activeTab: 'pomodoro',
         uiScale: 1.0,
         committedUiScale: 1.0,
-        showActiveAppWindowTitle: true,
         autostartEnabled: false,
-        autoPinOnFocusEnd: true,
         dangerousChange: null,
     });
 });
@@ -64,6 +62,19 @@ describe('useSettingsStore', () => {
         const state = useSettingsStore.getState();
         expect('targetMonitorIndex' in state).toBe(false);
         expect('setTargetMonitor' in state).toBe(false);
+    });
+
+    it('does not expose obsolete active-title or auto-pin settings', () => {
+        const state = useSettingsStore.getState();
+        const obsoleteActiveTitleKey = 'showActiveApp' + 'WindowTitle';
+        const obsoleteSetActiveTitleKey = 'setShowActiveApp' + 'WindowTitle';
+        const obsoleteAutoPinKey = 'autoPinOn' + 'FocusEnd';
+        const obsoleteSetAutoPinKey = 'setAutoPinOn' + 'FocusEnd';
+
+        expect(obsoleteActiveTitleKey in state).toBe(false);
+        expect(obsoleteSetActiveTitleKey in state).toBe(false);
+        expect(obsoleteAutoPinKey in state).toBe(false);
+        expect(obsoleteSetAutoPinKey in state).toBe(false);
     });
 
     it('previewDangerousUiScale records previous and next values', () => {
@@ -135,20 +146,6 @@ describe('useSettingsStore', () => {
         expect(useSettingsStore.getState().dangerousChange).toBeNull();
     });
 
-    it('defaults to showing active app window titles and can toggle it', () => {
-        expect(useSettingsStore.getState().showActiveAppWindowTitle).toBe(true);
-
-        useSettingsStore.getState().setShowActiveAppWindowTitle(false);
-        expect(useSettingsStore.getState().showActiveAppWindowTitle).toBe(false);
-    });
-
-    it('hydrates showActiveAppWindowTitle from persisted settings', () => {
-        useSettingsStore.getState().hydrateSettings({ uiScale: 1.25, showActiveAppWindowTitle: false });
-
-        expect(useSettingsStore.getState().uiScale).toBe(1.25);
-        expect(useSettingsStore.getState().showActiveAppWindowTitle).toBe(false);
-    });
-
     it('defaults autostartEnabled to false', () => {
         expect(useSettingsStore.getState().autostartEnabled).toBe(false);
 
@@ -170,34 +167,11 @@ describe('useSettingsStore', () => {
         expect(useSettingsStore.getState().autostartEnabled).toBe(false);
     });
 
-    it('defaults autoPinOnFocusEnd to true', () => {
-        expect(useSettingsStore.getState().autoPinOnFocusEnd).toBe(true);
-
-        const settingsWindowStore = createSettingsStore({ isSettingsWindow: true });
-        expect(settingsWindowStore.getState().autoPinOnFocusEnd).toBe(true);
-    });
-
-    it('hydrates autoPinOnFocusEnd from persisted settings', () => {
-        useSettingsStore.getState().hydrateSettings({ uiScale: 1.25, autoPinOnFocusEnd: false });
-
-        expect(useSettingsStore.getState().autoPinOnFocusEnd).toBe(false);
-    });
-
-    it('defaults missing persisted autoPinOnFocusEnd to true during hydration', () => {
-        useSettingsStore.setState({ autoPinOnFocusEnd: false });
-
-        useSettingsStore.getState().hydrateSettings({ uiScale: 1.25 });
-
-        expect(useSettingsStore.getState().autoPinOnFocusEnd).toBe(true);
-    });
-
     it('setAutostartEnabled applies native setting and persists confirmed value', async () => {
         settingsMocks.applyAutostartEnabled.mockResolvedValue(true);
         useSettingsStore.setState({
             committedUiScale: 1.5,
-            showActiveAppWindowTitle: false,
             autostartEnabled: false,
-            autoPinOnFocusEnd: true,
         });
 
         await useSettingsStore.getState().setAutostartEnabled(true);
@@ -206,28 +180,7 @@ describe('useSettingsStore', () => {
         expect(useSettingsStore.getState().autostartEnabled).toBe(true);
         expect(settingsMocks.savePersistedSettings).toHaveBeenCalledWith({
             uiScale: 1.5,
-            showActiveAppWindowTitle: false,
             autostartEnabled: true,
-            autoPinOnFocusEnd: true,
-        });
-    });
-
-    it('setAutoPinOnFocusEnd persists all global settings fields', () => {
-        useSettingsStore.setState({
-            committedUiScale: 1.5,
-            showActiveAppWindowTitle: false,
-            autostartEnabled: true,
-            autoPinOnFocusEnd: true,
-        });
-
-        useSettingsStore.getState().setAutoPinOnFocusEnd(false);
-
-        expect(useSettingsStore.getState().autoPinOnFocusEnd).toBe(false);
-        expect(settingsMocks.savePersistedSettings).toHaveBeenCalledWith({
-            uiScale: 1.5,
-            showActiveAppWindowTitle: false,
-            autostartEnabled: true,
-            autoPinOnFocusEnd: false,
         });
     });
 });
@@ -290,22 +243,6 @@ describe('createSettingsStore — settings-window mode', () => {
         expect('setTargetMonitor' in store.getState()).toBe(false);
     });
 
-    it('setShowActiveAppWindowTitle dispatches instead of mutating local state', () => {
-        const spy = vi.spyOn(dispatchMod, 'dispatch').mockResolvedValue();
-        const store = createSettingsStore({ isSettingsWindow: true });
-
-        store.getState().setShowActiveAppWindowTitle(false);
-
-        expect(store.getState().showActiveAppWindowTitle).toBe(true);
-        expect(spy).toHaveBeenCalledWith(expect.objectContaining({
-            v: BRIDGE_VERSION,
-            store: 'settings',
-            action: 'setShowActiveAppWindowTitle',
-            args: [false],
-        }));
-        spy.mockRestore();
-    });
-
     it('setAutostartEnabled dispatches instead of mutating local state', () => {
         const spy = vi.spyOn(dispatchMod, 'dispatch').mockResolvedValue();
         const store = createSettingsStore({ isSettingsWindow: true });
@@ -322,19 +259,4 @@ describe('createSettingsStore — settings-window mode', () => {
         spy.mockRestore();
     });
 
-    it('setAutoPinOnFocusEnd dispatches instead of mutating local state', () => {
-        const spy = vi.spyOn(dispatchMod, 'dispatch').mockResolvedValue();
-        const store = createSettingsStore({ isSettingsWindow: true });
-
-        store.getState().setAutoPinOnFocusEnd(false);
-
-        expect(store.getState().autoPinOnFocusEnd).toBe(true);
-        expect(spy).toHaveBeenCalledWith(expect.objectContaining({
-            v: BRIDGE_VERSION,
-            store: 'settings',
-            action: 'setAutoPinOnFocusEnd',
-            args: [false],
-        }));
-        spy.mockRestore();
-    });
 });

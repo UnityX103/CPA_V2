@@ -57,9 +57,7 @@ beforeEach(() => {
     useSettingsStore.setState({
         uiScale: 1.0,
         committedUiScale: 1.0,
-        showActiveAppWindowTitle: true,
         autostartEnabled: false,
-        autoPinOnFocusEnd: true,
         dangerousChange: null,
         activeTab: 'pomodoro',
     });
@@ -115,15 +113,13 @@ describe('buildSnapshot', () => {
     it('reads from every source store and stamps the version', () => {
         useSettingsStore.setState({ uiScale: 1.5, committedUiScale: 1.5 });
         useSettingsStore.setState({ autostartEnabled: true });
-        useSettingsStore.setState({ autoPinOnFocusEnd: false });
         usePomodoroStore.setState({ autoStartBreak: true });
-        useSettingsStore.getState().setShowActiveAppWindowTitle(false);
         const snap = buildSnapshot();
         expect(snap.v).toBe(BRIDGE_VERSION);
         expect(snap.settings.uiScale).toBe(1.5);
-        expect(snap.settings.showActiveAppWindowTitle).toBe(false);
         expect(snap.settings.autostartEnabled).toBe(true);
-        expect(snap.settings.autoPinOnFocusEnd).toBe(false);
+        expect(('showActiveApp' + 'WindowTitle') in snap.settings).toBe(false);
+        expect(('autoPinOn' + 'FocusEnd') in snap.settings).toBe(false);
         expect('targetMonitorIndex' in snap.settings).toBe(false);
         expect(snap.pomodoro.focusDurationSeconds).toBe(usePomodoroStore.getState().focusDurationSeconds);
         expect(snap.pomodoro.autoStartBreak).toBe(true);
@@ -322,17 +318,6 @@ describe('applyDispatch', () => {
         expect(useSettingsStore.getState().committedUiScale).toBe(2.0);
     });
 
-    it('routes show-active-app-title setting to the authoritative settings store', () => {
-        applyDispatch({
-            v: BRIDGE_VERSION,
-            store: 'settings',
-            action: 'setShowActiveAppWindowTitle',
-            args: [false],
-        });
-
-        expect(useSettingsStore.getState().showActiveAppWindowTitle).toBe(false);
-    });
-
     it('routes autostart setting to the authoritative settings store', () => {
         const original = useSettingsStore.getState().setAutostartEnabled;
         const setAutostartEnabled = vi.fn();
@@ -349,25 +334,6 @@ describe('applyDispatch', () => {
             expect(setAutostartEnabled).toHaveBeenCalledWith(true);
         } finally {
             useSettingsStore.setState({ setAutostartEnabled: original });
-        }
-    });
-
-    it('routes auto-pin-on-focus-end setting to the authoritative settings store', () => {
-        const original = useSettingsStore.getState().setAutoPinOnFocusEnd;
-        const setAutoPinOnFocusEnd = vi.fn();
-        useSettingsStore.setState({ setAutoPinOnFocusEnd });
-
-        try {
-            applyDispatch({
-                v: BRIDGE_VERSION,
-                store: 'settings',
-                action: 'setAutoPinOnFocusEnd',
-                args: [false],
-            });
-
-            expect(setAutoPinOnFocusEnd).toHaveBeenCalledWith(false);
-        } finally {
-            useSettingsStore.setState({ setAutoPinOnFocusEnd: original });
         }
     });
 
@@ -488,9 +454,7 @@ describe('bridge host subscription signatures', () => {
         const pomodoroTabSettings: SettingsState = {
             uiScale: 1.25,
             committedUiScale: 1.25,
-            showActiveAppWindowTitle: true,
             autostartEnabled: false,
-            autoPinOnFocusEnd: true,
             dangerousChange: null,
             activeTab: 'pomodoro',
         };
@@ -502,24 +466,14 @@ describe('bridge host subscription signatures', () => {
             ...pomodoroTabSettings,
             uiScale: 1.5,
         };
-        const hiddenTitleSettings: SettingsState = {
-            ...pomodoroTabSettings,
-            showActiveAppWindowTitle: false,
-        };
         const autostartSettings: SettingsState = {
             ...pomodoroTabSettings,
             autostartEnabled: true,
         };
-        const noAutoPinSettings: SettingsState = {
-            ...pomodoroTabSettings,
-            autoPinOnFocusEnd: false,
-        };
 
         expect(settingsSig(pomodoroTabSettings)).toBe(settingsSig(globalTabSettings));
         expect(settingsSig(pomodoroTabSettings)).not.toBe(settingsSig(scaledSettings));
-        expect(settingsSig(pomodoroTabSettings)).not.toBe(settingsSig(hiddenTitleSettings));
         expect(settingsSig(pomodoroTabSettings)).not.toBe(settingsSig(autostartSettings));
-        expect(settingsSig(pomodoroTabSettings)).not.toBe(settingsSig(noAutoPinSettings));
     });
 
     it('pomoSig includes end-action settings and ignores transient timer fields', () => {

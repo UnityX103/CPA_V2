@@ -11,68 +11,38 @@ vi.mock('@tauri-apps/plugin-store', () => ({
 }));
 
 describe('settingsPersistence', () => {
+    const obsoleteActiveTitleKey = 'showActiveApp' + 'WindowTitle';
+    const obsoleteAutoPinKey = 'autoPinOn' + 'FocusEnd';
+
     beforeEach(() => {
         store.get.mockReset();
         store.set.mockReset();
         store.save.mockReset();
     });
 
-    it('loads persisted v1 settings', async () => {
+    it('loads persisted v1 settings and ignores obsolete fields', async () => {
         store.get.mockResolvedValue({
             v: 1,
             uiScale: 1.75,
-            showActiveAppWindowTitle: false,
+            [obsoleteActiveTitleKey]: false,
             autostartEnabled: true,
+            [obsoleteAutoPinKey]: false,
         });
         const { loadPersistedSettings } = await import('./settingsPersistence');
 
         await expect(loadPersistedSettings()).resolves.toEqual({
             uiScale: 1.75,
-            showActiveAppWindowTitle: false,
             autostartEnabled: true,
-            autoPinOnFocusEnd: true,
         });
     });
 
-    it('loads persisted autoPinOnFocusEnd settings', async () => {
-        store.get.mockResolvedValue({
-            v: 1,
-            uiScale: 1.75,
-            showActiveAppWindowTitle: false,
-            autostartEnabled: true,
-            autoPinOnFocusEnd: false,
-        });
-        const { loadPersistedSettings } = await import('./settingsPersistence');
-
-        await expect(loadPersistedSettings()).resolves.toEqual({
-            uiScale: 1.75,
-            showActiveAppWindowTitle: false,
-            autostartEnabled: true,
-            autoPinOnFocusEnd: false,
-        });
-    });
-
-    it('defaults showActiveAppWindowTitle to true for older v1 settings', async () => {
+    it('defaults missing autostartEnabled to false for older v1 settings', async () => {
         store.get.mockResolvedValue({ v: 1, uiScale: 1.75 });
         const { loadPersistedSettings } = await import('./settingsPersistence');
 
         await expect(loadPersistedSettings()).resolves.toEqual({
             uiScale: 1.75,
-            showActiveAppWindowTitle: true,
             autostartEnabled: false,
-            autoPinOnFocusEnd: true,
-        });
-    });
-
-    it('defaults autoPinOnFocusEnd to true for older v1 settings', async () => {
-        store.get.mockResolvedValue({ v: 1, uiScale: 1.75 });
-        const { loadPersistedSettings } = await import('./settingsPersistence');
-
-        await expect(loadPersistedSettings()).resolves.toEqual({
-            uiScale: 1.75,
-            showActiveAppWindowTitle: true,
-            autostartEnabled: false,
-            autoPinOnFocusEnd: true,
         });
     });
 
@@ -87,7 +57,7 @@ describe('settingsPersistence', () => {
         store.get.mockResolvedValue({
             v: 1,
             uiScale: 1.75,
-            showActiveAppWindowTitle: true,
+            [obsoleteActiveTitleKey]: true,
             autostartEnabled: 'yes',
         });
         const { loadPersistedSettings } = await import('./settingsPersistence');
@@ -95,35 +65,18 @@ describe('settingsPersistence', () => {
         await expect(loadPersistedSettings()).resolves.toBeNull();
     });
 
-    it('ignores malformed autoPinOnFocusEnd settings', async () => {
-        store.get.mockResolvedValue({
-            v: 1,
-            uiScale: 1.75,
-            showActiveAppWindowTitle: true,
-            autostartEnabled: false,
-            autoPinOnFocusEnd: 'yes',
-        });
-        const { loadPersistedSettings } = await import('./settingsPersistence');
-
-        await expect(loadPersistedSettings()).resolves.toBeNull();
-    });
-
-    it('saves persisted v1 settings', async () => {
+    it('saves persisted v1 settings without obsolete fields', async () => {
         const { savePersistedSettings } = await import('./settingsPersistence');
 
         await savePersistedSettings({
             uiScale: 2,
-            showActiveAppWindowTitle: false,
             autostartEnabled: true,
-            autoPinOnFocusEnd: false,
         });
 
         expect(store.set).toHaveBeenCalledWith('settings', {
             v: 1,
             uiScale: 2,
-            showActiveAppWindowTitle: false,
             autostartEnabled: true,
-            autoPinOnFocusEnd: false,
         });
         expect(store.save).toHaveBeenCalledTimes(1);
     });

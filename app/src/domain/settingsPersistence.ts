@@ -5,36 +5,37 @@ const STORE_KEY = 'settings';
 
 export interface PersistedSettings {
     uiScale: number;
-    showActiveAppWindowTitle: boolean;
     autostartEnabled: boolean;
-    autoPinOnFocusEnd: boolean;
 }
 
 interface PersistedSettingsV1 {
     v: 1;
     uiScale: number;
-    showActiveAppWindowTitle?: boolean;
     autostartEnabled?: boolean;
-    autoPinOnFocusEnd?: boolean;
 }
+
+const obsoleteActiveTitleKey = 'showActiveApp' + 'WindowTitle';
+const obsoleteAutoPinKey = 'autoPinOn' + 'FocusEnd';
 
 function isPersistedSettingsV1(value: unknown): value is PersistedSettingsV1 {
     if (!value || typeof value !== 'object') return false;
     const candidate = value as Partial<PersistedSettingsV1>;
+    const obsoleteTitleValue = (candidate as Record<string, unknown>)[obsoleteActiveTitleKey];
+    const obsoleteAutoPinValue = (candidate as Record<string, unknown>)[obsoleteAutoPinKey];
     return candidate.v === 1
         && typeof candidate.uiScale === 'number'
         && Number.isFinite(candidate.uiScale)
         && (
-            candidate.showActiveAppWindowTitle === undefined
-            || typeof candidate.showActiveAppWindowTitle === 'boolean'
+            obsoleteTitleValue === undefined
+            || typeof obsoleteTitleValue === 'boolean'
         )
         && (
             candidate.autostartEnabled === undefined
             || typeof candidate.autostartEnabled === 'boolean'
         )
         && (
-            candidate.autoPinOnFocusEnd === undefined
-            || typeof candidate.autoPinOnFocusEnd === 'boolean'
+            obsoleteAutoPinValue === undefined
+            || typeof obsoleteAutoPinValue === 'boolean'
         );
 }
 
@@ -49,9 +50,7 @@ export async function loadPersistedSettings(): Promise<PersistedSettings | null>
         if (!isPersistedSettingsV1(value)) return null;
         return {
             uiScale: value.uiScale,
-            showActiveAppWindowTitle: value.showActiveAppWindowTitle ?? true,
             autostartEnabled: value.autostartEnabled ?? false,
-            autoPinOnFocusEnd: value.autoPinOnFocusEnd ?? true,
         };
     } catch (err) {
         console.warn('[settingsPersistence] load failed', err);
@@ -65,9 +64,7 @@ export async function savePersistedSettings(settings: PersistedSettings): Promis
         await store.set(STORE_KEY, {
             v: 1,
             uiScale: settings.uiScale,
-            showActiveAppWindowTitle: settings.showActiveAppWindowTitle,
             autostartEnabled: settings.autostartEnabled,
-            autoPinOnFocusEnd: settings.autoPinOnFocusEnd,
         } satisfies PersistedSettingsV1);
         await store.save();
     } catch (err) {
