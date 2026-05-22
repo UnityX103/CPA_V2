@@ -3,6 +3,7 @@ mod active_app;
 mod key_counter;
 mod scaled_window;
 mod video_files;
+mod window_layout;
 mod window_helpers;
 
 use serde::Serialize;
