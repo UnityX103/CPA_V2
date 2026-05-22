@@ -4,7 +4,7 @@ import { PomodoroEndActionLayer } from './ui/PomodoroEndActionLayer';
 import { AppUpdateReadyNotice } from './ui/AppUpdateReadyNotice';
 import { useStateSync } from './domain/stateSync';
 import { useActiveAppListener } from './domain/activeApp';
-import { useBindingKeyListener } from './domain/bindingKey';
+import { useBindingKeyListener, useBindingKeyStore } from './domain/bindingKey';
 import { useBridgeHost } from './domain/bridge/host';
 import { openCheckinEditorWindow, useCheckinWindowController } from './domain/checkinWindow';
 import { useInputCounterWindowController } from './domain/inputCounterWindow';
@@ -12,13 +12,23 @@ import { useRemotePlayerWindowController } from './domain/remotePlayerWindows';
 import { MAIN_WINDOW_BASE_SIZE, useScaledWindowSize } from './domain/scaledWindow';
 import { useAppUpdateStore } from './domain/appUpdate';
 import { MAX_SCALE, MIN_SCALE, useSettingsStore } from './domain/settings';
-import { loadPersistedSettings, savePersistedSettings } from './domain/settingsPersistence';
+import { loadPersistedSettings } from './domain/settingsPersistence';
 import { readAutostartEnabled } from './domain/autostart';
 import { useCheckinStore } from './domain/checkin';
-import { loadPersistedCheckin, savePersistedCheckin } from './domain/checkinPersistence';
+import { loadPersistedCheckin } from './domain/checkinPersistence';
 import { usePomodoroStore } from './domain/pomodoro';
 import { useNetworkStore } from './domain/network';
 import { useCloudAccountSync } from './domain/cloudAccountSync';
+import {
+    buildUserPreferencesSnapshot,
+    hydrateUserPreferencesSnapshot,
+    userPreferencesKey,
+    type UserPreferencesStores,
+} from './domain/userPreferences';
+import {
+    loadPersistedUserPreferences,
+    savePersistedUserPreferences,
+} from './domain/userPreferencesPersistence';
 
 function clampStartupScale(scale: number): number {
     if (!Number.isFinite(scale)) return 1.0;
@@ -68,6 +78,17 @@ function todayLocalDate(): string {
     return `${now.getFullYear()}-${month}-${day}`;
 }
 
+function userPreferenceStores(): UserPreferencesStores {
+    return {
+        pomodoro: usePomodoroStore,
+        settings: useSettingsStore,
+        appUpdate: useAppUpdateStore,
+        network: useNetworkStore,
+        bindingKey: useBindingKeyStore,
+        checkin: useCheckinStore,
+    };
+}
+
 export default function App() {
     useStateSync();
     useActiveAppListener();
@@ -77,140 +98,143 @@ export default function App() {
     useInputCounterWindowController();
     useRemotePlayerWindowController();
     const uiScale = useSettingsStore((s) => s.uiScale);
-    const [settingsHydrated, setSettingsHydrated] = useState(false);
-    useCloudAccountSync({ enabled: settingsHydrated });
+    const [localHydrated, setLocalHydrated] = useState(false);
+    useCloudAccountSync({ enabled: localHydrated });
     useScaledWindowSize({
         label: 'main',
         baseWidth: MAIN_WINDOW_BASE_SIZE.width,
         baseHeight: MAIN_WINDOW_BASE_SIZE.height,
         minWidth: MAIN_WINDOW_BASE_SIZE.width,
         minHeight: MAIN_WINDOW_BASE_SIZE.height,
-        enabled: settingsHydrated,
+        enabled: localHydrated,
     });
 
     useEffect(() => {
+        if (!localHydrated) return;
         void useNetworkStore.getState().restoreAccountSession();
-    }, []);
+    }, [localHydrated]);
 
     useEffect(() => {
         let cancelled = false;
-        loadPersistedSettings()
-            .then(async (settings) => {
-                if (cancelled) return;
-                const fallbackAutostartEnabled = settings?.autostartEnabled ?? false;
-                const initialSettings = getStartupSettingsState();
-                const confirmedAutostartEnabled = await readAutostartEnabled(fallbackAutostartEnabled);
-                if (cancelled) return;
-                if (useSettingsStore.getState().autostartEnabled !== initialSettings.autostartEnabled) {
-                    setSettingsHydrated(true);
-                    return;
-                }
+        let appUpdateCleanup = () => {};
+        const subscriptions: Array<() => void> = [];
+        let saveTimer: number | null = null;
 
-                const { snapshot, shouldApplyScale } = buildStartupSettingsSnapshot(
-                    settings,
-                    initialSettings,
-                    confirmedAutostartEnabled,
-                );
-
-                useSettingsStore.setState({
-                    ...(shouldApplyScale
-                        ? { uiScale: snapshot.uiScale, committedUiScale: snapshot.uiScale }
-                        : {}),
-                    autostartEnabled: snapshot.autostartEnabled,
-                });
-                if (confirmedAutostartEnabled !== fallbackAutostartEnabled) {
-                    void savePersistedSettings(snapshot);
-                }
-                setSettingsHydrated(true);
-            })
-            .catch((err) => {
-                console.warn('[settings] hydration failed', err);
-                if (!cancelled) {
-                    setSettingsHydrated(true);
-                }
-            });
-        return () => {
-            cancelled = true;
+        const clearSaveTimer = () => {
+            if (saveTimer != null) {
+                window.clearTimeout(saveTimer);
+                saveTimer = null;
+            }
         };
-    }, []);
 
-    useEffect(() => {
-        let cancelled = false;
-        let unsubscribe = () => {};
+        async function saveLocalSnapshot(stores: UserPreferencesStores) {
+            const snapshot = buildUserPreferencesSnapshot(stores);
+            await savePersistedUserPreferences(snapshot);
+            return snapshot;
+        }
+
+        function subscribeLocalPreferences(stores: UserPreferencesStores) {
+            let previousKey = userPreferencesKey(buildUserPreferencesSnapshot(stores));
+            const scheduleSave = () => {
+                const snapshot = buildUserPreferencesSnapshot(stores);
+                const key = userPreferencesKey(snapshot);
+                if (key === previousKey) return;
+                previousKey = key;
+                clearSaveTimer();
+                saveTimer = window.setTimeout(() => {
+                    void savePersistedUserPreferences(snapshot);
+                }, 100);
+            };
+
+            subscriptions.push(
+                stores.pomodoro.subscribe(scheduleSave),
+                stores.settings.subscribe(scheduleSave),
+                stores.appUpdate.subscribe(scheduleSave),
+                stores.network.subscribe(scheduleSave),
+                stores.bindingKey.subscribe(scheduleSave),
+                stores.checkin.subscribe(scheduleSave),
+            );
+        }
 
         async function hydrateAndSubscribe() {
+            const stores = userPreferenceStores();
             try {
-                const persisted = await loadPersistedCheckin();
+                const [preferences, legacySettings, legacyCheckin] = await Promise.all([
+                    loadPersistedUserPreferences(),
+                    loadPersistedSettings(),
+                    loadPersistedCheckin(),
+                    useAppUpdateStore.getState().hydrate(),
+                ]);
                 if (cancelled) return;
 
-                const checkin = useCheckinStore.getState();
-                if (persisted) {
-                    checkin.hydrateCheckin({
-                        weeklyPlan: persisted.weeklyPlan,
-                        dailyRecords: persisted.dailyRecords,
+                const initialSettings = getStartupSettingsState();
+                const fallbackAutostartEnabled = preferences?.settings.autostartEnabled
+                    ?? legacySettings?.autostartEnabled
+                    ?? false;
+                const confirmedAutostartEnabled = await readAutostartEnabled(fallbackAutostartEnabled);
+                if (cancelled) return;
+                const autostartChangedDuringNativeRead =
+                    useSettingsStore.getState().autostartEnabled !== initialSettings.autostartEnabled;
+                const startupAutostartEnabled = autostartChangedDuringNativeRead
+                    ? useSettingsStore.getState().autostartEnabled
+                    : confirmedAutostartEnabled;
+
+                if (preferences) {
+                    hydrateUserPreferencesSnapshot({
+                        stores,
+                        snapshot: {
+                            ...preferences,
+                            settings: {
+                                ...preferences.settings,
+                                autostartEnabled: startupAutostartEnabled,
+                            },
+                        },
                     });
+                } else {
+                    const { snapshot, shouldApplyScale } = buildStartupSettingsSnapshot(
+                        legacySettings,
+                        initialSettings,
+                        startupAutostartEnabled,
+                    );
+                    useSettingsStore.setState({
+                        ...(shouldApplyScale
+                            ? { uiScale: snapshot.uiScale, committedUiScale: snapshot.uiScale }
+                            : {}),
+                        autostartEnabled: snapshot.autostartEnabled,
+                    });
+                    if (legacyCheckin) {
+                        useCheckinStore.getState().hydrateCheckin({
+                            weeklyPlan: legacyCheckin.weeklyPlan,
+                            dailyRecords: legacyCheckin.dailyRecords,
+                        });
+                    }
                 }
+
                 const beforeRollForward = useCheckinStore.getState().weeklyPlan;
                 useCheckinStore.getState().rollForwardToDate(todayLocalDate());
                 const afterRollForward = useCheckinStore.getState();
                 if (afterRollForward.weeklyPlan !== beforeRollForward) {
-                    await savePersistedCheckin({
-                        schemaVersion: 1,
-                        weeklyPlan: afterRollForward.weeklyPlan,
-                        dailyRecords: afterRollForward.dailyRecords,
-                    });
+                    await saveLocalSnapshot(stores);
                 }
+                await saveLocalSnapshot(stores);
+                subscribeLocalPreferences(stores);
+                appUpdateCleanup = useAppUpdateStore.getState().startAutomaticChecks();
+                setLocalHydrated(true);
             } catch (error) {
                 if (!cancelled) {
                     useCheckinStore.getState().setLastError(String(error));
+                    setLocalHydrated(true);
                 }
             }
-
-            if (cancelled) return;
-            unsubscribe = useCheckinStore.subscribe((state, previousState) => {
-                if (
-                    state.weeklyPlan === previousState.weeklyPlan
-                    && state.dailyRecords === previousState.dailyRecords
-                ) {
-                    return;
-                }
-
-                void savePersistedCheckin({
-                    schemaVersion: 1,
-                    weeklyPlan: state.weeklyPlan,
-                    dailyRecords: state.dailyRecords,
-                }).catch((error) => {
-                    if (!cancelled) {
-                        useCheckinStore.getState().setLastError(String(error));
-                    }
-                });
-            });
         }
 
         void hydrateAndSubscribe();
 
         return () => {
             cancelled = true;
-            unsubscribe();
-        };
-    }, []);
-
-    useEffect(() => {
-        let cancelled = false;
-        let cleanup = () => {};
-
-        useAppUpdateStore.getState().hydrate()
-            .then(() => {
-                if (cancelled) return;
-                cleanup = useAppUpdateStore.getState().startAutomaticChecks();
-            })
-            .catch((err) => {
-                console.warn('[appUpdate] hydration failed', err);
-            });
-
-        return () => {
-            cancelled = true;
-            cleanup();
+            clearSaveTimer();
+            appUpdateCleanup();
+            subscriptions.forEach((unsubscribe) => unsubscribe());
         };
     }, []);
 

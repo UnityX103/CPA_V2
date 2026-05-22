@@ -69,6 +69,18 @@ function makeCloudSnapshot(): CloudAccountData {
             uiScale: 1,
             autostartEnabled: false,
         },
+        appUpdate: {
+            autoUpdateEnabled: true,
+        },
+        network: {
+            autoConnect: false,
+            playerName: '我',
+        },
+        bindingKey: {
+            panelEnabled: true,
+            entries: [],
+            syncedKeyId: null,
+        },
         checkin: {
             weeklyPlan: {
                 weekStartDate: '2026-05-18',

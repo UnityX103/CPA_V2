@@ -1,37 +1,32 @@
 import type { StoreApi, UseBoundStore } from 'zustand';
 import type { CheckinState, DailyCheckinRecord, WeeklyCheckinPlan } from './checkin';
-import type {
-    PomodoroActions,
-    PomodoroEndActionMode,
-    PomodoroEndActionVideo,
-    PomodoroState,
-} from './pomodoro';
+import type { PomodoroActions, PomodoroState } from './pomodoro';
 import type { PersistedSettingsSnapshot, SettingsState } from './settings';
+import type { AppUpdateSnapshot } from './appUpdate';
+import type { NetworkStateShape } from './network';
+import type { BindingKeyEntry } from './bindingKey';
+import {
+    buildUserPreferencesSnapshot,
+    hydrateUserPreferencesSnapshot,
+    type PersistedBindingKeyEntry,
+    type UserPreferencesSnapshot,
+} from './userPreferences';
 
-export interface CloudAccountData {
-    schemaVersion: 1;
+export interface CloudAccountData extends UserPreferencesSnapshot {
     updatedAt?: number;
-    pomodoro: {
-        focusDurationSeconds: number;
-        breakDurationSeconds: number;
-        totalRounds: number;
-        autoStartBreak: boolean;
-        endActionMode: PomodoroEndActionMode;
-        endActionVideo: PomodoroEndActionVideo;
-    };
-    settings: {
-        uiScale: number;
-        autostartEnabled: boolean;
-    };
-    checkin: {
-        weeklyPlan: WeeklyCheckinPlan;
-        dailyRecords: Record<string, DailyCheckinRecord>;
-    };
 }
 
 type PomodoroStore = UseBoundStore<StoreApi<PomodoroState & PomodoroActions>>;
 type SettingsStore = UseBoundStore<StoreApi<SettingsState & {
     hydrateSettings: (snapshot: PersistedSettingsSnapshot) => void;
+}>>;
+type AppUpdateStore = UseBoundStore<StoreApi<AppUpdateSnapshot>>;
+type NetworkStore = UseBoundStore<StoreApi<NetworkStateShape>>;
+type BindingKeyStore = UseBoundStore<StoreApi<{
+    panelEnabled: boolean;
+    entries: BindingKeyEntry[];
+    syncedKeyId: string | null;
+    capturingId: string | null;
 }>>;
 type CheckinStore = UseBoundStore<StoreApi<CheckinState & {
     hydrateCheckin: (snapshot: Pick<CheckinState, 'weeklyPlan' | 'dailyRecords'>) => void;
@@ -40,54 +35,21 @@ type CheckinStore = UseBoundStore<StoreApi<CheckinState & {
 export interface CloudStores {
     pomodoro: PomodoroStore;
     settings: SettingsStore;
+    appUpdate: AppUpdateStore;
+    network: NetworkStore;
+    bindingKey: BindingKeyStore;
     checkin: CheckinStore;
 }
 
 export function buildCloudAccountData(stores: CloudStores): CloudAccountData {
-    const p = stores.pomodoro.getState();
-    const s = stores.settings.getState();
-    const c = stores.checkin.getState();
-    return {
-        schemaVersion: 1,
-        pomodoro: {
-            focusDurationSeconds: p.focusDurationSeconds,
-            breakDurationSeconds: p.breakDurationSeconds,
-            totalRounds: p.totalRounds,
-            autoStartBreak: p.autoStartBreak,
-            endActionMode: p.endActionMode,
-            endActionVideo: { ...p.endActionVideo },
-        },
-        settings: {
-            uiScale: s.committedUiScale,
-            autostartEnabled: s.autostartEnabled,
-        },
-        checkin: {
-            weeklyPlan: cloneWeeklyPlan(c.weeklyPlan),
-            dailyRecords: cloneDailyRecords(c.dailyRecords),
-        },
-    };
+    return buildUserPreferencesSnapshot(stores);
 }
 
 export function hydrateCloudAccountData({ stores, data }: {
     stores: CloudStores;
     data: CloudAccountData;
 }): void {
-    stores.pomodoro.getState().applySettings(
-        data.pomodoro.focusDurationSeconds,
-        data.pomodoro.breakDurationSeconds,
-        data.pomodoro.totalRounds,
-        false,
-        data.pomodoro.autoStartBreak,
-    );
-    stores.pomodoro.getState().applyEndActionSettings(
-        data.pomodoro.endActionMode,
-        data.pomodoro.endActionVideo,
-    );
-    stores.settings.getState().hydrateSettings(data.settings);
-    stores.checkin.getState().hydrateCheckin({
-        weeklyPlan: cloneWeeklyPlan(data.checkin.weeklyPlan),
-        dailyRecords: cloneDailyRecords(data.checkin.dailyRecords),
-    });
+    hydrateUserPreferencesSnapshot({ stores, snapshot: data });
 }
 
 export function mergeCloudAccountDataConflict({ server, local }: {
@@ -96,6 +58,11 @@ export function mergeCloudAccountDataConflict({ server, local }: {
 }): CloudAccountData {
     return {
         ...server,
+        pomodoro: { ...server.pomodoro, endActionVideo: { ...server.pomodoro.endActionVideo } },
+        settings: { ...server.settings },
+        appUpdate: { ...server.appUpdate },
+        network: { ...server.network },
+        bindingKey: cloneBindingKey(server.bindingKey),
         checkin: {
             weeklyPlan: cloneWeeklyPlan(server.checkin.weeklyPlan),
             dailyRecords: mergeDailyRecords(server.checkin.dailyRecords, local.checkin.dailyRecords),
@@ -146,16 +113,25 @@ function cloneWeeklyPlan(plan: WeeklyCheckinPlan): WeeklyCheckinPlan {
     return JSON.parse(JSON.stringify(plan)) as WeeklyCheckinPlan;
 }
 
+function cloneBindingKey(bindingKey: CloudAccountData['bindingKey']): CloudAccountData['bindingKey'] {
+    return {
+        panelEnabled: bindingKey.panelEnabled,
+        syncedKeyId: bindingKey.syncedKeyId,
+        entries: bindingKey.entries.map(cloneBindingKeyEntry),
+    };
+}
+
+function cloneBindingKeyEntry(entry: PersistedBindingKeyEntry): PersistedBindingKeyEntry {
+    return {
+        ...entry,
+        input: entry.input ? { ...entry.input } : null,
+    };
+}
+
 function cloneDailyRecord(record: DailyCheckinRecord): DailyCheckinRecord {
     return {
         date: record.date,
         countsByItemId: { ...record.countsByItemId },
         processedPomodoroEndEventIds: [...record.processedPomodoroEndEventIds],
     };
-}
-
-function cloneDailyRecords(records: Record<string, DailyCheckinRecord>): Record<string, DailyCheckinRecord> {
-    return Object.fromEntries(
-        Object.entries(records).map(([date, record]) => [date, cloneDailyRecord(record)]),
-    );
 }

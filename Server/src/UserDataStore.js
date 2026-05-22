@@ -153,6 +153,9 @@ function normalizeSnapshot(value)
         schemaVersion: 1,
         pomodoro: normalizePomodoro(value.pomodoro),
         settings: normalizeSettings(value.settings),
+        appUpdate: normalizeAppUpdate(value.appUpdate),
+        network: normalizeNetwork(value.network),
+        bindingKey: normalizeBindingKey(value.bindingKey),
         checkin: normalizeCheckin(value.checkin)
     };
 }
@@ -193,10 +196,102 @@ function normalizeSettings(value)
     }
     return {
         uiScale: clampNumber(value.uiScale, 0.5, 2),
-        showActiveAppWindowTitle: Boolean(value.showActiveAppWindowTitle),
-        autostartEnabled: Boolean(value.autostartEnabled),
-        autoPinOnFocusEnd: Boolean(value.autoPinOnFocusEnd)
+        autostartEnabled: Boolean(value.autostartEnabled)
     };
+}
+
+function normalizeAppUpdate(value)
+{
+    if (!value || typeof value !== 'object')
+    {
+        return { autoUpdateEnabled: true };
+    }
+    return {
+        autoUpdateEnabled: typeof value.autoUpdateEnabled === 'boolean'
+            ? value.autoUpdateEnabled
+            : true
+    };
+}
+
+function normalizeNetwork(value)
+{
+    if (!value || typeof value !== 'object')
+    {
+        return { autoConnect: false, playerName: '我' };
+    }
+    const playerName = clampString(value.playerName, 64).trim();
+    return {
+        autoConnect: typeof value.autoConnect === 'boolean' ? value.autoConnect : false,
+        playerName: playerName || '我'
+    };
+}
+
+function normalizeBindingKey(value)
+{
+    if (!value || typeof value !== 'object')
+    {
+        return { panelEnabled: true, entries: [], syncedKeyId: null };
+    }
+    const entries = Array.isArray(value.entries)
+        ? value.entries.map(normalizeBindingKeyEntry).filter(Boolean)
+        : [];
+    const syncedKeyId = typeof value.syncedKeyId === 'string'
+        && entries.some((entry) => entry.id === value.syncedKeyId)
+        ? value.syncedKeyId
+        : null;
+    return {
+        panelEnabled: typeof value.panelEnabled === 'boolean' ? value.panelEnabled : true,
+        entries,
+        syncedKeyId
+    };
+}
+
+function normalizeBindingKeyEntry(value)
+{
+    if (!value || typeof value !== 'object')
+    {
+        return null;
+    }
+    if (typeof value.id !== 'string' || !value.id || typeof value.label !== 'string')
+    {
+        return null;
+    }
+    if (!Number.isInteger(value.keyCode))
+    {
+        return null;
+    }
+    const input = normalizeBindingInput(value.input);
+    if (value.input != null && !input)
+    {
+        return null;
+    }
+    return {
+        id: clampString(value.id, 128),
+        label: clampString(value.label, 128),
+        keyCode: value.keyCode,
+        input,
+        enabled: typeof value.enabled === 'boolean' ? value.enabled : true
+    };
+}
+
+function normalizeBindingInput(value)
+{
+    if (!value || typeof value !== 'object')
+    {
+        return null;
+    }
+    if (value.kind === 'keyboard' && Number.isInteger(value.code) && value.code >= 0)
+    {
+        return { kind: 'keyboard', code: value.code };
+    }
+    if (
+        value.kind === 'mouse' &&
+        (value.button === 'left' || value.button === 'middle' || value.button === 'right')
+    )
+    {
+        return { kind: 'mouse', button: value.button };
+    }
+    return null;
 }
 
 function normalizeCheckin(value)

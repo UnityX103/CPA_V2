@@ -45,6 +45,25 @@ function validSnapshot(overrides = {})
             autostartEnabled: false,
             autoPinOnFocusEnd: true
         },
+        appUpdate: {
+            autoUpdateEnabled: false
+        },
+        network: {
+            autoConnect: true,
+            playerName: 'Alice'
+        },
+        bindingKey: {
+            panelEnabled: false,
+            entries: [{
+                id: 'space',
+                label: 'Space',
+                keyCode: 49,
+                input: { kind: 'keyboard', code: 49 },
+                enabled: true,
+                pressCount: 99
+            }],
+            syncedKeyId: 'space'
+        },
         checkin: {
             weeklyPlan: {
                 weekStartDate: '2026-05-18',
@@ -107,9 +126,67 @@ test('UserDataStore saves, normalizes, and reloads a snapshot', async (t) =>
     assert.equal(loaded.updatedAt, 1779360000000);
     assert.equal(Object.hasOwn(loaded, 'unknown'), false);
     assert.equal(Object.hasOwn(loaded.pomodoro, 'extra'), false);
+    assert.deepEqual(loaded.settings, { uiScale: 1, autostartEnabled: false });
+    assert.deepEqual(loaded.appUpdate, { autoUpdateEnabled: false });
+    assert.deepEqual(loaded.network, { autoConnect: true, playerName: 'Alice' });
+    assert.deepEqual(loaded.bindingKey, {
+        panelEnabled: false,
+        entries: [{
+            id: 'space',
+            label: 'Space',
+            keyCode: 49,
+            input: { kind: 'keyboard', code: 49 },
+            enabled: true
+        }],
+        syncedKeyId: 'space'
+    });
 
     const raw = JSON.parse(await readFile(path, 'utf8'));
     assert.equal(raw.users['user-1'].pomodoro.focusDurationSeconds, 1500);
+});
+
+test('UserDataStore accepts old v1 snapshots without newer preference sections', async (t) =>
+{
+    const { store } = await createTempStore(t);
+    const oldSnapshot = validSnapshot();
+    delete oldSnapshot.appUpdate;
+    delete oldSnapshot.network;
+    delete oldSnapshot.bindingKey;
+
+    const saved = await store.saveUserData({
+        userId: 'user-1',
+        data: oldSnapshot,
+        baseUpdatedAt: null
+    });
+
+    assert.deepEqual(saved.appUpdate, { autoUpdateEnabled: true });
+    assert.deepEqual(saved.network, { autoConnect: false, playerName: '我' });
+    assert.deepEqual(saved.bindingKey, { panelEnabled: true, entries: [], syncedKeyId: null });
+});
+
+test('UserDataStore drops invalid binding entries and clears missing syncedKeyId', async (t) =>
+{
+    const { store } = await createTempStore(t);
+    const saved = await store.saveUserData({
+        userId: 'user-1',
+        data: validSnapshot({
+            bindingKey: {
+                panelEnabled: true,
+                entries: [
+                    { id: 'ok', label: 'OK', keyCode: -1, input: null, enabled: true },
+                    { id: 'bad', label: 'Bad', keyCode: 1, input: { kind: 'keyboard', code: -5 }, enabled: true }
+                ],
+                syncedKeyId: 'bad'
+            }
+        }),
+        baseUpdatedAt: null
+    });
+
+    assert.deepEqual(saved.bindingKey, {
+        panelEnabled: true,
+        entries: [{ id: 'ok', label: 'OK', keyCode: -1, input: null, enabled: true }],
+        syncedKeyId: null
+    });
 });
 
 test('UserDataStore rejects invalid snapshots', async (t) =>
