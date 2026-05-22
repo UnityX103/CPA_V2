@@ -148,7 +148,7 @@ interface CheckinPlanEditorPanelProps {
     initialSelectedDay?: WeekdayKey;
 }
 
-type RowMenuState = { itemId: string; kind: 'context' | 'order' } | null;
+type RowMenuState = { itemId: string } | null;
 
 export function CheckinPlanEditorPanel({ initialPlan, initialSelectedDay = 'mon' }: CheckinPlanEditorPanelProps = {}) {
     const storePlan = useCheckinStore((state) => state.weeklyPlan);
@@ -440,11 +440,7 @@ export function CheckinPlanEditorPanel({ initialPlan, initialSelectedDay = 'mon'
                                         data-testid={`checkin-item-row-${item.id}`}
                                         className="checkin-editor-item-row"
                                         style={{ '--checkin-item-color': color } as CSSProperties}
-                                        onContextMenu={(event) => {
-                                            event.preventDefault();
-                                            setOpenIconPickerFor(null);
-                                            setRowMenu({ itemId: item.id, kind: 'context' });
-                                        }}
+                                        onContextMenu={(event) => event.preventDefault()}
                                     >
                                         <div className="checkin-editor-item-main">
                                             <button
@@ -524,13 +520,13 @@ export function CheckinPlanEditorPanel({ initialPlan, initialSelectedDay = 'mon'
                                         <button
                                             type="button"
                                             className="checkin-editor-row-action"
-                                            aria-label={`调整 ${item.title} 顺序`}
+                                            aria-label={`打开 ${item.title} 操作菜单`}
                                             onClick={() => {
                                                 setOpenIconPickerFor(null);
                                                 setRowMenu((current) => (
-                                                    current?.itemId === item.id && current.kind === 'order'
+                                                    current?.itemId === item.id
                                                         ? null
-                                                        : { itemId: item.id, kind: 'order' }
+                                                        : { itemId: item.id }
                                                 ));
                                             }}
                                         >
@@ -538,14 +534,9 @@ export function CheckinPlanEditorPanel({ initialPlan, initialSelectedDay = 'mon'
                                         </button>
                                         {rowMenu?.itemId === item.id ? (
                                             <div className="checkin-row-menu" role="menu">
-                                                {rowMenu.kind === 'order' ? (
-                                                    <>
-                                                        <button type="button" role="menuitem" onClick={() => moveItem(item.id, -1)}>上移</button>
-                                                        <button type="button" role="menuitem" onClick={() => moveItem(item.id, 1)}>下移</button>
-                                                    </>
-                                                ) : (
-                                                    <button type="button" role="menuitem" onClick={() => removeItem(item.id)}>删除栏目</button>
-                                                )}
+                                                <button type="button" role="menuitem" onClick={() => moveItem(item.id, -1)}>上移</button>
+                                                <button type="button" role="menuitem" onClick={() => moveItem(item.id, 1)}>下移</button>
+                                                <button type="button" role="menuitem" onClick={() => removeItem(item.id)}>删除栏目</button>
                                             </div>
                                         ) : null}
                                     </div>

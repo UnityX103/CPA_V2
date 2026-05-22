@@ -322,12 +322,14 @@ describe('CheckinPlanEditorPanel', () => {
         expect(screen.getByDisplayValue('3')).toBeInTheDocument();
     });
 
-    it('opens a row context menu and deletes only after choosing delete', () => {
+    it('deletes rows from the right-side grip menu', () => {
         setMultiItemMonday();
         render(<CheckinPlanEditorPanel />);
 
-        fireEvent.contextMenu(screen.getByTestId('checkin-item-row-read'));
+        fireEvent.click(screen.getByRole('button', { name: '打开 阅读 操作菜单' }));
         expect(screen.getByRole('menuitem', { name: '删除栏目' })).toBeInTheDocument();
+        expect(screen.getByRole('menuitem', { name: '上移' })).toBeInTheDocument();
+        expect(screen.getByRole('menuitem', { name: '下移' })).toBeInTheDocument();
 
         let monday = useCheckinStore.getState().weeklyPlan.days.mon;
         expect(monday.kind).toBe('items');
@@ -345,11 +347,22 @@ describe('CheckinPlanEditorPanel', () => {
         }
     });
 
+    it('does not open row actions from the row context menu', () => {
+        setMultiItemMonday();
+        render(<CheckinPlanEditorPanel />);
+
+        fireEvent.contextMenu(screen.getByTestId('checkin-item-row-read'));
+
+        expect(screen.queryByRole('menuitem', { name: '删除栏目' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('menuitem', { name: '上移' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('menuitem', { name: '下移' })).not.toBeInTheDocument();
+    });
+
     it('uses the right-side grip to reorder rows instead of deleting them', () => {
         setMultiItemMonday();
         render(<CheckinPlanEditorPanel />);
 
-        fireEvent.click(screen.getByRole('button', { name: '调整 喝水 顺序' }));
+        fireEvent.click(screen.getByRole('button', { name: '打开 喝水 操作菜单' }));
         fireEvent.click(screen.getByRole('menuitem', { name: '上移' }));
         fireEvent.click(screen.getByRole('button', { name: '保存计划' }));
 
@@ -364,7 +377,7 @@ describe('CheckinPlanEditorPanel', () => {
         setMultiItemMonday();
         render(<CheckinPlanEditorPanel />);
 
-        fireEvent.contextMenu(screen.getByTestId('checkin-item-row-read'));
+        fireEvent.click(screen.getByRole('button', { name: '打开 阅读 操作菜单' }));
         expect(screen.getByRole('menuitem', { name: '删除栏目' })).toBeInTheDocument();
 
         fireEvent.click(screen.getByRole('button', { name: '周二' }));
