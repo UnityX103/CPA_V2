@@ -9,6 +9,8 @@ description: Use when packaging CPA_V2, publishing Tauri updater artifacts to Gi
 
 Treat release signing keys, GitHub tokens, Apple credentials, and SSH private keys as local secrets. Never print, paste, commit, or upload secret contents. Keep the self-contained credential pack in the repo root at:
 
+Release startup, packaging, updater metadata, and GitHub publishing are x64 / x86_64 only. Do not build, launch, test compatibility with, or publish ARM / ARM64 / aarch64 artifacts unless the user explicitly asks for an ARM release.
+
 ```bash
 cpa-v2-release/
 ```
@@ -67,19 +69,19 @@ From the repo root in `CPA_V2`:
 5. Generate updater release files:
    ```bash
    rm -rf release-updates
-   npm run release:updater -- --notes "当前版本更新" --platform darwin-aarch64
+   npm run release:updater -- --notes "当前版本更新" --platform darwin-x86_64
    ```
 6. Upload GitHub Release assets with stable ASCII names. Create or update tag `v<version>` and mark it as latest:
    - `app/release-updates/stable/latest.json`
    - `app/release-updates/stable/<version>/app.tar.gz`
    - `app/release-updates/stable/<version>/app.tar.gz.sig`
-   - DMG copied to `/tmp/CPA_V2_<version>_aarch64.dmg`
+   - DMG copied to `/tmp/CPA_V2_<version>_x64.dmg`
    ```bash
    gh release create "v<version>" \
      app/release-updates/stable/latest.json#latest.json \
      app/release-updates/stable/<version>/app.tar.gz#app.tar.gz \
      app/release-updates/stable/<version>/app.tar.gz.sig#app.tar.gz.sig \
-     /tmp/CPA_V2_<version>_aarch64.dmg#CPA_V2_<version>_aarch64.dmg \
+     /tmp/CPA_V2_<version>_x64.dmg#CPA_V2_<version>_x64.dmg \
      --repo UnityX103/CPA_V2 --target main --title "CPA_V2 <version>" \
      --notes "当前版本更新" --latest
    ```
@@ -88,7 +90,7 @@ From the repo root in `CPA_V2`:
    ```bash
    curl -fsSL https://github.com/UnityX103/CPA_V2/releases/latest/download/latest.json
    curl -I -L https://github.com/UnityX103/CPA_V2/releases/download/v<version>/app.tar.gz
-   curl -I -L https://github.com/UnityX103/CPA_V2/releases/download/v<version>/CPA_V2_<version>_aarch64.dmg
+   curl -I -L https://github.com/UnityX103/CPA_V2/releases/download/v<version>/CPA_V2_<version>_x64.dmg
    codesign --verify --deep --strict --verbose=4 \
      "src-tauri/target/release/bundle/macos/桌宠番茄钟.app"
    syspolicy_check distribution "src-tauri/target/release/bundle/macos/桌宠番茄钟.app"
@@ -125,7 +127,7 @@ Use this path when publishing the Windows updater package.
 - Current updater endpoint is GitHub Releases:
   `https://github.com/UnityX103/CPA_V2/releases/latest/download/latest.json`
 - Do not use `updates.nanzhaigame.cn` for new releases. It is a legacy endpoint kept only for old diagnostics.
-- GitHub normalizes non-ASCII asset names. Use ASCII release asset names for updater artifacts (`app.tar.gz`, `app.tar.gz.sig`) and DMG (`CPA_V2_<version>_aarch64.dmg`).
+- GitHub normalizes non-ASCII asset names. Use ASCII release asset names for updater artifacts (`app.tar.gz`, `app.tar.gz.sig`) and DMG (`CPA_V2_<version>_x64.dmg`).
 - Do not use `--no-sign` for published macOS packages. It can leave the bundle with an invalid resource seal and produce a browser-downloaded app that macOS reports as damaged.
 - The default ad-hoc signature is only a fallback. Without Developer ID + notarization, users may still need to approve the app in Privacy & Security. A polished public macOS release requires installing a Developer ID Application certificate and setting notarization credentials (`APPLE_API_KEY`/`APPLE_API_ISSUER`/`APPLE_API_KEY_PATH`, or the Apple ID flow) before rebuilding.
 - If a downloaded DMG installs an app that macOS says is damaged, check with `hdiutil verify`, `codesign --verify --deep --strict`, `spctl --assess`, and `syspolicy_check distribution`. If `syspolicy_check` reports `Notary Ticket Missing`, the remaining blocker is Apple notarization, not the Tauri updater signature.

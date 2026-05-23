@@ -116,7 +116,7 @@ export function SettingsPanel() {
                         </button>
                     ))}
                 </nav>
-                <div className="settings-content">
+                <div className="settings-content" data-no-window-drag>
                     {activeTab === 'pomodoro' && <PomodoroTab onApplyStateChange={setOrdinaryApply} />}
                     {activeTab === 'online' && <OnlineTab />}
                     {activeTab === 'pet' && <PetTab />}

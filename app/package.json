@@ -1,6 +1,7 @@
 {
   "name": "app",
   "private": true,
+  "description": "CPA_V2 desktop-pet pomodoro Tauri app; x64/x86_64 desktop startup and release targets only.",
   "version": "0.1.8",
   "type": "module",
   "scripts": {

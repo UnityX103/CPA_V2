@@ -134,13 +134,14 @@ describe('SettingsPanel drag', () => {
         expect(startDragging).not.toHaveBeenCalled();
     });
 
-    it('content empty area pointer down triggers native window drag', async () => {
+    it('settings content area pointer down does NOT trigger drag', async () => {
         render(<SettingsPanel />);
         const content = screen.getByRole('dialog', { name: '设置' }).querySelector('.settings-content')!;
+        expect(content.hasAttribute('data-no-window-drag')).toBe(true);
         await act(async () => {
             fireEvent.pointerDown(content, { button: 0 });
         });
-        expect(startDragging).toHaveBeenCalledTimes(1);
+        expect(startDragging).not.toHaveBeenCalled();
     });
 
     it('right-clicking empty content does NOT trigger drag', async () => {
@@ -289,6 +290,7 @@ describe('SettingsPanel geometry', () => {
         expect(cssDecl(content, 'overflow')).toBe('hidden');
         expect(cssDecl(scroll, 'overflow-y')).toBe('auto');
         expect(cssDecl(scroll, 'overflow-x')).toBe('hidden');
+        expect(cssDecl(scroll, 'overscroll-behavior')).toBe('contain');
         expect(settingsCss.match(/overflow-y:\s*auto\s*;/g)).toHaveLength(1);
     });
 

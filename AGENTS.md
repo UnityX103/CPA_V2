@@ -6,6 +6,8 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 
 `CPA_V2` is the **Tauri 2 + Rust + React/TS** rewrite of `CPA`, a desktop-pet pomodoro originally built on Unity 6 + QFramework. The goal is full feature parity with the Unity app while shedding the Unity stack. See `docs/superpowers/specs/2026-05-15-cpa-tauri-rewrite-design.md` for the migration scope, what's intentionally not migrated (HybridCLR, FFmpegOut, Unity Test Framework, etc.), and the iteration plan.
 
+Runtime and release targets are **x64 / x86_64 only**. Start, build, package, and publish only x64 desktop variants; do not build, launch, test for compatibility with, or publish ARM / ARM64 / aarch64 artifacts unless the user explicitly asks for an ARM release.
+
 **Target platforms: macOS and Windows.** Any new native feature in `src-tauri/` MUST ship both implementations (or call out an explicit Windows follow-up). Existing modules (`key_counter`, `active_app`) currently only have macOS impls with `#[cfg(not(target_os = "macos"))]` no-op stubs — that is tech debt to be filled in, not the design intent. Encapsulate platform differences under `src-tauri/src/<feature>/{macos,windows}.rs` with a platform-neutral Tauri-command surface.
 
 ## Top-level layout
@@ -44,6 +46,7 @@ CPA_V2/
 - Publish generated files from `app/release-updates/` as GitHub Release assets on `UnityX103/CPA_V2`; do not use `updates.nanzhaigame.cn` for new releases.
 - GitHub credentials are not stored in this repo. Use `gh auth status` before publishing, and keep release keys inside the ignored `cpa-v2-release/` credential pack.
 - Do not publish macOS packages built with `--no-sign`. The repo defaults to ad-hoc macOS signing (`bundle.macOS.signingIdentity = "-"`) as a minimum resource-seal fix, but polished public downloads require Developer ID signing plus Apple notarization.
+- macOS and Windows updater publishing targets x64 / x86_64 artifacts only. Do not include ARM / ARM64 / aarch64 platform keys in `latest.json` unless the user explicitly asks for an ARM release.
 - For Windows updater packages, `latest.json` must include `windows-x86_64-nsis` and `windows-x86_64` platform keys in addition to macOS keys.
 - Windows release publishing targets **x86_64 NSIS only**. Do not build or publish Windows ARM64 packages unless the user explicitly asks for an ARM64 Windows release.
 
