@@ -67,6 +67,7 @@ beforeEach(() => {
         uiScale: 1.0,
         committedUiScale: 1.0,
         autostartEnabled: false,
+        checkinEnabled: true,
         dangerousChange: null,
     });
     usePomodoroStore.setState({
@@ -639,6 +640,7 @@ describe('GlobalTab parity with Pdj9C', () => {
         render(<SettingsPanel />);
         expect(screen.getByText('界面缩放')).toBeTruthy();
         expect(screen.getByText('开机自启动')).toBeTruthy();
+        expect(screen.getByText('打卡系统')).toBeTruthy();
         expect(screen.getByText('自动下载并安装更新')).toBeTruthy();
         expect(screen.getByText('按键计数')).toBeTruthy();
         expect(screen.queryByText('显示打开的' + '文件名')).toBeNull();
@@ -653,14 +655,16 @@ describe('GlobalTab parity with Pdj9C', () => {
         expect(screen.getByRole('button', { name: /添加输入/ })).toBeTruthy();
     });
 
-    it('keeps autostart before app update controls', () => {
+    it('keeps checkin system between autostart and app update controls', () => {
         render(<SettingsPanel />);
 
         const autostart = screen.getByText('开机自启动');
+        const checkin = screen.getByText('打卡系统');
         const autoUpdate = screen.getByText('自动下载并安装更新');
         const bindingKey = screen.getByText('按键计数');
 
-        expect(autostart.compareDocumentPosition(autoUpdate) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(autostart.compareDocumentPosition(checkin) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(checkin.compareDocumentPosition(autoUpdate) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
         expect(autoUpdate.compareDocumentPosition(bindingKey) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
 
@@ -674,6 +678,20 @@ describe('GlobalTab parity with Pdj9C', () => {
         expect(toggle.getAttribute('aria-pressed')).toBe('false');
         fireEvent.click(toggle);
         expect(setAutostartEnabled).toHaveBeenCalledWith(true);
+    });
+
+    it('routes checkin system toggles to the settings store action', () => {
+        const setCheckinEnabled = vi.fn((enabled: boolean) => {
+            useSettingsStore.setState({ checkinEnabled: enabled });
+        });
+        useSettingsStore.setState({ setCheckinEnabled, checkinEnabled: true });
+        render(<SettingsPanel />);
+
+        const toggle = screen.getByRole('button', { name: '打卡系统' });
+
+        expect(toggle.getAttribute('aria-pressed')).toBe('true');
+        fireEvent.click(toggle);
+        expect(setCheckinEnabled).toHaveBeenCalledWith(false);
     });
 
     it('shows app update status and can disable automatic updates', () => {

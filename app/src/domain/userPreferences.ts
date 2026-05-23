@@ -36,6 +36,7 @@ export interface UserPreferencesSnapshot {
     settings: {
         uiScale: number;
         autostartEnabled: boolean;
+        checkinEnabled: boolean;
     };
     appUpdate: {
         autoUpdateEnabled: boolean;
@@ -148,6 +149,7 @@ export function defaultUserPreferencesSnapshot(): UserPreferencesSnapshot {
         settings: {
             uiScale: 1,
             autostartEnabled: false,
+            checkinEnabled: true,
         },
         appUpdate: {
             autoUpdateEnabled: true,
@@ -189,6 +191,7 @@ export function buildUserPreferencesSnapshot(stores: UserPreferencesStores): Use
         settings: {
             uiScale: settings.committedUiScale,
             autostartEnabled: settings.autostartEnabled,
+            checkinEnabled: settings.checkinEnabled,
         },
         appUpdate: {
             autoUpdateEnabled: appUpdate.autoUpdateEnabled,
@@ -327,6 +330,9 @@ function normalizeSettings(
         autostartEnabled: typeof value.autostartEnabled === 'boolean'
             ? value.autostartEnabled
             : fallback.autostartEnabled,
+        checkinEnabled: typeof value.checkinEnabled === 'boolean'
+            ? value.checkinEnabled
+            : fallback.checkinEnabled,
     };
 }
 

@@ -97,6 +97,7 @@ describe('useCloudAccountSync', () => {
                     settings: {
                         uiScale: 1,
                         autostartEnabled: false,
+                        checkinEnabled: true,
                     },
                     appUpdate: {
                         autoUpdateEnabled: false,

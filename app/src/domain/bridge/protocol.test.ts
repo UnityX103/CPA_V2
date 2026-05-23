@@ -38,6 +38,7 @@ describe('bridge protocol', () => {
                 uiScale: 1.5,
                 committedUiScale: 1.0,
                 autostartEnabled: true,
+                checkinEnabled: false,
                 dangerousChange: null,
             },
             pomodoro: {
@@ -88,6 +89,7 @@ describe('bridge protocol', () => {
         expect(snap.pomodoro.endActionMode).toBe(sampleEndActionMode);
         expect(snap.pomodoro.endActionVideo).toEqual(sampleEndActionVideo);
         expect(snap.settings.autostartEnabled).toBe(true);
+        expect(snap.settings.checkinEnabled).toBe(false);
         expect(('showActiveApp' + 'WindowTitle') in snap.settings).toBe(false);
         expect(('autoPinOn' + 'FocusEnd') in snap.settings).toBe(false);
         expect('targetMonitorIndex' in snap.settings).toBe(false);
@@ -100,6 +102,7 @@ describe('bridge protocol', () => {
             { v: 1, store: 'settings',   action: 'setUiScale',     args: [1.5] },
             { v: 1, store: 'settings',   action: 'previewDangerousUiScale', args: [1.5] },
             { v: 1, store: 'settings',   action: 'setAutostartEnabled', args: [true] },
+            { v: 1, store: 'settings',   action: 'setCheckinEnabled', args: [false] },
             { v: 1, store: 'settings',   action: 'applyDangerousChange', args: ['pending-id'] },
             { v: 1, store: 'settings',   action: 'revertDangerousChange', args: ['pending-id'] },
             { v: 1, store: 'pomodoro',   action: 'applySettings',  args: [1500, 300, 4, true, false] },
@@ -121,8 +124,8 @@ describe('bridge protocol', () => {
             { v: 1, store: 'checkin',    action: 'setWeeklyPlan',  args: [defaultWeeklyPlan('2026-05-25')] },
             { v: 1, store: 'checkin',    action: 'incrementItem',  args: ['2026-05-25', 'pomodoro-focus'] },
         ];
-        expect(samples).toHaveLength(23);
-        expect(samples[6]).toEqual({
+        expect(samples).toHaveLength(24);
+        expect(samples[7]).toEqual({
             v: 1,
             store: 'pomodoro',
             action: 'applyEndActionSettings',
