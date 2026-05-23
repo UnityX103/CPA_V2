@@ -27,7 +27,10 @@ export function useCheckinWindowController(): void {
     const checkinEnabled = useSettingsStore((s) => s.checkinEnabled);
 
     useEffect(() => {
-        if (!checkinEnabled) return;
+        if (!checkinEnabled) {
+            void closeCheckinWindows();
+            return;
+        }
         void invoke('open_today_checkin_window').catch((error) => {
             useCheckinStore.getState().setLastError(String(error));
         });
@@ -68,4 +71,15 @@ export async function openCheckinEditorWindow(): Promise<void> {
 export async function openTodayCheckinWindow(): Promise<void> {
     if (!useSettingsStore.getState().checkinEnabled) return;
     await invoke('open_today_checkin_window');
+}
+
+export async function closeCheckinWindows(): Promise<void> {
+    const results = await Promise.allSettled([
+        invoke('close_today_checkin_window'),
+        invoke('close_checkin_editor_window'),
+    ]);
+    const rejected = results.find((result): result is PromiseRejectedResult => result.status === 'rejected');
+    if (rejected) {
+        useCheckinStore.getState().setLastError(String(rejected.reason));
+    }
 }

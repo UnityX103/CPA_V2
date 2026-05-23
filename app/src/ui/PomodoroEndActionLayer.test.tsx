@@ -104,6 +104,26 @@ describe('PomodoroEndActionLayer', () => {
         expect(screen.queryByLabelText('播放 千千')).toBeNull();
     });
 
+    it('ignores manually skipped focus endings so no video or popup appears', async () => {
+        resolvePomodoroEndActionMock.mockResolvedValue({
+            kind: 'video',
+            title: '千千',
+            src: '/videos/ms1-alpha.mov',
+        });
+        render(<PomodoroEndActionLayer />);
+
+        await act(async () => {
+            usePomodoroStore.setState({
+                lastEndEvent: endEvent(1, { triggeredBy: 'skip' }),
+            });
+        });
+
+        expect(resolvePomodoroEndActionMock).not.toHaveBeenCalled();
+        expect(openPomodoroVideoWindowMock).not.toHaveBeenCalled();
+        expect(focusAppWindowMock).not.toHaveBeenCalled();
+        expect(screen.queryByText('专注结束')).toBeNull();
+    });
+
     it('falls back to the top popup when the video player window cannot open', async () => {
         resolvePomodoroEndActionMock.mockResolvedValue({
             kind: 'video',

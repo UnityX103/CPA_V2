@@ -43,6 +43,12 @@ export function PomodoroEndActionLayer() {
             const requestSeq = latestRequestSeq.current + 1;
             latestRequestSeq.current = requestSeq;
 
+            if (event.triggeredBy === 'skip') {
+                setPopup(null);
+                clearPopupTimeout();
+                return;
+            }
+
             const showTopPopup = () => {
                 clearPopupTimeout();
                 const title = popupTitle(event);

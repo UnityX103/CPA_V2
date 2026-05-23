@@ -55,6 +55,21 @@ describe('useCheckinWindowController', () => {
         expect(invokeMock).not.toHaveBeenCalledWith('open_today_checkin_window');
     });
 
+    it('closes both check-in windows when check-in is disabled after being enabled', async () => {
+        render(<CheckinWindowControllerHost />);
+        await waitFor(() => {
+            expect(invokeMock).toHaveBeenCalledWith('open_today_checkin_window');
+        });
+        invokeMock.mockClear();
+
+        useSettingsStore.setState({ checkinEnabled: false });
+
+        await waitFor(() => {
+            expect(invokeMock).toHaveBeenCalledWith('close_today_checkin_window');
+            expect(invokeMock).toHaveBeenCalledWith('close_checkin_editor_window');
+        });
+    });
+
     it('open helpers no-op when check-in is disabled', async () => {
         useSettingsStore.setState({ checkinEnabled: false });
 
