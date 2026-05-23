@@ -6,12 +6,14 @@ const STORE_KEY = 'settings';
 export interface PersistedSettings {
     uiScale: number;
     autostartEnabled: boolean;
+    checkinEnabled: boolean;
 }
 
 interface PersistedSettingsV1 {
     v: 1;
     uiScale: number;
     autostartEnabled?: boolean;
+    checkinEnabled?: boolean;
 }
 
 const obsoleteActiveTitleKey = 'showActiveApp' + 'WindowTitle';
@@ -34,6 +36,10 @@ function isPersistedSettingsV1(value: unknown): value is PersistedSettingsV1 {
             || typeof candidate.autostartEnabled === 'boolean'
         )
         && (
+            candidate.checkinEnabled === undefined
+            || typeof candidate.checkinEnabled === 'boolean'
+        )
+        && (
             obsoleteAutoPinValue === undefined
             || typeof obsoleteAutoPinValue === 'boolean'
         );
@@ -51,6 +57,7 @@ export async function loadPersistedSettings(): Promise<PersistedSettings | null>
         return {
             uiScale: value.uiScale,
             autostartEnabled: value.autostartEnabled ?? false,
+            checkinEnabled: value.checkinEnabled ?? true,
         };
     } catch (err) {
         console.warn('[settingsPersistence] load failed', err);
@@ -65,6 +72,7 @@ export async function savePersistedSettings(settings: PersistedSettings): Promis
             v: 1,
             uiScale: settings.uiScale,
             autostartEnabled: settings.autostartEnabled,
+            checkinEnabled: settings.checkinEnabled,
         } satisfies PersistedSettingsV1);
         await store.save();
     } catch (err) {

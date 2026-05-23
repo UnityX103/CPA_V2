@@ -34,6 +34,7 @@ beforeEach(() => {
         uiScale: 1.0,
         committedUiScale: 1.0,
         autostartEnabled: false,
+        checkinEnabled: true,
         dangerousChange: null,
     });
 });
@@ -153,10 +154,27 @@ describe('useSettingsStore', () => {
         expect(settingsWindowStore.getState().autostartEnabled).toBe(false);
     });
 
+    it('defaults checkinEnabled to true', () => {
+        expect(useSettingsStore.getState().checkinEnabled).toBe(true);
+
+        const settingsWindowStore = createSettingsStore({ isSettingsWindow: true });
+        expect(settingsWindowStore.getState().checkinEnabled).toBe(true);
+    });
+
     it('hydrates autostartEnabled from persisted settings', () => {
         useSettingsStore.getState().hydrateSettings({ uiScale: 1.25, autostartEnabled: true });
 
         expect(useSettingsStore.getState().autostartEnabled).toBe(true);
+    });
+
+    it('hydrates checkinEnabled from persisted settings', () => {
+        useSettingsStore.getState().hydrateSettings({
+            uiScale: 1.25,
+            autostartEnabled: false,
+            checkinEnabled: false,
+        });
+
+        expect(useSettingsStore.getState().checkinEnabled).toBe(false);
     });
 
     it('defaults missing persisted autostartEnabled to false during hydration', () => {
@@ -165,6 +183,14 @@ describe('useSettingsStore', () => {
         useSettingsStore.getState().hydrateSettings({ uiScale: 1.25 });
 
         expect(useSettingsStore.getState().autostartEnabled).toBe(false);
+    });
+
+    it('defaults missing persisted checkinEnabled to true during hydration', () => {
+        useSettingsStore.setState({ checkinEnabled: false });
+
+        useSettingsStore.getState().hydrateSettings({ uiScale: 1.25 });
+
+        expect(useSettingsStore.getState().checkinEnabled).toBe(true);
     });
 
     it('setAutostartEnabled applies native setting and persists confirmed value', async () => {
@@ -181,6 +207,24 @@ describe('useSettingsStore', () => {
         expect(settingsMocks.savePersistedSettings).toHaveBeenCalledWith({
             uiScale: 1.5,
             autostartEnabled: true,
+            checkinEnabled: true,
+        });
+    });
+
+    it('setCheckinEnabled updates state and persists confirmed value', () => {
+        useSettingsStore.setState({
+            committedUiScale: 1.5,
+            autostartEnabled: true,
+            checkinEnabled: true,
+        });
+
+        useSettingsStore.getState().setCheckinEnabled(false);
+
+        expect(useSettingsStore.getState().checkinEnabled).toBe(false);
+        expect(settingsMocks.savePersistedSettings).toHaveBeenCalledWith({
+            uiScale: 1.5,
+            autostartEnabled: true,
+            checkinEnabled: false,
         });
     });
 });
@@ -255,6 +299,22 @@ describe('createSettingsStore — settings-window mode', () => {
             store: 'settings',
             action: 'setAutostartEnabled',
             args: [true],
+        }));
+        spy.mockRestore();
+    });
+
+    it('setCheckinEnabled dispatches instead of mutating local state', () => {
+        const spy = vi.spyOn(dispatchMod, 'dispatch').mockResolvedValue();
+        const store = createSettingsStore({ isSettingsWindow: true });
+
+        store.getState().setCheckinEnabled(false);
+
+        expect(store.getState().checkinEnabled).toBe(true);
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({
+            v: BRIDGE_VERSION,
+            store: 'settings',
+            action: 'setCheckinEnabled',
+            args: [false],
         }));
         spy.mockRestore();
     });

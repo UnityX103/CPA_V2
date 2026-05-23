@@ -3,6 +3,7 @@ import { act, cleanup, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useCheckinStore, type WeeklyCheckinPlan } from './domain/checkin';
 import { usePomodoroStore } from './domain/pomodoro';
+import { useSettingsStore } from './domain/settings';
 
 const {
     hydrateAppUpdate,
@@ -189,6 +190,13 @@ beforeEach(() => {
         dailyRecords: {},
         lastError: null,
     });
+    useSettingsStore.setState({
+        uiScale: 1,
+        committedUiScale: 1,
+        autostartEnabled: false,
+        checkinEnabled: true,
+        dangerousChange: null,
+    });
     usePomodoroStore.setState({
         focusDurationSeconds: 25 * 60,
         breakDurationSeconds: 5 * 60,
@@ -303,5 +311,19 @@ describe('checkin Pomodoro integration', () => {
         expect(setPinnedSpy).not.toHaveBeenCalled();
         expect(usePomodoroStore.getState().isPinned).toBe(false);
         setPinnedSpy.mockRestore();
+    });
+
+    it('does not write check-in records or open check-in panel when check-in is disabled', () => {
+        useSettingsStore.setState({ checkinEnabled: false });
+        render(<App />);
+
+        act(() => {
+            usePomodoroStore.setState({
+                lastEndEvent: { id: 14, fromPhase: 'focus', toPhase: 'break', triggeredBy: 'timer' },
+            });
+        });
+
+        expect(useCheckinStore.getState().dailyRecords).toEqual({});
+        expect(openTodayCheckinWindowMock).not.toHaveBeenCalled();
     });
 });

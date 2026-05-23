@@ -65,6 +65,7 @@ function cloudSnapshot(overrides = {}) {
         settings: {
             uiScale: 1.5,
             autostartEnabled: false,
+            checkinEnabled: true,
         },
         appUpdate: {
             autoUpdateEnabled: false,
@@ -98,7 +99,7 @@ describe('cloudAccountData', () => {
         const { pomodoro, settings, checkin, appUpdate, network, bindingKey } = stores;
 
         pomodoro.getState().applySettings(1200, 180, 3, true, true);
-        settings.getState().hydrateSettings({ uiScale: 1.25, autostartEnabled: true });
+        settings.getState().hydrateSettings({ uiScale: 1.25, autostartEnabled: true, checkinEnabled: false });
         appUpdate.setState({ autoUpdateEnabled: false, status: 'readyToRestart' });
         network.setState({ autoConnect: true, playerName: 'Alice', roomCode: 'ROOM-1' });
         bindingKey.setState({
@@ -120,7 +121,7 @@ describe('cloudAccountData', () => {
 
         expect(snapshot.schemaVersion).toBe(1);
         expect(snapshot.pomodoro.focusDurationSeconds).toBe(1200);
-        expect(snapshot.settings).toEqual({ uiScale: 1.25, autostartEnabled: true });
+        expect(snapshot.settings).toEqual({ uiScale: 1.25, autostartEnabled: true, checkinEnabled: false });
         expect(snapshot.appUpdate).toEqual({ autoUpdateEnabled: false });
         expect(snapshot.network).toEqual({ autoConnect: true, playerName: 'Alice' });
         expect(snapshot.bindingKey.entries[0]).not.toHaveProperty('pressCount');
@@ -140,6 +141,7 @@ describe('cloudAccountData', () => {
         expect(pomodoro.getState().focusDurationSeconds).toBe(600);
         expect(pomodoro.getState().isRunning).toBe(true);
         expect(settings.getState().uiScale).toBe(1.5);
+        expect(settings.getState().checkinEnabled).toBe(true);
         expect(appUpdate.getState().autoUpdateEnabled).toBe(false);
         expect(network.getState().autoConnect).toBe(true);
         expect(bindingKey.getState().capturingId).toBe(null);

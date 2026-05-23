@@ -58,6 +58,7 @@ function buildStartupSettingsSnapshot(
             ? committedUiScale
             : persistedScale,
         autostartEnabled: confirmedAutostartEnabled,
+        checkinEnabled: settings?.checkinEnabled ?? initialSettings.checkinEnabled,
     };
 
     return { snapshot, shouldApplyScale: !scaleChanged };
@@ -68,11 +69,13 @@ function getStartupSettingsState() {
         uiScale,
         committedUiScale,
         autostartEnabled,
+        checkinEnabled,
     } = useSettingsStore.getState();
     return {
         uiScale,
         committedUiScale,
         autostartEnabled,
+        checkinEnabled,
     };
 }
 
@@ -263,6 +266,7 @@ export default function App() {
                             ? { uiScale: snapshot.uiScale, committedUiScale: snapshot.uiScale }
                             : {}),
                         autostartEnabled: snapshot.autostartEnabled,
+                        checkinEnabled: snapshot.checkinEnabled,
                     });
                     if (legacyCheckin) {
                         useCheckinStore.getState().hydrateCheckin({
@@ -309,6 +313,7 @@ export default function App() {
             const event = state.lastEndEvent;
             if (!event || event === previous.lastEndEvent) return;
             if (event.fromPhase !== 'focus') return;
+            if (!useSettingsStore.getState().checkinEnabled) return;
 
             useCheckinStore.getState().applyPomodoroFocusCompletion(todayLocalDate(), event.id);
             if (event.toPhase === 'break' && event.triggeredBy === 'timer') {

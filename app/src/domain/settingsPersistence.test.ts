@@ -26,6 +26,7 @@ describe('settingsPersistence', () => {
             uiScale: 1.75,
             [obsoleteActiveTitleKey]: false,
             autostartEnabled: true,
+            checkinEnabled: false,
             [obsoleteAutoPinKey]: false,
         });
         const { loadPersistedSettings } = await import('./settingsPersistence');
@@ -33,16 +34,18 @@ describe('settingsPersistence', () => {
         await expect(loadPersistedSettings()).resolves.toEqual({
             uiScale: 1.75,
             autostartEnabled: true,
+            checkinEnabled: false,
         });
     });
 
-    it('defaults missing autostartEnabled to false for older v1 settings', async () => {
+    it('defaults missing autostartEnabled and checkinEnabled for older v1 settings', async () => {
         store.get.mockResolvedValue({ v: 1, uiScale: 1.75 });
         const { loadPersistedSettings } = await import('./settingsPersistence');
 
         await expect(loadPersistedSettings()).resolves.toEqual({
             uiScale: 1.75,
             autostartEnabled: false,
+            checkinEnabled: true,
         });
     });
 
@@ -59,6 +62,19 @@ describe('settingsPersistence', () => {
             uiScale: 1.75,
             [obsoleteActiveTitleKey]: true,
             autostartEnabled: 'yes',
+            checkinEnabled: true,
+        });
+        const { loadPersistedSettings } = await import('./settingsPersistence');
+
+        await expect(loadPersistedSettings()).resolves.toBeNull();
+    });
+
+    it('ignores malformed checkin settings', async () => {
+        store.get.mockResolvedValue({
+            v: 1,
+            uiScale: 1.75,
+            autostartEnabled: true,
+            checkinEnabled: 'yes',
         });
         const { loadPersistedSettings } = await import('./settingsPersistence');
 
@@ -71,12 +87,14 @@ describe('settingsPersistence', () => {
         await savePersistedSettings({
             uiScale: 2,
             autostartEnabled: true,
+            checkinEnabled: false,
         });
 
         expect(store.set).toHaveBeenCalledWith('settings', {
             v: 1,
             uiScale: 2,
             autostartEnabled: true,
+            checkinEnabled: false,
         });
         expect(store.save).toHaveBeenCalledTimes(1);
     });

@@ -780,6 +780,17 @@ function GlobalTab() {
                     </div>
                 </div>
 
+                <div className="card">
+                    <div className="card-row">
+                        <span className="card-label">打卡系统</span>
+                        <Toggle
+                            checked={settings.checkinEnabled}
+                            onChange={settings.setCheckinEnabled}
+                            ariaLabel="打卡系统"
+                        />
+                    </div>
+                </div>
+
                 <AppUpdateSettingsRow />
 
                 {/* gspBindingKey yjJtt */}

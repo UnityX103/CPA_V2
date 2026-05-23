@@ -51,11 +51,13 @@ function makeStores(): UserPreferencesStores {
         uiScale: 1,
         committedUiScale: 1.25,
         autostartEnabled: true,
+        checkinEnabled: false,
         dangerousChange: null,
-        hydrateSettings: (snapshot: { uiScale: number; autostartEnabled?: boolean }) => set({
+        hydrateSettings: (snapshot: { uiScale: number; autostartEnabled?: boolean; checkinEnabled?: boolean }) => set({
             uiScale: snapshot.uiScale,
             committedUiScale: snapshot.uiScale,
             autostartEnabled: snapshot.autostartEnabled ?? false,
+            checkinEnabled: snapshot.checkinEnabled ?? true,
             dangerousChange: null,
         }),
     }));
@@ -140,6 +142,11 @@ describe('user preferences persistence', () => {
             endActionVideo: { sourceKind: 'builtin', builtinVideoId: 'qianqian', customVideoPath: '' },
         });
         expect(snapshot.network).toEqual({ autoConnect: true, playerName: 'Alice' });
+        expect(snapshot.settings).toEqual({
+            uiScale: 1.25,
+            autostartEnabled: true,
+            checkinEnabled: false,
+        });
         expect(snapshot.bindingKey.entries[0]).toEqual({
             id: 'space',
             label: 'Space',
@@ -154,12 +161,14 @@ describe('user preferences persistence', () => {
         const stores = makeStores();
         const snapshot = buildUserPreferencesSnapshot(stores);
         snapshot.pomodoro.focusDurationSeconds = 900;
+        snapshot.settings.checkinEnabled = true;
         snapshot.appUpdate.autoUpdateEnabled = true;
         snapshot.bindingKey.entries[0].label = 'Changed';
 
         hydrateUserPreferencesSnapshot({ stores, snapshot });
 
         expect(stores.pomodoro.getState().focusDurationSeconds).toBe(900);
+        expect(stores.settings.getState().checkinEnabled).toBe(true);
         expect(stores.pomodoro.getState().currentRound).toBe(3);
         expect(stores.appUpdate.getState().autoUpdateEnabled).toBe(true);
         expect(stores.appUpdate.getState().status).toBe('idle');
@@ -174,7 +183,7 @@ describe('user preferences persistence', () => {
         const normalized = normalizeUserPreferencesSnapshot({
             schemaVersion: 1,
             pomodoro: { focusDurationSeconds: 'bad' },
-            settings: { uiScale: 99, autostartEnabled: true },
+            settings: { uiScale: 99, autostartEnabled: true, checkinEnabled: false },
             appUpdate: { autoUpdateEnabled: false },
             network: { autoConnect: true, playerName: '  Bob  ' },
             bindingKey: {
@@ -187,6 +196,7 @@ describe('user preferences persistence', () => {
 
         expect(normalized?.pomodoro.focusDurationSeconds).toBe(25 * 60);
         expect(normalized?.settings.uiScale).toBe(2);
+        expect(normalized?.settings.checkinEnabled).toBe(false);
         expect(normalized?.network.playerName).toBe('Bob');
         expect(normalized?.bindingKey.syncedKeyId).toBe(null);
         expect(normalized?.bindingKey.entries).toHaveLength(1);

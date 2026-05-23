@@ -35,6 +35,7 @@ function makeSample(): BridgeSnapshot {
             uiScale: 2.0,
             committedUiScale: 1.0,
             autostartEnabled: true,
+            checkinEnabled: false,
             dangerousChange: {
                 id: 'scale-pending',
                 kind: 'uiScale',
@@ -134,6 +135,7 @@ beforeEach(() => {
         uiScale: 1.0,
         committedUiScale: 1.0,
         autostartEnabled: false,
+        checkinEnabled: true,
         dangerousChange: null,
         activeTab: 'pomodoro',
     });
@@ -186,6 +188,7 @@ describe('applySnapshotToMirrors', () => {
         expect(useSettingsStore.getState().uiScale).toBe(2.0);
         expect(useSettingsStore.getState().committedUiScale).toBe(1.0);
         expect(useSettingsStore.getState().autostartEnabled).toBe(true);
+        expect(useSettingsStore.getState().checkinEnabled).toBe(false);
         expect(useSettingsStore.getState().dangerousChange?.id).toBe('scale-pending');
         expect(('showActiveApp' + 'WindowTitle') in useSettingsStore.getState()).toBe(false);
         expect(('autoPinOn' + 'FocusEnd') in useSettingsStore.getState()).toBe(false);

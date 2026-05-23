@@ -20,18 +20,21 @@ export interface SettingsState {
     uiScale: number;
     committedUiScale: number;
     autostartEnabled: boolean;
+    checkinEnabled: boolean;
     dangerousChange: DangerousChange | null;
 }
 
 export interface PersistedSettingsSnapshot {
     uiScale: number;
     autostartEnabled?: boolean;
+    checkinEnabled?: boolean;
 }
 
 interface SettingsActions {
     setActiveTab: (tab: SettingsTab) => void;
     setUiScale: (scale: number) => void;
     setAutostartEnabled: (enabled: boolean) => Promise<void> | void;
+    setCheckinEnabled: (enabled: boolean) => void;
     previewDangerousUiScale: (scale: number) => void;
     applyDangerousChange: (id: string) => void;
     revertDangerousChange: (id: string) => void;
@@ -60,6 +63,7 @@ function persistedSnapshot(state: SettingsState): PersistedSettings {
     return {
         uiScale: state.committedUiScale,
         autostartEnabled: state.autostartEnabled,
+        checkinEnabled: state.checkinEnabled,
     };
 }
 
@@ -70,6 +74,7 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
             uiScale: 1.0,
             committedUiScale: 1.0,
             autostartEnabled: false,
+            checkinEnabled: true,
             dangerousChange: null,
             setActiveTab: (tab) => set({ activeTab: tab }),
             setUiScale: (scale) => {
@@ -80,6 +85,14 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
                     v: BRIDGE_VERSION,
                     store: 'settings',
                     action: 'setAutostartEnabled',
+                    args: [enabled],
+                } as Parameters<typeof dispatch>[0]);
+            },
+            setCheckinEnabled: (enabled) => {
+                void dispatch({
+                    v: BRIDGE_VERSION,
+                    store: 'settings',
+                    action: 'setCheckinEnabled',
                     args: [enabled],
                 } as Parameters<typeof dispatch>[0]);
             },
@@ -98,6 +111,7 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
                     uiScale,
                     committedUiScale: uiScale,
                     autostartEnabled: snapshot.autostartEnabled ?? false,
+                    checkinEnabled: snapshot.checkinEnabled ?? true,
                     dangerousChange: null,
                 });
             },
@@ -108,6 +122,7 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
         uiScale: 1.0,
         committedUiScale: 1.0,
         autostartEnabled: false,
+        checkinEnabled: true,
         dangerousChange: null,
         setActiveTab: (tab) => set({ activeTab: tab }),
         setUiScale: (scale) => {
@@ -118,6 +133,10 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
             const fallback = get().autostartEnabled;
             const confirmed = await applyAutostartEnabled(enabled, fallback);
             set({ autostartEnabled: confirmed });
+            void savePersistedSettings(persistedSnapshot(get()));
+        },
+        setCheckinEnabled: (checkinEnabled) => {
+            set({ checkinEnabled });
             void savePersistedSettings(persistedSnapshot(get()));
         },
         previewDangerousUiScale: (scale) => {
@@ -155,6 +174,7 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
                 uiScale,
                 committedUiScale: uiScale,
                 autostartEnabled: snapshot.autostartEnabled ?? false,
+                checkinEnabled: snapshot.checkinEnabled ?? true,
                 dangerousChange: null,
             });
         },

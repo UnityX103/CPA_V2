@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { effectiveItemsForDate, isRestDate, useCheckinStore } from './checkin';
 import { useScaledWindowSize } from './scaledWindow';
+import { useSettingsStore } from './settings';
 
 export const TODAY_CHECKIN_BASE_WIDTH = 278;
 export const TODAY_CHECKIN_BASE_HEIGHT = 289;
@@ -23,11 +24,14 @@ export function todayCheckinHeightForItemCount(itemCount: number): number {
 }
 
 export function useCheckinWindowController(): void {
+    const checkinEnabled = useSettingsStore((s) => s.checkinEnabled);
+
     useEffect(() => {
+        if (!checkinEnabled) return;
         void invoke('open_today_checkin_window').catch((error) => {
             useCheckinStore.getState().setLastError(String(error));
         });
-    }, []);
+    }, [checkinEnabled]);
 }
 
 export function useTodayCheckinWindowSize(enabled = true): void {
@@ -57,9 +61,11 @@ export function useCheckinEditorWindowSize(enabled = true): void {
 }
 
 export async function openCheckinEditorWindow(): Promise<void> {
+    if (!useSettingsStore.getState().checkinEnabled) return;
     await invoke('open_checkin_editor_window');
 }
 
 export async function openTodayCheckinWindow(): Promise<void> {
+    if (!useSettingsStore.getState().checkinEnabled) return;
     await invoke('open_today_checkin_window');
 }

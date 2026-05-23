@@ -68,6 +68,7 @@ function makeCloudSnapshot(): CloudAccountData {
         settings: {
             uiScale: 1,
             autostartEnabled: false,
+            checkinEnabled: true,
         },
         appUpdate: {
             autoUpdateEnabled: true,
