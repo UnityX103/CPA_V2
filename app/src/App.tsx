@@ -139,11 +139,11 @@ export default function App() {
     useActiveAppListener();
     useBindingKeyListener();
     useBridgeHost();
-    useCheckinWindowController();
     useInputCounterWindowController();
     useRemotePlayerWindowController();
     const uiScale = useSettingsStore((s) => s.uiScale);
     const [localHydrated, setLocalHydrated] = useState(false);
+    useCheckinWindowController(localHydrated);
     useCloudAccountSync({ enabled: localHydrated });
     useScaledWindowSize({
         label: 'main',

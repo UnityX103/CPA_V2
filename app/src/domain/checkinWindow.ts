@@ -23,10 +23,11 @@ export function todayCheckinHeightForItemCount(itemCount: number): number {
     return TODAY_CHECKIN_BASE_HEIGHT + Math.max(0, itemCount - 1) * TODAY_CHECKIN_ITEM_HEIGHT;
 }
 
-export function useCheckinWindowController(): void {
+export function useCheckinWindowController(enabled = true): void {
     const checkinEnabled = useSettingsStore((s) => s.checkinEnabled);
 
     useEffect(() => {
+        if (!enabled) return;
         if (!checkinEnabled) {
             void closeCheckinWindows();
             return;
@@ -34,7 +35,7 @@ export function useCheckinWindowController(): void {
         void invoke('open_today_checkin_window').catch((error) => {
             useCheckinStore.getState().setLastError(String(error));
         });
-    }, [checkinEnabled]);
+    }, [enabled, checkinEnabled]);
 }
 
 export function useTodayCheckinWindowSize(enabled = true): void {

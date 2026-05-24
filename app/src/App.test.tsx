@@ -396,6 +396,7 @@ describe('main App window composition', () => {
                 settings: { uiScale: 1.25, autostartEnabled: false, checkinEnabled: false },
             }),
         ));
+        expect(invokeMock).not.toHaveBeenCalledWith('open_today_checkin_window');
     });
 
     it('keeps autostart off when no persisted settings exist', async () => {
