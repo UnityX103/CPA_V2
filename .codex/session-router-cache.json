@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-06-15",
+  "temporaryThreadPrefix": "~",
+  "reusableSessions": [
+    {
+      "title": "[Pencil导入]",
+      "threadId": "019ecb60-fce1-78f1-9c49-1371ae8f25f5",
+      "purpose": "长期负责通过 Pencil MCP 导入和还原 CPA_V2 的 UI 布局、节点层级、图片资源与设计素材，并将其映射到 app/src/ui、app/src/styles 和相关前端资源中；处理 .pen 设计读取、截图核对、图片导出、React/CSS 实现与视觉验收。",
+      "triggers": [
+        "Pencil",
+        "UI布局",
+        "图片导入",
+        "设计还原",
+        "AUI",
+        "PUI",
+        ".pen",
+        "视觉验收"
+      ],
+      "updatedAt": "2026-06-15"
+    }
+  ]
+}
