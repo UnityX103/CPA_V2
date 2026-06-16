@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { create } from 'zustand';
 import { createPomodoroStore } from './pomodoro';
 import { createSettingsStore } from './settings';
-import { createCheckinStore, defaultWeeklyPlan } from './checkin';
+import { createCheckinStore, defaultPlanTemplate } from './checkin';
 import {
     buildCloudAccountData,
     hydrateCloudAccountData,
@@ -66,6 +66,7 @@ function cloudSnapshot(overrides = {}) {
             uiScale: 1.5,
             autostartEnabled: false,
             checkinEnabled: true,
+            planPanelEnabled: true,
         },
         appUpdate: {
             autoUpdateEnabled: false,
@@ -86,7 +87,7 @@ function cloudSnapshot(overrides = {}) {
             syncedKeyId: 'space',
         },
         checkin: {
-            weeklyPlan: defaultWeeklyPlan('2026-05-18'),
+            planTemplate: defaultPlanTemplate(),
             dailyRecords: {},
         },
         ...overrides,
@@ -115,17 +116,28 @@ describe('cloudAccountData', () => {
             syncedKeyId: 'space',
             capturingId: 'space',
         });
-        checkin.getState().setWeeklyPlan(defaultWeeklyPlan('2026-05-18'));
+        checkin.getState().setPlanTemplate({
+            ...defaultPlanTemplate(),
+            items: [{
+                ...defaultPlanTemplate().items[0],
+                repeatDays: ['mon', 'tue'],
+            }],
+        });
 
         const snapshot = buildCloudAccountData(stores);
 
         expect(snapshot.schemaVersion).toBe(1);
         expect(snapshot.pomodoro.focusDurationSeconds).toBe(1200);
-        expect(snapshot.settings).toEqual({ uiScale: 1.25, autostartEnabled: true, checkinEnabled: false });
+        expect(snapshot.settings).toEqual({
+            uiScale: 1.25,
+            autostartEnabled: true,
+            checkinEnabled: false,
+            planPanelEnabled: true,
+        });
         expect(snapshot.appUpdate).toEqual({ autoUpdateEnabled: false });
         expect(snapshot.network).toEqual({ autoConnect: true, playerName: 'Alice' });
         expect(snapshot.bindingKey.entries[0]).not.toHaveProperty('pressCount');
-        expect(snapshot.checkin.weeklyPlan.weekStartDate).toBe('2026-05-18');
+        expect(snapshot.checkin.planTemplate.items[0].repeatDays).toEqual(['mon', 'tue']);
     });
 
     it('hydrates settings without restoring volatile timer runtime state', () => {
@@ -146,14 +158,17 @@ describe('cloudAccountData', () => {
         expect(network.getState().autoConnect).toBe(true);
         expect(bindingKey.getState().capturingId).toBe(null);
         expect(bindingKey.getState().entries[0]).toEqual(expect.objectContaining({ pressCount: 0 }));
-        expect(checkin.getState().weeklyPlan.weekStartDate).toBe('2026-05-18');
+        expect(checkin.getState().planTemplate).toEqual(defaultPlanTemplate());
     });
 
     it('merges conflicting daily records by max counts and event id union', () => {
         const server = cloudSnapshot({
             updatedAt: 100,
             checkin: {
-                weeklyPlan: defaultWeeklyPlan('2026-05-18'),
+                planTemplate: {
+                    ...defaultPlanTemplate(),
+                    items: [{ ...defaultPlanTemplate().items[0], title: 'Server plan' }],
+                },
                 dailyRecords: {
                     '2026-05-21': {
                         date: '2026-05-21',
@@ -168,7 +183,10 @@ describe('cloudAccountData', () => {
             network: { autoConnect: false, playerName: 'Local' },
             updatedAt: 99,
             checkin: {
-                weeklyPlan: defaultWeeklyPlan('2026-05-18'),
+                planTemplate: {
+                    ...defaultPlanTemplate(),
+                    items: [{ ...defaultPlanTemplate().items[0], title: 'Local plan' }],
+                },
                 dailyRecords: {
                     '2026-05-21': {
                         date: '2026-05-21',
@@ -183,6 +201,7 @@ describe('cloudAccountData', () => {
 
         expect(merged.checkin.dailyRecords['2026-05-21'].countsByItemId).toEqual({ a: 3, b: 4, c: 2 });
         expect(merged.checkin.dailyRecords['2026-05-21'].processedPomodoroEndEventIds).toEqual([1, 3, 2]);
+        expect(merged.checkin.planTemplate.items[0].title).toBe('Server plan');
         expect(merged.network).toEqual(server.network);
     });
 });

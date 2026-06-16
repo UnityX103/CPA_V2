@@ -25,6 +25,7 @@ export function todayCheckinHeightForItemCount(itemCount: number): number {
 
 export function useCheckinWindowController(enabled = true): void {
     const checkinEnabled = useSettingsStore((s) => s.checkinEnabled);
+    const planPanelEnabled = useSettingsStore((s) => s.planPanelEnabled);
 
     useEffect(() => {
         if (!enabled) return;
@@ -32,10 +33,14 @@ export function useCheckinWindowController(enabled = true): void {
             void closeCheckinWindows();
             return;
         }
+        if (!planPanelEnabled) {
+            void closeTodayCheckinWindow();
+            return;
+        }
         void invoke('open_today_checkin_window').catch((error) => {
             useCheckinStore.getState().setLastError(String(error));
         });
-    }, [enabled, checkinEnabled]);
+    }, [enabled, checkinEnabled, planPanelEnabled]);
 }
 
 export function useTodayCheckinWindowSize(enabled = true): void {
@@ -70,8 +75,23 @@ export async function openCheckinEditorWindow(): Promise<void> {
 }
 
 export async function openTodayCheckinWindow(): Promise<void> {
-    if (!useSettingsStore.getState().checkinEnabled) return;
+    const settings = useSettingsStore.getState();
+    if (!settings.checkinEnabled || !settings.planPanelEnabled) return;
     await invoke('open_today_checkin_window');
+}
+
+export async function raiseTodayCheckinWindow(): Promise<void> {
+    const settings = useSettingsStore.getState();
+    if (!settings.checkinEnabled || !settings.planPanelEnabled) return;
+    await invoke('raise_today_checkin_window');
+}
+
+export async function closeTodayCheckinWindow(): Promise<void> {
+    try {
+        await invoke('close_today_checkin_window');
+    } catch (error) {
+        useCheckinStore.getState().setLastError(String(error));
+    }
 }
 
 export async function closeCheckinWindows(): Promise<void> {

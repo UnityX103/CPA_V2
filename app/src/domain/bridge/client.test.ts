@@ -1,13 +1,38 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { applySnapshotToMirrors } from './client';
+import { act, cleanup, render, screen } from '@testing-library/react';
+import { createElement } from 'react';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { applySnapshotToMirrors, useBridgeClient } from './client';
 import { useSettingsStore } from '../settings';
 import { usePomodoroStore } from '../pomodoro';
 import { useNetworkStore } from '../network';
 import { useBindingKeyStore } from '../bindingKey';
 import { useActiveAppStore } from '../activeApp';
 import { useAppUpdateStore } from '../appUpdate';
-import { BRIDGE_VERSION, type BridgeSnapshot } from './protocol';
-import { defaultWeeklyPlan, useCheckinStore } from '../checkin';
+import { BRIDGE_VERSION, EVT_STATE, type BridgeSnapshot } from './protocol';
+import { defaultPlanTemplate, useCheckinStore } from '../checkin';
+
+const { emitMock, listenMock, eventHandlers } = vi.hoisted(() => {
+    const handlers = new Map<string, (event: { payload: unknown }) => void>();
+    return {
+        emitMock: vi.fn(),
+        listenMock: vi.fn((eventName: string, handler: (event: { payload: unknown }) => void) => {
+            handlers.set(eventName, handler);
+            return Promise.resolve(() => {
+                if (handlers.get(eventName) === handler) {
+                    handlers.delete(eventName);
+                }
+            });
+        }),
+        eventHandlers: handlers,
+    };
+});
+
+vi.mock('@tauri-apps/api/webviewWindow', () => ({
+    WebviewWindow: {
+        getByLabel: vi.fn(() => Promise.resolve({ emit: emitMock })),
+    },
+}));
+vi.mock('@tauri-apps/api/event', () => ({ listen: listenMock }));
 
 const sampleRemoteState = {
     pomodoro: {
@@ -36,6 +61,7 @@ function makeSample(): BridgeSnapshot {
             committedUiScale: 1.0,
             autostartEnabled: true,
             checkinEnabled: false,
+            planPanelEnabled: false,
             dangerousChange: {
                 id: 'scale-pending',
                 kind: 'uiScale',
@@ -108,15 +134,16 @@ function makeSample(): BridgeSnapshot {
             errorMessage: null,
         },
         checkin: {
-            weeklyPlan: {
-                ...defaultWeeklyPlan('2026-05-18'),
-                days: {
-                    ...defaultWeeklyPlan('2026-05-18').days,
-                    mon: {
-                        kind: 'items',
-                        items: [{ id: 'manual-1', title: 'Read', type: 'manual', targetCount: 2 }],
-                    },
-                },
+            planTemplate: {
+                ...defaultPlanTemplate(),
+                items: [{
+                    id: 'manual-1',
+                    title: 'Read',
+                    type: 'manual',
+                    targetCount: 2,
+                    repeatDays: ['mon' as const],
+                    editMode: 'cycle',
+                }],
             },
             dailyRecords: {
                 '2026-05-18': {
@@ -131,11 +158,16 @@ function makeSample(): BridgeSnapshot {
 }
 
 beforeEach(() => {
+    vi.useRealTimers();
+    emitMock.mockClear();
+    listenMock.mockClear();
+    eventHandlers.clear();
     useSettingsStore.setState({
         uiScale: 1.0,
         committedUiScale: 1.0,
         autostartEnabled: false,
         checkinEnabled: true,
+        planPanelEnabled: true,
         dangerousChange: null,
         activeTab: 'pomodoro',
     });
@@ -176,11 +208,21 @@ beforeEach(() => {
         errorMessage: null,
     });
     useCheckinStore.setState({
-        weeklyPlan: defaultWeeklyPlan('2026-05-18'),
+        planTemplate: defaultPlanTemplate(),
         dailyRecords: {},
         lastError: null,
     });
 });
+
+afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+});
+
+function BridgeClientHost() {
+    const ready = useBridgeClient();
+    return createElement('div', { 'data-testid': 'bridge-ready' }, ready ? 'ready' : 'waiting');
+}
 
 describe('applySnapshotToMirrors', () => {
     it('writes every snapshot section into the corresponding store', () => {
@@ -189,6 +231,7 @@ describe('applySnapshotToMirrors', () => {
         expect(useSettingsStore.getState().committedUiScale).toBe(1.0);
         expect(useSettingsStore.getState().autostartEnabled).toBe(true);
         expect(useSettingsStore.getState().checkinEnabled).toBe(false);
+        expect(useSettingsStore.getState().planPanelEnabled).toBe(false);
         expect(useSettingsStore.getState().dangerousChange?.id).toBe('scale-pending');
         expect(('showActiveApp' + 'WindowTitle') in useSettingsStore.getState()).toBe(false);
         expect(('autoPinOn' + 'FocusEnd') in useSettingsStore.getState()).toBe(false);
@@ -219,9 +262,13 @@ describe('applySnapshotToMirrors', () => {
             lastCheckedAt: 1700000000000,
             errorMessage: null,
         });
-        expect(useCheckinStore.getState().weeklyPlan.days.mon).toEqual({
-            kind: 'items',
-            items: [{ id: 'manual-1', title: 'Read', type: 'manual', targetCount: 2 }],
+        expect(useCheckinStore.getState().planTemplate.items[0]).toEqual({
+            id: 'manual-1',
+            title: 'Read',
+            type: 'manual',
+            targetCount: 2,
+            repeatDays: ['mon'],
+            editMode: 'cycle',
         });
         expect(useCheckinStore.getState().dailyRecords['2026-05-18']).toEqual({
             date: '2026-05-18',
@@ -249,10 +296,10 @@ describe('applySnapshotToMirrors', () => {
         expect(useBindingKeyStore.getState().entries).toEqual(sample.bindingKey.entries);
         expect(useBindingKeyStore.getState().entries).not.toBe(sample.bindingKey.entries);
         expect(useBindingKeyStore.getState().entries[0]).not.toBe(sample.bindingKey.entries[0]);
-        expect(useCheckinStore.getState().weeklyPlan).toEqual(sample.checkin.weeklyPlan);
-        expect(useCheckinStore.getState().weeklyPlan).not.toBe(sample.checkin.weeklyPlan);
-        expect(useCheckinStore.getState().weeklyPlan.days).not.toBe(sample.checkin.weeklyPlan.days);
-        expect(useCheckinStore.getState().weeklyPlan.days.mon).not.toBe(sample.checkin.weeklyPlan.days.mon);
+        expect(useCheckinStore.getState().planTemplate).toEqual(sample.checkin.planTemplate);
+        expect(useCheckinStore.getState().planTemplate).not.toBe(sample.checkin.planTemplate);
+        expect(useCheckinStore.getState().planTemplate.items).not.toBe(sample.checkin.planTemplate.items);
+        expect(useCheckinStore.getState().planTemplate.items[0]).not.toBe(sample.checkin.planTemplate.items[0]);
         expect(useCheckinStore.getState().dailyRecords).toEqual(sample.checkin.dailyRecords);
         expect(useCheckinStore.getState().dailyRecords).not.toBe(sample.checkin.dailyRecords);
         expect(useCheckinStore.getState().dailyRecords['2026-05-18']).not.toBe(sample.checkin.dailyRecords['2026-05-18']);
@@ -266,9 +313,7 @@ describe('applySnapshotToMirrors', () => {
         sample.bindingKey.entries[0].label = 'Mutated';
         sample.bindingKey.entries[0].input = { kind: 'mouse', button: 'right' };
         sample.checkin.dailyRecords['2026-05-18'].countsByItemId['manual-1'] = 99;
-        if (sample.checkin.weeklyPlan.days.mon.kind === 'items') {
-            sample.checkin.weeklyPlan.days.mon.items[0].title = 'Mutated';
-        }
+        sample.checkin.planTemplate.items[0].title = 'Mutated';
 
         expect(useSettingsStore.getState().dangerousChange?.nextValue).toBe(2.0);
         expect(usePomodoroStore.getState().endActionVideo.customVideoPath).toBe('/Users/xpy/Videos/focus-complete.mp4');
@@ -279,8 +324,7 @@ describe('applySnapshotToMirrors', () => {
         expect(useBindingKeyStore.getState().entries[0].label).toBe('A');
         expect(useBindingKeyStore.getState().entries[0].input).toEqual({ kind: 'keyboard', code: 0 });
         expect(useCheckinStore.getState().dailyRecords['2026-05-18'].countsByItemId['manual-1']).toBe(1);
-        const mondayPlan = useCheckinStore.getState().weeklyPlan.days.mon;
-        expect(mondayPlan.kind === 'items' ? mondayPlan.items[0].title : '').toBe('Read');
+        expect(useCheckinStore.getState().planTemplate.items[0].title).toBe('Read');
     });
 
     it('ignores snapshots with a mismatched bridge version', () => {
@@ -362,5 +406,38 @@ describe('applySnapshotToMirrors', () => {
             window_title: 'Docs',
             icon_data_url: 'data:image/png;base64,safari-icon',
         });
+    });
+});
+
+describe('useBridgeClient', () => {
+    it('keeps requesting the initial host snapshot until a mirror window is hydrated', async () => {
+        vi.useFakeTimers();
+        render(createElement(BridgeClientHost));
+
+        await act(async () => {
+            await Promise.resolve();
+            await Promise.resolve();
+        });
+        expect(emitMock).toHaveBeenCalledTimes(1);
+
+        await act(async () => {
+            vi.advanceTimersByTime(1500);
+            await Promise.resolve();
+        });
+
+        expect(emitMock).toHaveBeenCalledTimes(2);
+
+        act(() => {
+            eventHandlers.get(EVT_STATE)?.({ payload: makeSample() });
+        });
+        expect(screen.getByTestId('bridge-ready').textContent).toBe('ready');
+
+        emitMock.mockClear();
+        await act(async () => {
+            vi.advanceTimersByTime(1500);
+            await Promise.resolve();
+        });
+
+        expect(emitMock).not.toHaveBeenCalled();
     });
 });

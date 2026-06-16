@@ -3,8 +3,21 @@ import type {
     BindingInput,
     BindingKeyEntry,
 } from './bindingKey';
-import type { CheckinDayPlan, CheckinItem, CheckinItemIcon, DailyCheckinRecord, WeekdayKey, WeeklyCheckinPlan } from './checkin';
-import { defaultWeeklyPlan } from './checkin';
+import type {
+    CheckinDayPlan,
+    CheckinItemIcon,
+    CheckinPlanTemplate,
+    DailyCheckinRecord,
+    LegacyCheckinItem,
+    WeekdayKey,
+    WeeklyCheckinPlan,
+} from './checkin';
+import {
+    clonePlanTemplate,
+    defaultPlanTemplate,
+    migrateWeeklyPlanToTemplate,
+    normalizePlanTemplate,
+} from './checkin';
 import type { NetworkStateShape } from './network';
 import type {
     PomodoroEndActionMode,
@@ -37,6 +50,7 @@ export interface UserPreferencesSnapshot {
         uiScale: number;
         autostartEnabled: boolean;
         checkinEnabled: boolean;
+        planPanelEnabled: boolean;
     };
     appUpdate: {
         autoUpdateEnabled: boolean;
@@ -51,7 +65,7 @@ export interface UserPreferencesSnapshot {
         syncedKeyId: string | null;
     };
     checkin: {
-        weeklyPlan: WeeklyCheckinPlan;
+        planTemplate: CheckinPlanTemplate;
         dailyRecords: Record<string, DailyCheckinRecord>;
     };
 }
@@ -83,9 +97,9 @@ interface BindingKeyStoreShape {
 }
 
 interface CheckinStoreShape {
-    weeklyPlan: WeeklyCheckinPlan;
+    planTemplate: CheckinPlanTemplate;
     dailyRecords: Record<string, DailyCheckinRecord>;
-    hydrateCheckin: (snapshot: Pick<CheckinStoreShape, 'weeklyPlan' | 'dailyRecords'>) => void;
+    hydrateCheckin: (snapshot: Pick<CheckinStoreShape, 'planTemplate' | 'dailyRecords'>) => void;
 }
 
 export interface UserPreferencesStores {
@@ -123,14 +137,6 @@ const CHECKIN_ITEM_ICONS = new Set<CheckinItemIcon>([
 ]);
 const WEEKDAYS: WeekdayKey[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 
-function currentWeekStart(date = new Date()): string {
-    const d = new Date(date);
-    d.setHours(12, 0, 0, 0);
-    const diff = (d.getDay() + 6) % 7;
-    d.setDate(d.getDate() - diff);
-    return d.toISOString().slice(0, 10);
-}
-
 export function defaultUserPreferencesSnapshot(): UserPreferencesSnapshot {
     return {
         schemaVersion: 1,
@@ -150,6 +156,7 @@ export function defaultUserPreferencesSnapshot(): UserPreferencesSnapshot {
             uiScale: 1,
             autostartEnabled: false,
             checkinEnabled: true,
+            planPanelEnabled: true,
         },
         appUpdate: {
             autoUpdateEnabled: true,
@@ -164,7 +171,7 @@ export function defaultUserPreferencesSnapshot(): UserPreferencesSnapshot {
             syncedKeyId: null,
         },
         checkin: {
-            weeklyPlan: defaultWeeklyPlan(currentWeekStart()),
+            planTemplate: defaultPlanTemplate(),
             dailyRecords: {},
         },
     };
@@ -192,6 +199,7 @@ export function buildUserPreferencesSnapshot(stores: UserPreferencesStores): Use
             uiScale: settings.committedUiScale,
             autostartEnabled: settings.autostartEnabled,
             checkinEnabled: settings.checkinEnabled,
+            planPanelEnabled: settings.planPanelEnabled,
         },
         appUpdate: {
             autoUpdateEnabled: appUpdate.autoUpdateEnabled,
@@ -206,7 +214,7 @@ export function buildUserPreferencesSnapshot(stores: UserPreferencesStores): Use
             syncedKeyId: bindingKey.syncedKeyId,
         },
         checkin: {
-            weeklyPlan: cloneWeeklyPlan(checkin.weeklyPlan),
+            planTemplate: clonePlanTemplate(checkin.planTemplate),
             dailyRecords: cloneDailyRecords(checkin.dailyRecords),
         },
     };
@@ -246,7 +254,7 @@ export function hydrateUserPreferencesSnapshot({ stores, snapshot }: {
         capturingId: null,
     });
     stores.checkin.getState().hydrateCheckin({
-        weeklyPlan: cloneWeeklyPlan(snapshot.checkin.weeklyPlan),
+        planTemplate: clonePlanTemplate(snapshot.checkin.planTemplate),
         dailyRecords: cloneDailyRecords(snapshot.checkin.dailyRecords),
     });
 }
@@ -333,6 +341,9 @@ function normalizeSettings(
         checkinEnabled: typeof value.checkinEnabled === 'boolean'
             ? value.checkinEnabled
             : fallback.checkinEnabled,
+        planPanelEnabled: typeof value.planPanelEnabled === 'boolean'
+            ? value.planPanelEnabled
+            : fallback.planPanelEnabled,
     };
 }
 
@@ -416,9 +427,16 @@ function normalizeCheckin(
     fallback: UserPreferencesSnapshot['checkin'],
 ): UserPreferencesSnapshot['checkin'] {
     if (!isObject(value)) return fallback;
-    const weeklyPlan = normalizeWeeklyPlan(value.weeklyPlan) ?? fallback.weeklyPlan;
+    const planTemplate = normalizePlanTemplate(value.planTemplate)
+        ?? legacyPlanTemplate(value.weeklyPlan)
+        ?? fallback.planTemplate;
     const dailyRecords = normalizeDailyRecords(value.dailyRecords) ?? fallback.dailyRecords;
-    return { weeklyPlan, dailyRecords };
+    return { planTemplate, dailyRecords };
+}
+
+function legacyPlanTemplate(value: unknown): CheckinPlanTemplate | null {
+    const weeklyPlan = normalizeWeeklyPlan(value);
+    return weeklyPlan ? migrateWeeklyPlanToTemplate(weeklyPlan) : null;
 }
 
 function normalizeWeeklyPlan(value: unknown): WeeklyCheckinPlan | null {
@@ -443,10 +461,10 @@ function normalizeDayPlan(value: unknown): CheckinDayPlan | null {
     if (value.kind !== 'items' || !Array.isArray(value.items)) return null;
     const items = value.items.map(normalizeCheckinItem);
     if (items.some((item) => item === null)) return null;
-    return { kind: 'items', items: items as CheckinItem[] };
+    return { kind: 'items', items: items as LegacyCheckinItem[] };
 }
 
-function normalizeCheckinItem(value: unknown): CheckinItem | null {
+function normalizeCheckinItem(value: unknown): LegacyCheckinItem | null {
     if (!isObject(value)) return null;
     if (
         typeof value.id !== 'string'
@@ -514,10 +532,6 @@ function isObject(value: unknown): value is Record<string, unknown> {
 
 function cloneInput(input: BindingInput | null): BindingInput | null {
     return input ? { ...input } : null;
-}
-
-function cloneWeeklyPlan(plan: WeeklyCheckinPlan): WeeklyCheckinPlan {
-    return JSON.parse(JSON.stringify(plan)) as WeeklyCheckinPlan;
 }
 
 function cloneDailyRecord(record: DailyCheckinRecord): DailyCheckinRecord {

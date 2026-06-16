@@ -4,7 +4,7 @@ import type { AccountStatus, AccountUser, CloudSyncStatus, ConnectionStatus, Rem
 import type { PomodoroEndActionMode, PomodoroEndActionVideo } from '../pomodoro';
 import type { ActiveAppInfo } from '../activeApp';
 import type { AppUpdateSnapshot } from '../appUpdate';
-import type { DailyCheckinRecord, WeeklyCheckinPlan } from '../checkin';
+import type { CheckinPlanTemplate, DailyCheckinRecord } from '../checkin';
 import type { CloudAccountData } from '../cloudAccountData';
 
 export const EVT_STATE_REQUEST = 'app:state:request';
@@ -19,6 +19,7 @@ export interface BridgeSnapshot {
         committedUiScale: number;
         autostartEnabled: boolean;
         checkinEnabled: boolean;
+        planPanelEnabled: boolean;
         dangerousChange: DangerousChange | null;
     };
     pomodoro: {
@@ -55,7 +56,7 @@ export interface BridgeSnapshot {
     };
     appUpdate: AppUpdateSnapshot;
     checkin: {
-        weeklyPlan: WeeklyCheckinPlan;
+        planTemplate: CheckinPlanTemplate;
         dailyRecords: Record<string, DailyCheckinRecord>;
         lastError: string | null;
     };
@@ -63,7 +64,7 @@ export interface BridgeSnapshot {
 
 export type DispatchPayload =
     | { v: typeof BRIDGE_VERSION; store: 'settings';   action: 'setUiScale' | 'previewDangerousUiScale'; args: [number] }
-    | { v: typeof BRIDGE_VERSION; store: 'settings';   action: 'setAutostartEnabled' | 'setCheckinEnabled'; args: [boolean] }
+    | { v: typeof BRIDGE_VERSION; store: 'settings';   action: 'setAutostartEnabled' | 'setCheckinEnabled' | 'setPlanPanelEnabled'; args: [boolean] }
     | { v: typeof BRIDGE_VERSION; store: 'settings';   action: 'applyDangerousChange' | 'revertDangerousChange'; args: [string] }
     | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'applySettings'; args: [number, number, number, boolean, boolean] }
     | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'applyEndActionSettings'; args: [PomodoroEndActionMode, PomodoroEndActionVideo] }
@@ -80,5 +81,5 @@ export type DispatchPayload =
     | { v: typeof BRIDGE_VERSION; store: 'bindingKey'; action: 'addEntry'; args: [] }
     | { v: typeof BRIDGE_VERSION; store: 'appUpdate';  action: 'setAutoUpdateEnabled'; args: [boolean] }
     | { v: typeof BRIDGE_VERSION; store: 'appUpdate';  action: 'checkNow' | 'restartForUpdate'; args: [] }
-    | { v: typeof BRIDGE_VERSION; store: 'checkin';    action: 'setWeeklyPlan'; args: [WeeklyCheckinPlan] }
+    | { v: typeof BRIDGE_VERSION; store: 'checkin';    action: 'setPlanTemplate'; args: [CheckinPlanTemplate] }
     | { v: typeof BRIDGE_VERSION; store: 'checkin';    action: 'incrementItem'; args: [string, string] };

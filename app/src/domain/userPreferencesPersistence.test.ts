@@ -52,12 +52,19 @@ function makeStores(): UserPreferencesStores {
         committedUiScale: 1.25,
         autostartEnabled: true,
         checkinEnabled: false,
+        planPanelEnabled: true,
         dangerousChange: null,
-        hydrateSettings: (snapshot: { uiScale: number; autostartEnabled?: boolean; checkinEnabled?: boolean }) => set({
+        hydrateSettings: (snapshot: {
+            uiScale: number;
+            autostartEnabled?: boolean;
+            checkinEnabled?: boolean;
+            planPanelEnabled?: boolean;
+        }) => set({
             uiScale: snapshot.uiScale,
             committedUiScale: snapshot.uiScale,
             autostartEnabled: snapshot.autostartEnabled ?? false,
             checkinEnabled: snapshot.checkinEnabled ?? true,
+            planPanelEnabled: snapshot.planPanelEnabled ?? true,
             dangerousChange: null,
         }),
     }));
@@ -102,18 +109,17 @@ function makeStores(): UserPreferencesStores {
         capturingId: 'space',
     }));
     const checkin = create<any>((set) => ({
-        weeklyPlan: {
-            weekStartDate: '2026-05-18',
+        planTemplate: {
+            schemaVersion: 2,
             carryToNextWeek: true,
-            days: {
-                mon: { kind: 'items', items: [{ id: 'pomo', title: '专注番茄', type: 'pomodoroFocus', targetCount: 4 }] },
-                tue: { kind: 'inherit' },
-                wed: { kind: 'inherit' },
-                thu: { kind: 'inherit' },
-                fri: { kind: 'inherit' },
-                sat: { kind: 'inherit' },
-                sun: { kind: 'rest' },
-            },
+            items: [{
+                id: 'pomo',
+                title: '专注番茄',
+                type: 'pomodoroFocus',
+                targetCount: 4,
+                repeatDays: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'],
+                editMode: 'cycle',
+            }],
         },
         dailyRecords: {
             '2026-05-18': { date: '2026-05-18', countsByItemId: { pomo: 1 }, processedPomodoroEndEventIds: [1] },
@@ -146,6 +152,7 @@ describe('user preferences persistence', () => {
             uiScale: 1.25,
             autostartEnabled: true,
             checkinEnabled: false,
+            planPanelEnabled: true,
         });
         expect(snapshot.bindingKey.entries[0]).toEqual({
             id: 'space',
@@ -155,6 +162,11 @@ describe('user preferences persistence', () => {
             enabled: true,
         });
         expect('pressCount' in snapshot.bindingKey.entries[0]).toBe(false);
+        expect(snapshot.checkin.planTemplate.items[0]).toMatchObject({
+            id: 'pomo',
+            repeatDays: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'],
+            editMode: 'cycle',
+        });
     });
 
     it('hydrates durable fields without restoring volatile fields', () => {
@@ -183,7 +195,7 @@ describe('user preferences persistence', () => {
         const normalized = normalizeUserPreferencesSnapshot({
             schemaVersion: 1,
             pomodoro: { focusDurationSeconds: 'bad' },
-            settings: { uiScale: 99, autostartEnabled: true, checkinEnabled: false },
+            settings: { uiScale: 99, autostartEnabled: true, checkinEnabled: false, planPanelEnabled: false },
             appUpdate: { autoUpdateEnabled: false },
             network: { autoConnect: true, playerName: '  Bob  ' },
             bindingKey: {
@@ -191,15 +203,52 @@ describe('user preferences persistence', () => {
                 entries: [{ id: 'a', label: 'A', keyCode: 1, input: { kind: 'keyboard', code: 1 }, enabled: true }],
                 syncedKeyId: 'missing',
             },
-            checkin: { weeklyPlan: 'bad', dailyRecords: {} },
+            checkin: { planTemplate: 'bad', dailyRecords: {} },
         });
 
         expect(normalized?.pomodoro.focusDurationSeconds).toBe(25 * 60);
         expect(normalized?.settings.uiScale).toBe(2);
         expect(normalized?.settings.checkinEnabled).toBe(false);
+        expect(normalized?.settings.planPanelEnabled).toBe(false);
         expect(normalized?.network.playerName).toBe('Bob');
         expect(normalized?.bindingKey.syncedKeyId).toBe(null);
         expect(normalized?.bindingKey.entries).toHaveLength(1);
+        expect(normalized?.checkin.planTemplate.schemaVersion).toBe(2);
+    });
+
+    it('normalizes legacy weeklyPlan check-in preferences into planTemplate', () => {
+        const normalized = normalizeUserPreferencesSnapshot({
+            schemaVersion: 1,
+            pomodoro: {},
+            settings: {},
+            appUpdate: {},
+            network: {},
+            bindingKey: {},
+            checkin: {
+                weeklyPlan: {
+                    weekStartDate: '2026-05-18',
+                    carryToNextWeek: true,
+                    days: {
+                        mon: {
+                            kind: 'items',
+                            items: [{ id: 'read', title: '阅读', type: 'manual', targetCount: 2 }],
+                        },
+                        tue: { kind: 'inherit' },
+                        wed: { kind: 'rest' },
+                        thu: { kind: 'inherit' },
+                        fri: { kind: 'inherit' },
+                        sat: { kind: 'inherit' },
+                        sun: { kind: 'rest' },
+                    },
+                },
+                dailyRecords: {},
+            },
+        });
+
+        expect(normalized?.checkin.planTemplate.items[0]).toMatchObject({
+            id: 'read',
+            repeatDays: ['mon', 'tue', 'thu', 'fri', 'sat'],
+        });
     });
 
     it('loads and saves v1 snapshots through Tauri store', async () => {

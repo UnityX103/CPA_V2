@@ -61,7 +61,7 @@ describe('daily check-in window configuration', () => {
     it('builds hidden Tauri windows and exposes commands for check-in panels', () => {
         const source = readFileSync(libRsPath, 'utf8');
 
-        expect(source).toMatch(/build_today_checkin_window_hidden/);
+        expect(source).toMatch(/build_today_checkin_window/);
         expect(source).toMatch(/build_checkin_editor_window_hidden/);
         expect(source).toMatch(/WebviewWindowBuilder::new\(app,\s*"today-checkin"/);
         expect(source).toMatch(/WebviewWindowBuilder::new\(app,\s*"checkin-editor"/);
@@ -79,19 +79,23 @@ describe('daily check-in window configuration', () => {
         expect(source).toMatch(/close_today_checkin_window,\s*close_checkin_editor_window/s);
     });
 
-    it('does not pin check-in windows by default or when opening them', () => {
+    it('opens the today check-in window at the visible layer without pinning it', () => {
         const source = readFileSync(libRsPath, 'utf8');
-        const todayBuilder = rustFunction(source, 'build_today_checkin_window_hidden');
+        const todayBuilder = rustFunction(source, 'build_today_checkin_window');
         const editorBuilder = rustFunction(source, 'build_checkin_editor_window_hidden');
         const todayOpen = rustFunction(source, 'open_today_checkin_window');
+        const todayRaise = rustFunction(source, 'raise_today_checkin_window');
         const editorOpen = rustFunction(source, 'open_checkin_editor_window');
 
         expect(todayBuilder?.body).toMatch(/\.always_on_top\(false\)/);
+        expect(todayBuilder?.body).toMatch(/\.visible\(false\)/);
         expect(editorBuilder?.body).toMatch(/\.always_on_top\(false\)/);
+        expect(editorBuilder?.body).toMatch(/\.visible\(false\)/);
         expect(todayBuilder?.body).not.toMatch(/set_always_on_top_native/);
         expect(editorBuilder?.body).not.toMatch(/set_always_on_top_native/);
-        expect(todayOpen?.body).not.toMatch(/set_focus\(/);
+        expect(todayOpen?.body).toMatch(/focus_existing_window\(app,\s*"today-checkin"\)/);
         expect(todayOpen?.body).not.toMatch(/set_always_on_top_native/);
+        expect(todayRaise?.body).toMatch(/focus_existing_window\(app,\s*"today-checkin"\)/);
         expect(editorOpen?.body).toMatch(/focus_existing_window\(app,\s*"checkin-editor"\)/);
         expect(editorOpen?.body).not.toMatch(/set_always_on_top_native/);
     });
@@ -117,7 +121,7 @@ describe('daily check-in window configuration', () => {
         expect(checkinWindowSource).toMatch(/CHECKIN_EDITOR_MIN_HEIGHT\s*=\s*420/);
         expect(checkinWindowSource).toMatch(/useCheckinEditorWindowSize/);
         expect(checkinWindowSource).toMatch(/label:\s*'checkin-editor'[\s\S]*baseWidth:\s*CHECKIN_EDITOR_BASE_WIDTH[\s\S]*baseHeight:\s*CHECKIN_EDITOR_BASE_HEIGHT[\s\S]*minWidth:\s*CHECKIN_EDITOR_MIN_WIDTH[\s\S]*minHeight:\s*CHECKIN_EDITOR_MIN_HEIGHT[\s\S]*center:\s*true/);
-        expect(editorSource).toMatch(/useCheckinEditorWindowSize\(bridgeReady\)/);
+        expect(editorSource).toMatch(/useCheckinEditorWindowSize\(shouldRenderPanel\)/);
     });
 
     it('sizes the today check-in webview from the effective item count', () => {
@@ -129,6 +133,6 @@ describe('daily check-in window configuration', () => {
         expect(todayCheckinHeightForItemCount(3)).toBe(409);
         expect(checkinWindowSource).toMatch(/useTodayCheckinWindowSize/);
         expect(checkinWindowSource).toMatch(/todayCheckinHeightForItemCount\(itemCount\)/);
-        expect(todaySource).toMatch(/useTodayCheckinWindowSize\(bridgeReady\)/);
+        expect(todaySource).toMatch(/useTodayCheckinWindowSize\(shouldRenderPanel\)/);
     });
 });

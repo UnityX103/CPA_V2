@@ -30,8 +30,55 @@ describe('checkinPersistence', () => {
         localStorage.clear();
     });
 
-    it('round-trips a schemaVersion 1 snapshot containing weeklyPlan and dailyRecords', async () => {
+    it('round-trips a schemaVersion 2 snapshot containing planTemplate and dailyRecords', async () => {
         const snapshot: PersistedCheckinSnapshot = {
+            schemaVersion: 2,
+            planTemplate: {
+                schemaVersion: 2,
+                carryToNextWeek: true,
+                items: [
+                    {
+                        id: 'read',
+                        title: '阅读',
+                        type: 'manual',
+                        targetCount: 2,
+                        icon: 'bookOpen',
+                        repeatDays: ['mon', 'wed'],
+                        editMode: 'count',
+                        perUseAmount: 30,
+                        perUseUnit: '分钟',
+                        countInputValue: 7,
+                        countUnitSize: 2,
+                        countUnitLabel: '页',
+                        countLoopCount: 3,
+                    },
+                    {
+                        id: 'focus',
+                        title: '专注番茄',
+                        type: 'pomodoroFocus',
+                        targetCount: 4,
+                        repeatDays: ['tue'],
+                        editMode: 'cycle',
+                    },
+                ],
+            },
+            dailyRecords: {
+                '2026-05-18': {
+                    date: '2026-05-18',
+                    countsByItemId: { read: 1, focus: 2 },
+                    processedPomodoroEndEventIds: [1001, 1002],
+                },
+            },
+        };
+
+        await savePersistedCheckin(snapshot);
+
+        expect(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null')).toEqual(snapshot);
+        await expect(loadPersistedCheckin()).resolves.toEqual(snapshot);
+    });
+
+    it('loads legacy schemaVersion 1 weeklyPlan snapshots as planTemplate', async () => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
             schemaVersion: 1,
             weeklyPlan: {
                 weekStartDate: '2026-05-18',
@@ -52,110 +99,65 @@ describe('checkinPersistence', () => {
                     sun: { kind: 'rest' },
                 },
             },
-            dailyRecords: {
-                '2026-05-18': {
-                    date: '2026-05-18',
-                    countsByItemId: { read: 1, focus: 2 },
-                    processedPomodoroEndEventIds: [1001, 1002],
-                },
+            dailyRecords: {},
+        }));
+
+        const snapshot = await loadPersistedCheckin();
+
+        expect(snapshot?.schemaVersion).toBe(2);
+        expect(snapshot?.planTemplate.items.find((item) => item.id === 'read')).toMatchObject({
+            repeatDays: ['mon', 'tue', 'thu', 'fri', 'sat'],
+            editMode: 'cycle',
+        });
+    });
+
+    it('normalizes v2 item icon, per-use metric, repeat days, and count metadata', async () => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            schemaVersion: 2,
+            planTemplate: {
+                schemaVersion: 2,
+                carryToNextWeek: true,
+                items: [{
+                    id: 'bad',
+                    title: '',
+                    type: 'manual',
+                    targetCount: -2,
+                    icon: 'unknownIcon',
+                    repeatDays: ['mon', 'nope', 'mon'],
+                    editMode: 'count',
+                    perUseAmount: -5,
+                    perUseUnit: '',
+                    countInputValue: -1,
+                    countUnitSize: 0,
+                    countUnitLabel: '',
+                    countLoopCount: 3.5,
+                }],
             },
-        };
+            dailyRecords: {},
+        }));
 
-        await savePersistedCheckin(snapshot);
+        const snapshot = await loadPersistedCheckin();
 
-        expect(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null')).toEqual(snapshot);
-        await expect(loadPersistedCheckin()).resolves.toEqual(snapshot);
+        expect(snapshot?.planTemplate.items[0]).toEqual({
+            id: 'bad',
+            title: '新项目',
+            type: 'manual',
+            targetCount: 1,
+            repeatDays: ['mon'],
+            editMode: 'count',
+            perUseAmount: 0,
+            perUseUnit: '次',
+            countInputValue: 0,
+            countUnitSize: 1,
+            countUnitLabel: '次',
+            countLoopCount: 1,
+        });
     });
 
     it('returns null for malformed persisted data', async () => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify({ schemaVersion: 99 }));
 
         await expect(loadPersistedCheckin()).resolves.toBeNull();
-    });
-
-    it('preserves valid item icon and per-use metric fields', async () => {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-            schemaVersion: 1,
-            weeklyPlan: {
-                weekStartDate: '2026-05-18',
-                carryToNextWeek: true,
-                days: {
-                    mon: {
-                        kind: 'items',
-                        items: [
-                            {
-                                id: 'read',
-                                title: '阅读',
-                                type: 'manual',
-                                targetCount: 2,
-                                icon: 'bookOpen',
-                                perUseAmount: 30,
-                                perUseUnit: '分钟',
-                            },
-                        ],
-                    },
-                    tue: { kind: 'inherit' },
-                    wed: { kind: 'inherit' },
-                    thu: { kind: 'inherit' },
-                    fri: { kind: 'inherit' },
-                    sat: { kind: 'inherit' },
-                    sun: { kind: 'rest' },
-                },
-            },
-            dailyRecords: {},
-        }));
-
-        const snapshot = await loadPersistedCheckin();
-        const monday = snapshot?.weeklyPlan.days.mon;
-        expect(monday?.kind).toBe('items');
-        if (monday?.kind === 'items') {
-            expect(monday.items[0]).toMatchObject({
-                icon: 'bookOpen',
-                perUseAmount: 30,
-                perUseUnit: '分钟',
-            });
-        }
-    });
-
-    it('drops unknown icon keys and clamps invalid metric values', async () => {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-            schemaVersion: 1,
-            weeklyPlan: {
-                weekStartDate: '2026-05-18',
-                carryToNextWeek: true,
-                days: {
-                    mon: { kind: 'inherit' },
-                    tue: {
-                        kind: 'items',
-                        items: [
-                            {
-                                id: 'bad',
-                                title: '坏数据',
-                                type: 'manual',
-                                targetCount: 1,
-                                icon: 'unknownIcon',
-                                perUseAmount: -5,
-                                perUseUnit: '',
-                            },
-                        ],
-                    },
-                    wed: { kind: 'inherit' },
-                    thu: { kind: 'inherit' },
-                    fri: { kind: 'inherit' },
-                    sat: { kind: 'inherit' },
-                    sun: { kind: 'rest' },
-                },
-            },
-            dailyRecords: {},
-        }));
-
-        const snapshot = await loadPersistedCheckin();
-        const tuesday = snapshot?.weeklyPlan.days.tue;
-        expect(tuesday?.kind).toBe('items');
-        if (tuesday?.kind === 'items') {
-            expect(tuesday.items[0]).toMatchObject({ perUseAmount: 0, perUseUnit: '次' });
-            expect(tuesday.items[0]).not.toHaveProperty('icon');
-        }
     });
 
     it('returns null when storage getItem throws', async () => {
@@ -176,20 +178,8 @@ describe('checkinPersistence', () => {
         });
 
         await expect(savePersistedCheckin({
-            schemaVersion: 1,
-            weeklyPlan: {
-                weekStartDate: '2026-05-18',
-                carryToNextWeek: true,
-                days: {
-                    mon: { kind: 'items', items: [] },
-                    tue: { kind: 'inherit' },
-                    wed: { kind: 'inherit' },
-                    thu: { kind: 'inherit' },
-                    fri: { kind: 'inherit' },
-                    sat: { kind: 'inherit' },
-                    sun: { kind: 'rest' },
-                },
-            },
+            schemaVersion: 2,
+            planTemplate: { schemaVersion: 2, carryToNextWeek: true, items: [] },
             dailyRecords: {},
         })).rejects.toThrow('storage blocked');
     });

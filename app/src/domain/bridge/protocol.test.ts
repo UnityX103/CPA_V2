@@ -3,7 +3,7 @@ import {
     type PomodoroEndActionMode,
     type PomodoroEndActionVideo,
 } from '../pomodoro';
-import { defaultWeeklyPlan } from '../checkin';
+import { defaultPlanTemplate } from '../checkin';
 import {
     BRIDGE_VERSION,
     EVT_DISPATCH,
@@ -39,6 +39,7 @@ describe('bridge protocol', () => {
                 committedUiScale: 1.0,
                 autostartEnabled: true,
                 checkinEnabled: false,
+                planPanelEnabled: false,
                 dangerousChange: null,
             },
             pomodoro: {
@@ -74,7 +75,7 @@ describe('bridge protocol', () => {
                 errorMessage: null,
             },
             checkin: {
-                weeklyPlan: defaultWeeklyPlan('2026-05-18'),
+                planTemplate: defaultPlanTemplate(),
                 dailyRecords: {
                     '2026-05-18': {
                         date: '2026-05-18',
@@ -90,6 +91,7 @@ describe('bridge protocol', () => {
         expect(snap.pomodoro.endActionVideo).toEqual(sampleEndActionVideo);
         expect(snap.settings.autostartEnabled).toBe(true);
         expect(snap.settings.checkinEnabled).toBe(false);
+        expect(snap.settings.planPanelEnabled).toBe(false);
         expect(('showActiveApp' + 'WindowTitle') in snap.settings).toBe(false);
         expect(('autoPinOn' + 'FocusEnd') in snap.settings).toBe(false);
         expect('targetMonitorIndex' in snap.settings).toBe(false);
@@ -103,6 +105,7 @@ describe('bridge protocol', () => {
             { v: 1, store: 'settings',   action: 'previewDangerousUiScale', args: [1.5] },
             { v: 1, store: 'settings',   action: 'setAutostartEnabled', args: [true] },
             { v: 1, store: 'settings',   action: 'setCheckinEnabled', args: [false] },
+            { v: 1, store: 'settings',   action: 'setPlanPanelEnabled', args: [false] },
             { v: 1, store: 'settings',   action: 'applyDangerousChange', args: ['pending-id'] },
             { v: 1, store: 'settings',   action: 'revertDangerousChange', args: ['pending-id'] },
             { v: 1, store: 'pomodoro',   action: 'applySettings',  args: [1500, 300, 4, true, false] },
@@ -121,11 +124,11 @@ describe('bridge protocol', () => {
             { v: 1, store: 'appUpdate',  action: 'setAutoUpdateEnabled', args: [false] },
             { v: 1, store: 'appUpdate',  action: 'checkNow',       args: [] },
             { v: 1, store: 'appUpdate',  action: 'restartForUpdate', args: [] },
-            { v: 1, store: 'checkin',    action: 'setWeeklyPlan',  args: [defaultWeeklyPlan('2026-05-25')] },
+            { v: 1, store: 'checkin',    action: 'setPlanTemplate',  args: [defaultPlanTemplate()] },
             { v: 1, store: 'checkin',    action: 'incrementItem',  args: ['2026-05-25', 'pomodoro-focus'] },
         ];
-        expect(samples).toHaveLength(24);
-        expect(samples[7]).toEqual({
+        expect(samples).toHaveLength(25);
+        expect(samples[8]).toEqual({
             v: 1,
             store: 'pomodoro',
             action: 'applyEndActionSettings',

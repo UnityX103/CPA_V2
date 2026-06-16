@@ -2,7 +2,12 @@ import '@testing-library/jest-dom/vitest';
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useSettingsStore } from './domain/settings';
-import { defaultWeeklyPlan, useCheckinStore, type WeeklyCheckinPlan } from './domain/checkin';
+import {
+    defaultPlanTemplate,
+    migrateWeeklyPlanToTemplate,
+    useCheckinStore,
+    type WeeklyCheckinPlan,
+} from './domain/checkin';
 import { usePomodoroStore } from './domain/pomodoro';
 
 const {
@@ -158,14 +163,6 @@ vi.mock('./ui/RemoteRoster', () => ({
 
 const { default: App } = await import('./App');
 
-function currentWeekStartFor(date: Date): string {
-    const d = new Date(date);
-    d.setHours(12, 0, 0, 0);
-    const diff = (d.getDay() + 6) % 7;
-    d.setDate(d.getDate() - diff);
-    return d.toISOString().slice(0, 10);
-}
-
 beforeEach(() => {
     appUpdateCleanup.mockClear();
     hydrateAppUpdate.mockClear();
@@ -226,6 +223,7 @@ beforeEach(() => {
         uiScale: 1.5,
         autostartEnabled: false,
         checkinEnabled: true,
+        planPanelEnabled: true,
     });
     loadPersistedUserPreferencesMock.mockReset();
     loadPersistedUserPreferencesMock.mockResolvedValue(null);
@@ -240,6 +238,7 @@ beforeEach(() => {
         committedUiScale: 1,
         autostartEnabled: false,
         checkinEnabled: true,
+        planPanelEnabled: true,
         dangerousChange: null,
     });
     usePomodoroStore.setState({
@@ -249,13 +248,14 @@ beforeEach(() => {
         lastEndEvent: null,
     });
     useCheckinStore.setState({
-        weeklyPlan: defaultWeeklyPlan(currentWeekStartFor(new Date())),
+        planTemplate: defaultPlanTemplate(),
         dailyRecords: {},
         lastError: null,
     });
 });
 
 afterEach(() => {
+    vi.useRealTimers();
     cleanup();
 });
 
@@ -328,6 +328,7 @@ describe('main App window composition', () => {
             uiScale: number;
             autostartEnabled: boolean;
             checkinEnabled: boolean;
+            planPanelEnabled: boolean;
         }) => void;
         loadPersistedSettingsMock.mockReturnValue(new Promise((resolve) => {
             resolveSettings = resolve;
@@ -342,6 +343,7 @@ describe('main App window composition', () => {
             uiScale: 1.5,
             autostartEnabled: false,
             checkinEnabled: true,
+            planPanelEnabled: true,
         });
 
         await waitFor(() => {
@@ -367,6 +369,7 @@ describe('main App window composition', () => {
             uiScale: 1.25,
             autostartEnabled: false,
             checkinEnabled: true,
+            planPanelEnabled: true,
         });
         readAutostartEnabledMock.mockResolvedValue(true);
 
@@ -376,7 +379,7 @@ describe('main App window composition', () => {
         expect(readAutostartEnabledMock).toHaveBeenCalledWith(false);
         await waitFor(() => expect(savePersistedUserPreferencesMock).toHaveBeenCalledWith(
             expect.objectContaining({
-                settings: { uiScale: 1.25, autostartEnabled: true, checkinEnabled: true },
+                settings: { uiScale: 1.25, autostartEnabled: true, checkinEnabled: true, planPanelEnabled: true },
             }),
         ));
     });
@@ -386,6 +389,7 @@ describe('main App window composition', () => {
             uiScale: 1.25,
             autostartEnabled: false,
             checkinEnabled: false,
+            planPanelEnabled: true,
         });
 
         render(<App />);
@@ -393,7 +397,7 @@ describe('main App window composition', () => {
         await waitFor(() => expect(useSettingsStore.getState().checkinEnabled).toBe(false));
         await waitFor(() => expect(savePersistedUserPreferencesMock).toHaveBeenCalledWith(
             expect.objectContaining({
-                settings: { uiScale: 1.25, autostartEnabled: false, checkinEnabled: false },
+                settings: { uiScale: 1.25, autostartEnabled: false, checkinEnabled: false, planPanelEnabled: true },
             }),
         ));
         expect(invokeMock).not.toHaveBeenCalledWith('open_today_checkin_window');
@@ -411,7 +415,7 @@ describe('main App window composition', () => {
         expect(savePersistedSettingsMock).not.toHaveBeenCalled();
         expect(savePersistedUserPreferencesMock).toHaveBeenCalledWith(
             expect.objectContaining({
-                settings: { uiScale: 1, autostartEnabled: false, checkinEnabled: true },
+                settings: { uiScale: 1, autostartEnabled: false, checkinEnabled: true, planPanelEnabled: true },
             }),
         );
     });
@@ -422,6 +426,7 @@ describe('main App window composition', () => {
             uiScale: 1.25,
             autostartEnabled: false,
             checkinEnabled: true,
+            planPanelEnabled: true,
         });
         readAutostartEnabledMock.mockReturnValue(new Promise((resolve) => {
             resolveAutostart = resolve;
@@ -455,6 +460,7 @@ describe('main App window composition', () => {
             uiScale: 1.25,
             autostartEnabled: false,
             checkinEnabled: true,
+            planPanelEnabled: true,
         });
         readAutostartEnabledMock.mockReturnValue(new Promise((resolve) => {
             resolveAutostart = resolve;
@@ -478,7 +484,7 @@ describe('main App window composition', () => {
         expect(useSettingsStore.getState().committedUiScale).toBe(1.5);
         await waitFor(() => expect(savePersistedUserPreferencesMock).toHaveBeenCalledWith(
             expect.objectContaining({
-                settings: { uiScale: 1.5, autostartEnabled: true, checkinEnabled: true },
+                settings: { uiScale: 1.5, autostartEnabled: true, checkinEnabled: true, planPanelEnabled: true },
             }),
         ));
     });
@@ -498,6 +504,7 @@ describe('main App window composition', () => {
                 uiScale: 1.25,
                 autostartEnabled: false,
                 checkinEnabled: false,
+                planPanelEnabled: false,
             },
             appUpdate: {
                 autoUpdateEnabled: false,
@@ -518,7 +525,7 @@ describe('main App window composition', () => {
                 syncedKeyId: 'space',
             },
             checkin: {
-                weeklyPlan: defaultWeeklyPlan('2026-05-18'),
+                planTemplate: defaultPlanTemplate(),
                 dailyRecords: {},
             },
         });
@@ -534,6 +541,7 @@ describe('main App window composition', () => {
         expect(useNetworkStore.getState().autoConnect).toBe(true);
         expect(useNetworkStore.getState().playerName).toBe('Alice');
         expect(useSettingsStore.getState().checkinEnabled).toBe(false);
+        expect(useSettingsStore.getState().planPanelEnabled).toBe(false);
         expect(useBindingKeyStore.getState().panelEnabled).toBe(false);
         expect(useBindingKeyStore.getState().entries[0]).toEqual(expect.objectContaining({
             label: 'Space',
@@ -543,6 +551,106 @@ describe('main App window composition', () => {
         expect(savePersistedUserPreferencesMock).toHaveBeenCalledWith(expect.objectContaining({
             pomodoro: expect.objectContaining({ focusDurationSeconds: 900 }),
         }));
+    });
+
+    it('opens the today check-in window after startup when unified preferences enable check-in and omit the plan panel flag', async () => {
+        loadPersistedUserPreferencesMock.mockResolvedValue({
+            schemaVersion: 1,
+            pomodoro: {
+                focusDurationSeconds: 1500,
+                breakDurationSeconds: 300,
+                totalRounds: 4,
+                autoStartBreak: true,
+                endActionMode: 'playVideo',
+                endActionVideo: { sourceKind: 'builtin', builtinVideoId: 'qianqian', customVideoPath: '' },
+            },
+            settings: {
+                uiScale: 1.03,
+                autostartEnabled: true,
+                checkinEnabled: true,
+            },
+            appUpdate: {
+                autoUpdateEnabled: true,
+            },
+            network: {
+                autoConnect: true,
+                playerName: 'Xpy',
+            },
+            bindingKey: {
+                panelEnabled: false,
+                entries: [],
+                syncedKeyId: null,
+            },
+            checkin: {
+                planTemplate: defaultPlanTemplate(),
+                dailyRecords: {},
+            },
+        });
+        restoreAccountSession.mockImplementation(async () => {
+            useNetworkStore.setState({ accountStatus: 'guest' });
+        });
+
+        render(<App />);
+
+        await waitFor(() => {
+            expect(invokeMock).toHaveBeenCalledWith('open_today_checkin_window');
+        });
+    });
+
+    it('opens the today check-in window from local preferences when account restore hangs', async () => {
+        vi.useFakeTimers();
+        loadPersistedUserPreferencesMock.mockResolvedValue({
+            schemaVersion: 1,
+            pomodoro: {
+                focusDurationSeconds: 1500,
+                breakDurationSeconds: 300,
+                totalRounds: 4,
+                autoStartBreak: true,
+                endActionMode: 'playVideo',
+                endActionVideo: { sourceKind: 'builtin', builtinVideoId: 'qianqian', customVideoPath: '' },
+            },
+            settings: {
+                uiScale: 1.03,
+                autostartEnabled: true,
+                checkinEnabled: true,
+                planPanelEnabled: true,
+            },
+            appUpdate: {
+                autoUpdateEnabled: true,
+            },
+            network: {
+                autoConnect: true,
+                playerName: 'Xpy',
+            },
+            bindingKey: {
+                panelEnabled: false,
+                entries: [],
+                syncedKeyId: null,
+            },
+            checkin: {
+                planTemplate: defaultPlanTemplate(),
+                dailyRecords: {},
+            },
+        });
+        restoreAccountSession.mockImplementation(() => new Promise(() => {}));
+
+        render(<App />);
+
+        await act(async () => {
+            await Promise.resolve();
+            await Promise.resolve();
+            await Promise.resolve();
+        });
+        expect(restoreAccountSession).toHaveBeenCalledTimes(1);
+        expect(invokeMock).not.toHaveBeenCalledWith('open_today_checkin_window');
+
+        await act(async () => {
+            vi.advanceTimersByTime(2500);
+            await Promise.resolve();
+            await Promise.resolve();
+        });
+
+        expect(invokeMock).toHaveBeenCalledWith('open_today_checkin_window');
     });
 
     it('prefers cloud archive when saved session restores successfully', async () => {
@@ -560,6 +668,7 @@ describe('main App window composition', () => {
                 uiScale: 1.1,
                 autostartEnabled: false,
                 checkinEnabled: true,
+                planPanelEnabled: true,
             },
             appUpdate: {
                 autoUpdateEnabled: true,
@@ -574,7 +683,7 @@ describe('main App window composition', () => {
                 syncedKeyId: null,
             },
             checkin: {
-                weeklyPlan: defaultWeeklyPlan('2026-05-18'),
+                planTemplate: defaultPlanTemplate(),
                 dailyRecords: {},
             },
         });
@@ -599,6 +708,7 @@ describe('main App window composition', () => {
                         uiScale: 1.4,
                         autostartEnabled: false,
                         checkinEnabled: false,
+                        planPanelEnabled: false,
                     },
                     appUpdate: {
                         autoUpdateEnabled: false,
@@ -613,7 +723,7 @@ describe('main App window composition', () => {
                         syncedKeyId: null,
                     },
                     checkin: {
-                        weeklyPlan: defaultWeeklyPlan('2026-05-18'),
+                        planTemplate: defaultPlanTemplate(),
                         dailyRecords: {},
                     },
                 },
@@ -625,6 +735,7 @@ describe('main App window composition', () => {
         await waitFor(() => expect(usePomodoroStore.getState().focusDurationSeconds).toBe(1800));
         expect(useNetworkStore.getState().playerName).toBe('Cloud');
         expect(useSettingsStore.getState().checkinEnabled).toBe(false);
+        expect(useSettingsStore.getState().planPanelEnabled).toBe(false);
         expect(savePersistedUserPreferencesMock).toHaveBeenCalledWith(expect.objectContaining({
             pomodoro: expect.objectContaining({ focusDurationSeconds: 1800 }),
             network: expect.objectContaining({ playerName: 'Cloud' }),
@@ -648,9 +759,10 @@ describe('main App window composition', () => {
                 sun: { kind: 'rest' },
             },
         };
+        const migratedTemplate = migrateWeeklyPlanToTemplate(oldPlan);
         loadPersistedCheckinMock.mockResolvedValue({
-            schemaVersion: 1,
-            weeklyPlan: oldPlan,
+            schemaVersion: 2,
+            planTemplate: migratedTemplate,
             dailyRecords: {},
         });
 
@@ -659,10 +771,7 @@ describe('main App window composition', () => {
         await waitFor(() => expect(savePersistedUserPreferencesMock).toHaveBeenCalledWith(
             expect.objectContaining({
                 checkin: {
-                    weeklyPlan: {
-                        ...oldPlan,
-                        weekStartDate: currentWeekStartFor(new Date()),
-                    },
+                    planTemplate: migratedTemplate,
                     dailyRecords: {},
                 },
             }),

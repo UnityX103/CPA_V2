@@ -36,7 +36,6 @@ import './SettingsPanel.css';
 const TABS: Array<{ id: SettingsTab; label: string }> = [
     { id: 'pomodoro', label: '番茄钟' },
     { id: 'online', label: '联机' },
-    { id: 'pet', label: '宠物' },
     { id: 'global', label: '全局' },
 ];
 
@@ -119,7 +118,6 @@ export function SettingsPanel() {
                 <div className="settings-content" data-no-window-drag>
                     {activeTab === 'pomodoro' && <PomodoroTab onApplyStateChange={setOrdinaryApply} />}
                     {activeTab === 'online' && <OnlineTab />}
-                    {activeTab === 'pet' && <PetTab />}
                     {activeTab === 'global' && <GlobalTab />}
                     <SettingsApplyRow
                         visible={ordinaryApply.dirty}
@@ -634,23 +632,6 @@ function phaseToText(phase: number | undefined, isRunning: boolean): { label: st
 }
 
 /* ============================================================
- * Pet Settings (v2ZgA) — 设计稿为占位，保持空容器
- * ============================================================ */
-
-function PetTab() {
-    return (
-        <div className="settings-content-scroll">
-            <div className="tab-pane">
-                <div className="card">
-                    <span className="card-label">桌宠形态</span>
-                    <div className="card-empty">尚未实现 — 设计稿 v2ZgA 仅占 70px 占位。</div>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-/* ============================================================
  * Global Settings (Pdj9C)
  * ============================================================ */
 
@@ -787,6 +768,17 @@ function GlobalTab() {
                             checked={settings.checkinEnabled}
                             onChange={settings.setCheckinEnabled}
                             ariaLabel="打卡系统"
+                        />
+                    </div>
+                </div>
+
+                <div className="card">
+                    <div className="card-row">
+                        <span className="card-label">计划面板</span>
+                        <Toggle
+                            checked={settings.planPanelEnabled}
+                            onChange={settings.setPlanPanelEnabled}
+                            ariaLabel="计划面板"
                         />
                     </div>
                 </div>

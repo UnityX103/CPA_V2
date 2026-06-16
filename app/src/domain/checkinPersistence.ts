@@ -1,39 +1,20 @@
-import type {
-    CheckinDayPlan,
-    CheckinItem,
-    CheckinItemIcon,
-    DailyCheckinRecord,
-    WeekdayKey,
-    WeeklyCheckinPlan,
+import {
+    migrateWeeklyPlanToTemplate,
+    normalizePlanTemplate,
+    type CheckinDayPlan,
+    type CheckinPlanTemplate,
+    type DailyCheckinRecord,
+    type LegacyCheckinItem,
+    type WeekdayKey,
+    type WeeklyCheckinPlan,
 } from './checkin';
 
 export const STORAGE_KEY = 'cpa-v2-checkin-v1';
-const CHECKIN_ITEM_ICONS = [
-    'activity',
-    'dumbbell',
-    'bookOpen',
-    'droplet',
-    'listChecks',
-    'sparkle',
-    'coffee',
-    'moon',
-    'sun',
-    'leaf',
-    'music',
-    'pencil',
-    'target',
-    'flame',
-    'heart',
-    'apple',
-    'clock',
-    'meditation',
-] satisfies CheckinItemIcon[];
-const CHECKIN_ITEM_ICON_SET = new Set<string>(CHECKIN_ITEM_ICONS);
 const WEEKDAYS: WeekdayKey[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 
 export interface PersistedCheckinSnapshot {
-    schemaVersion: 1;
-    weeklyPlan: WeeklyCheckinPlan;
+    schemaVersion: 2;
+    planTemplate: CheckinPlanTemplate;
     dailyRecords: Record<string, DailyCheckinRecord>;
 }
 
@@ -49,26 +30,7 @@ function isObject(value: unknown): value is Record<string, unknown> {
     return !!value && typeof value === 'object' && !Array.isArray(value);
 }
 
-function normalizeIcon(value: unknown): CheckinItemIcon | undefined {
-    return typeof value === 'string' && CHECKIN_ITEM_ICON_SET.has(value)
-        ? value as CheckinItemIcon
-        : undefined;
-}
-
-function normalizePerUseAmount(value: unknown): number | undefined {
-    if (value === undefined) return undefined;
-    if (typeof value !== 'number' || !Number.isFinite(value)) return undefined;
-    return Math.max(0, value);
-}
-
-function normalizePerUseUnit(value: unknown): string | undefined {
-    if (value === undefined) return undefined;
-    if (typeof value !== 'string') return undefined;
-    const trimmed = value.trim();
-    return trimmed.length > 0 ? trimmed : '次';
-}
-
-function normalizeCheckinItem(value: unknown): CheckinItem | null {
+function normalizeLegacyItem(value: unknown): LegacyCheckinItem | null {
     if (!isObject(value)) return null;
     if (
         typeof value.id !== 'string'
@@ -79,18 +41,18 @@ function normalizeCheckinItem(value: unknown): CheckinItem | null {
     ) {
         return null;
     }
-
-    const icon = normalizeIcon(value.icon);
-    const perUseAmount = normalizePerUseAmount(value.perUseAmount);
-    const perUseUnit = normalizePerUseUnit(value.perUseUnit);
     return {
         id: value.id,
         title: value.title,
         type: value.type,
-        targetCount: Math.max(1, value.targetCount),
-        ...(icon ? { icon } : {}),
-        ...(perUseAmount !== undefined ? { perUseAmount } : {}),
-        ...(perUseUnit !== undefined ? { perUseUnit } : {}),
+        targetCount: Math.max(1, Math.floor(value.targetCount)),
+        ...(typeof value.icon === 'string' ? { icon: value.icon as LegacyCheckinItem['icon'] } : {}),
+        ...(typeof value.perUseAmount === 'number' && Number.isFinite(value.perUseAmount)
+            ? { perUseAmount: Math.max(0, value.perUseAmount) }
+            : {}),
+        ...(typeof value.perUseUnit === 'string' && value.perUseUnit.trim()
+            ? { perUseUnit: value.perUseUnit.trim() }
+            : {}),
     };
 }
 
@@ -98,10 +60,9 @@ function normalizeDayPlan(value: unknown): CheckinDayPlan | null {
     if (!isObject(value)) return null;
     if (value.kind === 'inherit' || value.kind === 'rest') return { kind: value.kind };
     if (value.kind !== 'items' || !Array.isArray(value.items)) return null;
-
-    const items = value.items.map(normalizeCheckinItem);
+    const items = value.items.map(normalizeLegacyItem);
     if (items.some((item) => item === null)) return null;
-    return { kind: 'items', items: items as CheckinItem[] };
+    return { kind: 'items', items: items as LegacyCheckinItem[] };
 }
 
 function normalizeWeeklyPlan(value: unknown): WeeklyCheckinPlan | null {
@@ -124,31 +85,52 @@ function normalizeWeeklyPlan(value: unknown): WeeklyCheckinPlan | null {
     };
 }
 
-function isDailyRecord(value: unknown): value is DailyCheckinRecord {
-    if (!isObject(value) || !isObject(value.countsByItemId)) return false;
-    return typeof value.date === 'string'
-        && Object.values(value.countsByItemId).every((count) => (
-            typeof count === 'number' && Number.isFinite(count)
-        ))
-        && Array.isArray(value.processedPomodoroEndEventIds)
-        && value.processedPomodoroEndEventIds.every((id) => (
-            typeof id === 'number' && Number.isFinite(id)
-        ));
+function normalizeDailyRecord(value: unknown): DailyCheckinRecord | null {
+    if (!isObject(value) || !isObject(value.countsByItemId) || typeof value.date !== 'string') return null;
+    return {
+        date: value.date,
+        countsByItemId: Object.fromEntries(
+            Object.entries(value.countsByItemId)
+                .filter(([, count]) => typeof count === 'number' && Number.isFinite(count))
+                .map(([id, count]) => [id, Math.max(0, count as number)]),
+        ),
+        processedPomodoroEndEventIds: Array.isArray(value.processedPomodoroEndEventIds)
+            ? value.processedPomodoroEndEventIds.filter((id): id is number => (
+                typeof id === 'number' && Number.isInteger(id)
+            ))
+            : [],
+    };
 }
 
-function isDailyRecords(value: unknown): value is Record<string, DailyCheckinRecord> {
-    return isObject(value) && Object.values(value).every(isDailyRecord);
+function normalizeDailyRecords(value: unknown): Record<string, DailyCheckinRecord> | null {
+    if (!isObject(value)) return null;
+    const records: Record<string, DailyCheckinRecord> = {};
+    for (const [date, record] of Object.entries(value)) {
+        const normalized = normalizeDailyRecord(record);
+        if (!normalized) return null;
+        records[date] = normalized;
+    }
+    return records;
 }
 
 function normalizePersistedCheckinSnapshot(value: unknown): PersistedCheckinSnapshot | null {
-    if (!isObject(value) || value.schemaVersion !== 1 || !isDailyRecords(value.dailyRecords)) return null;
-    const weeklyPlan = normalizeWeeklyPlan(value.weeklyPlan);
-    if (!weeklyPlan) return null;
-    return {
-        schemaVersion: 1,
-        weeklyPlan,
-        dailyRecords: value.dailyRecords,
-    };
+    if (!isObject(value)) return null;
+    const dailyRecords = normalizeDailyRecords(value.dailyRecords);
+    if (!dailyRecords) return null;
+
+    if (value.schemaVersion === 2) {
+        const planTemplate = normalizePlanTemplate(value.planTemplate);
+        return planTemplate ? { schemaVersion: 2, planTemplate, dailyRecords } : null;
+    }
+
+    if (value.schemaVersion === 1) {
+        const weeklyPlan = normalizeWeeklyPlan(value.weeklyPlan);
+        return weeklyPlan
+            ? { schemaVersion: 2, planTemplate: migrateWeeklyPlanToTemplate(weeklyPlan), dailyRecords }
+            : null;
+    }
+
+    return null;
 }
 
 export async function loadPersistedCheckin(): Promise<PersistedCheckinSnapshot | null> {

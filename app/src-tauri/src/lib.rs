@@ -339,7 +339,7 @@ fn build_input_counter_window_hidden(
     Ok(w)
 }
 
-fn build_today_checkin_window_hidden(
+fn build_today_checkin_window(
     app: &tauri::AppHandle,
 ) -> Result<tauri::WebviewWindow, tauri::Error> {
     let url = WebviewUrl::App("index.html?window=today-checkin".into());
@@ -463,15 +463,6 @@ async fn resize_input_counter_window(app: tauri::AppHandle, height: f64) -> Resu
     Ok(())
 }
 
-fn show_existing_window(app: tauri::AppHandle, label: &str) -> Result<(), String> {
-    let w = app.get_webview_window(label).ok_or_else(|| {
-        format!("{label} window not built — setup() probably failed; check stderr")
-    })?;
-    apply_saved_window_layout(&app, label);
-    w.show().map_err(|e| e.to_string())?;
-    Ok(())
-}
-
 fn focus_existing_window(app: tauri::AppHandle, label: &str) -> Result<(), String> {
     let w = app.get_webview_window(label).ok_or_else(|| {
         format!("{label} window not built — setup() probably failed; check stderr")
@@ -492,7 +483,12 @@ async fn focus_app_window(app: tauri::AppHandle, label: String) -> Result<(), St
 
 #[tauri::command]
 async fn open_today_checkin_window(app: tauri::AppHandle) -> Result<(), String> {
-    show_existing_window(app, "today-checkin")
+    focus_existing_window(app, "today-checkin")
+}
+
+#[tauri::command]
+async fn raise_today_checkin_window(app: tauri::AppHandle) -> Result<(), String> {
+    focus_existing_window(app, "today-checkin")
 }
 
 #[tauri::command]
@@ -561,8 +557,8 @@ pub fn run() {
             if let Err(e) = build_input_counter_window_hidden(app.handle()) {
                 eprintln!("[setup] build_input_counter_window_hidden failed: {e}");
             }
-            if let Err(e) = build_today_checkin_window_hidden(app.handle()) {
-                eprintln!("[setup] build_today_checkin_window_hidden failed: {e}");
+            if let Err(e) = build_today_checkin_window(app.handle()) {
+                eprintln!("[setup] build_today_checkin_window failed: {e}");
             }
             if let Err(e) = build_checkin_editor_window_hidden(app.handle()) {
                 eprintln!("[setup] build_checkin_editor_window_hidden failed: {e}");
@@ -720,6 +716,7 @@ pub fn run() {
             resize_input_counter_window,
             focus_app_window,
             open_today_checkin_window,
+            raise_today_checkin_window,
             open_checkin_editor_window,
             close_today_checkin_window,
             close_checkin_editor_window,

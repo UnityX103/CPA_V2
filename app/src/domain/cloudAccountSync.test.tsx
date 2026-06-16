@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useCloudAccountSync } from './cloudAccountSync';
 import { useNetworkStore } from './network';
 import { usePomodoroStore } from './pomodoro';
-import { defaultWeeklyPlan, useCheckinStore } from './checkin';
+import { defaultPlanTemplate, useCheckinStore } from './checkin';
 import { useAppUpdateStore } from './appUpdate';
 import { useBindingKeyStore } from './bindingKey';
 
@@ -32,7 +32,7 @@ describe('useCloudAccountSync', () => {
             autoStartBreak: false,
         });
         useCheckinStore.getState().hydrateCheckin({
-            weeklyPlan: defaultWeeklyPlan('2026-05-18'),
+            planTemplate: defaultPlanTemplate(),
             dailyRecords: {},
         });
         useAppUpdateStore.setState({
@@ -98,6 +98,7 @@ describe('useCloudAccountSync', () => {
                         uiScale: 1,
                         autostartEnabled: false,
                         checkinEnabled: true,
+                        planPanelEnabled: true,
                     },
                     appUpdate: {
                         autoUpdateEnabled: false,
@@ -118,7 +119,7 @@ describe('useCloudAccountSync', () => {
                         syncedKeyId: 'space',
                     },
                     checkin: {
-                        weeklyPlan: defaultWeeklyPlan('2026-05-18'),
+                        planTemplate: defaultPlanTemplate(),
                         dailyRecords: {},
                     },
                 },

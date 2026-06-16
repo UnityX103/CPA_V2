@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom/vitest';
 import { act, cleanup, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useCheckinStore, type WeeklyCheckinPlan } from './domain/checkin';
+import { useCheckinStore, type CheckinPlanTemplate } from './domain/checkin';
 import { usePomodoroStore } from './domain/pomodoro';
 import { useSettingsStore } from './domain/settings';
 
@@ -12,6 +12,7 @@ const {
     loadPersistedUserPreferencesMock,
     openCheckinEditorWindowMock,
     openTodayCheckinWindowMock,
+    raiseTodayCheckinWindowMock,
     readAutostartEnabledMock,
     savePersistedCheckinMock,
     savePersistedSettingsMock,
@@ -71,6 +72,7 @@ const {
         loadPersistedUserPreferencesMock: vi.fn(),
         openCheckinEditorWindowMock: vi.fn(),
         openTodayCheckinWindowMock: vi.fn(),
+        raiseTodayCheckinWindowMock: vi.fn(),
         readAutostartEnabledMock: vi.fn(),
         savePersistedCheckinMock: vi.fn(),
         savePersistedSettingsMock: vi.fn(),
@@ -98,6 +100,7 @@ vi.mock('./domain/bridge/host', () => ({ useBridgeHost }));
 vi.mock('./domain/checkinWindow', () => ({
     openCheckinEditorWindow: openCheckinEditorWindowMock,
     openTodayCheckinWindow: openTodayCheckinWindowMock,
+    raiseTodayCheckinWindow: raiseTodayCheckinWindowMock,
     useCheckinWindowController,
 }));
 vi.mock('./domain/inputCounterWindow', () => ({ useInputCounterWindowController }));
@@ -128,21 +131,10 @@ vi.mock('./ui/AppUpdateReadyNotice', () => ({
 
 const { default: App } = await import('./App');
 
-const weeklyPlan: WeeklyCheckinPlan = {
-    weekStartDate: '2026-05-18',
+const planTemplate: CheckinPlanTemplate = {
+    schemaVersion: 2,
     carryToNextWeek: true,
-    days: {
-        mon: { kind: 'inherit' },
-        tue: {
-            kind: 'items',
-            items: [{ id: 'pomo', title: '专注番茄', type: 'pomodoroFocus', targetCount: 2 }],
-        },
-        wed: { kind: 'rest' },
-        thu: { kind: 'inherit' },
-        fri: { kind: 'inherit' },
-        sat: { kind: 'inherit' },
-        sun: { kind: 'rest' },
-    },
+    items: [{ id: 'pomo', title: '专注番茄', type: 'pomodoroFocus', targetCount: 2, repeatDays: ['tue'], editMode: 'cycle' }],
 };
 
 beforeEach(() => {
@@ -157,6 +149,8 @@ beforeEach(() => {
     openCheckinEditorWindowMock.mockResolvedValue(undefined);
     openTodayCheckinWindowMock.mockReset();
     openTodayCheckinWindowMock.mockResolvedValue(undefined);
+    raiseTodayCheckinWindowMock.mockReset();
+    raiseTodayCheckinWindowMock.mockResolvedValue(undefined);
     readAutostartEnabledMock.mockReset();
     readAutostartEnabledMock.mockResolvedValue(false);
     savePersistedSettingsMock.mockReset();
@@ -186,7 +180,7 @@ beforeEach(() => {
     useInputCounterWindowController.mockClear();
     useRemotePlayerWindowController.mockClear();
     useCheckinStore.setState({
-        weeklyPlan,
+        planTemplate,
         dailyRecords: {},
         lastError: null,
     });
@@ -273,7 +267,7 @@ describe('checkin Pomodoro integration', () => {
         expect(record.processedPomodoroEndEventIds).toEqual([1, 2]);
     });
 
-    it('opens the check-in panel, not the plan editor, when a focus timer naturally ends', () => {
+    it('raises the always-visible check-in panel, not the plan editor, when a focus timer naturally ends', () => {
         render(<App />);
 
         act(() => {
@@ -282,7 +276,8 @@ describe('checkin Pomodoro integration', () => {
             });
         });
 
-        expect(openTodayCheckinWindowMock).toHaveBeenCalledTimes(1);
+        expect(raiseTodayCheckinWindowMock).toHaveBeenCalledTimes(1);
+        expect(openTodayCheckinWindowMock).not.toHaveBeenCalled();
         expect(openCheckinEditorWindowMock).not.toHaveBeenCalled();
     });
 
@@ -325,5 +320,6 @@ describe('checkin Pomodoro integration', () => {
 
         expect(useCheckinStore.getState().dailyRecords).toEqual({});
         expect(openTodayCheckinWindowMock).not.toHaveBeenCalled();
+        expect(raiseTodayCheckinWindowMock).not.toHaveBeenCalled();
     });
 });

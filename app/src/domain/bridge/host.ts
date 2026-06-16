@@ -8,12 +8,11 @@ import { useBindingKeyStore, type BindingKeyEntry } from '../bindingKey';
 import { useActiveAppStore, type ActiveAppInfo } from '../activeApp';
 import { useAppUpdateStore, type AppUpdateSnapshot } from '../appUpdate';
 import {
+    clonePlanTemplate,
     useCheckinStore,
-    type CheckinDayPlan,
+    type CheckinPlanTemplate,
     type CheckinState,
     type DailyCheckinRecord,
-    type WeekdayKey,
-    type WeeklyCheckinPlan,
 } from '../checkin';
 import { REMOTE_PLAYER_WINDOW_LABELS } from '../remotePlayerWindowLabels';
 import {
@@ -81,25 +80,8 @@ function appUpdateSnapshot(s: AppUpdateSnapshot): AppUpdateSnapshot {
     };
 }
 
-function cloneCheckinDayPlan(dayPlan: CheckinDayPlan): CheckinDayPlan {
-    if (dayPlan.kind !== 'items') return { ...dayPlan };
-    return {
-        kind: 'items',
-        items: dayPlan.items.map((item) => ({ ...item })),
-    };
-}
-
-function cloneWeeklyCheckinPlan(plan: WeeklyCheckinPlan): WeeklyCheckinPlan {
-    return {
-        weekStartDate: plan.weekStartDate,
-        carryToNextWeek: plan.carryToNextWeek,
-        days: Object.fromEntries(
-            Object.entries(plan.days).map(([day, dayPlan]) => [
-                day,
-                cloneCheckinDayPlan(dayPlan),
-            ]),
-        ) as Record<WeekdayKey, CheckinDayPlan>,
-    };
+function cloneCheckinPlanTemplate(template: CheckinPlanTemplate): CheckinPlanTemplate {
+    return clonePlanTemplate(template);
 }
 
 function cloneDailyCheckinRecord(record: DailyCheckinRecord): DailyCheckinRecord {
@@ -136,6 +118,7 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
             committedUiScale: s.committedUiScale,
             autostartEnabled: s.autostartEnabled,
             checkinEnabled: s.checkinEnabled,
+            planPanelEnabled: s.planPanelEnabled,
             dangerousChange: cloneDangerousChange(s.dangerousChange),
         },
         pomodoro: {
@@ -172,7 +155,7 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
         },
         appUpdate: appUpdateSnapshot(u),
         checkin: {
-            weeklyPlan: cloneWeeklyCheckinPlan(c.weeklyPlan),
+            planTemplate: cloneCheckinPlanTemplate(c.planTemplate),
             dailyRecords: cloneDailyCheckinRecords(c.dailyRecords),
             lastError: c.lastError,
         },
@@ -192,6 +175,7 @@ export function applyDispatch(payload: DispatchPayload): void {
                 case 'previewDangerousUiScale': s.previewDangerousUiScale(...payload.args); return;
                 case 'setAutostartEnabled': void s.setAutostartEnabled(...payload.args); return;
                 case 'setCheckinEnabled': s.setCheckinEnabled(...payload.args); return;
+                case 'setPlanPanelEnabled': s.setPlanPanelEnabled(...payload.args); return;
                 case 'applyDangerousChange': s.applyDangerousChange(...payload.args); return;
                 case 'revertDangerousChange': s.revertDangerousChange(...payload.args); return;
             }
@@ -245,7 +229,7 @@ export function applyDispatch(payload: DispatchPayload): void {
         case 'checkin': {
             const c = useCheckinStore.getState();
             switch (payload.action) {
-                case 'setWeeklyPlan': c.setWeeklyPlan(...payload.args); return;
+                case 'setPlanTemplate': c.setPlanTemplate(...payload.args); return;
                 case 'incrementItem': c.incrementItem(...payload.args); return;
             }
             return;
@@ -279,6 +263,7 @@ export function settingsSig(s: {
     committedUiScale: number;
     autostartEnabled: boolean;
     checkinEnabled: boolean;
+    planPanelEnabled: boolean;
     dangerousChange: unknown;
 }): string {
     return JSON.stringify([
@@ -286,6 +271,7 @@ export function settingsSig(s: {
         s.committedUiScale,
         s.autostartEnabled,
         s.checkinEnabled,
+        s.planPanelEnabled,
         s.dangerousChange,
     ]);
 }
@@ -372,9 +358,9 @@ export function appUpdateSig(s: AppUpdateSnapshot): string {
     ]);
 }
 
-export function checkinSig(s: Pick<CheckinState, 'weeklyPlan' | 'dailyRecords' | 'lastError'>): string {
+export function checkinSig(s: Pick<CheckinState, 'planTemplate' | 'dailyRecords' | 'lastError'>): string {
     return JSON.stringify([
-        s.weeklyPlan,
+        s.planTemplate,
         Object.keys(s.dailyRecords).sort().map((date) => [date, s.dailyRecords[date]]),
         s.lastError,
     ]);

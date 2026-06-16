@@ -6,7 +6,7 @@ import { useStateSync } from './domain/stateSync';
 import { useActiveAppListener } from './domain/activeApp';
 import { useBindingKeyListener, useBindingKeyStore } from './domain/bindingKey';
 import { useBridgeHost } from './domain/bridge/host';
-import { openTodayCheckinWindow, useCheckinWindowController } from './domain/checkinWindow';
+import { openTodayCheckinWindow, raiseTodayCheckinWindow, useCheckinWindowController } from './domain/checkinWindow';
 import { useInputCounterWindowController } from './domain/inputCounterWindow';
 import { useRemotePlayerWindowController } from './domain/remotePlayerWindows';
 import { MAIN_WINDOW_BASE_SIZE, useScaledWindowSize } from './domain/scaledWindow';
@@ -59,6 +59,7 @@ function buildStartupSettingsSnapshot(
             : persistedScale,
         autostartEnabled: confirmedAutostartEnabled,
         checkinEnabled: settings?.checkinEnabled ?? initialSettings.checkinEnabled,
+        planPanelEnabled: settings?.planPanelEnabled ?? initialSettings.planPanelEnabled,
     };
 
     return { snapshot, shouldApplyScale: !scaleChanged };
@@ -70,12 +71,14 @@ function getStartupSettingsState() {
         committedUiScale,
         autostartEnabled,
         checkinEnabled,
+        planPanelEnabled,
     } = useSettingsStore.getState();
     return {
         uiScale,
         committedUiScale,
         autostartEnabled,
         checkinEnabled,
+        planPanelEnabled,
     };
 }
 
@@ -131,6 +134,24 @@ function waitForNetworkStartupResult(
                 finish('local');
             }
         });
+    });
+}
+
+async function waitForAccountRestoreAttempt(
+    timeoutMs = STARTUP_ACCOUNT_RESTORE_TIMEOUT_MS,
+): Promise<'restored' | 'timeout'> {
+    let timeoutId: number | null = null;
+    const restoreAttempt = useNetworkStore.getState()
+        .restoreAccountSession()
+        .then(() => 'restored' as const);
+    const timeout = new Promise<'timeout'>((resolve) => {
+        timeoutId = window.setTimeout(() => resolve('timeout'), timeoutMs);
+    });
+
+    return Promise.race([restoreAttempt, timeout]).finally(() => {
+        if (timeoutId != null) {
+            window.clearTimeout(timeoutId);
+        }
     });
 }
 
@@ -221,12 +242,15 @@ export default function App() {
 
                 let cloudArchive: CloudAccountData | null = null;
                 try {
-                    await useNetworkStore.getState().restoreAccountSession();
-                    if (!cancelled) {
+                    const restoreResult = await waitForAccountRestoreAttempt();
+                    if (cancelled) return;
+                    if (restoreResult === 'restored') {
                         const source = await waitForNetworkStartupResult();
                         if (!cancelled && source === 'cloud') {
                             cloudArchive = useNetworkStore.getState().cloudData;
                         }
+                    } else if (restoreResult === 'timeout') {
+                        console.warn('[startup] account restore timed out; falling back to local archive');
                     }
                 } catch (error) {
                     console.warn('[startup] account restore failed; falling back to local archive', error);
@@ -267,19 +291,20 @@ export default function App() {
                             : {}),
                         autostartEnabled: snapshot.autostartEnabled,
                         checkinEnabled: snapshot.checkinEnabled,
+                        planPanelEnabled: snapshot.planPanelEnabled,
                     });
                     if (legacyCheckin) {
                         useCheckinStore.getState().hydrateCheckin({
-                            weeklyPlan: legacyCheckin.weeklyPlan,
+                            planTemplate: legacyCheckin.planTemplate,
                             dailyRecords: legacyCheckin.dailyRecords,
                         });
                     }
                 }
 
-                const beforeRollForward = useCheckinStore.getState().weeklyPlan;
+                const beforeRollForward = useCheckinStore.getState().planTemplate;
                 useCheckinStore.getState().rollForwardToDate(todayLocalDate());
                 const afterRollForward = useCheckinStore.getState();
-                if (afterRollForward.weeklyPlan !== beforeRollForward) {
+                if (afterRollForward.planTemplate !== beforeRollForward) {
                     await saveLocalSnapshot(stores);
                 }
                 const savedSnapshot = await saveLocalSnapshot(stores);
@@ -290,6 +315,9 @@ export default function App() {
                 subscribeLocalPreferences(stores);
                 appUpdateCleanup = useAppUpdateStore.getState().startAutomaticChecks();
                 setLocalHydrated(true);
+                void openTodayCheckinWindow().catch((error) => {
+                    console.warn('[checkin] open persistent panel on startup failed', error);
+                });
             } catch (error) {
                 if (!cancelled) {
                     useCheckinStore.getState().setLastError(String(error));
@@ -317,8 +345,8 @@ export default function App() {
 
             useCheckinStore.getState().applyPomodoroFocusCompletion(todayLocalDate(), event.id);
             if (event.toPhase === 'break' && event.triggeredBy === 'timer') {
-                void openTodayCheckinWindow().catch((error) => {
-                    console.warn('[checkin] open panel on focus end failed', error);
+                void raiseTodayCheckinWindow().catch((error) => {
+                    console.warn('[checkin] raise panel on focus end failed', error);
                 });
             }
         });

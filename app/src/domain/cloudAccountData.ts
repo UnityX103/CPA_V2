@@ -1,5 +1,5 @@
 import type { StoreApi, UseBoundStore } from 'zustand';
-import type { CheckinState, DailyCheckinRecord, WeeklyCheckinPlan } from './checkin';
+import { clonePlanTemplate, type CheckinState, type DailyCheckinRecord } from './checkin';
 import type { PomodoroActions, PomodoroState } from './pomodoro';
 import type { PersistedSettingsSnapshot, SettingsState } from './settings';
 import type { AppUpdateSnapshot } from './appUpdate';
@@ -29,7 +29,7 @@ type BindingKeyStore = UseBoundStore<StoreApi<{
     capturingId: string | null;
 }>>;
 type CheckinStore = UseBoundStore<StoreApi<CheckinState & {
-    hydrateCheckin: (snapshot: Pick<CheckinState, 'weeklyPlan' | 'dailyRecords'>) => void;
+    hydrateCheckin: (snapshot: Pick<CheckinState, 'planTemplate' | 'dailyRecords'>) => void;
 }>>;
 
 export interface CloudStores {
@@ -64,7 +64,7 @@ export function mergeCloudAccountDataConflict({ server, local }: {
         network: { ...server.network },
         bindingKey: cloneBindingKey(server.bindingKey),
         checkin: {
-            weeklyPlan: cloneWeeklyPlan(server.checkin.weeklyPlan),
+            planTemplate: clonePlanTemplate(server.checkin.planTemplate),
             dailyRecords: mergeDailyRecords(server.checkin.dailyRecords, local.checkin.dailyRecords),
         },
     };
@@ -107,10 +107,6 @@ function mergeDailyRecords(
         };
     }
     return result;
-}
-
-function cloneWeeklyPlan(plan: WeeklyCheckinPlan): WeeklyCheckinPlan {
-    return JSON.parse(JSON.stringify(plan)) as WeeklyCheckinPlan;
 }
 
 function cloneBindingKey(bindingKey: CloudAccountData['bindingKey']): CloudAccountData['bindingKey'] {

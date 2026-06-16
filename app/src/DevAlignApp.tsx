@@ -5,7 +5,7 @@ import { SettingsPanel } from './ui/SettingsPanel';
 import { CheckinPlanEditorPanel } from './ui/CheckinPlanEditorPanel';
 import { useSettingsStore, type SettingsTab } from './domain/settings';
 import type { RemotePlayer } from './domain/network';
-import type { WeeklyCheckinPlan } from './domain/checkin';
+import type { CheckinPlanTemplate } from './domain/checkin';
 import './styles/global.css';
 import './DevAlignApp.css';
 
@@ -43,49 +43,48 @@ const MOCK_PLAYER: RemotePlayer = {
     },
 };
 
-const MOCK_CHECKIN_PLAN: WeeklyCheckinPlan = {
-    weekStartDate: '2026-05-18',
+const MOCK_CHECKIN_TEMPLATE: CheckinPlanTemplate = {
+    schemaVersion: 2,
     carryToNextWeek: true,
-    days: {
-        mon: { kind: 'inherit' },
-        tue: {
-            kind: 'items',
-            items: [
-                {
-                    id: 'read',
-                    title: '阅读',
-                    type: 'manual',
-                    targetCount: 2,
-                    icon: 'bookOpen',
-                    perUseAmount: 30,
-                    perUseUnit: '分钟',
-                },
-                {
-                    id: 'water',
-                    title: '喝水',
-                    type: 'manual',
-                    targetCount: 10,
-                    icon: 'droplet',
-                    perUseAmount: 2,
-                    perUseUnit: '杯',
-                },
-                {
-                    id: 'focus',
-                    title: '专注番茄',
-                    type: 'pomodoroFocus',
-                    targetCount: 4,
-                    icon: 'clock',
-                    perUseAmount: 25,
-                    perUseUnit: '分钟',
-                },
-            ],
+    items: [
+        {
+            id: 'read',
+            title: '阅读',
+            type: 'manual',
+            targetCount: 2,
+            icon: 'bookOpen',
+            repeatDays: ['mon', 'tue', 'wed', 'thu', 'fri'],
+            editMode: 'cycle',
+            perUseAmount: 30,
+            perUseUnit: '分钟',
         },
-        wed: { kind: 'inherit' },
-        thu: { kind: 'inherit' },
-        fri: { kind: 'inherit' },
-        sat: { kind: 'rest' },
-        sun: { kind: 'rest' },
-    },
+        {
+            id: 'water',
+            title: '喝水',
+            type: 'manual',
+            targetCount: 10,
+            icon: 'droplet',
+            repeatDays: ['tue', 'thu', 'sat'],
+            editMode: 'count',
+            perUseAmount: 2,
+            perUseUnit: '杯',
+            countInputValue: 10,
+            countUnitSize: 2,
+            countUnitLabel: '杯',
+            countLoopCount: 5,
+        },
+        {
+            id: 'focus',
+            title: '专注番茄',
+            type: 'pomodoroFocus',
+            targetCount: 4,
+            icon: 'clock',
+            repeatDays: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'],
+            editMode: 'cycle',
+            perUseAmount: 25,
+            perUseUnit: '分钟',
+        },
+    ],
 };
 
 const TARGETS: Target[] = [
@@ -120,7 +119,7 @@ const TARGETS: Target[] = [
         image: 'dev-align/s6g1w.png',
         width: 460,
         height: 898,
-        render: () => <CheckinPlanEditorPanel initialPlan={MOCK_CHECKIN_PLAN} initialSelectedDay="tue" />,
+        render: () => <CheckinPlanEditorPanel initialTemplate={MOCK_CHECKIN_TEMPLATE} />,
         note: '左侧为 Pencil s6g1w 导出；右侧为当前 React 编辑器。',
     },
 ];
@@ -130,7 +129,6 @@ type Mode = 'side' | 'overlay';
 const TABS: Array<{ id: SettingsTab; label: string }> = [
     { id: 'pomodoro', label: '番茄钟' },
     { id: 'online', label: '联机' },
-    { id: 'pet', label: '宠物' },
     { id: 'global', label: '全局' },
 ];
 

@@ -3,7 +3,6 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 import {
     dailySummary,
     effectiveItemsForDate,
-    isRestDate,
     recordForDate,
     useCheckinStore,
 } from '../domain/checkin';
@@ -24,9 +23,9 @@ function todayLocalDate(): string {
 export function TodayCheckinPanel() {
     const state = useCheckinStore();
     const date = todayLocalDate();
-    const rest = isRestDate(state, date);
     const summary = dailySummary(state, date);
     const items = effectiveItemsForDate(state, date);
+    const noPlan = items.length === 0;
     const record = recordForDate(state, date);
     const completedItems = items.filter((item) => (record.countsByItemId[item.id] ?? 0) >= item.targetCount).length;
     const percent = Math.round(summary.completionRate * 100);
@@ -40,21 +39,21 @@ export function TodayCheckinPanel() {
 
     return (
         <div
-            className={`today-checkin-panel ${percent >= 100 ? 'is-complete' : ''} ${rest ? 'is-rest' : ''}`}
+            className={`today-checkin-panel ${percent >= 100 ? 'is-complete' : ''} ${noPlan ? 'is-no-plan' : ''}`}
             onPointerDown={onPointerDown}
         >
             <div className="today-checkin-head">
                 <div className="today-checkin-title-wrap">
                     <h2>今日打卡</h2>
-                    <p>{rest ? '今天不计入本周目标' : `${completedItems}/${items.length} 项已完成`}</p>
+                    <p>{noPlan ? '今天没有待完成事项' : `${completedItems}/${items.length} 项已完成`}</p>
                 </div>
-                <span className="today-checkin-status">{rest ? '休息' : percent >= 100 ? '全部完成' : '未完成'}</span>
+                <span className="today-checkin-status">{noPlan ? '无计划' : percent >= 100 ? '全部完成' : '未完成'}</span>
             </div>
 
-            {rest ? (
-                <div className="today-checkin-rest">
-                    <span>当天休息</span>
-                    <p>今天不生成打卡项目，明天继续。</p>
+            {noPlan ? (
+                <div className="today-checkin-rest today-checkin-no-plan">
+                    <span>今日无计划</span>
+                    <p>今天没有重复到当前日期的打卡项目。</p>
                 </div>
             ) : (
                 <>
@@ -101,7 +100,7 @@ export function TodayCheckinPanel() {
             )}
 
             <div className="today-checkin-footer">
-                <span>{rest ? '休息日不影响连续完成' : '点击 +1 记录一次完成'}</span>
+                <span>{noPlan ? '无计划日按 100% 完成统计' : '点击 +1 记录一次完成'}</span>
                 <button type="button" aria-label="编辑打卡计划" onClick={() => void openCheckinEditorWindow()}>
                     编辑
                 </button>
