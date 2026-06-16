@@ -14,11 +14,19 @@ pub struct InputPressedPayload {
 
 impl InputPressedPayload {
     pub fn keyboard(code: i64) -> Self {
-        Self { kind: "keyboard", code: Some(code), button: None }
+        Self {
+            kind: "keyboard",
+            code: Some(code),
+            button: None,
+        }
     }
 
     pub fn mouse(button: &'static str) -> Self {
-        Self { kind: "mouse", code: None, button: Some(button) }
+        Self {
+            kind: "mouse",
+            code: None,
+            button: Some(button),
+        }
     }
 }
 
@@ -66,13 +74,15 @@ where
             move |_proxy, event_type, event: &CGEvent| -> CallbackResult {
                 match event_type {
                     CGEventType::KeyDown => {
-                        let keycode = event.get_integer_value_field(EventField::KEYBOARD_EVENT_KEYCODE);
+                        let keycode =
+                            event.get_integer_value_field(EventField::KEYBOARD_EVENT_KEYCODE);
                         on_input(InputPressedPayload::keyboard(keycode));
                     }
                     CGEventType::LeftMouseDown => on_input(InputPressedPayload::mouse("left")),
                     CGEventType::RightMouseDown => on_input(InputPressedPayload::mouse("right")),
                     CGEventType::OtherMouseDown => {
-                        let button = event.get_integer_value_field(EventField::MOUSE_EVENT_BUTTON_NUMBER);
+                        let button =
+                            event.get_integer_value_field(EventField::MOUSE_EVENT_BUTTON_NUMBER);
                         if button == 2 {
                             on_input(InputPressedPayload::mouse("middle"));
                         }
@@ -132,12 +142,12 @@ where
     use std::sync::mpsc;
     use std::sync::Mutex;
     use std::sync::OnceLock;
-    use std::time::Duration;
     use windows::Win32::Foundation::{LPARAM, LRESULT, WPARAM};
     use windows::Win32::UI::WindowsAndMessaging::{
-        CallNextHookEx, DispatchMessageW, PeekMessageW, SetWindowsHookExW, TranslateMessage,
-        UnhookWindowsHookEx, KBDLLHOOKSTRUCT, MSG, MSLLHOOKSTRUCT, PM_NOREMOVE, PM_REMOVE,
-        WH_KEYBOARD_LL, WH_MOUSE_LL, WM_KEYDOWN, WM_QUIT, WM_SYSKEYDOWN,
+        CallNextHookEx, DispatchMessageW, MsgWaitForMultipleObjectsEx, PeekMessageW,
+        SetWindowsHookExW, TranslateMessage, UnhookWindowsHookEx, KBDLLHOOKSTRUCT, MSG,
+        MSLLHOOKSTRUCT, MWMO_INPUTAVAILABLE, PM_NOREMOVE, PM_REMOVE, QS_ALLINPUT, WH_KEYBOARD_LL,
+        WH_MOUSE_LL, WM_KEYDOWN, WM_QUIT, WM_SYSKEYDOWN,
     };
 
     static INPUT_SENDER: OnceLock<Mutex<Option<mpsc::Sender<InputPressedPayload>>>> =
@@ -155,7 +165,8 @@ where
                 if let Some(sender_slot) = INPUT_SENDER.get() {
                     if let Ok(sender_guard) = sender_slot.lock() {
                         if let Some(sender) = sender_guard.as_ref() {
-                            let _ = sender.send(InputPressedPayload::keyboard(i64::from(event.vkCode)));
+                            let _ =
+                                sender.send(InputPressedPayload::keyboard(i64::from(event.vkCode)));
                         }
                     }
                 }
@@ -165,11 +176,7 @@ where
         unsafe { CallNextHookEx(None, code, w_param, l_param) }
     }
 
-    unsafe extern "system" fn mouse_proc(
-        code: i32,
-        w_param: WPARAM,
-        l_param: LPARAM,
-    ) -> LRESULT {
+    unsafe extern "system" fn mouse_proc(code: i32, w_param: WPARAM, l_param: LPARAM) -> LRESULT {
         if code >= 0 {
             let message = w_param.0 as u32;
             if let Some(button) = windows_mouse_message_to_button(message) {
@@ -201,21 +208,21 @@ where
 
     let (install_tx, install_rx) = mpsc::channel::<Result<(), String>>();
     std::thread::spawn(move || {
-        let keyboard_hook = match unsafe { SetWindowsHookExW(WH_KEYBOARD_LL, Some(keyboard_proc), None, 0) }
-        {
-            Ok(hook) => hook,
-            Err(err) => {
-                let message = format!("[key_counter] SetWindowsHookExW failed: {err}");
-                let _ = install_tx.send(Err(message.clone()));
-                eprintln!("{message}");
-                if let Some(sender_slot) = INPUT_SENDER.get() {
-                    if let Ok(mut sender_guard) = sender_slot.lock() {
-                        *sender_guard = None;
+        let keyboard_hook =
+            match unsafe { SetWindowsHookExW(WH_KEYBOARD_LL, Some(keyboard_proc), None, 0) } {
+                Ok(hook) => hook,
+                Err(err) => {
+                    let message = format!("[key_counter] SetWindowsHookExW failed: {err}");
+                    let _ = install_tx.send(Err(message.clone()));
+                    eprintln!("{message}");
+                    if let Some(sender_slot) = INPUT_SENDER.get() {
+                        if let Ok(mut sender_guard) = sender_slot.lock() {
+                            *sender_guard = None;
+                        }
                     }
+                    return;
                 }
-                return;
-            }
-        };
+            };
 
         let mouse_hook = match unsafe { SetWindowsHookExW(WH_MOUSE_LL, Some(mouse_proc), None, 0) }
         {
@@ -260,7 +267,9 @@ where
                 on_input(payload);
             }
 
-            std::thread::sleep(Duration::from_millis(50));
+            unsafe {
+                let _ = MsgWaitForMultipleObjectsEx(None, 50, QS_ALLINPUT, MWMO_INPUTAVAILABLE);
+            }
         }
 
         unsafe {
@@ -306,7 +315,11 @@ mod input_event_tests {
     fn keyboard_payload_keeps_key_code() {
         assert_eq!(
             InputPressedPayload::keyboard(49),
-            InputPressedPayload { kind: "keyboard", code: Some(49), button: None }
+            InputPressedPayload {
+                kind: "keyboard",
+                code: Some(49),
+                button: None
+            }
         );
     }
 
@@ -314,7 +327,11 @@ mod input_event_tests {
     fn mouse_payload_uses_button_names() {
         assert_eq!(
             InputPressedPayload::mouse("middle"),
-            InputPressedPayload { kind: "mouse", code: None, button: Some("middle") }
+            InputPressedPayload {
+                kind: "mouse",
+                code: None,
+                button: Some("middle")
+            }
         );
     }
 
@@ -324,5 +341,24 @@ mod input_event_tests {
         assert_eq!(windows_mouse_message_to_button(0x0207), Some("middle"));
         assert_eq!(windows_mouse_message_to_button(0x0204), Some("right"));
         assert_eq!(windows_mouse_message_to_button(0x020B), None);
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn windows_low_level_hook_pump_waits_for_input_instead_of_polling_sleep() {
+        let source = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/key_counter.rs"));
+        let production_source = source
+            .split("mod input_event_tests")
+            .next()
+            .expect("source should include production code");
+        let fixed_sleep_poll = concat!("std::thread::", "sleep(Duration::from_millis(50))");
+        assert!(
+            production_source.contains("MsgWaitForMultipleObjectsEx"),
+            "low-level hook thread should block until queued input arrives"
+        );
+        assert!(
+            !production_source.contains(fixed_sleep_poll),
+            "low-level hook thread must not add fixed latency to the global input chain"
+        );
     }
 }
