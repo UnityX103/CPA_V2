@@ -79,7 +79,7 @@ describe('daily check-in window configuration', () => {
         expect(source).toMatch(/close_today_checkin_window,\s*close_checkin_editor_window/s);
     });
 
-    it('does not pin check-in windows by default or when opening them', () => {
+    it('opens the today check-in window at the visible layer without pinning it', () => {
         const source = readFileSync(libRsPath, 'utf8');
         const todayBuilder = rustFunction(source, 'build_today_checkin_window');
         const editorBuilder = rustFunction(source, 'build_checkin_editor_window_hidden');
@@ -93,7 +93,7 @@ describe('daily check-in window configuration', () => {
         expect(editorBuilder?.body).toMatch(/\.visible\(false\)/);
         expect(todayBuilder?.body).not.toMatch(/set_always_on_top_native/);
         expect(editorBuilder?.body).not.toMatch(/set_always_on_top_native/);
-        expect(todayOpen?.body).not.toMatch(/set_focus\(/);
+        expect(todayOpen?.body).toMatch(/focus_existing_window\(app,\s*"today-checkin"\)/);
         expect(todayOpen?.body).not.toMatch(/set_always_on_top_native/);
         expect(todayRaise?.body).toMatch(/focus_existing_window\(app,\s*"today-checkin"\)/);
         expect(editorOpen?.body).toMatch(/focus_existing_window\(app,\s*"checkin-editor"\)/);
