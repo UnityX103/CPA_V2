@@ -66,6 +66,7 @@ function cloudSnapshot(overrides = {}) {
             uiScale: 1.5,
             autostartEnabled: false,
             checkinEnabled: true,
+            planPanelEnabled: true,
         },
         appUpdate: {
             autoUpdateEnabled: false,
@@ -127,7 +128,12 @@ describe('cloudAccountData', () => {
 
         expect(snapshot.schemaVersion).toBe(1);
         expect(snapshot.pomodoro.focusDurationSeconds).toBe(1200);
-        expect(snapshot.settings).toEqual({ uiScale: 1.25, autostartEnabled: true, checkinEnabled: false });
+        expect(snapshot.settings).toEqual({
+            uiScale: 1.25,
+            autostartEnabled: true,
+            checkinEnabled: false,
+            planPanelEnabled: true,
+        });
         expect(snapshot.appUpdate).toEqual({ autoUpdateEnabled: false });
         expect(snapshot.network).toEqual({ autoConnect: true, playerName: 'Alice' });
         expect(snapshot.bindingKey.entries[0]).not.toHaveProperty('pressCount');

@@ -52,12 +52,19 @@ function makeStores(): UserPreferencesStores {
         committedUiScale: 1.25,
         autostartEnabled: true,
         checkinEnabled: false,
+        planPanelEnabled: true,
         dangerousChange: null,
-        hydrateSettings: (snapshot: { uiScale: number; autostartEnabled?: boolean; checkinEnabled?: boolean }) => set({
+        hydrateSettings: (snapshot: {
+            uiScale: number;
+            autostartEnabled?: boolean;
+            checkinEnabled?: boolean;
+            planPanelEnabled?: boolean;
+        }) => set({
             uiScale: snapshot.uiScale,
             committedUiScale: snapshot.uiScale,
             autostartEnabled: snapshot.autostartEnabled ?? false,
             checkinEnabled: snapshot.checkinEnabled ?? true,
+            planPanelEnabled: snapshot.planPanelEnabled ?? true,
             dangerousChange: null,
         }),
     }));
@@ -145,6 +152,7 @@ describe('user preferences persistence', () => {
             uiScale: 1.25,
             autostartEnabled: true,
             checkinEnabled: false,
+            planPanelEnabled: true,
         });
         expect(snapshot.bindingKey.entries[0]).toEqual({
             id: 'space',
@@ -187,7 +195,7 @@ describe('user preferences persistence', () => {
         const normalized = normalizeUserPreferencesSnapshot({
             schemaVersion: 1,
             pomodoro: { focusDurationSeconds: 'bad' },
-            settings: { uiScale: 99, autostartEnabled: true, checkinEnabled: false },
+            settings: { uiScale: 99, autostartEnabled: true, checkinEnabled: false, planPanelEnabled: false },
             appUpdate: { autoUpdateEnabled: false },
             network: { autoConnect: true, playerName: '  Bob  ' },
             bindingKey: {
@@ -201,6 +209,7 @@ describe('user preferences persistence', () => {
         expect(normalized?.pomodoro.focusDurationSeconds).toBe(25 * 60);
         expect(normalized?.settings.uiScale).toBe(2);
         expect(normalized?.settings.checkinEnabled).toBe(false);
+        expect(normalized?.settings.planPanelEnabled).toBe(false);
         expect(normalized?.network.playerName).toBe('Bob');
         expect(normalized?.bindingKey.syncedKeyId).toBe(null);
         expect(normalized?.bindingKey.entries).toHaveLength(1);

@@ -69,6 +69,7 @@ function makeCloudSnapshot(): CloudAccountData {
             uiScale: 1,
             autostartEnabled: false,
             checkinEnabled: true,
+            planPanelEnabled: true,
         },
         appUpdate: {
             autoUpdateEnabled: true,

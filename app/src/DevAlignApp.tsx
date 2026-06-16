@@ -129,7 +129,6 @@ type Mode = 'side' | 'overlay';
 const TABS: Array<{ id: SettingsTab; label: string }> = [
     { id: 'pomodoro', label: '番茄钟' },
     { id: 'online', label: '联机' },
-    { id: 'pet', label: '宠物' },
     { id: 'global', label: '全局' },
 ];
 

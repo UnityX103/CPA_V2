@@ -25,6 +25,7 @@ beforeEach(() => {
     invokeMock.mockResolvedValue(undefined);
     useSettingsStore.setState({
         checkinEnabled: true,
+        planPanelEnabled: true,
         uiScale: 1,
         committedUiScale: 1,
         autostartEnabled: false,
@@ -55,6 +56,15 @@ describe('useCheckinWindowController', () => {
         expect(invokeMock).not.toHaveBeenCalledWith('open_today_checkin_window');
     });
 
+    it('does not open the today check-in window when the plan panel is disabled', async () => {
+        useSettingsStore.setState({ checkinEnabled: true, planPanelEnabled: false });
+
+        render(<CheckinWindowControllerHost />);
+        await Promise.resolve();
+
+        expect(invokeMock).not.toHaveBeenCalledWith('open_today_checkin_window');
+    });
+
     it('closes both check-in windows when check-in is disabled after being enabled', async () => {
         render(<CheckinWindowControllerHost />);
         await waitFor(() => {
@@ -70,6 +80,21 @@ describe('useCheckinWindowController', () => {
         });
     });
 
+    it('closes only the today check-in window when the plan panel is disabled after being enabled', async () => {
+        render(<CheckinWindowControllerHost />);
+        await waitFor(() => {
+            expect(invokeMock).toHaveBeenCalledWith('open_today_checkin_window');
+        });
+        invokeMock.mockClear();
+
+        useSettingsStore.setState({ planPanelEnabled: false });
+
+        await waitFor(() => {
+            expect(invokeMock).toHaveBeenCalledWith('close_today_checkin_window');
+        });
+        expect(invokeMock).not.toHaveBeenCalledWith('close_checkin_editor_window');
+    });
+
     it('open helpers no-op when check-in is disabled', async () => {
         useSettingsStore.setState({ checkinEnabled: false });
 
@@ -78,5 +103,15 @@ describe('useCheckinWindowController', () => {
 
         expect(invokeMock).not.toHaveBeenCalledWith('open_today_checkin_window');
         expect(invokeMock).not.toHaveBeenCalledWith('open_checkin_editor_window');
+    });
+
+    it('today open helper no-ops when the plan panel is disabled', async () => {
+        useSettingsStore.setState({ checkinEnabled: true, planPanelEnabled: false });
+
+        await openTodayCheckinWindow();
+        await openCheckinEditorWindow();
+
+        expect(invokeMock).not.toHaveBeenCalledWith('open_today_checkin_window');
+        expect(invokeMock).toHaveBeenCalledWith('open_checkin_editor_window');
     });
 });

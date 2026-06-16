@@ -4,7 +4,7 @@ import { BRIDGE_VERSION } from './bridge/protocol';
 import { savePersistedSettings, type PersistedSettings } from './settingsPersistence';
 import { applyAutostartEnabled } from './autostart';
 
-export type SettingsTab = 'pomodoro' | 'online' | 'pet' | 'global';
+export type SettingsTab = 'pomodoro' | 'online' | 'global';
 export type DangerousSettingKind = 'uiScale';
 
 export interface DangerousChange {
@@ -21,6 +21,7 @@ export interface SettingsState {
     committedUiScale: number;
     autostartEnabled: boolean;
     checkinEnabled: boolean;
+    planPanelEnabled: boolean;
     dangerousChange: DangerousChange | null;
 }
 
@@ -28,6 +29,7 @@ export interface PersistedSettingsSnapshot {
     uiScale: number;
     autostartEnabled?: boolean;
     checkinEnabled?: boolean;
+    planPanelEnabled?: boolean;
 }
 
 interface SettingsActions {
@@ -35,6 +37,7 @@ interface SettingsActions {
     setUiScale: (scale: number) => void;
     setAutostartEnabled: (enabled: boolean) => Promise<void> | void;
     setCheckinEnabled: (enabled: boolean) => void;
+    setPlanPanelEnabled: (enabled: boolean) => void;
     previewDangerousUiScale: (scale: number) => void;
     applyDangerousChange: (id: string) => void;
     revertDangerousChange: (id: string) => void;
@@ -64,6 +67,7 @@ function persistedSnapshot(state: SettingsState): PersistedSettings {
         uiScale: state.committedUiScale,
         autostartEnabled: state.autostartEnabled,
         checkinEnabled: state.checkinEnabled,
+        planPanelEnabled: state.planPanelEnabled,
     };
 }
 
@@ -75,6 +79,7 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
             committedUiScale: 1.0,
             autostartEnabled: false,
             checkinEnabled: true,
+            planPanelEnabled: true,
             dangerousChange: null,
             setActiveTab: (tab) => set({ activeTab: tab }),
             setUiScale: (scale) => {
@@ -96,6 +101,14 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
                     args: [enabled],
                 } as Parameters<typeof dispatch>[0]);
             },
+            setPlanPanelEnabled: (enabled) => {
+                void dispatch({
+                    v: BRIDGE_VERSION,
+                    store: 'settings',
+                    action: 'setPlanPanelEnabled',
+                    args: [enabled],
+                } as Parameters<typeof dispatch>[0]);
+            },
             previewDangerousUiScale: (scale) => {
                 void dispatch({ v: BRIDGE_VERSION, store: 'settings', action: 'previewDangerousUiScale', args: [scale] });
             },
@@ -112,6 +125,7 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
                     committedUiScale: uiScale,
                     autostartEnabled: snapshot.autostartEnabled ?? false,
                     checkinEnabled: snapshot.checkinEnabled ?? true,
+                    planPanelEnabled: snapshot.planPanelEnabled ?? true,
                     dangerousChange: null,
                 });
             },
@@ -123,6 +137,7 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
         committedUiScale: 1.0,
         autostartEnabled: false,
         checkinEnabled: true,
+        planPanelEnabled: true,
         dangerousChange: null,
         setActiveTab: (tab) => set({ activeTab: tab }),
         setUiScale: (scale) => {
@@ -137,6 +152,10 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
         },
         setCheckinEnabled: (checkinEnabled) => {
             set({ checkinEnabled });
+            void savePersistedSettings(persistedSnapshot(get()));
+        },
+        setPlanPanelEnabled: (planPanelEnabled) => {
+            set({ planPanelEnabled });
             void savePersistedSettings(persistedSnapshot(get()));
         },
         previewDangerousUiScale: (scale) => {
@@ -175,6 +194,7 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
                 committedUiScale: uiScale,
                 autostartEnabled: snapshot.autostartEnabled ?? false,
                 checkinEnabled: snapshot.checkinEnabled ?? true,
+                planPanelEnabled: snapshot.planPanelEnabled ?? true,
                 dangerousChange: null,
             });
         },

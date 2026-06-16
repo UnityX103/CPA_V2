@@ -35,6 +35,7 @@ beforeEach(() => {
         committedUiScale: 1.0,
         autostartEnabled: false,
         checkinEnabled: true,
+        planPanelEnabled: true,
         dangerousChange: null,
     });
 });
@@ -161,6 +162,13 @@ describe('useSettingsStore', () => {
         expect(settingsWindowStore.getState().checkinEnabled).toBe(true);
     });
 
+    it('defaults planPanelEnabled to true', () => {
+        expect(useSettingsStore.getState().planPanelEnabled).toBe(true);
+
+        const settingsWindowStore = createSettingsStore({ isSettingsWindow: true });
+        expect(settingsWindowStore.getState().planPanelEnabled).toBe(true);
+    });
+
     it('hydrates autostartEnabled from persisted settings', () => {
         useSettingsStore.getState().hydrateSettings({ uiScale: 1.25, autostartEnabled: true });
 
@@ -175,6 +183,17 @@ describe('useSettingsStore', () => {
         });
 
         expect(useSettingsStore.getState().checkinEnabled).toBe(false);
+    });
+
+    it('hydrates planPanelEnabled from persisted settings', () => {
+        useSettingsStore.getState().hydrateSettings({
+            uiScale: 1.25,
+            autostartEnabled: false,
+            checkinEnabled: true,
+            planPanelEnabled: false,
+        });
+
+        expect(useSettingsStore.getState().planPanelEnabled).toBe(false);
     });
 
     it('defaults missing persisted autostartEnabled to false during hydration', () => {
@@ -193,6 +212,14 @@ describe('useSettingsStore', () => {
         expect(useSettingsStore.getState().checkinEnabled).toBe(true);
     });
 
+    it('defaults missing persisted planPanelEnabled to true during hydration', () => {
+        useSettingsStore.setState({ planPanelEnabled: false });
+
+        useSettingsStore.getState().hydrateSettings({ uiScale: 1.25 });
+
+        expect(useSettingsStore.getState().planPanelEnabled).toBe(true);
+    });
+
     it('setAutostartEnabled applies native setting and persists confirmed value', async () => {
         settingsMocks.applyAutostartEnabled.mockResolvedValue(true);
         useSettingsStore.setState({
@@ -208,6 +235,7 @@ describe('useSettingsStore', () => {
             uiScale: 1.5,
             autostartEnabled: true,
             checkinEnabled: true,
+            planPanelEnabled: true,
         });
     });
 
@@ -225,6 +253,26 @@ describe('useSettingsStore', () => {
             uiScale: 1.5,
             autostartEnabled: true,
             checkinEnabled: false,
+            planPanelEnabled: true,
+        });
+    });
+
+    it('setPlanPanelEnabled updates state and persists confirmed value', () => {
+        useSettingsStore.setState({
+            committedUiScale: 1.5,
+            autostartEnabled: true,
+            checkinEnabled: true,
+            planPanelEnabled: true,
+        });
+
+        useSettingsStore.getState().setPlanPanelEnabled(false);
+
+        expect(useSettingsStore.getState().planPanelEnabled).toBe(false);
+        expect(settingsMocks.savePersistedSettings).toHaveBeenCalledWith({
+            uiScale: 1.5,
+            autostartEnabled: true,
+            checkinEnabled: true,
+            planPanelEnabled: false,
         });
     });
 });
@@ -314,6 +362,22 @@ describe('createSettingsStore — settings-window mode', () => {
             v: BRIDGE_VERSION,
             store: 'settings',
             action: 'setCheckinEnabled',
+            args: [false],
+        }));
+        spy.mockRestore();
+    });
+
+    it('setPlanPanelEnabled dispatches instead of mutating local state', () => {
+        const spy = vi.spyOn(dispatchMod, 'dispatch').mockResolvedValue();
+        const store = createSettingsStore({ isSettingsWindow: true });
+
+        store.getState().setPlanPanelEnabled(false);
+
+        expect(store.getState().planPanelEnabled).toBe(true);
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({
+            v: BRIDGE_VERSION,
+            store: 'settings',
+            action: 'setPlanPanelEnabled',
             args: [false],
         }));
         spy.mockRestore();

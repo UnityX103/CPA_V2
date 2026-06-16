@@ -59,6 +59,7 @@ beforeEach(() => {
         committedUiScale: 1.0,
         autostartEnabled: false,
         checkinEnabled: true,
+        planPanelEnabled: true,
         dangerousChange: null,
         activeTab: 'pomodoro',
     });
@@ -115,12 +116,14 @@ describe('buildSnapshot', () => {
         useSettingsStore.setState({ uiScale: 1.5, committedUiScale: 1.5 });
         useSettingsStore.setState({ autostartEnabled: true });
         useSettingsStore.setState({ checkinEnabled: false });
+        useSettingsStore.setState({ planPanelEnabled: false });
         usePomodoroStore.setState({ autoStartBreak: true });
         const snap = buildSnapshot();
         expect(snap.v).toBe(BRIDGE_VERSION);
         expect(snap.settings.uiScale).toBe(1.5);
         expect(snap.settings.autostartEnabled).toBe(true);
         expect(snap.settings.checkinEnabled).toBe(false);
+        expect(snap.settings.planPanelEnabled).toBe(false);
         expect(('showActiveApp' + 'WindowTitle') in snap.settings).toBe(false);
         expect(('autoPinOn' + 'FocusEnd') in snap.settings).toBe(false);
         expect('targetMonitorIndex' in snap.settings).toBe(false);
@@ -351,6 +354,19 @@ describe('applyDispatch', () => {
         expect(useSettingsStore.getState().checkinEnabled).toBe(false);
     });
 
+    it('routes plan panel enabled setting to the authoritative settings store', () => {
+        useSettingsStore.setState({ planPanelEnabled: true });
+
+        applyDispatch({
+            v: BRIDGE_VERSION,
+            store: 'settings',
+            action: 'setPlanPanelEnabled',
+            args: [false],
+        });
+
+        expect(useSettingsStore.getState().planPanelEnabled).toBe(false);
+    });
+
     it('routes pomodoro/applySettings to usePomodoroStore.applySettings', () => {
         applyDispatch({ v: BRIDGE_VERSION, store: 'pomodoro', action: 'applySettings', args: [900, 180, 5, true, true] });
 
@@ -473,6 +489,7 @@ describe('bridge host subscription signatures', () => {
             committedUiScale: 1.25,
             autostartEnabled: false,
             checkinEnabled: true,
+            planPanelEnabled: true,
             dangerousChange: null,
             activeTab: 'pomodoro',
         };
@@ -492,11 +509,16 @@ describe('bridge host subscription signatures', () => {
             ...pomodoroTabSettings,
             checkinEnabled: false,
         };
+        const disabledPlanPanelSettings: SettingsState = {
+            ...pomodoroTabSettings,
+            planPanelEnabled: false,
+        };
 
         expect(settingsSig(pomodoroTabSettings)).toBe(settingsSig(globalTabSettings));
         expect(settingsSig(pomodoroTabSettings)).not.toBe(settingsSig(scaledSettings));
         expect(settingsSig(pomodoroTabSettings)).not.toBe(settingsSig(autostartSettings));
         expect(settingsSig(pomodoroTabSettings)).not.toBe(settingsSig(disabledCheckinSettings));
+        expect(settingsSig(pomodoroTabSettings)).not.toBe(settingsSig(disabledPlanPanelSettings));
     });
 
     it('pomoSig includes end-action settings and ignores transient timer fields', () => {

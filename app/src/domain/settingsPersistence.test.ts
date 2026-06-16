@@ -27,6 +27,7 @@ describe('settingsPersistence', () => {
             [obsoleteActiveTitleKey]: false,
             autostartEnabled: true,
             checkinEnabled: false,
+            planPanelEnabled: false,
             [obsoleteAutoPinKey]: false,
         });
         const { loadPersistedSettings } = await import('./settingsPersistence');
@@ -35,10 +36,11 @@ describe('settingsPersistence', () => {
             uiScale: 1.75,
             autostartEnabled: true,
             checkinEnabled: false,
+            planPanelEnabled: false,
         });
     });
 
-    it('defaults missing autostartEnabled and checkinEnabled for older v1 settings', async () => {
+    it('defaults missing autostartEnabled, checkinEnabled, and planPanelEnabled for older v1 settings', async () => {
         store.get.mockResolvedValue({ v: 1, uiScale: 1.75 });
         const { loadPersistedSettings } = await import('./settingsPersistence');
 
@@ -46,6 +48,7 @@ describe('settingsPersistence', () => {
             uiScale: 1.75,
             autostartEnabled: false,
             checkinEnabled: true,
+            planPanelEnabled: true,
         });
     });
 
@@ -81,6 +84,19 @@ describe('settingsPersistence', () => {
         await expect(loadPersistedSettings()).resolves.toBeNull();
     });
 
+    it('ignores malformed plan panel settings', async () => {
+        store.get.mockResolvedValue({
+            v: 1,
+            uiScale: 1.75,
+            autostartEnabled: true,
+            checkinEnabled: true,
+            planPanelEnabled: 'yes',
+        });
+        const { loadPersistedSettings } = await import('./settingsPersistence');
+
+        await expect(loadPersistedSettings()).resolves.toBeNull();
+    });
+
     it('saves persisted v1 settings without obsolete fields', async () => {
         const { savePersistedSettings } = await import('./settingsPersistence');
 
@@ -88,6 +104,7 @@ describe('settingsPersistence', () => {
             uiScale: 2,
             autostartEnabled: true,
             checkinEnabled: false,
+            planPanelEnabled: false,
         });
 
         expect(store.set).toHaveBeenCalledWith('settings', {
@@ -95,6 +112,7 @@ describe('settingsPersistence', () => {
             uiScale: 2,
             autostartEnabled: true,
             checkinEnabled: false,
+            planPanelEnabled: false,
         });
         expect(store.save).toHaveBeenCalledTimes(1);
     });

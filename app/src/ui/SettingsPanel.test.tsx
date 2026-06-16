@@ -68,6 +68,7 @@ beforeEach(() => {
         committedUiScale: 1.0,
         autostartEnabled: false,
         checkinEnabled: true,
+        planPanelEnabled: true,
         dangerousChange: null,
     });
     usePomodoroStore.setState({
@@ -639,6 +640,7 @@ describe('GlobalTab parity with Pdj9C', () => {
         expect(screen.getByText('界面缩放')).toBeTruthy();
         expect(screen.getByText('开机自启动')).toBeTruthy();
         expect(screen.getByText('打卡系统')).toBeTruthy();
+        expect(screen.getByText('计划面板')).toBeTruthy();
         expect(screen.getByText('自动下载并安装更新')).toBeTruthy();
         expect(screen.getByText('按键计数')).toBeTruthy();
         expect(screen.queryByText('显示打开的' + '文件名')).toBeNull();
@@ -653,16 +655,18 @@ describe('GlobalTab parity with Pdj9C', () => {
         expect(screen.getByRole('button', { name: /添加输入/ })).toBeTruthy();
     });
 
-    it('keeps checkin system between autostart and app update controls', () => {
+    it('keeps plan panel between checkin system and app update controls', () => {
         render(<SettingsPanel />);
 
         const autostart = screen.getByText('开机自启动');
         const checkin = screen.getByText('打卡系统');
+        const planPanel = screen.getByText('计划面板');
         const autoUpdate = screen.getByText('自动下载并安装更新');
         const bindingKey = screen.getByText('按键计数');
 
         expect(autostart.compareDocumentPosition(checkin) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-        expect(checkin.compareDocumentPosition(autoUpdate) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(checkin.compareDocumentPosition(planPanel) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(planPanel.compareDocumentPosition(autoUpdate) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
         expect(autoUpdate.compareDocumentPosition(bindingKey) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
 
@@ -690,6 +694,20 @@ describe('GlobalTab parity with Pdj9C', () => {
         expect(toggle.getAttribute('aria-pressed')).toBe('true');
         fireEvent.click(toggle);
         expect(setCheckinEnabled).toHaveBeenCalledWith(false);
+    });
+
+    it('routes plan panel toggles to the settings store action', () => {
+        const setPlanPanelEnabled = vi.fn((enabled: boolean) => {
+            useSettingsStore.setState({ planPanelEnabled: enabled });
+        });
+        useSettingsStore.setState({ setPlanPanelEnabled, planPanelEnabled: true });
+        render(<SettingsPanel />);
+
+        const toggle = screen.getByRole('button', { name: '计划面板' });
+
+        expect(toggle.getAttribute('aria-pressed')).toBe('true');
+        fireEvent.click(toggle);
+        expect(setPlanPanelEnabled).toHaveBeenCalledWith(false);
     });
 
     it('shows app update status and can disable automatic updates', () => {
@@ -1022,14 +1040,12 @@ describe('GlobalTab parity with Pdj9C', () => {
     });
 });
 
-describe('PetTab parity with v2ZgA', () => {
-    beforeEach(() => {
-        useSettingsStore.setState({ activeTab: 'pet' });
-    });
-
-    it('renders the placeholder card (v2ZgA is fit_content(70) with no children)', () => {
+describe('Settings sidebar parity with vnYnS', () => {
+    it('does not render the removed pet settings tab', () => {
         render(<SettingsPanel />);
-        expect(screen.getByText('桌宠形态')).toBeTruthy();
-        expect(screen.getByText(/尚未实现/)).toBeTruthy();
+
+        expect(screen.queryByRole('button', { name: '宠物' })).toBeNull();
+        expect(screen.queryByText('桌宠形态')).toBeNull();
+        expect(screen.queryByText(/尚未实现/)).toBeNull();
     });
 });

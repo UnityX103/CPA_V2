@@ -118,6 +118,7 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
             committedUiScale: s.committedUiScale,
             autostartEnabled: s.autostartEnabled,
             checkinEnabled: s.checkinEnabled,
+            planPanelEnabled: s.planPanelEnabled,
             dangerousChange: cloneDangerousChange(s.dangerousChange),
         },
         pomodoro: {
@@ -174,6 +175,7 @@ export function applyDispatch(payload: DispatchPayload): void {
                 case 'previewDangerousUiScale': s.previewDangerousUiScale(...payload.args); return;
                 case 'setAutostartEnabled': void s.setAutostartEnabled(...payload.args); return;
                 case 'setCheckinEnabled': s.setCheckinEnabled(...payload.args); return;
+                case 'setPlanPanelEnabled': s.setPlanPanelEnabled(...payload.args); return;
                 case 'applyDangerousChange': s.applyDangerousChange(...payload.args); return;
                 case 'revertDangerousChange': s.revertDangerousChange(...payload.args); return;
             }
@@ -261,6 +263,7 @@ export function settingsSig(s: {
     committedUiScale: number;
     autostartEnabled: boolean;
     checkinEnabled: boolean;
+    planPanelEnabled: boolean;
     dangerousChange: unknown;
 }): string {
     return JSON.stringify([
@@ -268,6 +271,7 @@ export function settingsSig(s: {
         s.committedUiScale,
         s.autostartEnabled,
         s.checkinEnabled,
+        s.planPanelEnabled,
         s.dangerousChange,
     ]);
 }

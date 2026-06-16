@@ -59,6 +59,7 @@ function buildStartupSettingsSnapshot(
             : persistedScale,
         autostartEnabled: confirmedAutostartEnabled,
         checkinEnabled: settings?.checkinEnabled ?? initialSettings.checkinEnabled,
+        planPanelEnabled: settings?.planPanelEnabled ?? initialSettings.planPanelEnabled,
     };
 
     return { snapshot, shouldApplyScale: !scaleChanged };
@@ -70,12 +71,14 @@ function getStartupSettingsState() {
         committedUiScale,
         autostartEnabled,
         checkinEnabled,
+        planPanelEnabled,
     } = useSettingsStore.getState();
     return {
         uiScale,
         committedUiScale,
         autostartEnabled,
         checkinEnabled,
+        planPanelEnabled,
     };
 }
 
@@ -267,6 +270,7 @@ export default function App() {
                             : {}),
                         autostartEnabled: snapshot.autostartEnabled,
                         checkinEnabled: snapshot.checkinEnabled,
+                        planPanelEnabled: snapshot.planPanelEnabled,
                     });
                     if (legacyCheckin) {
                         useCheckinStore.getState().hydrateCheckin({

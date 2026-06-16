@@ -223,6 +223,7 @@ beforeEach(() => {
         uiScale: 1.5,
         autostartEnabled: false,
         checkinEnabled: true,
+        planPanelEnabled: true,
     });
     loadPersistedUserPreferencesMock.mockReset();
     loadPersistedUserPreferencesMock.mockResolvedValue(null);
@@ -237,6 +238,7 @@ beforeEach(() => {
         committedUiScale: 1,
         autostartEnabled: false,
         checkinEnabled: true,
+        planPanelEnabled: true,
         dangerousChange: null,
     });
     usePomodoroStore.setState({
@@ -325,6 +327,7 @@ describe('main App window composition', () => {
             uiScale: number;
             autostartEnabled: boolean;
             checkinEnabled: boolean;
+            planPanelEnabled: boolean;
         }) => void;
         loadPersistedSettingsMock.mockReturnValue(new Promise((resolve) => {
             resolveSettings = resolve;
@@ -339,6 +342,7 @@ describe('main App window composition', () => {
             uiScale: 1.5,
             autostartEnabled: false,
             checkinEnabled: true,
+            planPanelEnabled: true,
         });
 
         await waitFor(() => {
@@ -364,6 +368,7 @@ describe('main App window composition', () => {
             uiScale: 1.25,
             autostartEnabled: false,
             checkinEnabled: true,
+            planPanelEnabled: true,
         });
         readAutostartEnabledMock.mockResolvedValue(true);
 
@@ -373,7 +378,7 @@ describe('main App window composition', () => {
         expect(readAutostartEnabledMock).toHaveBeenCalledWith(false);
         await waitFor(() => expect(savePersistedUserPreferencesMock).toHaveBeenCalledWith(
             expect.objectContaining({
-                settings: { uiScale: 1.25, autostartEnabled: true, checkinEnabled: true },
+                settings: { uiScale: 1.25, autostartEnabled: true, checkinEnabled: true, planPanelEnabled: true },
             }),
         ));
     });
@@ -383,6 +388,7 @@ describe('main App window composition', () => {
             uiScale: 1.25,
             autostartEnabled: false,
             checkinEnabled: false,
+            planPanelEnabled: true,
         });
 
         render(<App />);
@@ -390,7 +396,7 @@ describe('main App window composition', () => {
         await waitFor(() => expect(useSettingsStore.getState().checkinEnabled).toBe(false));
         await waitFor(() => expect(savePersistedUserPreferencesMock).toHaveBeenCalledWith(
             expect.objectContaining({
-                settings: { uiScale: 1.25, autostartEnabled: false, checkinEnabled: false },
+                settings: { uiScale: 1.25, autostartEnabled: false, checkinEnabled: false, planPanelEnabled: true },
             }),
         ));
         expect(invokeMock).not.toHaveBeenCalledWith('open_today_checkin_window');
@@ -408,7 +414,7 @@ describe('main App window composition', () => {
         expect(savePersistedSettingsMock).not.toHaveBeenCalled();
         expect(savePersistedUserPreferencesMock).toHaveBeenCalledWith(
             expect.objectContaining({
-                settings: { uiScale: 1, autostartEnabled: false, checkinEnabled: true },
+                settings: { uiScale: 1, autostartEnabled: false, checkinEnabled: true, planPanelEnabled: true },
             }),
         );
     });
@@ -419,6 +425,7 @@ describe('main App window composition', () => {
             uiScale: 1.25,
             autostartEnabled: false,
             checkinEnabled: true,
+            planPanelEnabled: true,
         });
         readAutostartEnabledMock.mockReturnValue(new Promise((resolve) => {
             resolveAutostart = resolve;
@@ -452,6 +459,7 @@ describe('main App window composition', () => {
             uiScale: 1.25,
             autostartEnabled: false,
             checkinEnabled: true,
+            planPanelEnabled: true,
         });
         readAutostartEnabledMock.mockReturnValue(new Promise((resolve) => {
             resolveAutostart = resolve;
@@ -475,7 +483,7 @@ describe('main App window composition', () => {
         expect(useSettingsStore.getState().committedUiScale).toBe(1.5);
         await waitFor(() => expect(savePersistedUserPreferencesMock).toHaveBeenCalledWith(
             expect.objectContaining({
-                settings: { uiScale: 1.5, autostartEnabled: true, checkinEnabled: true },
+                settings: { uiScale: 1.5, autostartEnabled: true, checkinEnabled: true, planPanelEnabled: true },
             }),
         ));
     });
@@ -495,6 +503,7 @@ describe('main App window composition', () => {
                 uiScale: 1.25,
                 autostartEnabled: false,
                 checkinEnabled: false,
+                planPanelEnabled: false,
             },
             appUpdate: {
                 autoUpdateEnabled: false,
@@ -531,6 +540,7 @@ describe('main App window composition', () => {
         expect(useNetworkStore.getState().autoConnect).toBe(true);
         expect(useNetworkStore.getState().playerName).toBe('Alice');
         expect(useSettingsStore.getState().checkinEnabled).toBe(false);
+        expect(useSettingsStore.getState().planPanelEnabled).toBe(false);
         expect(useBindingKeyStore.getState().panelEnabled).toBe(false);
         expect(useBindingKeyStore.getState().entries[0]).toEqual(expect.objectContaining({
             label: 'Space',
@@ -557,6 +567,7 @@ describe('main App window composition', () => {
                 uiScale: 1.1,
                 autostartEnabled: false,
                 checkinEnabled: true,
+                planPanelEnabled: true,
             },
             appUpdate: {
                 autoUpdateEnabled: true,
@@ -596,6 +607,7 @@ describe('main App window composition', () => {
                         uiScale: 1.4,
                         autostartEnabled: false,
                         checkinEnabled: false,
+                        planPanelEnabled: false,
                     },
                     appUpdate: {
                         autoUpdateEnabled: false,
@@ -622,6 +634,7 @@ describe('main App window composition', () => {
         await waitFor(() => expect(usePomodoroStore.getState().focusDurationSeconds).toBe(1800));
         expect(useNetworkStore.getState().playerName).toBe('Cloud');
         expect(useSettingsStore.getState().checkinEnabled).toBe(false);
+        expect(useSettingsStore.getState().planPanelEnabled).toBe(false);
         expect(savePersistedUserPreferencesMock).toHaveBeenCalledWith(expect.objectContaining({
             pomodoro: expect.objectContaining({ focusDurationSeconds: 1800 }),
             network: expect.objectContaining({ playerName: 'Cloud' }),
