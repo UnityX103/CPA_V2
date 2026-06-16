@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom/vitest';
 import { act, cleanup, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useCheckinStore, type WeeklyCheckinPlan } from './domain/checkin';
+import { useCheckinStore, type CheckinPlanTemplate } from './domain/checkin';
 import { usePomodoroStore } from './domain/pomodoro';
 import { useSettingsStore } from './domain/settings';
 
@@ -128,21 +128,10 @@ vi.mock('./ui/AppUpdateReadyNotice', () => ({
 
 const { default: App } = await import('./App');
 
-const weeklyPlan: WeeklyCheckinPlan = {
-    weekStartDate: '2026-05-18',
+const planTemplate: CheckinPlanTemplate = {
+    schemaVersion: 2,
     carryToNextWeek: true,
-    days: {
-        mon: { kind: 'inherit' },
-        tue: {
-            kind: 'items',
-            items: [{ id: 'pomo', title: '专注番茄', type: 'pomodoroFocus', targetCount: 2 }],
-        },
-        wed: { kind: 'rest' },
-        thu: { kind: 'inherit' },
-        fri: { kind: 'inherit' },
-        sat: { kind: 'inherit' },
-        sun: { kind: 'rest' },
-    },
+    items: [{ id: 'pomo', title: '专注番茄', type: 'pomodoroFocus', targetCount: 2, repeatDays: ['tue'], editMode: 'cycle' }],
 };
 
 beforeEach(() => {
@@ -186,7 +175,7 @@ beforeEach(() => {
     useInputCounterWindowController.mockClear();
     useRemotePlayerWindowController.mockClear();
     useCheckinStore.setState({
-        weeklyPlan,
+        planTemplate,
         dailyRecords: {},
         lastError: null,
     });

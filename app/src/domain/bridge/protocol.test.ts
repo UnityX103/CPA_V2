@@ -3,7 +3,7 @@ import {
     type PomodoroEndActionMode,
     type PomodoroEndActionVideo,
 } from '../pomodoro';
-import { defaultWeeklyPlan } from '../checkin';
+import { defaultPlanTemplate } from '../checkin';
 import {
     BRIDGE_VERSION,
     EVT_DISPATCH,
@@ -74,7 +74,7 @@ describe('bridge protocol', () => {
                 errorMessage: null,
             },
             checkin: {
-                weeklyPlan: defaultWeeklyPlan('2026-05-18'),
+                planTemplate: defaultPlanTemplate(),
                 dailyRecords: {
                     '2026-05-18': {
                         date: '2026-05-18',
@@ -121,7 +121,7 @@ describe('bridge protocol', () => {
             { v: 1, store: 'appUpdate',  action: 'setAutoUpdateEnabled', args: [false] },
             { v: 1, store: 'appUpdate',  action: 'checkNow',       args: [] },
             { v: 1, store: 'appUpdate',  action: 'restartForUpdate', args: [] },
-            { v: 1, store: 'checkin',    action: 'setWeeklyPlan',  args: [defaultWeeklyPlan('2026-05-25')] },
+            { v: 1, store: 'checkin',    action: 'setPlanTemplate',  args: [defaultPlanTemplate()] },
             { v: 1, store: 'checkin',    action: 'incrementItem',  args: ['2026-05-25', 'pomodoro-focus'] },
         ];
         expect(samples).toHaveLength(24);

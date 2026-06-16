@@ -20,7 +20,7 @@ import { useActiveAppStore } from '../activeApp';
 import { BRIDGE_VERSION } from './protocol';
 import { useAppUpdateStore } from '../appUpdate';
 import { REMOTE_PLAYER_WINDOW_LABELS } from '../remotePlayerWindowLabels';
-import { defaultWeeklyPlan, useCheckinStore } from '../checkin';
+import { defaultPlanTemplate, useCheckinStore } from '../checkin';
 
 type BindingKeySigInput = Parameters<typeof bindingKeySig>[0];
 type BindingKeyStateWithPermission = BindingKeySigInput & {
@@ -104,7 +104,7 @@ beforeEach(() => {
         errorMessage: null,
     });
     useCheckinStore.setState({
-        weeklyPlan: defaultWeeklyPlan('2026-05-18'),
+        planTemplate: defaultPlanTemplate(),
         dailyRecords: {},
         lastError: null,
     });
@@ -141,7 +141,7 @@ describe('buildSnapshot', () => {
             errorMessage: null,
         });
         expect(snap.checkin).toEqual({
-            weeklyPlan: defaultWeeklyPlan('2026-05-18'),
+            planTemplate: defaultPlanTemplate(),
             dailyRecords: {},
             lastError: null,
         });
@@ -170,15 +170,16 @@ describe('buildSnapshot', () => {
             }],
         });
         useCheckinStore.setState({
-            weeklyPlan: {
-                ...defaultWeeklyPlan('2026-05-18'),
-                days: {
-                    ...defaultWeeklyPlan('2026-05-18').days,
-                    mon: {
-                        kind: 'items',
-                        items: [{ id: 'manual-1', title: 'Read', type: 'manual', targetCount: 2 }],
-                    },
-                },
+            planTemplate: {
+                ...defaultPlanTemplate(),
+                items: [{
+                    id: 'manual-1',
+                    title: 'Read',
+                    type: 'manual',
+                    targetCount: 2,
+                    repeatDays: ['mon'],
+                    editMode: 'cycle',
+                }],
             },
             dailyRecords: {
                 '2026-05-18': {
@@ -205,10 +206,10 @@ describe('buildSnapshot', () => {
         expect(snap.bindingKey.entries).toEqual(useBindingKeyStore.getState().entries);
         expect(snap.bindingKey.entries).not.toBe(useBindingKeyStore.getState().entries);
         expect(snap.bindingKey.entries[0]).not.toBe(useBindingKeyStore.getState().entries[0]);
-        expect(snap.checkin.weeklyPlan).toEqual(useCheckinStore.getState().weeklyPlan);
-        expect(snap.checkin.weeklyPlan).not.toBe(useCheckinStore.getState().weeklyPlan);
-        expect(snap.checkin.weeklyPlan.days).not.toBe(useCheckinStore.getState().weeklyPlan.days);
-        expect(snap.checkin.weeklyPlan.days.mon).not.toBe(useCheckinStore.getState().weeklyPlan.days.mon);
+        expect(snap.checkin.planTemplate).toEqual(useCheckinStore.getState().planTemplate);
+        expect(snap.checkin.planTemplate).not.toBe(useCheckinStore.getState().planTemplate);
+        expect(snap.checkin.planTemplate.items).not.toBe(useCheckinStore.getState().planTemplate.items);
+        expect(snap.checkin.planTemplate.items[0]).not.toBe(useCheckinStore.getState().planTemplate.items[0]);
         expect(snap.checkin.dailyRecords).toEqual(useCheckinStore.getState().dailyRecords);
         expect(snap.checkin.dailyRecords).not.toBe(useCheckinStore.getState().dailyRecords);
         expect(snap.checkin.dailyRecords['2026-05-18']).not.toBe(useCheckinStore.getState().dailyRecords['2026-05-18']);
@@ -222,9 +223,7 @@ describe('buildSnapshot', () => {
         snap.bindingKey.entries[0].label = 'Mutated';
         snap.bindingKey.entries[0].input = { kind: 'mouse', button: 'right' };
         snap.checkin.dailyRecords['2026-05-18'].countsByItemId['manual-1'] = 99;
-        if (snap.checkin.weeklyPlan.days.mon.kind === 'items') {
-            snap.checkin.weeklyPlan.days.mon.items[0].title = 'Mutated';
-        }
+        snap.checkin.planTemplate.items[0].title = 'Mutated';
 
         expect(useSettingsStore.getState().dangerousChange?.nextValue).toBe(1.5);
         expect(usePomodoroStore.getState().endActionVideo.customVideoPath).toBe('/Users/xpy/Videos/focus-complete.mp4');
@@ -235,8 +234,7 @@ describe('buildSnapshot', () => {
         expect(useBindingKeyStore.getState().entries[0].label).toBe('A');
         expect(useBindingKeyStore.getState().entries[0].input).toEqual({ kind: 'keyboard', code: 0 });
         expect(useCheckinStore.getState().dailyRecords['2026-05-18'].countsByItemId['manual-1']).toBe(1);
-        const mondayPlan = useCheckinStore.getState().weeklyPlan.days.mon;
-        expect(mondayPlan.kind === 'items' ? mondayPlan.items[0].title : '').toBe('Read');
+        expect(useCheckinStore.getState().planTemplate.items[0].title).toBe('Read');
     });
 
     it('includes committed scale and dangerous change state', () => {
@@ -445,13 +443,16 @@ describe('applyDispatch', () => {
     });
 
     it('routes checkin plan and item increment actions to the authoritative main store', () => {
-        const nextPlan = defaultWeeklyPlan('2026-05-25');
+        const nextTemplate = {
+            ...defaultPlanTemplate(),
+            items: [{ ...defaultPlanTemplate().items[0], repeatDays: ['mon' as const] }],
+        };
 
         applyDispatch({
             v: BRIDGE_VERSION,
             store: 'checkin',
-            action: 'setWeeklyPlan',
-            args: [nextPlan],
+            action: 'setPlanTemplate',
+            args: [nextTemplate],
         });
         applyDispatch({
             v: BRIDGE_VERSION,
@@ -460,7 +461,7 @@ describe('applyDispatch', () => {
             args: ['2026-05-25', 'pomodoro-focus'],
         });
 
-        expect(useCheckinStore.getState().weeklyPlan.weekStartDate).toBe('2026-05-25');
+        expect(useCheckinStore.getState().planTemplate).toEqual(nextTemplate);
         expect(useCheckinStore.getState().dailyRecords['2026-05-25'].countsByItemId['pomodoro-focus']).toBe(1);
     });
 });
@@ -616,7 +617,7 @@ describe('bridge host subscription signatures', () => {
 
     it('checkinSig includes mirrored plan, records, and error fields', () => {
         const base = {
-            weeklyPlan: defaultWeeklyPlan('2026-05-18'),
+            planTemplate: defaultPlanTemplate(),
             dailyRecords: {
                 '2026-05-18': {
                     date: '2026-05-18',

@@ -701,3 +701,101 @@
     background: #d15f3d;
     color: #fff;
 }
+
+.repeat-plan-item-row {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+}
+
+.repeat-plan-item-row .checkin-editor-item-main {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) 72px auto;
+    align-items: end;
+}
+
+.checkin-editor-icon-wrap {
+    position: relative;
+    align-self: center;
+}
+
+.checkin-editor-field {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.checkin-editor-field span {
+    color: #a28b79;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.checkin-editor-field input {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    height: 30px;
+    padding: 4px 8px;
+    border: 1px solid #ead9c8;
+    border-radius: 10px;
+    background: #ffffffcc;
+    color: #5b4636;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 800;
+    outline: none;
+}
+
+.checkin-editor-field.title input {
+    color: var(--item-color);
+}
+
+.checkin-editor-mode-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 6px;
+    align-items: center;
+}
+
+.checkin-editor-mode-row button,
+.checkin-editor-repeat-days button {
+    min-width: 0;
+    height: 28px;
+    border: 1px solid #ead9c8;
+    border-radius: 999px;
+    background: #ffffffcc;
+    color: #a28b79;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.checkin-editor-mode-row button.active,
+.checkin-editor-repeat-days button.active {
+    border-color: color-mix(in srgb, var(--item-color) 42%, #ead9c8);
+    background: color-mix(in srgb, var(--item-color) 13%, #fff7f0);
+    color: var(--item-color);
+}
+
+.checkin-editor-mode-row span {
+    color: var(--item-color);
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.checkin-editor-repeat-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+}
+
+.checkin-editor-count-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}

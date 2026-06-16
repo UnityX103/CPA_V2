@@ -1,18 +1,23 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
     createCheckinStore,
-    defaultWeeklyPlan,
-    effectivePlanForDate,
-    effectiveItemsForDate,
     dailySummary,
+    defaultPlanTemplate,
+    itemsForDate,
+    migrateWeeklyPlanToTemplate,
     streakSummary,
     weeklySummary,
+    type CheckinPlanTemplate,
     type WeeklyCheckinPlan,
 } from './checkin';
 
 const weekStartDate = '2026-05-18';
 
-function plan(overrides: Partial<WeeklyCheckinPlan['days']>): WeeklyCheckinPlan {
+function template(items: CheckinPlanTemplate['items']): CheckinPlanTemplate {
+    return { schemaVersion: 2, carryToNextWeek: true, items };
+}
+
+function legacyPlan(overrides: Partial<WeeklyCheckinPlan['days']>): WeeklyCheckinPlan {
     return {
         weekStartDate,
         carryToNextWeek: true,
@@ -34,147 +39,87 @@ describe('checkin domain', () => {
         vi.setSystemTime(new Date('2026-05-19T10:00:00+08:00'));
     });
 
-    it('resolves inherit days from the previous ordinary day without copying records', () => {
+    it('filters template items by repeat days for a date', () => {
         const store = createCheckinStore({ isMirrorWindow: false });
-        store.setState({ weeklyPlan: plan({}) });
+        store.setState({
+            planTemplate: template([
+                { id: 'read', title: '阅读', type: 'manual', targetCount: 2, repeatDays: ['mon', 'wed'], editMode: 'cycle' },
+                { id: 'water', title: '喝水', type: 'manual', targetCount: 3, repeatDays: ['tue'], editMode: 'cycle' },
+            ]),
+            dailyRecords: {},
+            lastError: null,
+        });
 
-        expect(effectiveItemsForDate(store.getState(), '2026-05-19')).toEqual([
-            { id: 'read', title: '阅读', type: 'manual', targetCount: 2 },
-        ]);
-
-        store.getState().incrementItem('2026-05-19', 'read');
-
-        expect(store.getState().dailyRecords['2026-05-19'].countsByItemId.read).toBe(1);
-        expect(store.getState().dailyRecords['2026-05-18']).toBeUndefined();
+        expect(itemsForDate(store.getState(), '2026-05-18').map((item) => item.id)).toEqual(['read']);
+        expect(itemsForDate(store.getState(), '2026-05-19').map((item) => item.id)).toEqual(['water']);
+        expect(itemsForDate(store.getState(), '2026-05-20').map((item) => item.id)).toEqual(['read']);
+        expect(itemsForDate(store.getState(), '2026-05-21')).toEqual([]);
     });
 
-    it('excludes rest days from summaries', () => {
+    it('treats no-plan days as complete without rest-day semantics', () => {
         const store = createCheckinStore({ isMirrorWindow: false });
-        store.setState({ weeklyPlan: plan({}) });
+        store.setState({
+            planTemplate: template([
+                { id: 'read', title: '阅读', type: 'manual', targetCount: 2, repeatDays: ['mon'], editMode: 'cycle' },
+            ]),
+            dailyRecords: {},
+            lastError: null,
+        });
 
-        expect(dailySummary(store.getState(), '2026-05-20')).toMatchObject({
-            date: '2026-05-20',
-            isRestDay: true,
-            totalTarget: 0,
+        expect(itemsForDate(store.getState(), '2026-05-19')).toEqual([]);
+        expect(dailySummary(store.getState(), '2026-05-19')).toMatchObject({
+            date: '2026-05-19',
+            isNoPlanDay: true,
             completedCount: 0,
+            totalTarget: 0,
             completionRate: 1,
         });
 
         const summary = weeklySummary(store.getState(), weekStartDate);
-        expect(summary.restDays).toEqual(['2026-05-20', '2026-05-24']);
-        expect(summary.totalTarget).toBe(13);
+        expect(summary.noPlanDays).toEqual([
+            '2026-05-19',
+            '2026-05-20',
+            '2026-05-21',
+            '2026-05-22',
+            '2026-05-23',
+            '2026-05-24',
+        ]);
+        expect(summary.totalTarget).toBe(2);
     });
 
-    it('chains inherit days through previous effective items while skipping rest days', () => {
-        const store = createCheckinStore({ isMirrorWindow: false });
-        store.setState({ weeklyPlan: plan({}) });
-
-        expect(effectivePlanForDate(store.getState(), '2026-05-23')).toEqual({
-            kind: 'items',
-            items: [{ id: 'pomo', title: '专注番茄', type: 'pomodoroFocus', targetCount: 3 }],
-        });
-        expect(effectiveItemsForDate(store.getState(), '2026-05-23')).toEqual([
-            { id: 'pomo', title: '专注番茄', type: 'pomodoroFocus', targetCount: 3 },
-        ]);
-
-        store.setState({
-            weeklyPlan: plan({
-                fri: { kind: 'rest' },
-            }),
-        });
-
-        expect(effectiveItemsForDate(store.getState(), '2026-05-23')).toEqual([
-            { id: 'pomo', title: '专注番茄', type: 'pomodoroFocus', targetCount: 3 },
-        ]);
-    });
-
-    it('resolves inherited days to the nearest previous ordinary plan before a rest day', () => {
+    it('keeps completed streaks through no-plan days', () => {
         const store = createCheckinStore({ isMirrorWindow: false });
         store.setState({
-            weeklyPlan: plan({
-                tue: { kind: 'rest' },
-                wed: { kind: 'inherit' },
-            }),
+            planTemplate: template([
+                { id: 'read', title: '阅读', type: 'manual', targetCount: 2, repeatDays: ['mon'], editMode: 'cycle' },
+                { id: 'focus', title: '专注番茄', type: 'pomodoroFocus', targetCount: 2, repeatDays: ['thu'], editMode: 'cycle' },
+            ]),
+            dailyRecords: {},
+            lastError: null,
         });
-
-        expect(effectiveItemsForDate(store.getState(), '2026-05-20')).toEqual([
-            { id: 'read', title: '阅读', type: 'manual', targetCount: 2 },
-        ]);
-    });
-
-    it('skips rest days when calculating the current streak', () => {
-        const store = createCheckinStore({ isMirrorWindow: false });
-        store.setState({ weeklyPlan: plan({}) });
 
         store.getState().incrementItem('2026-05-18', 'read');
         store.getState().incrementItem('2026-05-18', 'read');
-        store.getState().incrementItem('2026-05-19', 'read');
-        store.getState().incrementItem('2026-05-19', 'read');
         store.getState().applyPomodoroFocusCompletion('2026-05-21', 1);
         store.getState().applyPomodoroFocusCompletion('2026-05-21', 2);
-        store.getState().applyPomodoroFocusCompletion('2026-05-21', 3);
 
         expect(streakSummary(store.getState(), '2026-05-21')).toEqual({
-            currentStreak: 3,
-            checkedThroughDate: '2026-05-21',
+            currentStreak: 4,
+            checkedThroughDate: '2026-05-18',
         });
     });
 
-    it('stops the current streak at an incomplete ordinary day', () => {
-        const store = createCheckinStore({ isMirrorWindow: false });
-        store.setState({ weeklyPlan: plan({}) });
-
-        store.getState().incrementItem('2026-05-18', 'read');
-        store.getState().incrementItem('2026-05-18', 'read');
-        store.getState().incrementItem('2026-05-19', 'read');
-        store.getState().applyPomodoroFocusCompletion('2026-05-21', 1);
-        store.getState().applyPomodoroFocusCompletion('2026-05-21', 2);
-        store.getState().applyPomodoroFocusCompletion('2026-05-21', 3);
-
-        expect(streakSummary(store.getState(), '2026-05-21')).toEqual({
-            currentStreak: 1,
-            checkedThroughDate: '2026-05-21',
-        });
-    });
-
-    it('counts completed ordinary-day streaks across more than seven calendar days while skipping rest days', () => {
-        const store = createCheckinStore({ isMirrorWindow: false });
-        store.setState({ weeklyPlan: plan({}) });
-
-        for (const date of ['2026-05-18', '2026-05-19', '2026-05-25', '2026-05-26']) {
-            store.getState().incrementItem(date, 'read');
-            store.getState().incrementItem(date, 'read');
-        }
-        for (const [date, eventIds] of [
-            ['2026-05-21', [1, 2, 3]],
-            ['2026-05-22', [4, 5, 6]],
-            ['2026-05-23', [7, 8, 9]],
-            ['2026-05-28', [16, 17, 18]],
-        ] as const) {
-            for (const eventId of eventIds) {
-                store.getState().applyPomodoroFocusCompletion(date, eventId);
-            }
-        }
-
-        expect(streakSummary(store.getState(), '2026-05-28')).toEqual({
-            currentStreak: 8,
-            checkedThroughDate: '2026-05-28',
-        });
-    });
-
-    it('increments every pomodoroFocus item once per Pomodoro end event id', () => {
+    it('increments every effective pomodoroFocus item once per Pomodoro end event id', () => {
         const store = createCheckinStore({ isMirrorWindow: false });
         store.setState({
-            weeklyPlan: plan({
-                tue: {
-                    kind: 'items',
-                    items: [
-                        { id: 'p1', title: '早间番茄', type: 'pomodoroFocus', targetCount: 1 },
-                        { id: 'p2', title: '晚间番茄', type: 'pomodoroFocus', targetCount: 1 },
-                        { id: 'm1', title: '喝水', type: 'manual', targetCount: 1 },
-                    ],
-                },
-            }),
+            planTemplate: template([
+                { id: 'p1', title: '早间番茄', type: 'pomodoroFocus', targetCount: 1, repeatDays: ['tue'], editMode: 'cycle' },
+                { id: 'p2', title: '晚间番茄', type: 'pomodoroFocus', targetCount: 1, repeatDays: ['tue'], editMode: 'cycle' },
+                { id: 'm1', title: '喝水', type: 'manual', targetCount: 1, repeatDays: ['tue'], editMode: 'cycle' },
+                { id: 'p3', title: '周三番茄', type: 'pomodoroFocus', targetCount: 1, repeatDays: ['wed'], editMode: 'cycle' },
+            ]),
+            dailyRecords: {},
+            lastError: null,
         });
 
         store.getState().applyPomodoroFocusCompletion('2026-05-19', 42);
@@ -187,23 +132,41 @@ describe('checkin domain', () => {
         expect(store.getState().dailyRecords['2026-05-19'].processedPomodoroEndEventIds).toEqual([42]);
     });
 
-    it('creates a default current-week plan', () => {
-        expect(defaultWeeklyPlan('2026-05-18')).toMatchObject({
-            weekStartDate: '2026-05-18',
+    it('creates a default item-repeat template', () => {
+        expect(defaultPlanTemplate()).toMatchObject({
+            schemaVersion: 2,
             carryToNextWeek: true,
+            items: [
+                expect.objectContaining({
+                    id: 'pomodoro-focus',
+                    repeatDays: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'],
+                    editMode: 'cycle',
+                }),
+            ],
         });
     });
 
-    it('rolls the current plan forward when carryToNextWeek is enabled', () => {
-        const store = createCheckinStore({ isMirrorWindow: false });
-        store.setState({ weeklyPlan: plan({}) });
+    it('migrates legacy weekly plans into repeated template items', () => {
+        const migrated = migrateWeeklyPlanToTemplate(legacyPlan({}));
 
-        store.getState().rollForwardToDate('2026-05-25');
-
-        expect(store.getState().weeklyPlan.weekStartDate).toBe('2026-05-25');
-        expect(store.getState().weeklyPlan.days.mon).toEqual({
-            kind: 'items',
-            items: [{ id: 'read', title: '阅读', type: 'manual', targetCount: 2 }],
-        });
+        expect(migrated).toMatchObject({ schemaVersion: 2, carryToNextWeek: true });
+        expect(migrated.items).toEqual([
+            expect.objectContaining({
+                id: 'read',
+                title: '阅读',
+                type: 'manual',
+                targetCount: 2,
+                repeatDays: ['mon', 'tue'],
+                editMode: 'cycle',
+            }),
+            expect.objectContaining({
+                id: 'pomo',
+                title: '专注番茄',
+                type: 'pomodoroFocus',
+                targetCount: 3,
+                repeatDays: ['thu', 'fri', 'sat'],
+                editMode: 'cycle',
+            }),
+        ]);
     });
 });

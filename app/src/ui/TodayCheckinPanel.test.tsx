@@ -14,18 +14,10 @@ describe('TodayCheckinPanel', () => {
         vi.setSystemTime(new Date('2026-05-19T10:00:00+08:00'));
         vi.mocked(openCheckinEditorWindow).mockClear();
         useCheckinStore.setState({
-            weeklyPlan: {
-                weekStartDate: '2026-05-18',
+            planTemplate: {
+                schemaVersion: 2,
                 carryToNextWeek: true,
-                days: {
-                    mon: { kind: 'items', items: [{ id: 'read', title: '阅读', type: 'manual', targetCount: 2 }] },
-                    tue: { kind: 'inherit' },
-                    wed: { kind: 'rest' },
-                    thu: { kind: 'inherit' },
-                    fri: { kind: 'inherit' },
-                    sat: { kind: 'inherit' },
-                    sun: { kind: 'rest' },
-                },
+                items: [{ id: 'read', title: '阅读', type: 'manual', targetCount: 2, repeatDays: ['tue'], editMode: 'cycle' }],
             },
             dailyRecords: {},
             lastError: null,
@@ -68,12 +60,13 @@ describe('TodayCheckinPanel', () => {
         expect(screen.getByText('完成')).toBeTruthy();
     });
 
-    it('renders rest state and opens the editor from the compact panel', () => {
+    it('renders no-plan state and opens the editor from the compact panel', () => {
         vi.setSystemTime(new Date('2026-05-20T01:00:00+08:00'));
 
         render(<TodayCheckinPanel />);
 
-        expect(screen.getByText('当天休息')).toBeTruthy();
+        expect(screen.getByText('今日无计划')).toBeTruthy();
+        expect(screen.getByText('今天没有重复到当前日期的打卡项目。')).toBeTruthy();
 
         fireEvent.click(screen.getByRole('button', { name: '编辑打卡计划' }));
 

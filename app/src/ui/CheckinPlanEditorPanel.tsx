@@ -3,13 +3,16 @@ import { useEffect, useMemo, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import {
-    type CheckinDayPlan,
-    type CheckinItem,
+    clonePlanTemplate,
+    normalizePlanTemplate,
+    type CheckinEditMode,
     type CheckinItemIcon,
     type CheckinItemType,
+    type CheckinPlanItem,
+    type CheckinPlanTemplate,
     type WeekdayKey,
-    type WeeklyCheckinPlan,
     useCheckinStore,
+    WEEKDAYS,
 } from '../domain/checkin';
 import {
     CHECKIN_ITEM_ICON_OPTIONS,
@@ -19,7 +22,7 @@ import { CheckinItemIconGlyph } from './CheckinItemIconGlyph';
 import { shouldStartWindowDrag } from './windowDrag';
 import './CheckinPlanEditorPanel.css';
 
-const WEEKDAYS: Array<{ key: WeekdayKey; label: string; shortLabel: string }> = [
+const WEEKDAY_META: Array<{ key: WeekdayKey; label: string; shortLabel: string }> = [
     { key: 'mon', label: '周一', shortLabel: '一' },
     { key: 'tue', label: '周二', shortLabel: '二' },
     { key: 'wed', label: '周三', shortLabel: '三' },
@@ -29,16 +32,11 @@ const WEEKDAYS: Array<{ key: WeekdayKey; label: string; shortLabel: string }> = 
     { key: 'sun', label: '周日', shortLabel: '日' },
 ];
 
-const WEEKDAY_ROWS: WeekdayKey[][] = [
-    ['mon', 'tue', 'wed', 'thu'],
-    ['fri', 'sat', 'sun'],
-];
-
 const ITEM_COLORS: Record<CheckinItemIcon, string> = {
     activity: '#D15F3D',
     dumbbell: '#2D8F4E',
     bookOpen: '#E08C10',
-    droplet: '#7C3AED',
+    droplet: '#2D8F4E',
     listChecks: '#5B4636',
     sparkle: '#D15F3D',
     coffee: '#8B5E3C',
@@ -55,24 +53,11 @@ const ITEM_COLORS: Record<CheckinItemIcon, string> = {
     meditation: '#7C3AED',
 };
 
-function clonePlan(plan: WeeklyCheckinPlan): WeeklyCheckinPlan {
-    return {
-        ...plan,
-        days: Object.fromEntries(
-            WEEKDAYS.map(({ key }) => {
-                const day = plan.days[key];
-                return [
-                    key,
-                    day.kind === 'items'
-                        ? { kind: 'items', items: day.items.map((item) => ({ ...item })) }
-                        : { ...day },
-                ];
-            }),
-        ) as WeeklyCheckinPlan['days'],
-    };
+interface CheckinPlanEditorPanelProps {
+    initialTemplate?: CheckinPlanTemplate;
 }
 
-function createItem(type: CheckinItemType): CheckinItem {
+function createItem(type: CheckinItemType = 'manual'): CheckinPlanItem {
     const id = `${type === 'pomodoroFocus' ? 'pomodoro' : 'manual'}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
     if (type === 'pomodoroFocus') {
         return {
@@ -81,188 +66,125 @@ function createItem(type: CheckinItemType): CheckinItem {
             type,
             targetCount: 4,
             icon: 'clock',
+            repeatDays: [...WEEKDAYS],
+            editMode: 'cycle',
             perUseAmount: 25,
             perUseUnit: '分钟',
+            countInputValue: 4,
+            countUnitSize: 4,
+            countUnitLabel: '次',
+            countLoopCount: 1,
         };
     }
 
     return {
         id,
-        title: '新栏目',
+        title: '新项目',
         type,
         targetCount: 1,
         icon: 'sparkle',
+        repeatDays: [...WEEKDAYS],
+        editMode: 'cycle',
         perUseAmount: 1,
         perUseUnit: '次',
+        countInputValue: 1,
+        countUnitSize: 1,
+        countUnitLabel: '次',
+        countLoopCount: 1,
     };
 }
 
-function emptyItemsPlan(): CheckinDayPlan {
-    return { kind: 'items', items: [] };
-}
-
-function itemColor(item: CheckinItem): string {
+function itemColor(item: CheckinPlanItem): string {
     return ITEM_COLORS[resolveCheckinItemIcon(item)];
 }
 
-function normalizeItemsForSave(items: CheckinItem[]): CheckinItem[] {
-    let sawPomodoro = false;
-    return items.map((item) => {
-        const type = item.type === 'pomodoroFocus' && !sawPomodoro ? 'pomodoroFocus' : 'manual';
-        if (type === 'pomodoroFocus') sawPomodoro = true;
-        return {
+function normalizeDraft(draft: CheckinPlanTemplate): CheckinPlanTemplate {
+    return normalizePlanTemplate({
+        ...draft,
+        items: draft.items.map((item) => ({
             ...item,
-            type,
-            title: item.title.trim() || (type === 'pomodoroFocus' ? '专注番茄' : '新栏目'),
+            title: item.title.trim() || (item.type === 'pomodoroFocus' ? '专注番茄' : '新项目'),
             targetCount: Math.max(1, Number(item.targetCount) || 1),
             perUseAmount: Math.max(0, Number(item.perUseAmount) || 0),
             perUseUnit: item.perUseUnit?.trim() || '次',
-        };
-    });
+            countInputValue: Math.max(0, Number(item.countInputValue) || 0),
+            countUnitSize: Math.max(1, Number(item.countUnitSize) || 1),
+            countUnitLabel: item.countUnitLabel?.trim() || '次',
+            countLoopCount: Math.max(1, Number(item.countLoopCount) || 1),
+        })),
+    }) ?? clonePlanTemplate(draft);
 }
 
-function normalizePlanForSave(plan: WeeklyCheckinPlan): WeeklyCheckinPlan {
-    return {
-        ...plan,
-        days: Object.fromEntries(
-            WEEKDAYS.map(({ key }) => {
-                const day = plan.days[key];
-                return [
-                    key,
-                    day.kind === 'items'
-                        ? { kind: 'items', items: normalizeItemsForSave(day.items) }
-                        : { ...day },
-                ];
-            }),
-        ) as WeeklyCheckinPlan['days'],
-    };
-}
-
-function dayStateLabel(plan: CheckinDayPlan): string {
-    if (plan.kind === 'rest') return '✓';
-    return '';
-}
-
-interface CheckinPlanEditorPanelProps {
-    initialPlan?: WeeklyCheckinPlan;
-    initialSelectedDay?: WeekdayKey;
-}
-
-type RowMenuState = { itemId: string } | null;
-
-export function CheckinPlanEditorPanel({ initialPlan, initialSelectedDay = 'mon' }: CheckinPlanEditorPanelProps = {}) {
-    const storePlan = useCheckinStore((state) => state.weeklyPlan);
-    const setWeeklyPlan = useCheckinStore((state) => state.setWeeklyPlan);
-    const sourcePlan = initialPlan ?? storePlan;
-    const [draft, setDraft] = useState(() => clonePlan(sourcePlan));
-    const [isDirty, setIsDirty] = useState(false);
-    const [selectedDay, setSelectedDay] = useState<WeekdayKey>(initialSelectedDay);
-    const [isChoosingNewType, setIsChoosingNewType] = useState(true);
-    const [openIconPickerFor, setOpenIconPickerFor] = useState<string | null>(null);
-    const [rowMenu, setRowMenu] = useState<RowMenuState>(null);
-    const selectedMeta = useMemo(
-        () => WEEKDAYS.find((day) => day.key === selectedDay) ?? WEEKDAYS[0],
-        [selectedDay],
+export function CheckinPlanEditorPanel({ initialTemplate }: CheckinPlanEditorPanelProps = {}) {
+    const storeTemplate = useCheckinStore((state) => state.planTemplate);
+    const setPlanTemplate = useCheckinStore((state) => state.setPlanTemplate);
+    const sourceTemplate = useMemo(
+        () => initialTemplate ?? storeTemplate,
+        [initialTemplate, storeTemplate],
     );
-    const selectedPlan = draft.days[selectedDay];
-    const selectedItems = selectedPlan.kind === 'items' ? selectedPlan.items : [];
-    const hasPomodoroItem = selectedItems.some((item) => item.type === 'pomodoroFocus');
+    const [draft, setDraft] = useState(() => clonePlanTemplate(sourceTemplate));
+    const [isDirty, setIsDirty] = useState(false);
+    const [openIconPickerFor, setOpenIconPickerFor] = useState<string | null>(null);
 
     useEffect(() => {
         if (isDirty) return;
-        setDraft(clonePlan(sourcePlan));
-    }, [isDirty, sourcePlan]);
+        setDraft(clonePlanTemplate(sourceTemplate));
+    }, [isDirty, sourceTemplate]);
 
-    const setSelectedPlan = (plan: CheckinDayPlan) => {
+    const updateItem = (id: string, patch: Partial<CheckinPlanItem>) => {
         setIsDirty(true);
         setDraft((current) => ({
             ...current,
-            days: {
-                ...current.days,
-                [selectedDay]: plan,
-            },
+            items: current.items.map((item) => item.id === id ? { ...item, ...patch } : item),
         }));
     };
 
-    const closeTransientMenus = () => {
+    const addItem = () => {
+        setIsDirty(true);
         setOpenIconPickerFor(null);
-        setRowMenu(null);
-    };
-
-    const inheritSelectedDay = () => {
-        closeTransientMenus();
-        setSelectedPlan({ kind: 'inherit' });
-        setIsChoosingNewType(false);
-    };
-
-    const beginAddItem = () => {
-        closeTransientMenus();
-        if (selectedPlan.kind === 'inherit') {
-            setSelectedPlan(emptyItemsPlan());
-        }
-        setIsChoosingNewType(true);
-    };
-
-    const updateItem = (id: string, patch: Partial<CheckinItem>) => {
-        const currentPlan = draft.days[selectedDay];
-        if (currentPlan.kind !== 'items') return;
-        setSelectedPlan({
-            kind: 'items',
-            items: currentPlan.items.map((item) => item.id === id ? { ...item, ...patch } : item),
-        });
-    };
-
-    const addItem = (type: CheckinItemType) => {
-        const currentPlan = draft.days[selectedDay];
-        const currentItems = currentPlan.kind === 'items' ? currentPlan.items : [];
-        if (type === 'pomodoroFocus' && currentItems.some((item) => item.type === 'pomodoroFocus')) return;
-        setSelectedPlan({ kind: 'items', items: [...currentItems, createItem(type)] });
-        setIsChoosingNewType(false);
+        setDraft((current) => ({
+            ...current,
+            items: [...current.items, createItem('manual')],
+        }));
     };
 
     const removeItem = (id: string) => {
-        if (selectedPlan.kind !== 'items') return;
-        setRowMenu(null);
-        setSelectedPlan({ kind: 'items', items: selectedPlan.items.filter((item) => item.id !== id) });
+        setIsDirty(true);
+        setOpenIconPickerFor(null);
+        setDraft((current) => ({
+            ...current,
+            items: current.items.filter((item) => item.id !== id),
+        }));
     };
 
-    const moveItem = (id: string, direction: -1 | 1) => {
-        const currentPlan = draft.days[selectedDay];
-        if (currentPlan.kind !== 'items') return;
-        const index = currentPlan.items.findIndex((item) => item.id === id);
-        const nextIndex = index + direction;
-        if (index < 0 || nextIndex < 0 || nextIndex >= currentPlan.items.length) return;
-
-        const items = [...currentPlan.items];
-        const [item] = items.splice(index, 1);
-        items.splice(nextIndex, 0, item);
-        setSelectedPlan({ kind: 'items', items });
-        setRowMenu(null);
+    const toggleRepeatDay = (item: CheckinPlanItem, day: WeekdayKey) => {
+        const hasDay = item.repeatDays.includes(day);
+        const repeatDays = hasDay
+            ? item.repeatDays.filter((current) => current !== day)
+            : WEEKDAYS.filter((current) => current === day || item.repeatDays.includes(current));
+        updateItem(item.id, { repeatDays });
     };
 
-    const toggleRestDay = () => {
-        setIsChoosingNewType(false);
-        closeTransientMenus();
-        setSelectedPlan(selectedPlan.kind === 'rest' ? emptyItemsPlan() : { kind: 'rest' });
+    const setEditMode = (item: CheckinPlanItem, editMode: CheckinEditMode) => {
+        updateItem(item.id, { editMode });
     };
 
     const toggleCarryToNextWeek = () => {
-        closeTransientMenus();
         setIsDirty(true);
         setDraft((current) => ({ ...current, carryToNextWeek: !current.carryToNextWeek }));
     };
 
     const closeWindow = () => {
-        closeTransientMenus();
-        setDraft(clonePlan(sourcePlan));
+        setOpenIconPickerFor(null);
+        setDraft(clonePlanTemplate(sourceTemplate));
         setIsDirty(false);
         void invoke('close_checkin_editor_window');
     };
 
     const savePlan = () => {
-        closeTransientMenus();
+        setOpenIconPickerFor(null);
         setIsDirty(false);
-        setWeeklyPlan(normalizePlanForSave(clonePlan(draft)));
+        setPlanTemplate(normalizeDraft(draft));
         void invoke('close_checkin_editor_window');
     };
 
@@ -281,275 +203,175 @@ export function CheckinPlanEditorPanel({ initialPlan, initialSelectedDay = 'mon'
         >
             <header className="checkin-editor-head">
                 <div className="checkin-editor-title-wrap">
-                    <h2>本周计划</h2>
-                    <p>点击上方星期切换当天计划；空白日期自动继承前一天内容</p>
+                    <h2>计划编辑</h2>
+                    <p>每个事项单独设置重复日期和次数信息</p>
                 </div>
-                <span className="checkin-editor-status"><i />按日编辑</span>
+                <span className="checkin-editor-status"><i />按事项编辑</span>
             </header>
 
-            <section className="checkin-editor-section checkin-editor-week-card" aria-label="选择日期">
-                <div className="checkin-editor-section-head">
-                    <strong>选择日期</strong>
-                    <span>点击星期切换到当天计划；绿色表示已完成或休息</span>
-                </div>
-                <div className="checkin-editor-week-grid">
-                    {WEEKDAY_ROWS.map((row) => (
-                        <div key={row.join('-')} className="checkin-editor-week-row">
-                            {row.map((key) => {
-                                const day = WEEKDAYS.find((candidate) => candidate.key === key) ?? WEEKDAYS[0];
-                                const plan = draft.days[key];
-                                const isRestLike = plan.kind === 'rest';
-                                return (
-                                    <button
-                                        key={key}
-                                        type="button"
-                                        className={[
-                                            'checkin-editor-day-pill',
-                                            selectedDay === key ? 'active' : '',
-                                            isRestLike ? 'complete' : '',
-                                        ].filter(Boolean).join(' ')}
-                                        aria-label={day.label}
-                                        onClick={() => {
-                                            setSelectedDay(key);
-                                            setIsChoosingNewType(false);
-                                            closeTransientMenus();
-                                        }}
-                                    >
-                                        <span>{day.shortLabel}</span>
-                                        {dayStateLabel(plan) ? <small>{dayStateLabel(plan)}</small> : null}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    ))}
-                </div>
-            </section>
-
-            <section className="checkin-editor-section checkin-editor-selected-card">
-                <div className="checkin-editor-selected-row">
+            <section className="checkin-editor-section checkin-editor-items-section" aria-label="打卡计划项目">
+                <div className="checkin-editor-section-head checkin-editor-content-head">
                     <div className="checkin-editor-title-wrap">
-                        <strong>{selectedMeta.label}计划 · {selectedPlan.kind === 'rest' ? '休息日' : '普通打卡日'}</strong>
-                        <p>{selectedPlan.kind === 'rest' ? '当天不会生成打卡项目' : '当前示例不是休息日；未填写时会继承前一天内容'}</p>
+                        <strong>打卡计划项目</strong>
+                        <p>{draft.items.length} 个事项</p>
                     </div>
                     <button
                         type="button"
-                        className={`checkin-editor-rest-toggle ${selectedPlan.kind === 'rest' ? 'active' : ''}`}
-                        role="switch"
-                        aria-label="休息日"
-                        aria-checked={selectedPlan.kind === 'rest'}
-                        onClick={toggleRestDay}
+                        className="checkin-editor-primary"
+                        aria-label="新增项目"
+                        onClick={addItem}
                     >
-                        <span>休息日：{selectedPlan.kind === 'rest' ? '开' : '关'}</span>
-                        <i />
+                        + 新增项目
                     </button>
                 </div>
-                <div className="checkin-editor-note">
-                    <span className="lucide-text-icon">☷</span>
-                    <p>普通日会显示当天打卡项目；需要跳过当天时再打开休息日开关。</p>
-                </div>
-            </section>
 
-            <section className="checkin-editor-section checkin-editor-items-section">
-                {selectedPlan.kind === 'rest' ? (
-                    <div className="checkin-editor-rest-state">
-                        <span>当天休息</span>
-                        <p>今天不计入本周目标，打卡列表会隐藏。</p>
-                    </div>
-                ) : (
-                    <>
-                        <div className="checkin-editor-section-head checkin-editor-content-head">
-                            <div className="checkin-editor-title-wrap">
-                                <strong>{selectedMeta.label}内容</strong>
-                                <p>{selectedPlan.kind === 'inherit' ? '当天使用最近一个普通计划日的打卡项目' : '非休息日可编辑当天打卡项目；无单独内容时继承前一天'}</p>
-                            </div>
-                            <span className="checkin-editor-plan-badge">
-                                {selectedPlan.kind === 'inherit' ? '已继承前一天' : '✎ 计划日'}
-                            </span>
-                        </div>
-
-                        <div className="checkin-editor-section-head">
-                            <div className="checkin-editor-title-wrap">
-                                <strong>打卡项目</strong>
-                                <p>新增时先选择番茄钟或通用；通用标题可编辑</p>
-                            </div>
-                            <button
-                                type="button"
-                                className="checkin-editor-primary"
-                                aria-label="新增栏目"
-                                onClick={beginAddItem}
+                <div className="checkin-editor-items">
+                    {draft.items.map((item) => {
+                        const icon = resolveCheckinItemIcon(item);
+                        const modeLabel = item.editMode === 'count' ? '次数' : '周期';
+                        return (
+                            <article
+                                key={item.id}
+                                className="checkin-editor-item-row repeat-plan-item-row"
+                                data-testid={`checkin-item-row-${item.id}`}
+                                style={{
+                                    '--item-color': itemColor(item),
+                                    '--checkin-item-color': itemColor(item),
+                                } as CSSProperties}
                             >
-                                + 新增栏目
-                            </button>
-                        </div>
-
-                        <div className="checkin-editor-items">
-                            {selectedPlan.kind !== 'inherit' && isChoosingNewType ? (
-                                <div className="checkin-editor-type-card">
-                                    <div className="checkin-editor-type-card-head">
-                                        <div className="checkin-editor-title-wrap">
-                                            <strong>选择新栏目类型</strong>
-                                            <p>先选择类型，再填写每次数量与每日目标</p>
-                                        </div>
-                                        <span>✣</span>
-                                    </div>
-                                    <div className="checkin-editor-type-options">
+                                <div className="checkin-editor-item-main">
+                                    <div className="checkin-editor-icon-wrap">
                                         <button
                                             type="button"
-                                            className="checkin-editor-type-option pomodoro"
-                                            disabled={hasPomodoroItem}
-                                            onClick={() => addItem('pomodoroFocus')}
+                                            className="checkin-item-icon-button"
+                                            aria-label={`更换 ${item.title} 图标`}
+                                            onClick={() => setOpenIconPickerFor(openIconPickerFor === item.id ? null : item.id)}
                                         >
-                                            <span>↺</span>
-                                            <strong>番茄钟</strong>
-                                            <small>使用专注时长</small>
+                                            <CheckinItemIconGlyph icon={icon} />
                                         </button>
-                                        <button
-                                            type="button"
-                                            className="checkin-editor-type-option"
-                                            onClick={() => addItem('manual')}
-                                        >
-                                            <span>✎</span>
-                                            <strong>通用</strong>
-                                            <small>自定义名称与单位</small>
-                                        </button>
-                                    </div>
-                                </div>
-                            ) : null}
-
-                            {selectedPlan.kind === 'inherit' ? (
-                                <div className="checkin-editor-inherit-state">
-                                    <span>已继承前一天计划</span>
-                                    <p>今天会显示最近一个普通计划日的打卡项目。</p>
-                                    <button type="button" className="checkin-editor-primary" onClick={inheritSelectedDay}>
-                                        基于前一天计划
-                                    </button>
-                                </div>
-                            ) : selectedItems.length === 0 ? (
-                                <div className="checkin-editor-empty">
-                                    <span>还没有当天专属项目</span>
-                                    <button type="button" className="checkin-editor-primary" onClick={inheritSelectedDay}>
-                                        基于前一天计划
-                                    </button>
-                                </div>
-                            ) : selectedItems.map((item) => {
-                                const icon = resolveCheckinItemIcon(item);
-                                const color = itemColor(item);
-                                return (
-                                    <div
-                                        key={item.id}
-                                        data-testid={`checkin-item-row-${item.id}`}
-                                        className="checkin-editor-item-row"
-                                        style={{ '--checkin-item-color': color } as CSSProperties}
-                                        onContextMenu={(event) => event.preventDefault()}
-                                    >
-                                        <div className="checkin-editor-item-main">
-                                            <button
-                                                type="button"
-                                                className="checkin-item-icon-button"
-                                                aria-label={`更换 ${item.title} 图标`}
-                                                onClick={() => setOpenIconPickerFor((current) => (
-                                                    current === item.id ? null : item.id
+                                        {openIconPickerFor === item.id ? (
+                                            <div className="checkin-icon-picker" role="menu">
+                                                {CHECKIN_ITEM_ICON_OPTIONS.map((option) => (
+                                                    <button
+                                                        key={option.id}
+                                                        type="button"
+                                                        role="menuitem"
+                                                        aria-label={option.label}
+                                                        onClick={() => {
+                                                            updateItem(item.id, { icon: option.id });
+                                                            setOpenIconPickerFor(null);
+                                                        }}
+                                                    >
+                                                        <CheckinItemIconGlyph icon={option.id} />
+                                                    </button>
                                                 ))}
-                                            >
-                                                <CheckinItemIconGlyph icon={icon} />
-                                            </button>
-                                            <div className="checkin-editor-item-copy">
-                                                <input
-                                                    aria-label={item.title === '新栏目' ? '新栏目名称' : `${item.title} 标题`}
-                                                    value={item.title}
-                                                    onChange={(event) => updateItem(item.id, { title: event.target.value })}
-                                                />
-                                                <p>每次 {item.perUseAmount ?? (item.type === 'pomodoroFocus' ? 25 : 1)} {item.perUseUnit ?? (item.type === 'pomodoroFocus' ? '分钟' : '次')}，目标 {item.targetCount} 次</p>
-                                            </div>
-                                            {openIconPickerFor === item.id ? (
-                                                <div className="checkin-icon-picker" role="menu" aria-label={`${item.title} 图标选择`}>
-                                                    {CHECKIN_ITEM_ICON_OPTIONS.map((option) => (
-                                                        <button
-                                                            key={option.id}
-                                                            type="button"
-                                                            role="menuitem"
-                                                            aria-label={option.label}
-                                                            onClick={() => {
-                                                                updateItem(item.id, { icon: option.id });
-                                                                setOpenIconPickerFor(null);
-                                                            }}
-                                                        >
-                                                            <CheckinItemIconGlyph icon={option.id} />
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            ) : null}
-                                        </div>
-
-                                        <label className="checkin-item-metric">
-                                            <span>每次</span>
-                                            <span className="checkin-item-metric-line">
-                                                <input
-                                                    aria-label={`${item.title} 每次数量`}
-                                                    type="number"
-                                                    min={0}
-                                                    value={item.perUseAmount ?? (item.type === 'pomodoroFocus' ? 25 : 1)}
-                                                    onChange={(event) => updateItem(item.id, {
-                                                        perUseAmount: Math.max(0, Number(event.target.value) || 0),
-                                                    })}
-                                                />
-                                                <input
-                                                    aria-label={`${item.title} 每次单位`}
-                                                    value={item.perUseUnit ?? (item.type === 'pomodoroFocus' ? '分钟' : '次')}
-                                                    onChange={(event) => updateItem(item.id, { perUseUnit: event.target.value })}
-                                                />
-                                            </span>
-                                        </label>
-
-                                        <label className="checkin-item-metric">
-                                            <span>目标</span>
-                                            <span className="checkin-item-metric-line">
-                                                <input
-                                                    aria-label={`${item.title} 每日目标`}
-                                                    type="number"
-                                                    min={1}
-                                                    value={item.targetCount}
-                                                    onChange={(event) => updateItem(item.id, {
-                                                        targetCount: Math.max(1, Number(event.target.value) || 1),
-                                                    })}
-                                                />
-                                                <em>次</em>
-                                            </span>
-                                        </label>
-
-                                        <button
-                                            type="button"
-                                            className="checkin-editor-row-action"
-                                            aria-label={`打开 ${item.title} 操作菜单`}
-                                            onClick={() => {
-                                                setOpenIconPickerFor(null);
-                                                setRowMenu((current) => (
-                                                    current?.itemId === item.id
-                                                        ? null
-                                                        : { itemId: item.id }
-                                                ));
-                                            }}
-                                        >
-                                            ⋮⋮
-                                        </button>
-                                        {rowMenu?.itemId === item.id ? (
-                                            <div className="checkin-row-menu" role="menu">
-                                                <button type="button" role="menuitem" onClick={() => moveItem(item.id, -1)}>上移</button>
-                                                <button type="button" role="menuitem" onClick={() => moveItem(item.id, 1)}>下移</button>
-                                                <button type="button" role="menuitem" onClick={() => removeItem(item.id)}>删除栏目</button>
                                             </div>
                                         ) : null}
                                     </div>
-                                );
-                            })}
-                        </div>
 
-                        <div className="checkin-editor-rest-hint">
-                            <CheckinItemIconGlyph icon="moon" />
-                            <p>开启休息日后，本列表会被“当天休息”状态替换。</p>
-                        </div>
-                    </>
-                )}
+                                    <label className="checkin-editor-field title">
+                                        <span>事项</span>
+                                        <input
+                                            aria-label={`${item.title} 标题`}
+                                            value={item.title}
+                                            onChange={(event) => updateItem(item.id, { title: event.target.value })}
+                                        />
+                                    </label>
+
+                                    <label className="checkin-editor-field small">
+                                        <span>目标</span>
+                                        <input
+                                            aria-label={`${item.title} 目标次数`}
+                                            type="number"
+                                            min={1}
+                                            value={item.targetCount}
+                                            onChange={(event) => updateItem(item.id, { targetCount: Number(event.target.value) })}
+                                        />
+                                    </label>
+
+                                    <button
+                                        type="button"
+                                        className="checkin-editor-row-action"
+                                        aria-label={`删除 ${item.title}`}
+                                        onClick={() => removeItem(item.id)}
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+
+                                <div className="checkin-editor-mode-row" role="group" aria-label={`${item.title} 编辑模式`}>
+                                    <button
+                                        type="button"
+                                        className={item.editMode === 'cycle' ? 'active' : ''}
+                                        aria-label={`${item.title} 周期`}
+                                        onClick={() => setEditMode(item, 'cycle')}
+                                    >
+                                        周期
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={item.editMode === 'count' ? 'active' : ''}
+                                        aria-label={`${item.title} 次数`}
+                                        onClick={() => setEditMode(item, 'count')}
+                                    >
+                                        次数
+                                    </button>
+                                    <span>{modeLabel}</span>
+                                </div>
+
+                                {item.editMode === 'count' ? (
+                                    <div className="checkin-editor-count-grid">
+                                        <label className="checkin-editor-field">
+                                            <span>输入值</span>
+                                            <input
+                                                aria-label={`${item.title} 输入值`}
+                                                type="number"
+                                                min={0}
+                                                value={item.countInputValue ?? item.targetCount}
+                                                onChange={(event) => updateItem(item.id, { countInputValue: Number(event.target.value) })}
+                                            />
+                                        </label>
+                                        <label className="checkin-editor-field">
+                                            <span>每轮次数</span>
+                                            <input
+                                                aria-label={`${item.title} 每轮次数`}
+                                                type="number"
+                                                min={1}
+                                                value={item.countUnitSize ?? item.targetCount}
+                                                onChange={(event) => updateItem(item.id, { countUnitSize: Number(event.target.value) })}
+                                            />
+                                        </label>
+                                        <label className="checkin-editor-field">
+                                            <span>循环次数</span>
+                                            <input
+                                                aria-label={`${item.title} 循环次数`}
+                                                type="number"
+                                                min={1}
+                                                value={item.countLoopCount ?? 1}
+                                                onChange={(event) => updateItem(item.id, { countLoopCount: Number(event.target.value) })}
+                                            />
+                                        </label>
+                                    </div>
+                                ) : (
+                                    <div className="checkin-editor-repeat-days">
+                                        {WEEKDAY_META.map((day) => (
+                                            <button
+                                                key={day.key}
+                                                type="button"
+                                                className={item.repeatDays.includes(day.key) ? 'active' : ''}
+                                                aria-label={`${item.title} ${day.label}`}
+                                                aria-pressed={item.repeatDays.includes(day.key)}
+                                                onClick={() => toggleRepeatDay(item, day.key)}
+                                            >
+                                                {day.shortLabel}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </article>
+                        );
+                    })}
+                </div>
             </section>
 
             <button
@@ -559,10 +381,7 @@ export function CheckinPlanEditorPanel({ initialPlan, initialSelectedDay = 'mon'
                 aria-pressed={draft.carryToNextWeek}
                 onClick={toggleCarryToNextWeek}
             >
-                <span>
-                    <strong>下周沿用当前计划</strong>
-                    <small>保存后作为当前激活计划的下周默认配置</small>
-                </span>
+                <span>下周沿用当前计划</span>
                 <i />
             </button>
 

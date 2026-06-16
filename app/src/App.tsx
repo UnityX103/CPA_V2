@@ -270,16 +270,16 @@ export default function App() {
                     });
                     if (legacyCheckin) {
                         useCheckinStore.getState().hydrateCheckin({
-                            weeklyPlan: legacyCheckin.weeklyPlan,
+                            planTemplate: legacyCheckin.planTemplate,
                             dailyRecords: legacyCheckin.dailyRecords,
                         });
                     }
                 }
 
-                const beforeRollForward = useCheckinStore.getState().weeklyPlan;
+                const beforeRollForward = useCheckinStore.getState().planTemplate;
                 useCheckinStore.getState().rollForwardToDate(todayLocalDate());
                 const afterRollForward = useCheckinStore.getState();
-                if (afterRollForward.weeklyPlan !== beforeRollForward) {
+                if (afterRollForward.planTemplate !== beforeRollForward) {
                     await saveLocalSnapshot(stores);
                 }
                 const savedSnapshot = await saveLocalSnapshot(stores);

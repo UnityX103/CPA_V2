@@ -7,7 +7,7 @@ import { useBindingKeyStore } from '../bindingKey';
 import { useActiveAppStore } from '../activeApp';
 import { useAppUpdateStore } from '../appUpdate';
 import { BRIDGE_VERSION, type BridgeSnapshot } from './protocol';
-import { defaultWeeklyPlan, useCheckinStore } from '../checkin';
+import { defaultPlanTemplate, useCheckinStore } from '../checkin';
 
 const sampleRemoteState = {
     pomodoro: {
@@ -108,15 +108,16 @@ function makeSample(): BridgeSnapshot {
             errorMessage: null,
         },
         checkin: {
-            weeklyPlan: {
-                ...defaultWeeklyPlan('2026-05-18'),
-                days: {
-                    ...defaultWeeklyPlan('2026-05-18').days,
-                    mon: {
-                        kind: 'items',
-                        items: [{ id: 'manual-1', title: 'Read', type: 'manual', targetCount: 2 }],
-                    },
-                },
+            planTemplate: {
+                ...defaultPlanTemplate(),
+                items: [{
+                    id: 'manual-1',
+                    title: 'Read',
+                    type: 'manual',
+                    targetCount: 2,
+                    repeatDays: ['mon' as const],
+                    editMode: 'cycle',
+                }],
             },
             dailyRecords: {
                 '2026-05-18': {
@@ -176,7 +177,7 @@ beforeEach(() => {
         errorMessage: null,
     });
     useCheckinStore.setState({
-        weeklyPlan: defaultWeeklyPlan('2026-05-18'),
+        planTemplate: defaultPlanTemplate(),
         dailyRecords: {},
         lastError: null,
     });
@@ -219,9 +220,13 @@ describe('applySnapshotToMirrors', () => {
             lastCheckedAt: 1700000000000,
             errorMessage: null,
         });
-        expect(useCheckinStore.getState().weeklyPlan.days.mon).toEqual({
-            kind: 'items',
-            items: [{ id: 'manual-1', title: 'Read', type: 'manual', targetCount: 2 }],
+        expect(useCheckinStore.getState().planTemplate.items[0]).toEqual({
+            id: 'manual-1',
+            title: 'Read',
+            type: 'manual',
+            targetCount: 2,
+            repeatDays: ['mon'],
+            editMode: 'cycle',
         });
         expect(useCheckinStore.getState().dailyRecords['2026-05-18']).toEqual({
             date: '2026-05-18',
@@ -249,10 +254,10 @@ describe('applySnapshotToMirrors', () => {
         expect(useBindingKeyStore.getState().entries).toEqual(sample.bindingKey.entries);
         expect(useBindingKeyStore.getState().entries).not.toBe(sample.bindingKey.entries);
         expect(useBindingKeyStore.getState().entries[0]).not.toBe(sample.bindingKey.entries[0]);
-        expect(useCheckinStore.getState().weeklyPlan).toEqual(sample.checkin.weeklyPlan);
-        expect(useCheckinStore.getState().weeklyPlan).not.toBe(sample.checkin.weeklyPlan);
-        expect(useCheckinStore.getState().weeklyPlan.days).not.toBe(sample.checkin.weeklyPlan.days);
-        expect(useCheckinStore.getState().weeklyPlan.days.mon).not.toBe(sample.checkin.weeklyPlan.days.mon);
+        expect(useCheckinStore.getState().planTemplate).toEqual(sample.checkin.planTemplate);
+        expect(useCheckinStore.getState().planTemplate).not.toBe(sample.checkin.planTemplate);
+        expect(useCheckinStore.getState().planTemplate.items).not.toBe(sample.checkin.planTemplate.items);
+        expect(useCheckinStore.getState().planTemplate.items[0]).not.toBe(sample.checkin.planTemplate.items[0]);
         expect(useCheckinStore.getState().dailyRecords).toEqual(sample.checkin.dailyRecords);
         expect(useCheckinStore.getState().dailyRecords).not.toBe(sample.checkin.dailyRecords);
         expect(useCheckinStore.getState().dailyRecords['2026-05-18']).not.toBe(sample.checkin.dailyRecords['2026-05-18']);
@@ -266,9 +271,7 @@ describe('applySnapshotToMirrors', () => {
         sample.bindingKey.entries[0].label = 'Mutated';
         sample.bindingKey.entries[0].input = { kind: 'mouse', button: 'right' };
         sample.checkin.dailyRecords['2026-05-18'].countsByItemId['manual-1'] = 99;
-        if (sample.checkin.weeklyPlan.days.mon.kind === 'items') {
-            sample.checkin.weeklyPlan.days.mon.items[0].title = 'Mutated';
-        }
+        sample.checkin.planTemplate.items[0].title = 'Mutated';
 
         expect(useSettingsStore.getState().dangerousChange?.nextValue).toBe(2.0);
         expect(usePomodoroStore.getState().endActionVideo.customVideoPath).toBe('/Users/xpy/Videos/focus-complete.mp4');
@@ -279,8 +282,7 @@ describe('applySnapshotToMirrors', () => {
         expect(useBindingKeyStore.getState().entries[0].label).toBe('A');
         expect(useBindingKeyStore.getState().entries[0].input).toEqual({ kind: 'keyboard', code: 0 });
         expect(useCheckinStore.getState().dailyRecords['2026-05-18'].countsByItemId['manual-1']).toBe(1);
-        const mondayPlan = useCheckinStore.getState().weeklyPlan.days.mon;
-        expect(mondayPlan.kind === 'items' ? mondayPlan.items[0].title : '').toBe('Read');
+        expect(useCheckinStore.getState().planTemplate.items[0].title).toBe('Read');
     });
 
     it('ignores snapshots with a mismatched bridge version', () => {

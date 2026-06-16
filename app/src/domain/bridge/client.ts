@@ -8,11 +8,10 @@ import { useBindingKeyStore, type BindingKeyEntry } from '../bindingKey';
 import { useActiveAppStore, type ActiveAppInfo } from '../activeApp';
 import { useAppUpdateStore } from '../appUpdate';
 import {
+    clonePlanTemplate,
     useCheckinStore,
-    type CheckinDayPlan,
+    type CheckinPlanTemplate,
     type DailyCheckinRecord,
-    type WeekdayKey,
-    type WeeklyCheckinPlan,
 } from '../checkin';
 import {
     BRIDGE_VERSION,
@@ -51,25 +50,8 @@ function cloneDangerousChange(change: DangerousChange | null): DangerousChange |
     return change ? { ...change } : null;
 }
 
-function cloneCheckinDayPlan(dayPlan: CheckinDayPlan): CheckinDayPlan {
-    if (dayPlan.kind !== 'items') return { ...dayPlan };
-    return {
-        kind: 'items',
-        items: dayPlan.items.map((item) => ({ ...item })),
-    };
-}
-
-function cloneWeeklyCheckinPlan(plan: WeeklyCheckinPlan): WeeklyCheckinPlan {
-    return {
-        weekStartDate: plan.weekStartDate,
-        carryToNextWeek: plan.carryToNextWeek,
-        days: Object.fromEntries(
-            Object.entries(plan.days).map(([day, dayPlan]) => [
-                day,
-                cloneCheckinDayPlan(dayPlan),
-            ]),
-        ) as Record<WeekdayKey, CheckinDayPlan>,
-    };
+function cloneCheckinPlanTemplate(template: CheckinPlanTemplate): CheckinPlanTemplate {
+    return clonePlanTemplate(template);
 }
 
 function cloneDailyCheckinRecord(record: DailyCheckinRecord): DailyCheckinRecord {
@@ -159,7 +141,7 @@ export function applySnapshotToMirrors(snap: BridgeSnapshot): void {
     });
     useAppUpdateStore.getState().applySnapshot({ ...snap.appUpdate });
     useCheckinStore.setState({
-        weeklyPlan: cloneWeeklyCheckinPlan(snap.checkin.weeklyPlan),
+        planTemplate: cloneCheckinPlanTemplate(snap.checkin.planTemplate),
         dailyRecords: cloneDailyCheckinRecords(snap.checkin.dailyRecords),
         lastError: snap.checkin.lastError,
     });

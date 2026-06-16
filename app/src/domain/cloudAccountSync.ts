@@ -138,7 +138,7 @@ export function useCloudAccountSync(opts: { enabled?: boolean } = {}) {
         });
 
         const unsubCheckin = useCheckinStore.subscribe((s, p) => {
-            if (s.weeklyPlan !== p.weeklyPlan || s.dailyRecords !== p.dailyRecords) {
+            if (s.planTemplate !== p.planTemplate || s.dailyRecords !== p.dailyRecords) {
                 saveLocalNow();
                 scheduleSave();
             }

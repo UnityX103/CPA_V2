@@ -2,7 +2,12 @@ import '@testing-library/jest-dom/vitest';
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useSettingsStore } from './domain/settings';
-import { defaultWeeklyPlan, useCheckinStore, type WeeklyCheckinPlan } from './domain/checkin';
+import {
+    defaultPlanTemplate,
+    migrateWeeklyPlanToTemplate,
+    useCheckinStore,
+    type WeeklyCheckinPlan,
+} from './domain/checkin';
 import { usePomodoroStore } from './domain/pomodoro';
 
 const {
@@ -158,14 +163,6 @@ vi.mock('./ui/RemoteRoster', () => ({
 
 const { default: App } = await import('./App');
 
-function currentWeekStartFor(date: Date): string {
-    const d = new Date(date);
-    d.setHours(12, 0, 0, 0);
-    const diff = (d.getDay() + 6) % 7;
-    d.setDate(d.getDate() - diff);
-    return d.toISOString().slice(0, 10);
-}
-
 beforeEach(() => {
     appUpdateCleanup.mockClear();
     hydrateAppUpdate.mockClear();
@@ -249,7 +246,7 @@ beforeEach(() => {
         lastEndEvent: null,
     });
     useCheckinStore.setState({
-        weeklyPlan: defaultWeeklyPlan(currentWeekStartFor(new Date())),
+        planTemplate: defaultPlanTemplate(),
         dailyRecords: {},
         lastError: null,
     });
@@ -518,7 +515,7 @@ describe('main App window composition', () => {
                 syncedKeyId: 'space',
             },
             checkin: {
-                weeklyPlan: defaultWeeklyPlan('2026-05-18'),
+                planTemplate: defaultPlanTemplate(),
                 dailyRecords: {},
             },
         });
@@ -574,7 +571,7 @@ describe('main App window composition', () => {
                 syncedKeyId: null,
             },
             checkin: {
-                weeklyPlan: defaultWeeklyPlan('2026-05-18'),
+                planTemplate: defaultPlanTemplate(),
                 dailyRecords: {},
             },
         });
@@ -613,7 +610,7 @@ describe('main App window composition', () => {
                         syncedKeyId: null,
                     },
                     checkin: {
-                        weeklyPlan: defaultWeeklyPlan('2026-05-18'),
+                        planTemplate: defaultPlanTemplate(),
                         dailyRecords: {},
                     },
                 },
@@ -648,9 +645,10 @@ describe('main App window composition', () => {
                 sun: { kind: 'rest' },
             },
         };
+        const migratedTemplate = migrateWeeklyPlanToTemplate(oldPlan);
         loadPersistedCheckinMock.mockResolvedValue({
-            schemaVersion: 1,
-            weeklyPlan: oldPlan,
+            schemaVersion: 2,
+            planTemplate: migratedTemplate,
             dailyRecords: {},
         });
 
@@ -659,10 +657,7 @@ describe('main App window composition', () => {
         await waitFor(() => expect(savePersistedUserPreferencesMock).toHaveBeenCalledWith(
             expect.objectContaining({
                 checkin: {
-                    weeklyPlan: {
-                        ...oldPlan,
-                        weekStartDate: currentWeekStartFor(new Date()),
-                    },
+                    planTemplate: migratedTemplate,
                     dailyRecords: {},
                 },
             }),

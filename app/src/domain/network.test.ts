@@ -83,18 +83,10 @@ function makeCloudSnapshot(): CloudAccountData {
             syncedKeyId: null,
         },
         checkin: {
-            weeklyPlan: {
-                weekStartDate: '2026-05-18',
+            planTemplate: {
+                schemaVersion: 2,
                 carryToNextWeek: true,
-                days: {
-                    mon: { kind: 'items', items: [] },
-                    tue: { kind: 'inherit' },
-                    wed: { kind: 'inherit' },
-                    thu: { kind: 'inherit' },
-                    fri: { kind: 'inherit' },
-                    sat: { kind: 'inherit' },
-                    sun: { kind: 'rest' },
-                },
+                items: [],
             },
             dailyRecords: {},
         },

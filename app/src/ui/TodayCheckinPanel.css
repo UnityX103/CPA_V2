@@ -226,7 +226,11 @@
 }
 
 .today-checkin-panel.is-complete .today-checkin-status,
-.today-checkin-panel.is-rest .today-checkin-status {
+.today-checkin-panel.is-no-plan .today-checkin-status {
     background: #dcfce7;
     color: #34a853;
+}
+
+.today-checkin-no-plan span {
+    color: #214e34;
 }
