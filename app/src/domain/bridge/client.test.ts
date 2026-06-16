@@ -1,13 +1,38 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { applySnapshotToMirrors } from './client';
+import { act, cleanup, render, screen } from '@testing-library/react';
+import { createElement } from 'react';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { applySnapshotToMirrors, useBridgeClient } from './client';
 import { useSettingsStore } from '../settings';
 import { usePomodoroStore } from '../pomodoro';
 import { useNetworkStore } from '../network';
 import { useBindingKeyStore } from '../bindingKey';
 import { useActiveAppStore } from '../activeApp';
 import { useAppUpdateStore } from '../appUpdate';
-import { BRIDGE_VERSION, type BridgeSnapshot } from './protocol';
+import { BRIDGE_VERSION, EVT_STATE, type BridgeSnapshot } from './protocol';
 import { defaultPlanTemplate, useCheckinStore } from '../checkin';
+
+const { emitMock, listenMock, eventHandlers } = vi.hoisted(() => {
+    const handlers = new Map<string, (event: { payload: unknown }) => void>();
+    return {
+        emitMock: vi.fn(),
+        listenMock: vi.fn((eventName: string, handler: (event: { payload: unknown }) => void) => {
+            handlers.set(eventName, handler);
+            return Promise.resolve(() => {
+                if (handlers.get(eventName) === handler) {
+                    handlers.delete(eventName);
+                }
+            });
+        }),
+        eventHandlers: handlers,
+    };
+});
+
+vi.mock('@tauri-apps/api/webviewWindow', () => ({
+    WebviewWindow: {
+        getByLabel: vi.fn(() => Promise.resolve({ emit: emitMock })),
+    },
+}));
+vi.mock('@tauri-apps/api/event', () => ({ listen: listenMock }));
 
 const sampleRemoteState = {
     pomodoro: {
@@ -133,6 +158,10 @@ function makeSample(): BridgeSnapshot {
 }
 
 beforeEach(() => {
+    vi.useRealTimers();
+    emitMock.mockClear();
+    listenMock.mockClear();
+    eventHandlers.clear();
     useSettingsStore.setState({
         uiScale: 1.0,
         committedUiScale: 1.0,
@@ -184,6 +213,16 @@ beforeEach(() => {
         lastError: null,
     });
 });
+
+afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+});
+
+function BridgeClientHost() {
+    const ready = useBridgeClient();
+    return createElement('div', { 'data-testid': 'bridge-ready' }, ready ? 'ready' : 'waiting');
+}
 
 describe('applySnapshotToMirrors', () => {
     it('writes every snapshot section into the corresponding store', () => {
@@ -367,5 +406,38 @@ describe('applySnapshotToMirrors', () => {
             window_title: 'Docs',
             icon_data_url: 'data:image/png;base64,safari-icon',
         });
+    });
+});
+
+describe('useBridgeClient', () => {
+    it('keeps requesting the initial host snapshot until a mirror window is hydrated', async () => {
+        vi.useFakeTimers();
+        render(createElement(BridgeClientHost));
+
+        await act(async () => {
+            await Promise.resolve();
+            await Promise.resolve();
+        });
+        expect(emitMock).toHaveBeenCalledTimes(1);
+
+        await act(async () => {
+            vi.advanceTimersByTime(1500);
+            await Promise.resolve();
+        });
+
+        expect(emitMock).toHaveBeenCalledTimes(2);
+
+        act(() => {
+            eventHandlers.get(EVT_STATE)?.({ payload: makeSample() });
+        });
+        expect(screen.getByTestId('bridge-ready').textContent).toBe('ready');
+
+        emitMock.mockClear();
+        await act(async () => {
+            vi.advanceTimersByTime(1500);
+            await Promise.resolve();
+        });
+
+        expect(emitMock).not.toHaveBeenCalled();
     });
 });

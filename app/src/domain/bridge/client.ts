@@ -20,6 +20,8 @@ import {
     type BridgeSnapshot,
 } from './protocol';
 
+const INITIAL_SNAPSHOT_RETRY_MS = 1000;
+
 function clonePlayer(player: RemotePlayer): RemotePlayer {
     return {
         ...player,
@@ -153,11 +155,28 @@ export function useBridgeClient(): boolean {
 
     useEffect(() => {
         let cancelled = false;
+        let initialSnapshotReceived = false;
+        let retryTimer: number | null = null;
         const unlistens: UnlistenFn[] = [];
+
+        async function requestInitialSnapshot(): Promise<void> {
+            try {
+                const main = await WebviewWindow.getByLabel('main');
+                if (cancelled || initialSnapshotReceived) return;
+                await main?.emit(EVT_STATE_REQUEST, {});
+            } catch (err) {
+                console.warn('[bridge] failed to request initial snapshot', err);
+            }
+        }
 
         listen<BridgeSnapshot>(EVT_STATE, (e) => {
             applySnapshotToMirrors(e.payload);
             if (e.payload.v === BRIDGE_VERSION) {
+                initialSnapshotReceived = true;
+                if (retryTimer != null) {
+                    window.clearInterval(retryTimer);
+                    retryTimer = null;
+                }
                 setHasInitialSnapshot(true);
             }
         })
@@ -165,19 +184,22 @@ export function useBridgeClient(): boolean {
                 if (cancelled) { u(); return; }
                 unlistens.push(u);
                 // Listener attached. Now safe to request the initial snapshot — the host's
-                // reply via EVT_STATE will land in our listener.
-                try {
-                    const main = await WebviewWindow.getByLabel('main');
-                    if (cancelled) return;
-                    await main?.emit(EVT_STATE_REQUEST, {});
-                } catch (err) {
-                    console.warn('[bridge] failed to request initial snapshot', err);
+                // reply via EVT_STATE will land in our listener. Hidden windows can attach
+                // before the main host listener is ready, so retry until the first snapshot.
+                await requestInitialSnapshot();
+                if (!cancelled && !initialSnapshotReceived) {
+                    retryTimer = window.setInterval(() => {
+                        void requestInitialSnapshot();
+                    }, INITIAL_SNAPSHOT_RETRY_MS);
                 }
             })
             .catch((err) => { console.warn('[bridge] failed to attach listener', err); });
 
         return () => {
             cancelled = true;
+            if (retryTimer != null) {
+                window.clearInterval(retryTimer);
+            }
             unlistens.forEach((u) => u());
         };
     }, []);
