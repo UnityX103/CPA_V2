@@ -6,12 +6,15 @@ import { TodayCheckinPanel } from './ui/TodayCheckinPanel';
 
 export default function TodayCheckinApp() {
     const bridgeReady = useBridgeClient();
-    useTodayCheckinWindowSize(bridgeReady);
+    const checkinEnabled = useSettingsStore((s) => s.checkinEnabled);
+    const planPanelEnabled = useSettingsStore((s) => s.planPanelEnabled);
     const uiScale = useSettingsStore((s) => s.uiScale);
+    const shouldRenderPanel = bridgeReady && checkinEnabled && planPanelEnabled;
+    useTodayCheckinWindowSize(shouldRenderPanel);
 
     return (
         <div className="today-checkin-window-root" style={{ '--app-ui-scale': String(uiScale) } as CSSProperties}>
-            {bridgeReady ? <TodayCheckinPanel /> : null}
+            {shouldRenderPanel ? <TodayCheckinPanel /> : null}
         </div>
     );
 }

@@ -96,6 +96,18 @@ describe('useCheckinWindowController', () => {
         expect(invokeMock).not.toHaveBeenCalledWith('close_checkin_editor_window');
     });
 
+    it('reopens the today check-in window when check-in is re-enabled and the plan panel is enabled', async () => {
+        useSettingsStore.setState({ checkinEnabled: false, planPanelEnabled: true });
+        render(<CheckinWindowControllerHost />);
+        invokeMock.mockClear();
+
+        useSettingsStore.setState({ checkinEnabled: true });
+
+        await waitFor(() => {
+            expect(invokeMock).toHaveBeenCalledWith('open_today_checkin_window');
+        });
+    });
+
     it('open helpers no-op when check-in is disabled', async () => {
         useSettingsStore.setState({ checkinEnabled: false });
 

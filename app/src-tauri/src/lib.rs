@@ -351,7 +351,7 @@ fn build_today_checkin_window(
         .decorations(false)
         .shadow(false)
         .skip_taskbar(true)
-        .visible(true)
+        .visible(false)
         .always_on_top(false)
         .build()?;
     window_helpers::install_first_mouse_only(&w);

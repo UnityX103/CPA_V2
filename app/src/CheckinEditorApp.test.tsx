@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom/vitest';
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { useSettingsStore } from './domain/settings';
 
 const { useBridgeClientMock, useCheckinEditorWindowSizeMock } = vi.hoisted(() => ({
     useBridgeClientMock: vi.fn(),
@@ -20,6 +21,14 @@ describe('CheckinEditorApp', () => {
         useBridgeClientMock.mockReset();
         useBridgeClientMock.mockReturnValue(true);
         useCheckinEditorWindowSizeMock.mockReset();
+        useSettingsStore.setState({
+            checkinEnabled: true,
+            planPanelEnabled: true,
+            uiScale: 1,
+            committedUiScale: 1,
+            autostartEnabled: false,
+            dangerousChange: null,
+        });
     });
 
     afterEach(() => {
@@ -40,5 +49,14 @@ describe('CheckinEditorApp', () => {
 
         expect(screen.getByTestId('checkin-plan-editor-panel')).toBeInTheDocument();
         expect(useCheckinEditorWindowSizeMock).toHaveBeenCalledWith(true);
+    });
+
+    it('unmounts the editor panel when the check-in system is disabled', () => {
+        useSettingsStore.setState({ checkinEnabled: false });
+
+        render(<CheckinEditorApp />);
+
+        expect(screen.queryByTestId('checkin-plan-editor-panel')).toBeNull();
+        expect(useCheckinEditorWindowSizeMock).toHaveBeenCalledWith(false);
     });
 });

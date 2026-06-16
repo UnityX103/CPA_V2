@@ -88,7 +88,7 @@ describe('daily check-in window configuration', () => {
         const editorOpen = rustFunction(source, 'open_checkin_editor_window');
 
         expect(todayBuilder?.body).toMatch(/\.always_on_top\(false\)/);
-        expect(todayBuilder?.body).toMatch(/\.visible\(true\)/);
+        expect(todayBuilder?.body).toMatch(/\.visible\(false\)/);
         expect(editorBuilder?.body).toMatch(/\.always_on_top\(false\)/);
         expect(editorBuilder?.body).toMatch(/\.visible\(false\)/);
         expect(todayBuilder?.body).not.toMatch(/set_always_on_top_native/);
@@ -121,7 +121,7 @@ describe('daily check-in window configuration', () => {
         expect(checkinWindowSource).toMatch(/CHECKIN_EDITOR_MIN_HEIGHT\s*=\s*420/);
         expect(checkinWindowSource).toMatch(/useCheckinEditorWindowSize/);
         expect(checkinWindowSource).toMatch(/label:\s*'checkin-editor'[\s\S]*baseWidth:\s*CHECKIN_EDITOR_BASE_WIDTH[\s\S]*baseHeight:\s*CHECKIN_EDITOR_BASE_HEIGHT[\s\S]*minWidth:\s*CHECKIN_EDITOR_MIN_WIDTH[\s\S]*minHeight:\s*CHECKIN_EDITOR_MIN_HEIGHT[\s\S]*center:\s*true/);
-        expect(editorSource).toMatch(/useCheckinEditorWindowSize\(bridgeReady\)/);
+        expect(editorSource).toMatch(/useCheckinEditorWindowSize\(shouldRenderPanel\)/);
     });
 
     it('sizes the today check-in webview from the effective item count', () => {
@@ -133,6 +133,6 @@ describe('daily check-in window configuration', () => {
         expect(todayCheckinHeightForItemCount(3)).toBe(409);
         expect(checkinWindowSource).toMatch(/useTodayCheckinWindowSize/);
         expect(checkinWindowSource).toMatch(/todayCheckinHeightForItemCount\(itemCount\)/);
-        expect(todaySource).toMatch(/useTodayCheckinWindowSize\(bridgeReady\)/);
+        expect(todaySource).toMatch(/useTodayCheckinWindowSize\(shouldRenderPanel\)/);
     });
 });

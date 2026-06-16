@@ -6,12 +6,14 @@ import { CheckinPlanEditorPanel } from './ui/CheckinPlanEditorPanel';
 
 export default function CheckinEditorApp() {
     const bridgeReady = useBridgeClient();
-    useCheckinEditorWindowSize(bridgeReady);
+    const checkinEnabled = useSettingsStore((s) => s.checkinEnabled);
     const uiScale = useSettingsStore((s) => s.uiScale);
+    const shouldRenderPanel = bridgeReady && checkinEnabled;
+    useCheckinEditorWindowSize(shouldRenderPanel);
 
     return (
         <div className="checkin-editor-window-root" style={{ '--app-ui-scale': String(uiScale) } as CSSProperties}>
-            {bridgeReady ? <CheckinPlanEditorPanel /> : null}
+            {shouldRenderPanel ? <CheckinPlanEditorPanel /> : null}
         </div>
     );
 }

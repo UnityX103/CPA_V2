@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom/vitest';
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { useSettingsStore } from './domain/settings';
 
 const { useBridgeClientMock, useTodayCheckinWindowSizeMock } = vi.hoisted(() => ({
     useBridgeClientMock: vi.fn(),
@@ -20,6 +21,14 @@ describe('TodayCheckinApp', () => {
         useBridgeClientMock.mockReset();
         useBridgeClientMock.mockReturnValue(true);
         useTodayCheckinWindowSizeMock.mockReset();
+        useSettingsStore.setState({
+            checkinEnabled: true,
+            planPanelEnabled: true,
+            uiScale: 1,
+            committedUiScale: 1,
+            autostartEnabled: false,
+            dangerousChange: null,
+        });
     });
 
     afterEach(() => {
@@ -40,5 +49,23 @@ describe('TodayCheckinApp', () => {
 
         expect(screen.getByTestId('today-checkin-panel')).toBeInTheDocument();
         expect(useTodayCheckinWindowSizeMock).toHaveBeenCalledWith(true);
+    });
+
+    it('unmounts the today check-in panel when the check-in system is disabled', () => {
+        useSettingsStore.setState({ checkinEnabled: false, planPanelEnabled: true });
+
+        render(<TodayCheckinApp />);
+
+        expect(screen.queryByTestId('today-checkin-panel')).toBeNull();
+        expect(useTodayCheckinWindowSizeMock).toHaveBeenCalledWith(false);
+    });
+
+    it('unmounts the today check-in panel when the plan panel is disabled', () => {
+        useSettingsStore.setState({ checkinEnabled: true, planPanelEnabled: false });
+
+        render(<TodayCheckinApp />);
+
+        expect(screen.queryByTestId('today-checkin-panel')).toBeNull();
+        expect(useTodayCheckinWindowSizeMock).toHaveBeenCalledWith(false);
     });
 });
