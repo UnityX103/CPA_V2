@@ -255,6 +255,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+    vi.useRealTimers();
     cleanup();
 });
 
@@ -594,6 +595,62 @@ describe('main App window composition', () => {
         await waitFor(() => {
             expect(invokeMock).toHaveBeenCalledWith('open_today_checkin_window');
         });
+    });
+
+    it('opens the today check-in window from local preferences when account restore hangs', async () => {
+        vi.useFakeTimers();
+        loadPersistedUserPreferencesMock.mockResolvedValue({
+            schemaVersion: 1,
+            pomodoro: {
+                focusDurationSeconds: 1500,
+                breakDurationSeconds: 300,
+                totalRounds: 4,
+                autoStartBreak: true,
+                endActionMode: 'playVideo',
+                endActionVideo: { sourceKind: 'builtin', builtinVideoId: 'qianqian', customVideoPath: '' },
+            },
+            settings: {
+                uiScale: 1.03,
+                autostartEnabled: true,
+                checkinEnabled: true,
+                planPanelEnabled: true,
+            },
+            appUpdate: {
+                autoUpdateEnabled: true,
+            },
+            network: {
+                autoConnect: true,
+                playerName: 'Xpy',
+            },
+            bindingKey: {
+                panelEnabled: false,
+                entries: [],
+                syncedKeyId: null,
+            },
+            checkin: {
+                planTemplate: defaultPlanTemplate(),
+                dailyRecords: {},
+            },
+        });
+        restoreAccountSession.mockImplementation(() => new Promise(() => {}));
+
+        render(<App />);
+
+        await act(async () => {
+            await Promise.resolve();
+            await Promise.resolve();
+            await Promise.resolve();
+        });
+        expect(restoreAccountSession).toHaveBeenCalledTimes(1);
+        expect(invokeMock).not.toHaveBeenCalledWith('open_today_checkin_window');
+
+        await act(async () => {
+            vi.advanceTimersByTime(2500);
+            await Promise.resolve();
+            await Promise.resolve();
+        });
+
+        expect(invokeMock).toHaveBeenCalledWith('open_today_checkin_window');
     });
 
     it('prefers cloud archive when saved session restores successfully', async () => {

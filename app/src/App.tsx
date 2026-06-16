@@ -137,6 +137,24 @@ function waitForNetworkStartupResult(
     });
 }
 
+async function waitForAccountRestoreAttempt(
+    timeoutMs = STARTUP_ACCOUNT_RESTORE_TIMEOUT_MS,
+): Promise<'restored' | 'timeout'> {
+    let timeoutId: number | null = null;
+    const restoreAttempt = useNetworkStore.getState()
+        .restoreAccountSession()
+        .then(() => 'restored' as const);
+    const timeout = new Promise<'timeout'>((resolve) => {
+        timeoutId = window.setTimeout(() => resolve('timeout'), timeoutMs);
+    });
+
+    return Promise.race([restoreAttempt, timeout]).finally(() => {
+        if (timeoutId != null) {
+            window.clearTimeout(timeoutId);
+        }
+    });
+}
+
 export default function App() {
     useStateSync();
     useActiveAppListener();
@@ -224,12 +242,15 @@ export default function App() {
 
                 let cloudArchive: CloudAccountData | null = null;
                 try {
-                    await useNetworkStore.getState().restoreAccountSession();
-                    if (!cancelled) {
+                    const restoreResult = await waitForAccountRestoreAttempt();
+                    if (cancelled) return;
+                    if (restoreResult === 'restored') {
                         const source = await waitForNetworkStartupResult();
                         if (!cancelled && source === 'cloud') {
                             cloudArchive = useNetworkStore.getState().cloudData;
                         }
+                    } else if (restoreResult === 'timeout') {
+                        console.warn('[startup] account restore timed out; falling back to local archive');
                     }
                 } catch (error) {
                     console.warn('[startup] account restore failed; falling back to local archive', error);
