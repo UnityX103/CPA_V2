@@ -6,7 +6,7 @@ import { useStateSync } from './domain/stateSync';
 import { useActiveAppListener } from './domain/activeApp';
 import { useBindingKeyListener, useBindingKeyStore } from './domain/bindingKey';
 import { useBridgeHost } from './domain/bridge/host';
-import { openTodayCheckinWindow, useCheckinWindowController } from './domain/checkinWindow';
+import { openTodayCheckinWindow, raiseTodayCheckinWindow, useCheckinWindowController } from './domain/checkinWindow';
 import { useInputCounterWindowController } from './domain/inputCounterWindow';
 import { useRemotePlayerWindowController } from './domain/remotePlayerWindows';
 import { MAIN_WINDOW_BASE_SIZE, useScaledWindowSize } from './domain/scaledWindow';
@@ -294,6 +294,9 @@ export default function App() {
                 subscribeLocalPreferences(stores);
                 appUpdateCleanup = useAppUpdateStore.getState().startAutomaticChecks();
                 setLocalHydrated(true);
+                void openTodayCheckinWindow().catch((error) => {
+                    console.warn('[checkin] open persistent panel on startup failed', error);
+                });
             } catch (error) {
                 if (!cancelled) {
                     useCheckinStore.getState().setLastError(String(error));
@@ -321,8 +324,8 @@ export default function App() {
 
             useCheckinStore.getState().applyPomodoroFocusCompletion(todayLocalDate(), event.id);
             if (event.toPhase === 'break' && event.triggeredBy === 'timer') {
-                void openTodayCheckinWindow().catch((error) => {
-                    console.warn('[checkin] open panel on focus end failed', error);
+                void raiseTodayCheckinWindow().catch((error) => {
+                    console.warn('[checkin] raise panel on focus end failed', error);
                 });
             }
         });

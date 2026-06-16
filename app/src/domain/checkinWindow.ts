@@ -80,6 +80,12 @@ export async function openTodayCheckinWindow(): Promise<void> {
     await invoke('open_today_checkin_window');
 }
 
+export async function raiseTodayCheckinWindow(): Promise<void> {
+    const settings = useSettingsStore.getState();
+    if (!settings.checkinEnabled || !settings.planPanelEnabled) return;
+    await invoke('raise_today_checkin_window');
+}
+
 export async function closeTodayCheckinWindow(): Promise<void> {
     try {
         await invoke('close_today_checkin_window');

@@ -12,6 +12,7 @@ const {
     loadPersistedUserPreferencesMock,
     openCheckinEditorWindowMock,
     openTodayCheckinWindowMock,
+    raiseTodayCheckinWindowMock,
     readAutostartEnabledMock,
     savePersistedCheckinMock,
     savePersistedSettingsMock,
@@ -71,6 +72,7 @@ const {
         loadPersistedUserPreferencesMock: vi.fn(),
         openCheckinEditorWindowMock: vi.fn(),
         openTodayCheckinWindowMock: vi.fn(),
+        raiseTodayCheckinWindowMock: vi.fn(),
         readAutostartEnabledMock: vi.fn(),
         savePersistedCheckinMock: vi.fn(),
         savePersistedSettingsMock: vi.fn(),
@@ -98,6 +100,7 @@ vi.mock('./domain/bridge/host', () => ({ useBridgeHost }));
 vi.mock('./domain/checkinWindow', () => ({
     openCheckinEditorWindow: openCheckinEditorWindowMock,
     openTodayCheckinWindow: openTodayCheckinWindowMock,
+    raiseTodayCheckinWindow: raiseTodayCheckinWindowMock,
     useCheckinWindowController,
 }));
 vi.mock('./domain/inputCounterWindow', () => ({ useInputCounterWindowController }));
@@ -146,6 +149,8 @@ beforeEach(() => {
     openCheckinEditorWindowMock.mockResolvedValue(undefined);
     openTodayCheckinWindowMock.mockReset();
     openTodayCheckinWindowMock.mockResolvedValue(undefined);
+    raiseTodayCheckinWindowMock.mockReset();
+    raiseTodayCheckinWindowMock.mockResolvedValue(undefined);
     readAutostartEnabledMock.mockReset();
     readAutostartEnabledMock.mockResolvedValue(false);
     savePersistedSettingsMock.mockReset();
@@ -262,7 +267,7 @@ describe('checkin Pomodoro integration', () => {
         expect(record.processedPomodoroEndEventIds).toEqual([1, 2]);
     });
 
-    it('opens the check-in panel, not the plan editor, when a focus timer naturally ends', () => {
+    it('raises the always-visible check-in panel, not the plan editor, when a focus timer naturally ends', () => {
         render(<App />);
 
         act(() => {
@@ -271,7 +276,8 @@ describe('checkin Pomodoro integration', () => {
             });
         });
 
-        expect(openTodayCheckinWindowMock).toHaveBeenCalledTimes(1);
+        expect(raiseTodayCheckinWindowMock).toHaveBeenCalledTimes(1);
+        expect(openTodayCheckinWindowMock).not.toHaveBeenCalled();
         expect(openCheckinEditorWindowMock).not.toHaveBeenCalled();
     });
 
@@ -314,5 +320,6 @@ describe('checkin Pomodoro integration', () => {
 
         expect(useCheckinStore.getState().dailyRecords).toEqual({});
         expect(openTodayCheckinWindowMock).not.toHaveBeenCalled();
+        expect(raiseTodayCheckinWindowMock).not.toHaveBeenCalled();
     });
 });

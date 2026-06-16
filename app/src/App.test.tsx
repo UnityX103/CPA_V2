@@ -552,6 +552,50 @@ describe('main App window composition', () => {
         }));
     });
 
+    it('opens the today check-in window after startup when unified preferences enable check-in and omit the plan panel flag', async () => {
+        loadPersistedUserPreferencesMock.mockResolvedValue({
+            schemaVersion: 1,
+            pomodoro: {
+                focusDurationSeconds: 1500,
+                breakDurationSeconds: 300,
+                totalRounds: 4,
+                autoStartBreak: true,
+                endActionMode: 'playVideo',
+                endActionVideo: { sourceKind: 'builtin', builtinVideoId: 'qianqian', customVideoPath: '' },
+            },
+            settings: {
+                uiScale: 1.03,
+                autostartEnabled: true,
+                checkinEnabled: true,
+            },
+            appUpdate: {
+                autoUpdateEnabled: true,
+            },
+            network: {
+                autoConnect: true,
+                playerName: 'Xpy',
+            },
+            bindingKey: {
+                panelEnabled: false,
+                entries: [],
+                syncedKeyId: null,
+            },
+            checkin: {
+                planTemplate: defaultPlanTemplate(),
+                dailyRecords: {},
+            },
+        });
+        restoreAccountSession.mockImplementation(async () => {
+            useNetworkStore.setState({ accountStatus: 'guest' });
+        });
+
+        render(<App />);
+
+        await waitFor(() => {
+            expect(invokeMock).toHaveBeenCalledWith('open_today_checkin_window');
+        });
+    });
+
     it('prefers cloud archive when saved session restores successfully', async () => {
         loadPersistedUserPreferencesMock.mockResolvedValue({
             schemaVersion: 1,

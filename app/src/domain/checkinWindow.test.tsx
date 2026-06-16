@@ -5,6 +5,7 @@ import { useCheckinStore } from './checkin';
 import {
     openCheckinEditorWindow,
     openTodayCheckinWindow,
+    raiseTodayCheckinWindow,
     useCheckinWindowController,
 } from './checkinWindow';
 
@@ -113,5 +114,18 @@ describe('useCheckinWindowController', () => {
 
         expect(invokeMock).not.toHaveBeenCalledWith('open_today_checkin_window');
         expect(invokeMock).toHaveBeenCalledWith('open_checkin_editor_window');
+    });
+
+    it('raises the today check-in window only when check-in and the plan panel are enabled', async () => {
+        await raiseTodayCheckinWindow();
+
+        expect(invokeMock).toHaveBeenCalledWith('raise_today_checkin_window');
+
+        invokeMock.mockClear();
+        useSettingsStore.setState({ checkinEnabled: true, planPanelEnabled: false });
+
+        await raiseTodayCheckinWindow();
+
+        expect(invokeMock).not.toHaveBeenCalledWith('raise_today_checkin_window');
     });
 });

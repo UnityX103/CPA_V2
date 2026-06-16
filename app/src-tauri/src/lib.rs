@@ -339,7 +339,7 @@ fn build_input_counter_window_hidden(
     Ok(w)
 }
 
-fn build_today_checkin_window_hidden(
+fn build_today_checkin_window(
     app: &tauri::AppHandle,
 ) -> Result<tauri::WebviewWindow, tauri::Error> {
     let url = WebviewUrl::App("index.html?window=today-checkin".into());
@@ -351,7 +351,7 @@ fn build_today_checkin_window_hidden(
         .decorations(false)
         .shadow(false)
         .skip_taskbar(true)
-        .visible(false)
+        .visible(true)
         .always_on_top(false)
         .build()?;
     window_helpers::install_first_mouse_only(&w);
@@ -496,6 +496,11 @@ async fn open_today_checkin_window(app: tauri::AppHandle) -> Result<(), String> 
 }
 
 #[tauri::command]
+async fn raise_today_checkin_window(app: tauri::AppHandle) -> Result<(), String> {
+    focus_existing_window(app, "today-checkin")
+}
+
+#[tauri::command]
 async fn open_checkin_editor_window(app: tauri::AppHandle) -> Result<(), String> {
     focus_existing_window(app, "checkin-editor")
 }
@@ -561,8 +566,8 @@ pub fn run() {
             if let Err(e) = build_input_counter_window_hidden(app.handle()) {
                 eprintln!("[setup] build_input_counter_window_hidden failed: {e}");
             }
-            if let Err(e) = build_today_checkin_window_hidden(app.handle()) {
-                eprintln!("[setup] build_today_checkin_window_hidden failed: {e}");
+            if let Err(e) = build_today_checkin_window(app.handle()) {
+                eprintln!("[setup] build_today_checkin_window failed: {e}");
             }
             if let Err(e) = build_checkin_editor_window_hidden(app.handle()) {
                 eprintln!("[setup] build_checkin_editor_window_hidden failed: {e}");
@@ -720,6 +725,7 @@ pub fn run() {
             resize_input_counter_window,
             focus_app_window,
             open_today_checkin_window,
+            raise_today_checkin_window,
             open_checkin_editor_window,
             close_today_checkin_window,
             close_checkin_editor_window,

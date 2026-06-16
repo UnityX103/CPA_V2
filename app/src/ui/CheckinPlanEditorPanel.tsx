@@ -169,11 +169,6 @@ export function CheckinPlanEditorPanel({ initialTemplate }: CheckinPlanEditorPan
         updateItem(item.id, { editMode });
     };
 
-    const toggleCarryToNextWeek = () => {
-        setIsDirty(true);
-        setDraft((current) => ({ ...current, carryToNextWeek: !current.carryToNextWeek }));
-    };
-
     const closeWindow = () => {
         setOpenIconPickerFor(null);
         setDraft(clonePlanTemplate(sourceTemplate));
@@ -204,16 +199,15 @@ export function CheckinPlanEditorPanel({ initialTemplate }: CheckinPlanEditorPan
             <header className="checkin-editor-head">
                 <div className="checkin-editor-title-wrap">
                     <h2>计划编辑</h2>
-                    <p>每个事项单独设置重复日期和次数信息</p>
+                    <p>每个打卡事项都可以单独设置重复周期；保存后立即作为当前计划模板</p>
                 </div>
-                <span className="checkin-editor-status"><i />按事项编辑</span>
             </header>
 
             <section className="checkin-editor-section checkin-editor-items-section" aria-label="打卡计划项目">
                 <div className="checkin-editor-section-head checkin-editor-content-head">
                     <div className="checkin-editor-title-wrap">
                         <strong>打卡计划项目</strong>
-                        <p>{draft.items.length} 个事项</p>
+                        <p>每个项目设置自己的重复周期，不再按某一天统一编辑</p>
                     </div>
                     <button
                         type="button"
@@ -228,7 +222,10 @@ export function CheckinPlanEditorPanel({ initialTemplate }: CheckinPlanEditorPan
                 <div className="checkin-editor-items">
                     {draft.items.map((item) => {
                         const icon = resolveCheckinItemIcon(item);
-                        const modeLabel = item.editMode === 'count' ? '次数' : '周期';
+                        const isCountMode = item.editMode === 'count';
+                        const subtitle = item.type === 'pomodoroFocus'
+                            ? '每天自动生成番茄钟打卡'
+                            : `每次完成记录 ${item.perUseAmount ?? 1}${item.perUseUnit ?? '次'}`;
                         return (
                             <article
                                 key={item.id}
@@ -239,88 +236,91 @@ export function CheckinPlanEditorPanel({ initialTemplate }: CheckinPlanEditorPan
                                     '--checkin-item-color': itemColor(item),
                                 } as CSSProperties}
                             >
-                                <div className="checkin-editor-item-main">
-                                    <div className="checkin-editor-icon-wrap">
-                                        <button
-                                            type="button"
-                                            className="checkin-item-icon-button"
-                                            aria-label={`更换 ${item.title} 图标`}
-                                            onClick={() => setOpenIconPickerFor(openIconPickerFor === item.id ? null : item.id)}
-                                        >
-                                            <CheckinItemIconGlyph icon={icon} />
-                                        </button>
-                                        {openIconPickerFor === item.id ? (
-                                            <div className="checkin-icon-picker" role="menu">
-                                                {CHECKIN_ITEM_ICON_OPTIONS.map((option) => (
-                                                    <button
-                                                        key={option.id}
-                                                        type="button"
-                                                        role="menuitem"
-                                                        aria-label={option.label}
-                                                        onClick={() => {
-                                                            updateItem(item.id, { icon: option.id });
-                                                            setOpenIconPickerFor(null);
-                                                        }}
-                                                    >
-                                                        <CheckinItemIconGlyph icon={option.id} />
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        ) : null}
+                                <div className="checkin-editor-item-top">
+                                    <div className="checkin-editor-item-name">
+                                        <div className="checkin-editor-icon-wrap">
+                                            <button
+                                                type="button"
+                                                className="checkin-item-icon-button"
+                                                aria-label={`更换 ${item.title} 图标`}
+                                                onClick={() => setOpenIconPickerFor(openIconPickerFor === item.id ? null : item.id)}
+                                            >
+                                                <CheckinItemIconGlyph icon={icon} />
+                                            </button>
+                                            {openIconPickerFor === item.id ? (
+                                                <div className="checkin-icon-picker" role="menu">
+                                                    {CHECKIN_ITEM_ICON_OPTIONS.map((option) => (
+                                                        <button
+                                                            key={option.id}
+                                                            type="button"
+                                                            role="menuitem"
+                                                            aria-label={option.label}
+                                                            onClick={() => {
+                                                                updateItem(item.id, { icon: option.id });
+                                                                setOpenIconPickerFor(null);
+                                                            }}
+                                                        >
+                                                            <CheckinItemIconGlyph icon={option.id} />
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            ) : null}
+                                        </div>
+                                        <div className="checkin-editor-item-copy">
+                                            <input
+                                                aria-label={`${item.title} 标题`}
+                                                value={item.title}
+                                                onChange={(event) => updateItem(item.id, { title: event.target.value })}
+                                            />
+                                            <p>
+                                                <span>{subtitle}</span>
+                                                <label className="checkin-editor-target-inline">
+                                                    目标
+                                                    <input
+                                                        aria-label={`${item.title} 目标次数`}
+                                                        type="number"
+                                                        min={1}
+                                                        value={item.targetCount}
+                                                        onChange={(event) => updateItem(item.id, { targetCount: Number(event.target.value) })}
+                                                    />
+                                                    次
+                                                </label>
+                                            </p>
+                                        </div>
                                     </div>
 
-                                    <label className="checkin-editor-field title">
-                                        <span>事项</span>
-                                        <input
-                                            aria-label={`${item.title} 标题`}
-                                            value={item.title}
-                                            onChange={(event) => updateItem(item.id, { title: event.target.value })}
-                                        />
-                                    </label>
-
-                                    <label className="checkin-editor-field small">
-                                        <span>目标</span>
-                                        <input
-                                            aria-label={`${item.title} 目标次数`}
-                                            type="number"
-                                            min={1}
-                                            value={item.targetCount}
-                                            onChange={(event) => updateItem(item.id, { targetCount: Number(event.target.value) })}
-                                        />
-                                    </label>
-
-                                    <button
-                                        type="button"
-                                        className="checkin-editor-row-action"
-                                        aria-label={`删除 ${item.title}`}
-                                        onClick={() => removeItem(item.id)}
-                                    >
-                                        ×
-                                    </button>
+                                    <div className="checkin-editor-item-actions">
+                                        <div className="checkin-editor-mode-row" role="group" aria-label={`${item.title} 编辑模式`}>
+                                            <button
+                                                type="button"
+                                                className={!isCountMode ? 'active' : ''}
+                                                aria-label={`${item.title} 周期`}
+                                                onClick={() => setEditMode(item, 'cycle')}
+                                            >
+                                                周期
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className={isCountMode ? 'active' : ''}
+                                                aria-label={`${item.title} 次数`}
+                                                onClick={() => setEditMode(item, 'count')}
+                                            >
+                                                次数
+                                            </button>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            className="checkin-editor-row-action"
+                                            aria-label={`删除 ${item.title}`}
+                                            onClick={() => removeItem(item.id)}
+                                        >
+                                            ⋮
+                                        </button>
+                                    </div>
                                 </div>
 
-                                <div className="checkin-editor-mode-row" role="group" aria-label={`${item.title} 编辑模式`}>
-                                    <button
-                                        type="button"
-                                        className={item.editMode === 'cycle' ? 'active' : ''}
-                                        aria-label={`${item.title} 周期`}
-                                        onClick={() => setEditMode(item, 'cycle')}
-                                    >
-                                        周期
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className={item.editMode === 'count' ? 'active' : ''}
-                                        aria-label={`${item.title} 次数`}
-                                        onClick={() => setEditMode(item, 'count')}
-                                    >
-                                        次数
-                                    </button>
-                                    <span>{modeLabel}</span>
-                                </div>
-
-                                {item.editMode === 'count' ? (
-                                    <div className="checkin-editor-count-grid">
+                                {isCountMode ? (
+                                    <div className="checkin-editor-count-grid checkin-editor-item-controls">
                                         <label className="checkin-editor-field">
                                             <span>输入值</span>
                                             <input
@@ -353,19 +353,25 @@ export function CheckinPlanEditorPanel({ initialTemplate }: CheckinPlanEditorPan
                                         </label>
                                     </div>
                                 ) : (
-                                    <div className="checkin-editor-repeat-days">
-                                        {WEEKDAY_META.map((day) => (
-                                            <button
-                                                key={day.key}
-                                                type="button"
-                                                className={item.repeatDays.includes(day.key) ? 'active' : ''}
-                                                aria-label={`${item.title} ${day.label}`}
-                                                aria-pressed={item.repeatDays.includes(day.key)}
-                                                onClick={() => toggleRepeatDay(item, day.key)}
-                                            >
-                                                {day.shortLabel}
-                                            </button>
-                                        ))}
+                                    <div className="checkin-editor-repeat-controls checkin-editor-item-controls">
+                                        <div className="checkin-editor-cycle-select">
+                                            <span aria-hidden="true">▦</span>
+                                            <strong>每日重复</strong>
+                                        </div>
+                                        <div className="checkin-editor-repeat-days">
+                                            {WEEKDAY_META.map((day) => (
+                                                <button
+                                                    key={day.key}
+                                                    type="button"
+                                                    className={item.repeatDays.includes(day.key) ? 'active' : ''}
+                                                    aria-label={`${item.title} ${day.label}`}
+                                                    aria-pressed={item.repeatDays.includes(day.key)}
+                                                    onClick={() => toggleRepeatDay(item, day.key)}
+                                                >
+                                                    {day.shortLabel}
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
                             </article>
@@ -373,17 +379,6 @@ export function CheckinPlanEditorPanel({ initialTemplate }: CheckinPlanEditorPan
                     })}
                 </div>
             </section>
-
-            <button
-                type="button"
-                className={`checkin-editor-carry ${draft.carryToNextWeek ? 'active' : ''}`}
-                aria-label="下周沿用当前计划"
-                aria-pressed={draft.carryToNextWeek}
-                onClick={toggleCarryToNextWeek}
-            >
-                <span>下周沿用当前计划</span>
-                <i />
-            </button>
 
             <footer className="checkin-editor-actions">
                 <button type="button" onClick={closeWindow}>取消</button>
