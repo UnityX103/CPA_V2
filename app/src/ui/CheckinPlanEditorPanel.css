@@ -1049,15 +1049,28 @@
 }
 
 .checkin-editor-count-grid {
-    display: grid;
-    grid-template-columns: 75px 92px 112px;
+    display: flex;
+    align-items: center;
     gap: 6px;
+}
+
+.checkin-editor-count-grid .checkin-editor-field:nth-child(1) {
+    width: 75px;
+}
+
+.checkin-editor-count-grid .checkin-editor-field:nth-child(2) {
+    width: 96px;
+}
+
+.checkin-editor-count-grid .checkin-editor-field:nth-child(3) {
+    width: 112px;
 }
 
 .checkin-editor-count-grid .checkin-editor-field {
     min-width: 0;
     height: 36px;
     box-sizing: border-box;
+    flex: 0 0 auto;
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -1090,6 +1103,10 @@
     color: #5b4636;
     font-size: 13px;
     text-align: right;
+}
+
+.checkin-editor-count-grid .checkin-editor-unit-field input {
+    text-align: left;
 }
 
 .checkin-editor-actions {

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-06-15",
+  "updatedAt": "2026-06-17",
   "temporaryThreadPrefix": "~",
   "reusableSessions": [
     {
@@ -18,6 +18,23 @@
         "视觉验收"
       ],
       "updatedAt": "2026-06-15"
+    },
+    {
+      "title": "[Pencil设计]",
+      "threadId": "019ed453-fbff-7aa1-9c5c-3ca7327fef0e",
+      "purpose": "长期负责 CPA_V2 的 Pencil 设计工作：通过 Pencil MCP 读取和修改 AUI/PUI.pen，调整设计节点、布局、组件状态、素材引用与视觉细节，并在需要时导出截图或节点资源用于 app/src/ui 与 app/src/styles 的实现核对；保护 .pen 加密源文件，避免直接文本读取。",
+      "triggers": [
+        "Pencil设计",
+        "Pencil",
+        "MCP设计",
+        "AUI",
+        "PUI",
+        ".pen",
+        "设计节点",
+        "UI设计",
+        "视觉验收"
+      ],
+      "updatedAt": "2026-06-17"
     }
   ]
 }
