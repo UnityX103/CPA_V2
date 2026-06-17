@@ -1,13 +1,8 @@
-import type { PointerEvent } from 'react';
-import { useTodoStore, visibleTodoItems, type TodoFilter, type TodoItem } from '../domain/todo';
+import type { KeyboardEvent, PointerEvent } from 'react';
+import { useState } from 'react';
+import { useTodoStore, visibleTodoItems, type TodoItem } from '../domain/todo';
 import { shouldStartWindowDrag } from './windowDrag';
 import './TodoPanel.css';
-
-const FILTERS: Array<{ id: TodoFilter; label: string }> = [
-    { id: 'today', label: '今日待办' },
-    { id: 'week', label: '本周任务' },
-    { id: 'other', label: '其他' },
-];
 
 export function TodoPanel() {
     const todo = useTodoStore();
@@ -27,7 +22,7 @@ export function TodoPanel() {
             <TodoCurrentTask />
             {todo.expanded && (
                 <>
-                    <TodoFilterTabs activeFilter={todo.activeFilter} />
+                    <div className="todo-section-divider" aria-hidden="true" />
                     <div className="todo-list" aria-label="待办列表">
                         {items.length > 0 ? (
                             items.map((item) => <TodoItemRow key={item.id} item={item} />)
@@ -82,26 +77,6 @@ export function TodoCurrentTask() {
     );
 }
 
-function TodoFilterTabs({ activeFilter }: { activeFilter: TodoFilter }) {
-    const setActiveFilter = useTodoStore((s) => s.setActiveFilter);
-    return (
-        <div className="todo-filter-tabs" role="tablist" aria-label="待办筛选">
-            {FILTERS.map((filter) => (
-                <button
-                    key={filter.id}
-                    className={`todo-filter-tab ${activeFilter === filter.id ? 'active' : ''}`}
-                    role="tab"
-                    aria-selected={activeFilter === filter.id}
-                    type="button"
-                    onClick={() => setActiveFilter(filter.id)}
-                >
-                    {filter.label}
-                </button>
-            ))}
-        </div>
-    );
-}
-
 export function TodoItemRow({ item }: { item: TodoItem }) {
     const editingItemId = useTodoStore((s) => s.editingItemId);
     const beginEdit = useTodoStore((s) => s.beginEdit);
@@ -110,139 +85,150 @@ export function TodoItemRow({ item }: { item: TodoItem }) {
     const toggleCompleted = useTodoStore((s) => s.toggleCompleted);
     const deleteItem = useTodoStore((s) => s.deleteItem);
     const setItemAsCurrent = useTodoStore((s) => s.setItemAsCurrent);
+    const addCurrentTaskToTodo = useTodoStore((s) => s.addCurrentTaskToTodo);
+    const currentTaskTitle = useTodoStore((s) => s.currentTaskTitle);
+    const [pendingCurrentItemId, setPendingCurrentItemId] = useState<string | null>(null);
     const isEditing = editingItemId === item.id;
+    const isCurrent = currentTaskTitle.trim() !== '' && currentTaskTitle.trim() === item.title.trim();
 
-    const onEdit = () => {
-        if (isEditing) {
-            finishEdit(item.id);
-        } else {
+    const promoteItem = () => {
+        const currentTitle = currentTaskTitle.trim();
+        if (currentTitle && currentTitle !== item.title.trim()) {
+            setPendingCurrentItemId(item.id);
+            return;
+        }
+        setItemAsCurrent(item.id);
+    };
+
+    const confirmReplaceCurrent = (moveExistingToTodo: boolean) => {
+        if (!pendingCurrentItemId) return;
+        if (moveExistingToTodo) {
+            addCurrentTaskToTodo();
+        }
+        setItemAsCurrent(pendingCurrentItemId);
+        setPendingCurrentItemId(null);
+    };
+
+    const onTitleKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            toggleCompleted(item.id);
+        }
+        if (event.key === 'F2') {
+            event.preventDefault();
             beginEdit(item.id);
         }
     };
 
     return (
-        <article
-            className={`todo-item-row ${item.completed ? 'is-complete' : ''} ${isEditing ? 'is-editing' : ''}`}
-            data-testid="todo-item-row"
-        >
-            <div className="todo-item-main">
-                <button
-                    className="todo-complete-toggle"
-                    type="button"
-                    onClick={() => toggleCompleted(item.id)}
-                    aria-label={item.completed ? '标记未完成' : '标记完成'}
-                >
-                    {item.completed && <CheckIcon />}
-                </button>
-                <div className="todo-item-text">
+        <>
+            <article
+                className={`todo-item-row ${item.completed ? 'is-complete' : ''} ${isCurrent ? 'is-current' : ''} ${isEditing ? 'is-editing' : ''}`}
+                data-testid="todo-item-row"
+            >
+                <div className="todo-item-main">
                     {isEditing ? (
                         <input
                             className="todo-title-input"
                             value={item.title}
                             onChange={(event) => updateItem(item.id, { title: event.target.value })}
+                            onBlur={() => finishEdit(item.id)}
+                            onKeyDown={(event) => {
+                                if (event.key === 'Enter' || event.key === 'Escape') {
+                                    finishEdit(item.id);
+                                }
+                            }}
                             aria-label="待办标题"
                             data-no-window-drag
                         />
                     ) : (
-                        <div className="todo-item-title">{item.title}</div>
-                    )}
-                    {!isEditing && (
-                        <div className="todo-item-time">
-                            {item.completed ? <CircleCheckIcon /> : <ClockIcon />}
-                            <span>{timeLabel(item)}</span>
-                        </div>
-                    )}
-                </div>
-                <div className="todo-row-actions">
-                    <button
-                        className="todo-icon-button edit"
-                        type="button"
-                        onClick={onEdit}
-                        aria-label={isEditing ? '保存待办' : '编辑待办'}
-                    >
-                        <PencilIcon />
-                    </button>
-                    <button
-                        className="todo-icon-button delete"
-                        type="button"
-                        onClick={() => deleteItem(item.id)}
-                        aria-label="删除待办"
-                    >
-                        <TrashIcon />
-                    </button>
-                </div>
-            </div>
-            {isEditing && (
-                <div className="todo-item-editor">
-                    <div className="todo-time-row">
-                        <span className="todo-time-label">
-                            <ClockIcon />
-                            待办时间
-                        </span>
-                        <div className="todo-time-inputs">
-                            <input
-                                className="todo-time-input"
-                                value={item.startTime}
-                                onChange={(event) => updateItem(item.id, { startTime: event.target.value })}
-                                placeholder="09:30"
-                                aria-label="开始时间"
-                                data-no-window-drag
-                            />
-                            <span className="todo-time-sep">-</span>
-                            <input
-                                className="todo-time-input"
-                                value={item.endTime}
-                                onChange={(event) => updateItem(item.id, { endTime: event.target.value })}
-                                placeholder="10:00"
-                                aria-label="结束时间"
-                                data-no-window-drag
-                            />
-                        </div>
-                    </div>
-                    <div className="todo-set-current-row">
                         <button
-                            className="todo-set-current-btn"
+                            className="todo-item-title"
                             type="button"
-                            onClick={() => setItemAsCurrent(item.id)}
+                            onClick={() => toggleCompleted(item.id)}
+                            onDoubleClick={() => beginEdit(item.id)}
+                            onKeyDown={onTitleKeyDown}
+                            aria-label={item.completed ? `标记未完成：${item.title}` : `标记完成：${item.title}`}
                         >
-                            设为当前执行
+                            {item.title}
+                        </button>
+                    )}
+                    <div className="todo-row-actions">
+                        <button
+                            className="todo-icon-button promote"
+                            type="button"
+                            onClick={promoteItem}
+                            aria-label={isCurrent ? '已设为当前执行' : '设为当前执行'}
+                        >
+                            <ArrowUpToLineIcon />
+                        </button>
+                        <button
+                            className="todo-icon-button delete"
+                            type="button"
+                            onClick={() => deleteItem(item.id)}
+                            aria-label="删除待办"
+                        >
+                            <TrashIcon />
                         </button>
                     </div>
                 </div>
+            </article>
+            {pendingCurrentItemId === item.id && (
+                <ReplaceCurrentExecutionDialog
+                    onCancel={() => confirmReplaceCurrent(false)}
+                    onConfirm={() => confirmReplaceCurrent(true)}
+                />
             )}
-        </article>
+        </>
     );
 }
 
-function timeLabel(item: TodoItem): string {
-    const range = item.startTime && item.endTime
-        ? `${item.startTime} - ${item.endTime}`
-        : item.startTime || item.endTime || '未设置时间';
-    return item.completed ? `已完成 · ${range}` : range;
+function ReplaceCurrentExecutionDialog({
+    onCancel,
+    onConfirm,
+}: {
+    onCancel: () => void;
+    onConfirm: () => void;
+}) {
+    return (
+        <div className="todo-dialog-backdrop" role="presentation">
+            <section className="todo-replace-dialog" role="dialog" aria-modal="true" aria-labelledby="todo-replace-title">
+                <div className="todo-dialog-title-wrap">
+                    <h2 id="todo-replace-title">替换当前执行？</h2>
+                    <p>已有当前执行内容</p>
+                </div>
+                <p className="todo-dialog-body">
+                    是否将原有“当前执行”转为新的待办后，再将所选内容设置为当前执行？
+                </p>
+                <div className="todo-dialog-actions">
+                    <button className="todo-dialog-button secondary" type="button" onClick={onCancel}>
+                        否，直接覆盖
+                    </button>
+                    <button className="todo-dialog-button primary" type="button" onClick={onConfirm}>
+                        是，转为待办
+                    </button>
+                </div>
+            </section>
+        </div>
+    );
 }
 
 function PlusIcon() {
     return <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>;
 }
 
-function PencilIcon() {
-    return <svg viewBox="0 0 24 24"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>;
+function ArrowUpToLineIcon() {
+    return (
+        <svg viewBox="0 0 24 24">
+            <path d="M12 19V5" />
+            <path d="m5 12 7-7 7 7" />
+            <path d="M5 19h14" />
+        </svg>
+    );
 }
 
 function TrashIcon() {
     return <svg viewBox="0 0 24 24"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /></svg>;
-}
-
-function ClockIcon() {
-    return <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>;
-}
-
-function CheckIcon() {
-    return <svg viewBox="0 0 24 24"><path d="m5 12 5 5L20 7" /></svg>;
-}
-
-function CircleCheckIcon() {
-    return <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="m8 12 3 3 5-6" /></svg>;
 }
 
 function ChevronUpIcon() {

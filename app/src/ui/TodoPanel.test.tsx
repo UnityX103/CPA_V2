@@ -32,74 +32,83 @@ describe('TodoPanel', () => {
         expect(useTodoStore.getState().items[0].title).toBe('整理今日待办');
     });
 
-    it('completes, edits, sets current, and deletes a todo row', () => {
+    it('completes, edits, promotes, and deletes a todo row', () => {
         useTodoStore.getState().hydrateTodo({
-            items: [{
-                id: 'todo-1',
-                title: '整理今日待办',
-                completed: false,
-                filter: 'today',
-                startTime: '09:30',
-                endTime: '10:00',
-                createdAt: 1,
-                updatedAt: 1,
-                completedAt: null,
-            }],
+            items: [item('todo-1', '整理今日待办')],
         });
         render(<TodoPanel />);
 
-        fireEvent.click(screen.getByRole('button', { name: '标记完成' }));
+        fireEvent.click(screen.getByRole('button', { name: '标记完成：整理今日待办' }));
         expect(useTodoStore.getState().items[0].completed).toBe(true);
-        expect(screen.getByText('已完成 · 09:30 - 10:00')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: '标记未完成：整理今日待办' })).toBeInTheDocument();
 
-        fireEvent.click(screen.getByRole('button', { name: '编辑待办' }));
+        fireEvent.keyDown(screen.getByRole('button', { name: '标记未完成：整理今日待办' }), { key: 'F2' });
         fireEvent.change(screen.getByLabelText('待办标题'), {
             target: { value: '检查在线房间状态' },
         });
-        fireEvent.change(screen.getByLabelText('开始时间'), {
-            target: { value: '10:30' },
-        });
-        fireEvent.change(screen.getByLabelText('结束时间'), {
-            target: { value: '11:00' },
-        });
+        fireEvent.keyDown(screen.getByLabelText('待办标题'), { key: 'Enter' });
+        expect(screen.getByText('检查在线房间状态')).toBeInTheDocument();
+
         fireEvent.click(screen.getByRole('button', { name: '设为当前执行' }));
         expect(useTodoStore.getState().currentTaskTitle).toBe('检查在线房间状态');
-
-        fireEvent.click(screen.getByRole('button', { name: '保存待办' }));
-        expect(screen.getByText('检查在线房间状态')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: '已设为当前执行' })).toBeInTheDocument();
 
         fireEvent.click(screen.getByRole('button', { name: '删除待办' }));
         expect(useTodoStore.getState().items).toEqual([]);
         expect(screen.getByText('暂无待办')).toBeInTheDocument();
     });
 
-    it('switches filters and renders the collapsed state', () => {
+    it('asks before replacing an existing current task and can archive the old current task', () => {
         useTodoStore.getState().hydrateTodo({
-            activeFilter: 'today',
-            items: [
-                item('today', '今日事项', 'today'),
-                item('week', '本周事项', 'week'),
-            ],
+            currentTaskTitle: '正在写测试',
+            items: [item('todo-1', '整理今日待办')],
+        });
+        render(<TodoPanel />);
+
+        fireEvent.click(screen.getByRole('button', { name: '设为当前执行' }));
+        expect(screen.getByRole('dialog', { name: '替换当前执行？' })).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: '是，转为待办' }));
+
+        const state = useTodoStore.getState();
+        expect(state.currentTaskTitle).toBe('整理今日待办');
+        expect(state.items.map((todo) => todo.title)).toEqual(['正在写测试', '整理今日待办']);
+    });
+
+    it('can directly overwrite the existing current task from the replacement dialog', () => {
+        useTodoStore.getState().hydrateTodo({
+            currentTaskTitle: '正在写测试',
+            items: [item('todo-1', '整理今日待办')],
+        });
+        render(<TodoPanel />);
+
+        fireEvent.click(screen.getByRole('button', { name: '设为当前执行' }));
+        fireEvent.click(screen.getByRole('button', { name: '否，直接覆盖' }));
+
+        const state = useTodoStore.getState();
+        expect(state.currentTaskTitle).toBe('整理今日待办');
+        expect(state.items.map((todo) => todo.title)).toEqual(['整理今日待办']);
+    });
+
+    it('renders the collapsed state without the todo list', () => {
+        useTodoStore.getState().hydrateTodo({
+            items: [item('today', '今日事项')],
         });
         render(<TodoPanel />);
 
         expect(screen.getByText('今日事项')).toBeInTheDocument();
-        fireEvent.click(screen.getByRole('tab', { name: '本周任务' }));
-        expect(screen.getByText('本周事项')).toBeInTheDocument();
-        expect(screen.queryByText('今日事项')).toBeNull();
-
         fireEvent.click(screen.getByRole('button', { name: '收纳待办' }));
         expect(screen.getByTestId('todo-panel')).toHaveClass('is-collapsed');
-        expect(screen.queryByText('本周事项')).toBeNull();
+        expect(screen.queryByText('今日事项')).toBeNull();
         expect(screen.getByRole('button', { name: '展开待办' })).toBeInTheDocument();
     });
 });
 
-function item(id: string, title: string, filter: 'today' | 'week' | 'other') {
+function item(id: string, title: string) {
     return {
         id,
         title,
-        filter,
+        filter: 'today' as const,
         completed: false,
         startTime: '',
         endTime: '',
