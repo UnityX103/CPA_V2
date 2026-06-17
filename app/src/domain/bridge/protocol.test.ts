@@ -85,6 +85,12 @@ describe('bridge protocol', () => {
                 },
                 lastError: null,
             },
+            todo: {
+                currentTaskTitle: '正在写测试',
+                activeFilter: 'today',
+                expanded: true,
+                items: [],
+            },
         };
         expect(snap.v).toBe(1);
         expect(snap.pomodoro.endActionMode).toBe(sampleEndActionMode);
@@ -97,6 +103,7 @@ describe('bridge protocol', () => {
         expect('targetMonitorIndex' in snap.settings).toBe(false);
         expect(snap.appUpdate.status).toBe('upToDate');
         expect(snap.checkin.dailyRecords['2026-05-18'].countsByItemId['pomodoro-focus']).toBe(2);
+        expect(snap.todo.currentTaskTitle).toBe('正在写测试');
     });
 
     it('DispatchPayload accepts every action shape', () => {

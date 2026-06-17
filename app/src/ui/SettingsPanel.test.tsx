@@ -642,7 +642,7 @@ describe('GlobalTab parity with Pdj9C', () => {
         expect(screen.getByText('界面缩放')).toBeTruthy();
         expect(screen.getByText('开机自启动')).toBeTruthy();
         expect(screen.getByText('打卡系统')).toBeTruthy();
-        expect(screen.getByText('计划面板')).toBeTruthy();
+        expect(screen.getByText('TODO面板')).toBeTruthy();
         expect(screen.getByText('自动下载并安装更新')).toBeTruthy();
         expect(screen.getByText('按键计数')).toBeTruthy();
         expect(screen.queryByText('显示打开的' + '文件名')).toBeNull();
@@ -657,12 +657,12 @@ describe('GlobalTab parity with Pdj9C', () => {
         expect(screen.getByRole('button', { name: /添加输入/ })).toBeTruthy();
     });
 
-    it('keeps plan panel between checkin system and app update controls', () => {
+    it('keeps TODO panel between checkin system and app update controls', () => {
         render(<SettingsPanel />);
 
         const autostart = screen.getByText('开机自启动');
         const checkin = screen.getByText('打卡系统');
-        const planPanel = screen.getByText('计划面板');
+        const planPanel = screen.getByText('TODO面板');
         const autoUpdate = screen.getByText('自动下载并安装更新');
         const bindingKey = screen.getByText('按键计数');
 
@@ -698,14 +698,14 @@ describe('GlobalTab parity with Pdj9C', () => {
         expect(setCheckinEnabled).toHaveBeenCalledWith(false);
     });
 
-    it('routes plan panel toggles to the settings store action', () => {
+    it('routes TODO panel toggles to the settings store action', () => {
         const setPlanPanelEnabled = vi.fn((enabled: boolean) => {
             useSettingsStore.setState({ planPanelEnabled: enabled });
         });
         useSettingsStore.setState({ setPlanPanelEnabled, planPanelEnabled: true });
         render(<SettingsPanel />);
 
-        const toggle = screen.getByRole('button', { name: '计划面板' });
+        const toggle = screen.getByRole('button', { name: 'TODO面板' });
 
         expect(toggle.getAttribute('aria-pressed')).toBe('true');
         fireEvent.click(toggle);

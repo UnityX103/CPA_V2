@@ -14,6 +14,7 @@ import {
     type CheckinState,
     type DailyCheckinRecord,
 } from '../checkin';
+import { cloneTodoSnapshot, useTodoStore, type TodoSnapshot } from '../todo';
 import { REMOTE_PLAYER_WINDOW_LABELS } from '../remotePlayerWindowLabels';
 import {
     BRIDGE_VERSION,
@@ -111,6 +112,7 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
     const a = useActiveAppStore.getState();
     const u = useAppUpdateStore.getState();
     const c = useCheckinStore.getState();
+    const t = useTodoStore.getState();
     return {
         v: BRIDGE_VERSION,
         settings: {
@@ -159,6 +161,12 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
             dailyRecords: cloneDailyCheckinRecords(c.dailyRecords),
             lastError: c.lastError,
         },
+        todo: cloneTodoSnapshot({
+            currentTaskTitle: t.currentTaskTitle,
+            items: t.items,
+            activeFilter: t.activeFilter,
+            expanded: t.expanded,
+        }),
     };
 }
 
@@ -366,6 +374,15 @@ export function checkinSig(s: Pick<CheckinState, 'planTemplate' | 'dailyRecords'
     ]);
 }
 
+export function todoSig(s: TodoSnapshot): string {
+    return JSON.stringify([
+        s.currentTaskTitle,
+        s.items,
+        s.activeFilter,
+        s.expanded,
+    ]);
+}
+
 export function activeAppSig(s: { current: ActiveAppInfo | null }): string {
     if (!s.current) return JSON.stringify(null);
     const { icon_data_url: _iconDataUrl, ...withoutIcon } = s.current;
@@ -402,6 +419,7 @@ export function useBridgeHost(): void {
         let prevBindingKey = bindingKeySig(useBindingKeyStore.getState());
         let prevAppUpdate = appUpdateSig(useAppUpdateStore.getState());
         let prevCheckin = checkinSig(useCheckinStore.getState());
+        let prevTodo = todoSig(useTodoStore.getState());
         let prevActiveApp = activeAppSig(useActiveAppStore.getState());
         let prevActiveAppIdentity = activeAppIdentitySig(useActiveAppStore.getState());
         const subs: Array<() => void> = [
@@ -439,6 +457,12 @@ export function useBridgeHost(): void {
                 const sig = checkinSig(s);
                 if (sig === prevCheckin) return;
                 prevCheckin = sig;
+                void sendSnapshot();
+            }),
+            useTodoStore.subscribe((s) => {
+                const sig = todoSig(s);
+                if (sig === prevTodo) return;
+                prevTodo = sig;
                 void sendSnapshot();
             }),
             useActiveAppStore.subscribe((s) => {

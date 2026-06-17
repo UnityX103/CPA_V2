@@ -91,6 +91,12 @@ function makeCloudSnapshot(): CloudAccountData {
             },
             dailyRecords: {},
         },
+        todo: {
+            currentTaskTitle: '',
+            activeFilter: 'today',
+            expanded: true,
+            items: [],
+        },
     };
 }
 

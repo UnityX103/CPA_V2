@@ -13,6 +13,7 @@ import {
     type CheckinPlanTemplate,
     type DailyCheckinRecord,
 } from '../checkin';
+import { cloneTodoSnapshot, useTodoStore, type TodoSnapshot } from '../todo';
 import {
     BRIDGE_VERSION,
     EVT_STATE,
@@ -73,6 +74,10 @@ function cloneDailyCheckinRecords(
             cloneDailyCheckinRecord(record),
         ]),
     );
+}
+
+function cloneTodo(snapshot: TodoSnapshot): TodoSnapshot {
+    return cloneTodoSnapshot(snapshot);
 }
 
 function hasIconDataProperty(activeApp: ActiveAppInfo): boolean {
@@ -147,6 +152,10 @@ export function applySnapshotToMirrors(snap: BridgeSnapshot): void {
         planTemplate: cloneCheckinPlanTemplate(snap.checkin.planTemplate),
         dailyRecords: cloneDailyCheckinRecords(snap.checkin.dailyRecords),
         lastError: snap.checkin.lastError,
+    });
+    useTodoStore.setState({
+        ...cloneTodo(snap.todo),
+        editingItemId: null,
     });
 }
 

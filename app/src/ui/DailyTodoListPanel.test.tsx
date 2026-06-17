@@ -4,10 +4,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
     DailyTodoListPanel,
     TodoItemRow,
-    type TodoItem,
+    type DailyTodoItem,
 } from './DailyTodoListPanel';
 
-const sampleItems: TodoItem[] = [
+const sampleItems: DailyTodoItem[] = [
     { id: 'organize', title: '整理今日待办' },
     { id: 'room', title: '检查在线房间状态' },
     { id: 'review', title: '复盘昨日专注记录', done: true },
@@ -31,8 +31,8 @@ describe('TodoItemRow', () => {
             />,
         );
 
-        fireEvent.change(screen.getByLabelText('整理今日待办 标题'), { target: { value: '整理收件箱' } });
-        fireEvent.click(screen.getByRole('button', { name: '移动 整理今日待办 到列表顶端' }));
+        fireEvent.change(screen.getByLabelText('待办标题'), { target: { value: '整理收件箱' } });
+        fireEvent.click(screen.getByRole('button', { name: '设为当前执行' }));
         fireEvent.click(screen.getByRole('button', { name: '删除 整理今日待办' }));
 
         expect(onTitleChange).toHaveBeenCalledWith('整理收件箱');
@@ -44,7 +44,7 @@ describe('TodoItemRow', () => {
         const { rerender } = render(<TodoItemRow item={sampleItems[0]} />);
 
         expect(screen.getByText('整理今日待办')).toBeInTheDocument();
-        expect(screen.queryByLabelText('整理今日待办 标题')).not.toBeInTheDocument();
+        expect(screen.queryByLabelText('待办标题')).not.toBeInTheDocument();
 
         rerender(<TodoItemRow item={sampleItems[2]} />);
 
@@ -52,10 +52,10 @@ describe('TodoItemRow', () => {
         expect(screen.getByText('复盘昨日专注记录')).toBeInTheDocument();
     });
 
-    it('uses move-to-top language instead of window pin language', () => {
+    it('uses current-task language instead of window pin language', () => {
         render(<TodoItemRow item={{ id: 'top', title: '整理今日待办', pinned: true }} />);
 
-        expect(screen.getByRole('button', { name: '移动 整理今日待办 到列表顶端' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: '已设为当前执行' })).toBeInTheDocument();
         expect(screen.queryByRole('button', { name: /置顶窗口|窗口置顶/ })).not.toBeInTheDocument();
     });
 });

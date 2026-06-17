@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { createPomodoroStore } from './pomodoro';
 import { createSettingsStore } from './settings';
 import { createCheckinStore, defaultPlanTemplate } from './checkin';
+import { createTodoStore } from './todo';
 import {
     buildCloudAccountData,
     hydrateCloudAccountData,
@@ -47,6 +48,7 @@ function makeCloudStores() {
             capturingId: null,
         })),
         checkin: createCheckinStore({ isMirrorWindow: false }),
+        todo: createTodoStore(),
     };
 }
 
@@ -90,6 +92,22 @@ function cloudSnapshot(overrides = {}) {
             planTemplate: defaultPlanTemplate(),
             dailyRecords: {},
         },
+        todo: {
+            currentTaskTitle: 'Write tests',
+            activeFilter: 'today' as const,
+            expanded: true,
+            items: [{
+                id: 'todo-1',
+                title: 'Review cloud sync',
+                completed: false,
+                filter: 'today' as const,
+                startTime: '09:30',
+                endTime: '10:00',
+                createdAt: 10,
+                updatedAt: 10,
+                completedAt: null,
+            }],
+        },
         ...overrides,
     };
 }
@@ -97,7 +115,7 @@ function cloudSnapshot(overrides = {}) {
 describe('cloudAccountData', () => {
     it('builds a snapshot from durable local preference stores', () => {
         const stores = makeCloudStores();
-        const { pomodoro, settings, checkin, appUpdate, network, bindingKey } = stores;
+        const { pomodoro, settings, checkin, appUpdate, network, bindingKey, todo } = stores;
 
         pomodoro.getState().applySettings(1200, 180, 3, true, true);
         settings.getState().hydrateSettings({ uiScale: 1.25, autostartEnabled: true, checkinEnabled: false });
@@ -123,6 +141,8 @@ describe('cloudAccountData', () => {
                 repeatDays: ['mon', 'tue'],
             }],
         });
+        todo.getState().setCurrentTaskTitle('Current task');
+        todo.getState().addCurrentTaskToTodo();
 
         const snapshot = buildCloudAccountData(stores);
 
@@ -138,11 +158,13 @@ describe('cloudAccountData', () => {
         expect(snapshot.network).toEqual({ autoConnect: true, playerName: 'Alice' });
         expect(snapshot.bindingKey.entries[0]).not.toHaveProperty('pressCount');
         expect(snapshot.checkin.planTemplate.items[0].repeatDays).toEqual(['mon', 'tue']);
+        expect(snapshot.todo.currentTaskTitle).toBe('');
+        expect(snapshot.todo.items[0].title).toBe('Current task');
     });
 
     it('hydrates settings without restoring volatile timer runtime state', () => {
         const stores = makeCloudStores();
-        const { pomodoro, settings, checkin, appUpdate, network, bindingKey } = stores;
+        const { pomodoro, settings, checkin, appUpdate, network, bindingKey, todo } = stores;
         pomodoro.getState().start();
 
         hydrateCloudAccountData({
@@ -159,6 +181,8 @@ describe('cloudAccountData', () => {
         expect(bindingKey.getState().capturingId).toBe(null);
         expect(bindingKey.getState().entries[0]).toEqual(expect.objectContaining({ pressCount: 0 }));
         expect(checkin.getState().planTemplate).toEqual(defaultPlanTemplate());
+        expect(todo.getState().currentTaskTitle).toBe('Write tests');
+        expect(todo.getState().items[0].title).toBe('Review cloud sync');
     });
 
     it('merges conflicting daily records by max counts and event id union', () => {

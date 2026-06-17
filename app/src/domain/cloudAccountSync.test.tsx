@@ -6,6 +6,7 @@ import { usePomodoroStore } from './pomodoro';
 import { defaultPlanTemplate, useCheckinStore } from './checkin';
 import { useAppUpdateStore } from './appUpdate';
 import { useBindingKeyStore } from './bindingKey';
+import { useTodoStore } from './todo';
 
 const savePersistedUserPreferencesMock = vi.hoisted(() => vi.fn(async () => {}));
 
@@ -49,6 +50,12 @@ describe('useCloudAccountSync', () => {
             entries: [],
             syncedKeyId: null,
             capturingId: null,
+        });
+        useTodoStore.getState().hydrateTodo({
+            currentTaskTitle: '',
+            activeFilter: 'today',
+            expanded: true,
+            items: [],
         });
         savePersistedUserPreferencesMock.mockClear();
     });
@@ -122,6 +129,12 @@ describe('useCloudAccountSync', () => {
                         planTemplate: defaultPlanTemplate(),
                         dailyRecords: {},
                     },
+                    todo: {
+                        currentTaskTitle: 'Server todo',
+                        activeFilter: 'today',
+                        expanded: true,
+                        items: [],
+                    },
                 },
                 cloudDataUpdatedAt: 10,
                 cloudSyncStatus: 'synced',
@@ -132,6 +145,7 @@ describe('useCloudAccountSync', () => {
         expect(useAppUpdateStore.getState().autoUpdateEnabled).toBe(false);
         expect(useNetworkStore.getState().autoConnect).toBe(true);
         expect(useBindingKeyStore.getState().panelEnabled).toBe(false);
+        expect(useTodoStore.getState().currentTaskTitle).toBe('Server todo');
         expect(savePersistedUserPreferencesMock).toHaveBeenCalledTimes(1);
         expect(save).not.toHaveBeenCalled();
     });

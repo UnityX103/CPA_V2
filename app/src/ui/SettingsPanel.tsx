@@ -774,11 +774,11 @@ function GlobalTab() {
 
                 <div className="card">
                     <div className="card-row">
-                        <span className="card-label">计划面板</span>
+                        <span className="card-label">TODO面板</span>
                         <Toggle
                             checked={settings.planPanelEnabled}
                             onChange={settings.setPlanPanelEnabled}
-                            ariaLabel="计划面板"
+                            ariaLabel="TODO面板"
                         />
                     </div>
                 </div>

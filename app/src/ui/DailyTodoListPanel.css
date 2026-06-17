@@ -1,9 +1,10 @@
 .daily-todo-panel {
     box-sizing: border-box;
     width: 340px;
+    height: 368px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
     padding: 12px;
     overflow: hidden;
     border: 1px solid #efdccd;
@@ -11,17 +12,38 @@
     background: #fffdfbee;
     color: #5b4636;
     font-family: MaokenAssortedSans, CPAMaoken, sans-serif;
+    box-shadow: var(--shadow-panel);
+    -webkit-app-region: drag;
 }
 
 .daily-todo-panel.is-expanded {
-    min-height: 368px;
+    height: 368px;
 }
 
 .daily-todo-panel.is-collapsed {
-    min-height: 132px;
+    height: 132px;
+}
+
+.daily-todo-panel button,
+.daily-todo-panel input {
+    -webkit-app-region: no-drag;
+}
+
+.daily-todo-panel svg,
+.todo-replace-dialog svg {
+    width: 1em;
+    height: 1em;
+    display: block;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
 .daily-todo-current-module {
+    height: 68px;
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -82,9 +104,14 @@
     font-weight: 700;
 }
 
-.daily-todo-add-button span {
-    font-size: 13px;
-    line-height: 1;
+.daily-todo-add-button:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.daily-todo-add-button svg {
+    width: 12px;
+    height: 12px;
 }
 
 .daily-todo-divider {
@@ -94,13 +121,41 @@
 }
 
 .daily-todo-list {
+    min-height: 0;
+    flex: 1;
     display: flex;
     flex-direction: column;
     gap: 8px;
+    overflow: auto;
+}
+
+.daily-todo-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.daily-todo-list::-webkit-scrollbar-thumb {
+    background: #e9cbb8;
+    border-radius: 999px;
+}
+
+.daily-todo-empty {
+    height: 63px;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed #e9cbb8;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.45);
+    color: #a28b79;
+    font-size: 12px;
+    font-weight: 700;
 }
 
 .todo-item-row {
-    min-height: 63px;
+    height: 63px;
+    flex: 0 0 auto;
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -131,6 +186,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    text-align: left;
 }
 
 .todo-item-title-input {
@@ -164,6 +220,11 @@
     line-height: 1;
 }
 
+.todo-item-icon-button svg {
+    width: 15px;
+    height: 15px;
+}
+
 .todo-item-move-button {
     background: #fff1ee;
     color: #d15f3d;
@@ -194,7 +255,89 @@
     font-weight: 700;
 }
 
-.daily-todo-toggle span {
+.daily-todo-toggle svg {
     font-size: 13px;
+    width: 13px;
+    height: 13px;
     line-height: 1;
+}
+
+.todo-dialog-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(91, 70, 54, 0.18);
+    -webkit-app-region: no-drag;
+}
+
+.todo-replace-dialog {
+    width: min(420px, calc(100vw - 32px));
+    border-radius: 20px;
+    background: #ffffff;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    padding: 24px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    color: #1a1a1a;
+}
+
+.todo-dialog-title-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.todo-dialog-title-wrap h2 {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.2;
+    font-weight: 700;
+}
+
+.todo-dialog-title-wrap p,
+.todo-dialog-body {
+    margin: 0;
+}
+
+.todo-dialog-title-wrap p {
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.todo-dialog-body {
+    color: #4b5563;
+    font-size: 14px;
+    line-height: 1.5;
+    font-weight: 500;
+}
+
+.todo-dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.todo-dialog-button {
+    width: 120px;
+    border-radius: 999px;
+    padding: 7px 12px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.todo-dialog-button.secondary {
+    border: 1px solid #e8c4a8;
+    background: #ffffff;
+    color: #a28b79;
+}
+
+.todo-dialog-button.primary {
+    background: #d15f3d;
+    color: #ffffff;
 }
