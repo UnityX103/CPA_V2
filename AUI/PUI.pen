@@ -3539,10 +3539,11 @@
         },
         {
           "type": "frame",
-          "id": "jdmyz",
-          "name": "Component/TodoItemRow",
+          "id": "J5leny",
+          "name": "Component/TodoItemRow / 编辑状态",
           "reusable": true,
-          "width": "fill_container",
+          "width": 568,
+          "height": 63,
           "fill": "#FFFDFBE6",
           "cornerRadius": 14,
           "stroke": "#E9CBB8",
@@ -3551,17 +3552,18 @@
           "layout": "vertical",
           "gap": 10,
           "padding": 10,
+          "justifyContent": "center",
           "children": [
             {
               "type": "frame",
-              "id": "yoYeD",
+              "id": "o3vqk",
               "name": "todo/top-row",
               "width": "fill_container",
               "gap": 8,
               "alignItems": "center",
               "children": [
                 {
-                  "id": "o9Wi0r",
+                  "id": "vh6wj",
                   "type": "ref",
                   "ref": "brmHc",
                   "name": "todo/title-input",
@@ -3577,210 +3579,59 @@
                 },
                 {
                   "type": "frame",
-                  "id": "H560hE",
+                  "id": "F4hqO",
                   "name": "todo/actions",
                   "gap": 6,
                   "alignItems": "center",
                   "children": [
                     {
-                      "id": "tr7hs",
-                      "type": "ref",
-                      "ref": "G6VSO",
-                      "name": "todo/edit-button",
-                      "width": 32,
-                      "height": 32,
-                      "cornerRadius": 16,
-                      "fill": "#FFF1EE",
-                      "descendants": {
-                        "3eDk5": {
-                          "fill": "#D15F3D",
-                          "width": 15,
-                          "height": 15,
-                          "icon": "pencil"
-                        }
-                      }
-                    },
-                    {
-                      "id": "qYWr3",
-                      "type": "ref",
-                      "ref": "G6VSO",
-                      "name": "todo/delete-button",
-                      "width": 32,
-                      "height": 32,
-                      "cornerRadius": 16,
-                      "fill": "#FFFFFF",
-                      "stroke": "#F0D3BC",
-                      "strokeWidth": 1,
-                      "strokeLinejoin": "miter",
-                      "strokeLinecap": "butt",
-                      "strokeAlignment": "inner",
-                      "descendants": {
-                        "3eDk5": {
-                          "fill": "#A28B79",
-                          "width": 15,
-                          "height": 15,
-                          "icon": "trash-2"
-                        }
-                      }
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "type": "frame",
-              "id": "pqxQF",
-              "name": "todo/expanded-editor",
-              "width": "fill_container",
-              "stroke": "#F0D3BC",
-              "strokeWidth": {
-                "top": 1
-              },
-              "strokeAlignment": "inner",
-              "layout": "vertical",
-              "gap": 9,
-              "padding": [
-                10,
-                0,
-                0,
-                0
-              ],
-              "children": [
-                {
-                  "type": "frame",
-                  "id": "FbKjI",
-                  "name": "todo/time-row",
-                  "width": "fill_container",
-                  "gap": 8,
-                  "alignItems": "center",
-                  "children": [
-                    {
                       "type": "frame",
-                      "id": "WjxIH",
-                      "name": "todo/time-label",
-                      "width": 82,
-                      "gap": 5,
+                      "id": "Blg0a",
+                      "name": "todo/move-to-top-button",
+                      "width": 32,
+                      "height": 32,
+                      "fill": "#FFF1EE",
+                      "cornerRadius": 16,
+                      "justifyContent": "center",
                       "alignItems": "center",
                       "children": [
                         {
                           "type": "icon",
-                          "id": "ycaKg",
-                          "width": 14,
-                          "height": 14,
-                          "icon": "clock-3",
+                          "id": "laGLK",
+                          "name": "todo/move-to-top-icon",
+                          "width": 15,
+                          "height": 15,
+                          "icon": "arrow-up-to-line",
                           "library": "lucide",
                           "fill": "#D15F3D"
-                        },
-                        {
-                          "type": "text",
-                          "id": "IZvwg",
-                          "fill": "#5B4636",
-                          "content": "待办时间",
-                          "fontFamily": "MaokenAssortedSans",
-                          "fontSize": 12,
-                          "fontWeight": "800"
                         }
                       ]
                     },
                     {
                       "type": "frame",
-                      "id": "l7D7s",
-                      "name": "todo/time-inputs",
-                      "width": "fill_container",
-                      "gap": 6,
+                      "id": "QR3mh",
+                      "name": "todo/delete-button",
+                      "width": 32,
+                      "height": 32,
+                      "fill": "#FFFFFF",
+                      "cornerRadius": 16,
+                      "stroke": "#F0D3BC",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
+                      "justifyContent": "center",
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "frame",
-                          "id": "BWlq0",
-                          "name": "todo/start-time",
-                          "width": "fill_container",
-                          "height": 32,
-                          "fill": "#FFFFFFCC",
-                          "cornerRadius": 10,
-                          "stroke": "#E5E7EB",
-                          "strokeWidth": 1,
-                          "strokeAlignment": "inner",
-                          "padding": [
-                            7,
-                            10
-                          ],
-                          "justifyContent": "center",
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "zcvhJ",
-                              "fill": "#5B4636",
-                              "content": "09:30",
-                              "fontFamily": "MaokenAssortedSans",
-                              "fontSize": 12,
-                              "fontWeight": "700"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "text",
-                          "id": "WSFTt",
-                          "fill": "#A28B79",
-                          "content": "-",
-                          "fontFamily": "MaokenAssortedSans",
-                          "fontSize": 12,
-                          "fontWeight": "700"
-                        },
-                        {
-                          "type": "frame",
-                          "id": "uaqK9",
-                          "name": "todo/end-time",
-                          "width": "fill_container",
-                          "height": 32,
-                          "fill": "#FFFFFFCC",
-                          "cornerRadius": 10,
-                          "stroke": "#E5E7EB",
-                          "strokeWidth": 1,
-                          "strokeAlignment": "inner",
-                          "padding": [
-                            7,
-                            10
-                          ],
-                          "justifyContent": "center",
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "G5SvuU",
-                              "fill": "#5B4636",
-                              "content": "10:00",
-                              "fontFamily": "MaokenAssortedSans",
-                              "fontSize": 12,
-                              "fontWeight": "700"
-                            }
-                          ]
+                          "type": "icon",
+                          "id": "MdykH",
+                          "name": "todo/delete-icon",
+                          "width": 15,
+                          "height": 15,
+                          "icon": "trash-2",
+                          "library": "lucide",
+                          "fill": "#A28B79"
                         }
                       ]
-                    }
-                  ]
-                },
-                {
-                  "type": "frame",
-                  "id": "E3UY8",
-                  "name": "todo/apply-row",
-                  "width": "fill_container",
-                  "justifyContent": "end",
-                  "alignItems": "center",
-                  "children": [
-                    {
-                      "id": "qWvS0",
-                      "type": "ref",
-                      "ref": "Za5wE",
-                      "name": "todo/set-current-button",
-                      "width": 142,
-                      "descendants": {
-                        "oNDTH": {
-                          "content": "设为当前执行",
-                          "fontSize": 12
-                        }
-                      }
                     }
                   ]
                 }
@@ -3791,9 +3642,9 @@
         {
           "type": "frame",
           "id": "SShOP",
-          "name": "Component/TodoItemRow Non Edit Instance Work",
+          "name": "状态实例",
           "width": "fill_container",
-          "height": 170,
+          "height": 243,
           "layout": "none",
           "children": [
             {
@@ -3803,230 +3654,86 @@
               "y": 0,
               "name": "sectionLabel",
               "fill": "#6B7280",
-              "content": "TodoItemRow / 非编辑模式实例",
+              "content": "状态实例",
               "fontFamily": "MaokenAssortedSans",
               "fontSize": 14,
               "fontWeight": "700"
             },
             {
-              "type": "rectangle",
-              "cornerRadius": 14,
-              "id": "ReLCe",
+              "id": "sp5cd",
+              "type": "ref",
+              "ref": "J5leny",
+              "name": "状态实例 / 未完成",
               "x": 0,
               "y": 24,
-              "name": "非编辑未完成",
-              "fill": "#FFFDFB",
               "width": 568,
               "height": 63,
-              "stroke": "#E9CBB8",
-              "strokeWidth": 1,
-              "strokeAlignment": "inner"
+              "descendants": {
+                "vh6wj": {
+                  "type": "text",
+                  "id": "Ojysx",
+                  "name": "todo/title",
+                  "fill": "#5B4636",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "整理今日待办",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 13,
+                  "fontWeight": "700"
+                }
+              }
             },
             {
-              "type": "rectangle",
-              "cornerRadius": 14,
-              "id": "THGgO",
+              "id": "b5Yeyr",
+              "type": "ref",
+              "ref": "J5leny",
+              "name": "状态实例 / 完成",
               "x": 0,
               "y": 97,
-              "name": "非编辑完成",
-              "fill": "#FFFDFB",
               "width": 568,
               "height": 63,
-              "stroke": "#E9CBB8",
-              "strokeWidth": 1,
-              "strokeAlignment": "inner"
-            },
-            {
-              "type": "ellipse",
-              "id": "R4AZWI",
-              "x": 10,
-              "y": 34,
-              "name": "todo/incomplete-toggle",
-              "fill": "#FFFFFF",
-              "width": 18,
-              "height": 18,
-              "stroke": "#EFDCCD",
-              "strokeWidth": 1
-            },
-            {
-              "type": "text",
-              "id": "o6VFw",
-              "x": 36,
-              "y": 36,
-              "name": "todo/incomplete-title",
-              "fill": "#5B4636",
-              "content": "整理今日待办",
-              "fontFamily": "MaokenAssortedSans",
-              "fontSize": 13,
-              "fontWeight": "700"
-            },
-            {
-              "type": "icon",
-              "id": "WlBnQ",
-              "x": 36,
-              "y": 62,
-              "name": "todo/incomplete-status-icon",
-              "width": 13,
-              "height": 13,
-              "icon": "clock-3",
-              "library": "lucide",
-              "fill": "#D15F3D"
-            },
-            {
-              "type": "text",
-              "id": "B6FCVC",
-              "x": 55,
-              "y": 63,
-              "name": "todo/incomplete-time",
-              "fill": "#A28B79",
-              "content": "09:30 - 10:00",
-              "fontFamily": "MaokenAssortedSans",
-              "fontSize": 11,
-              "fontWeight": "700"
-            },
-            {
-              "type": "ellipse",
-              "id": "n3wyNw",
-              "x": 10,
-              "y": 107,
-              "name": "todo/complete-toggle",
-              "fill": "#34A853",
-              "width": 18,
-              "height": 18,
-              "stroke": "#34A853",
-              "strokeWidth": 1
-            },
-            {
-              "type": "icon",
-              "id": "d80sQ",
-              "x": 13,
-              "y": 110,
-              "name": "todo/complete-toggle-check",
-              "width": 12,
-              "height": 12,
-              "icon": "check",
-              "library": "lucide",
-              "fill": "#FFFFFF"
-            },
-            {
-              "type": "text",
-              "id": "f00d3",
-              "x": 36,
-              "y": 109,
-              "name": "todo/complete-title",
-              "fill": "#A28B79",
-              "content": "复盘昨日专注记录",
-              "fontFamily": "MaokenAssortedSans",
-              "fontSize": 13,
-              "fontWeight": "700"
-            },
-            {
-              "type": "icon",
-              "id": "zu5J1",
-              "x": 36,
-              "y": 135,
-              "name": "todo/complete-status-icon",
-              "width": 13,
-              "height": 13,
-              "icon": "circle-check",
-              "library": "lucide",
-              "fill": "#34A853"
-            },
-            {
-              "type": "text",
-              "id": "wcP6J",
-              "x": 55,
-              "y": 136,
-              "name": "todo/complete-time",
-              "fill": "#A28B79",
-              "content": "已完成 · 08:40 - 09:00",
-              "fontFamily": "MaokenAssortedSans",
-              "fontSize": 11,
-              "fontWeight": "700"
-            },
-            {
-              "id": "OMHsE",
-              "type": "ref",
-              "ref": "G6VSO",
-              "name": "todo/non-edit-edit-button",
-              "x": 488,
-              "y": 39,
-              "width": 32,
-              "height": 32,
-              "cornerRadius": 16,
-              "fill": "#FFF1EE",
               "descendants": {
-                "3eDk5": {
-                  "icon": "pencil",
-                  "fill": "#D15F3D",
-                  "width": 15,
-                  "height": 15
-                }
-              }
-            },
-            {
-              "id": "npZ6r",
-              "type": "ref",
-              "ref": "G6VSO",
-              "name": "todo/non-edit-delete-button",
-              "x": 526,
-              "y": 39,
-              "width": 32,
-              "height": 32,
-              "cornerRadius": 16,
-              "fill": "#FFFFFF",
-              "stroke": "#F0D3BC",
-              "strokeAlignment": "inner",
-              "strokeWidth": 1,
-              "descendants": {
-                "3eDk5": {
-                  "icon": "trash-2",
+                "vh6wj": {
+                  "type": "text",
+                  "id": "X84wL",
+                  "name": "todo/title",
                   "fill": "#A28B79",
-                  "width": 15,
-                  "height": 15
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "复盘昨日专注记录",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 13,
+                  "fontWeight": "700"
                 }
               }
             },
             {
-              "id": "OoBgl",
+              "id": "FSOfl",
               "type": "ref",
-              "ref": "G6VSO",
-              "name": "todo/non-edit-edit-button",
-              "x": 488,
-              "y": 112,
-              "width": 32,
-              "height": 32,
-              "cornerRadius": 16,
-              "fill": "#FFF1EE",
+              "ref": "J5leny",
+              "name": "状态实例 / 已置顶",
+              "x": 0,
+              "y": 170,
+              "width": 568,
+              "height": 63,
               "descendants": {
-                "3eDk5": {
-                  "icon": "pencil",
-                  "fill": "#D15F3D",
-                  "width": 15,
-                  "height": 15
-                }
-              }
-            },
-            {
-              "id": "BQErV",
-              "type": "ref",
-              "ref": "G6VSO",
-              "name": "todo/non-edit-delete-button",
-              "x": 526,
-              "y": 112,
-              "width": 32,
-              "height": 32,
-              "cornerRadius": 16,
-              "fill": "#FFFFFF",
-              "stroke": "#F0D3BC",
-              "strokeAlignment": "inner",
-              "strokeWidth": 1,
-              "descendants": {
-                "3eDk5": {
-                  "icon": "trash-2",
-                  "fill": "#A28B79",
-                  "width": 15,
-                  "height": 15
+                "vh6wj": {
+                  "type": "text",
+                  "id": "G9zEMo",
+                  "name": "todo/title",
+                  "fill": "#5B4636",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "整理今日待办",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 13,
+                  "fontWeight": "700"
+                },
+                "Blg0a": {
+                  "fill": "#D15F3D"
+                },
+                "laGLK": {
+                  "fill": "#FFFFFF"
                 }
               }
             }
@@ -6995,9 +6702,10 @@
                                   "children": [
                                     {
                                       "type": "text",
-                                      "id": "iNoUC",
+                                      "id": "Krvxo",
+                                      "name": "Label",
                                       "fill": "#A28B79",
-                                      "content": "输入值",
+                                      "content": "每次数量",
                                       "fontFamily": "MaokenAssortedSans",
                                       "fontSize": 10,
                                       "fontWeight": "800"
@@ -7016,26 +6724,26 @@
                                 {
                                   "type": "frame",
                                   "id": "cwqXn",
-                                  "name": "count/unit-size-input",
-                                  "width": 92,
+                                  "name": "count/unit-dropdown",
+                                  "width": 96,
                                   "height": 36,
                                   "fill": "#FFFFFFCC",
                                   "cornerRadius": 12,
                                   "stroke": "#E5E7EB",
                                   "strokeWidth": 1,
                                   "strokeAlignment": "inner",
+                                  "gap": 8,
                                   "padding": [
                                     6,
                                     8
                                   ],
-                                  "justifyContent": "space_between",
                                   "alignItems": "center",
                                   "children": [
                                     {
                                       "type": "text",
                                       "id": "fzcPm",
                                       "fill": "#A28B79",
-                                      "content": "每轮次数",
+                                      "content": "单位",
                                       "fontFamily": "MaokenAssortedSans",
                                       "fontSize": 10,
                                       "fontWeight": "800"
@@ -7044,10 +6752,20 @@
                                       "type": "text",
                                       "id": "XqeMb",
                                       "fill": "#5B4636",
-                                      "content": "4 次",
+                                      "content": "/ 个",
                                       "fontFamily": "MaokenAssortedSans",
                                       "fontSize": 13,
                                       "fontWeight": "800"
+                                    },
+                                    {
+                                      "type": "icon",
+                                      "id": "h8IX3",
+                                      "name": "unit-dropdown-chevron",
+                                      "width": 12,
+                                      "height": 12,
+                                      "icon": "chevron-down",
+                                      "library": "lucide",
+                                      "fill": "#A28B79"
                                     }
                                   ]
                                 },
@@ -7563,7 +7281,7 @@
           "name": "Daily Todo List Panel / Expanded",
           "clip": true,
           "width": 340,
-          "height": 388,
+          "height": 368,
           "fill": "#FFFDFBEE",
           "cornerRadius": 24,
           "stroke": "#EFDCCD",
@@ -7626,414 +7344,9 @@
             {
               "type": "rectangle",
               "cornerRadius": 999,
-              "id": "K99BH",
-              "x": 12,
-              "y": 92,
-              "name": "todo/filter-tab-bg",
-              "fill": "#D15F3D",
-              "width": 101,
-              "height": 25,
-              "stroke": "#D15F3D",
-              "strokeWidth": 1,
-              "strokeAlignment": "inner"
-            },
-            {
-              "type": "text",
-              "id": "t8xJZ",
-              "x": 41,
-              "y": 99,
-              "name": "todo/filter-tab-label",
-              "fill": "#FFFFFF",
-              "content": "今日待办",
-              "fontFamily": "MaokenAssortedSans",
-              "fontSize": 11,
-              "fontWeight": "700"
-            },
-            {
-              "type": "rectangle",
-              "cornerRadius": 999,
-              "id": "L1BYYW",
-              "x": 119,
-              "y": 92,
-              "name": "todo/filter-tab-bg",
-              "fill": "#FFFFFFCC",
-              "width": 101,
-              "height": 25,
-              "stroke": "#EFDCCD",
-              "strokeWidth": 1,
-              "strokeAlignment": "inner"
-            },
-            {
-              "type": "text",
-              "id": "hqcyF",
-              "x": 148,
-              "y": 99,
-              "name": "todo/filter-tab-label",
-              "fill": "#A28B79",
-              "content": "本周任务",
-              "fontFamily": "MaokenAssortedSans",
-              "fontSize": 11,
-              "fontWeight": "700"
-            },
-            {
-              "type": "rectangle",
-              "cornerRadius": 999,
-              "id": "ND7CS",
-              "x": 226,
-              "y": 92,
-              "name": "todo/filter-tab-bg",
-              "fill": "#FFFFFFCC",
-              "width": 101,
-              "height": 25,
-              "stroke": "#EFDCCD",
-              "strokeWidth": 1,
-              "strokeAlignment": "inner"
-            },
-            {
-              "type": "text",
-              "id": "N3Slbw",
-              "x": 266,
-              "y": 99,
-              "name": "todo/filter-tab-label",
-              "fill": "#A28B79",
-              "content": "其他",
-              "fontFamily": "MaokenAssortedSans",
-              "fontSize": 11,
-              "fontWeight": "700"
-            },
-            {
-              "type": "rectangle",
-              "cornerRadius": 14,
-              "id": "apt1i",
-              "x": 12,
-              "y": 129,
-              "name": "todo/list-item-undone",
-              "fill": "#FFFDFB",
-              "width": 316,
-              "height": 63,
-              "stroke": "#E9CBB8",
-              "strokeWidth": 1,
-              "strokeAlignment": "inner"
-            },
-            {
-              "type": "ellipse",
-              "id": "zKa6S",
-              "x": 22,
-              "y": 139,
-              "name": "todo/completion-toggle",
-              "fill": "#FFFFFF",
-              "width": 18,
-              "height": 18,
-              "stroke": "#EFDCCD",
-              "strokeWidth": 1
-            },
-            {
-              "type": "text",
-              "id": "OdPCL",
-              "x": 48,
-              "y": 141,
-              "name": "todo/title",
-              "fill": "#5B4636",
-              "content": "整理今日待办",
-              "fontFamily": "MaokenAssortedSans",
-              "fontSize": 13,
-              "fontWeight": "700"
-            },
-            {
-              "type": "icon",
-              "id": "HFX02",
-              "x": 48,
-              "y": 167,
-              "name": "todo/status-icon",
-              "width": 13,
-              "height": 13,
-              "icon": "clock-3",
-              "library": "lucide",
-              "fill": "#D15F3D"
-            },
-            {
-              "type": "text",
-              "id": "CRj2i",
-              "x": 67,
-              "y": 168,
-              "name": "todo/time",
-              "fill": "#A28B79",
-              "content": "09:30 - 10:00",
-              "fontFamily": "MaokenAssortedSans",
-              "fontSize": 11,
-              "fontWeight": "700"
-            },
-            {
-              "id": "irxjB",
-              "type": "ref",
-              "ref": "G6VSO",
-              "name": "todo/edit-button",
-              "x": 256,
-              "y": 144,
-              "width": 32,
-              "height": 32,
-              "cornerRadius": 16,
-              "fill": "#FFF1EE",
-              "descendants": {
-                "3eDk5": {
-                  "icon": "pencil",
-                  "fill": "#D15F3D",
-                  "width": 15,
-                  "height": 15
-                }
-              }
-            },
-            {
-              "id": "IAvtm",
-              "type": "ref",
-              "ref": "G6VSO",
-              "name": "todo/delete-button",
-              "x": 294,
-              "y": 144,
-              "width": 32,
-              "height": 32,
-              "cornerRadius": 16,
-              "fill": "#FFFFFF",
-              "stroke": "#F0D3BC",
-              "strokeAlignment": "inner",
-              "strokeWidth": 1,
-              "descendants": {
-                "3eDk5": {
-                  "icon": "trash-2",
-                  "fill": "#A28B79",
-                  "width": 15,
-                  "height": 15
-                }
-              }
-            },
-            {
-              "type": "rectangle",
-              "cornerRadius": 14,
-              "id": "P7xKp",
-              "x": 12,
-              "y": 200,
-              "name": "todo/list-item-undone",
-              "fill": "#FFFDFB",
-              "width": 316,
-              "height": 63,
-              "stroke": "#E9CBB8",
-              "strokeWidth": 1,
-              "strokeAlignment": "inner"
-            },
-            {
-              "type": "ellipse",
-              "id": "WAogh",
-              "x": 22,
-              "y": 210,
-              "name": "todo/completion-toggle",
-              "fill": "#FFFFFF",
-              "width": 18,
-              "height": 18,
-              "stroke": "#EFDCCD",
-              "strokeWidth": 1
-            },
-            {
-              "type": "text",
-              "id": "p4mCON",
-              "x": 48,
-              "y": 212,
-              "name": "todo/title",
-              "fill": "#5B4636",
-              "content": "检查在线房间状态",
-              "fontFamily": "MaokenAssortedSans",
-              "fontSize": 13,
-              "fontWeight": "700"
-            },
-            {
-              "type": "icon",
-              "id": "L0UcP6",
-              "x": 48,
-              "y": 238,
-              "name": "todo/status-icon",
-              "width": 13,
-              "height": 13,
-              "icon": "clock-3",
-              "library": "lucide",
-              "fill": "#D15F3D"
-            },
-            {
-              "type": "text",
-              "id": "C1EIE9",
-              "x": 67,
-              "y": 239,
-              "name": "todo/time",
-              "fill": "#A28B79",
-              "content": "10:30 - 11:00",
-              "fontFamily": "MaokenAssortedSans",
-              "fontSize": 11,
-              "fontWeight": "700"
-            },
-            {
-              "id": "v5bys",
-              "type": "ref",
-              "ref": "G6VSO",
-              "name": "todo/edit-button",
-              "x": 256,
-              "y": 215,
-              "width": 32,
-              "height": 32,
-              "cornerRadius": 16,
-              "fill": "#FFF1EE",
-              "descendants": {
-                "3eDk5": {
-                  "icon": "pencil",
-                  "fill": "#D15F3D",
-                  "width": 15,
-                  "height": 15
-                }
-              }
-            },
-            {
-              "id": "r7ERD6",
-              "type": "ref",
-              "ref": "G6VSO",
-              "name": "todo/delete-button",
-              "x": 294,
-              "y": 215,
-              "width": 32,
-              "height": 32,
-              "cornerRadius": 16,
-              "fill": "#FFFFFF",
-              "stroke": "#F0D3BC",
-              "strokeAlignment": "inner",
-              "strokeWidth": 1,
-              "descendants": {
-                "3eDk5": {
-                  "icon": "trash-2",
-                  "fill": "#A28B79",
-                  "width": 15,
-                  "height": 15
-                }
-              }
-            },
-            {
-              "type": "rectangle",
-              "cornerRadius": 14,
-              "id": "tTIXq",
-              "x": 12,
-              "y": 271,
-              "name": "todo/list-item-done",
-              "fill": "#FFFDFB",
-              "width": 316,
-              "height": 63,
-              "stroke": "#E9CBB8",
-              "strokeWidth": 1,
-              "strokeAlignment": "inner"
-            },
-            {
-              "type": "ellipse",
-              "id": "Ve75V",
-              "x": 22,
-              "y": 281,
-              "name": "todo/completion-toggle",
-              "fill": "#34A853",
-              "width": 18,
-              "height": 18,
-              "stroke": "#34A853",
-              "strokeWidth": 1
-            },
-            {
-              "type": "icon",
-              "id": "b9rlHs",
-              "x": 25,
-              "y": 284,
-              "name": "todo/completion-check",
-              "width": 12,
-              "height": 12,
-              "icon": "check",
-              "library": "lucide",
-              "fill": "#FFFFFF"
-            },
-            {
-              "type": "text",
-              "id": "aGW0d",
-              "x": 48,
-              "y": 283,
-              "name": "todo/title",
-              "fill": "#A28B79",
-              "content": "复盘昨日专注记录",
-              "fontFamily": "MaokenAssortedSans",
-              "fontSize": 13,
-              "fontWeight": "700"
-            },
-            {
-              "type": "icon",
-              "id": "MUNnr",
-              "x": 48,
-              "y": 309,
-              "name": "todo/status-icon",
-              "width": 13,
-              "height": 13,
-              "icon": "circle-check",
-              "library": "lucide",
-              "fill": "#34A853"
-            },
-            {
-              "type": "text",
-              "id": "fCZXe",
-              "x": 67,
-              "y": 310,
-              "name": "todo/time",
-              "fill": "#A28B79",
-              "content": "已完成 · 08:40 - 09:00",
-              "fontFamily": "MaokenAssortedSans",
-              "fontSize": 11,
-              "fontWeight": "700"
-            },
-            {
-              "id": "u6QBB",
-              "type": "ref",
-              "ref": "G6VSO",
-              "name": "todo/edit-button",
-              "x": 256,
-              "y": 286,
-              "width": 32,
-              "height": 32,
-              "cornerRadius": 16,
-              "fill": "#FFF1EE",
-              "descendants": {
-                "3eDk5": {
-                  "icon": "pencil",
-                  "fill": "#D15F3D",
-                  "width": 15,
-                  "height": 15
-                }
-              }
-            },
-            {
-              "id": "gcns4",
-              "type": "ref",
-              "ref": "G6VSO",
-              "name": "todo/delete-button",
-              "x": 294,
-              "y": 286,
-              "width": 32,
-              "height": 32,
-              "cornerRadius": 16,
-              "fill": "#FFFFFF",
-              "stroke": "#F0D3BC",
-              "strokeAlignment": "inner",
-              "strokeWidth": 1,
-              "descendants": {
-                "3eDk5": {
-                  "icon": "trash-2",
-                  "fill": "#A28B79",
-                  "width": 15,
-                  "height": 15
-                }
-              }
-            },
-            {
-              "type": "rectangle",
-              "cornerRadius": 999,
               "id": "NGF0o",
               "x": 12,
-              "y": 346,
+              "y": 322,
               "name": "todo/collapse-toggle-bg",
               "fill": "#FFFFFFCC",
               "width": 316,
@@ -8046,7 +7359,7 @@
               "type": "icon",
               "id": "DbepA",
               "x": 132,
-              "y": 354,
+              "y": 330,
               "name": "todo/collapse-icon",
               "width": 13,
               "height": 13,
@@ -8058,7 +7371,7 @@
               "type": "text",
               "id": "V0Kwg",
               "x": 151,
-              "y": 355,
+              "y": 331,
               "name": "todo/collapse-label",
               "fill": "#D15F3D",
               "content": "收纳待办",
@@ -8100,6 +7413,88 @@
               "fontFamily": "MaokenAssortedSans",
               "fontSize": 11,
               "fontWeight": "700"
+            },
+            {
+              "type": "rectangle",
+              "id": "W9LKK",
+              "x": 12,
+              "y": 92,
+              "name": "todo/section-divider",
+              "fill": "#EFDCCD",
+              "width": 316,
+              "height": 1
+            },
+            {
+              "id": "CxFmJ",
+              "type": "ref",
+              "ref": "J5leny",
+              "name": "todo/list-item-undone-instance",
+              "x": 12,
+              "y": 105,
+              "width": 316,
+              "height": 63,
+              "descendants": {
+                "vh6wj": {
+                  "type": "text",
+                  "id": "q2VvB",
+                  "name": "todo/title",
+                  "fill": "#5B4636",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "整理今日待办",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 13,
+                  "fontWeight": "700"
+                }
+              }
+            },
+            {
+              "id": "VTXMn",
+              "type": "ref",
+              "ref": "J5leny",
+              "name": "todo/list-item-undone-instance",
+              "x": 12,
+              "y": 176,
+              "width": 316,
+              "height": 63,
+              "descendants": {
+                "vh6wj": {
+                  "type": "text",
+                  "id": "hJQfi",
+                  "name": "todo/title",
+                  "fill": "#5B4636",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "检查在线房间状态",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 13,
+                  "fontWeight": "700"
+                }
+              }
+            },
+            {
+              "id": "ZbLry",
+              "type": "ref",
+              "ref": "J5leny",
+              "name": "todo/list-item-done-instance",
+              "x": 12,
+              "y": 247,
+              "width": 316,
+              "height": 63,
+              "descendants": {
+                "vh6wj": {
+                  "type": "text",
+                  "id": "Zft1l",
+                  "name": "todo/title",
+                  "fill": "#A28B79",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "复盘昨日专注记录",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 13,
+                  "fontWeight": "700"
+                }
+              }
             }
           ]
         },

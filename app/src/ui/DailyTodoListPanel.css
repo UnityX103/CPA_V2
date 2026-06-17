@@ -1,0 +1,200 @@
+.daily-todo-panel {
+    box-sizing: border-box;
+    width: 340px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+    overflow: hidden;
+    border: 1px solid #efdccd;
+    border-radius: 24px;
+    background: #fffdfbee;
+    color: #5b4636;
+    font-family: MaokenAssortedSans, CPAMaoken, sans-serif;
+}
+
+.daily-todo-panel.is-expanded {
+    min-height: 368px;
+}
+
+.daily-todo-panel.is-collapsed {
+    min-height: 132px;
+}
+
+.daily-todo-current-module {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+    border: 1px solid #efdccd;
+    border-radius: 18px;
+    background: #fffdfbee;
+}
+
+.daily-todo-module-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 14px;
+    color: #5b4636;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.daily-todo-input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.daily-todo-input-row input {
+    min-width: 0;
+    height: 28px;
+    flex: 1 1 auto;
+    padding: 0 10px;
+    border: 1px solid #efdccd;
+    border-radius: 12px;
+    background: #ffffffcc;
+    color: #5b4636;
+    font-size: 12px;
+    font-weight: 700;
+    outline: none;
+}
+
+.daily-todo-input-row input::placeholder {
+    color: #a28b79;
+}
+
+.daily-todo-add-button {
+    height: 28px;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 999px;
+    background: #d15f3d;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.daily-todo-add-button span {
+    font-size: 13px;
+    line-height: 1;
+}
+
+.daily-todo-divider {
+    height: 1px;
+    flex: 0 0 auto;
+    background: #efdccd;
+}
+
+.daily-todo-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.todo-item-row {
+    min-height: 63px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px;
+    border: 1px solid #e9cbb8;
+    border-radius: 14px;
+    background: #fffdfbe6;
+}
+
+.todo-item-row-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.todo-item-title,
+.todo-item-title-input {
+    min-width: 0;
+    flex: 1 1 auto;
+    color: #5b4636;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.todo-item-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.todo-item-title-input {
+    height: 32px;
+    padding: 0 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #ffffffcc;
+    outline: none;
+}
+
+.todo-item-row.is-done .todo-item-title {
+    color: #a28b79;
+}
+
+.todo-item-actions {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.todo-item-icon-button {
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    border-radius: 16px;
+    font-size: 15px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.todo-item-move-button {
+    background: #fff1ee;
+    color: #d15f3d;
+}
+
+.todo-item-row.is-pinned .todo-item-move-button {
+    background: #d15f3d;
+    color: #ffffff;
+}
+
+.todo-item-delete-button {
+    border: 1px solid #f0d3bc;
+    background: #ffffff;
+    color: #a28b79;
+}
+
+.daily-todo-toggle {
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: 1px solid #efdccd;
+    border-radius: 999px;
+    background: #ffffffcc;
+    color: #d15f3d;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.daily-todo-toggle span {
+    font-size: 13px;
+    line-height: 1;
+}
