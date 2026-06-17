@@ -22,7 +22,7 @@ describe('TodoPanel', () => {
         render(<TodoPanel />);
 
         expect(screen.getByTestId('todo-panel')).toHaveClass('is-expanded');
-        fireEvent.change(screen.getByLabelText('当前执行'), {
+        fireEvent.change(screen.getByLabelText('当前执行任务'), {
             target: { value: '整理今日待办' },
         });
         fireEvent.click(screen.getByRole('button', { name: '添加到待办' }));
@@ -53,7 +53,7 @@ describe('TodoPanel', () => {
         expect(useTodoStore.getState().currentTaskTitle).toBe('检查在线房间状态');
         expect(screen.getByRole('button', { name: '已设为当前执行' })).toBeInTheDocument();
 
-        fireEvent.click(screen.getByRole('button', { name: '删除待办' }));
+        fireEvent.click(screen.getByRole('button', { name: '删除 检查在线房间状态' }));
         expect(useTodoStore.getState().items).toEqual([]);
         expect(screen.getByText('暂无待办')).toBeInTheDocument();
     });
