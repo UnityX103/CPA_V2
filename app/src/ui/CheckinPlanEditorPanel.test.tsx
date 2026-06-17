@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom/vitest';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { readFileSync } from 'node:fs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useCheckinStore, type CheckinPlanTemplate } from '../domain/checkin';
 import { CheckinPlanEditorPanel } from './CheckinPlanEditorPanel';
@@ -42,6 +43,10 @@ function resetCheckinStore() {
         dailyRecords: {},
         lastError: null,
     });
+}
+
+function editorCss(): string {
+    return readFileSync('src/ui/CheckinPlanEditorPanel.css', 'utf8');
 }
 
 describe('CheckinPlanEditorPanel', () => {
@@ -142,5 +147,20 @@ describe('CheckinPlanEditorPanel', () => {
         fireEvent.pointerDown(screen.getByLabelText('阅读 标题'), { button: 0 });
 
         expect(startDraggingMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps DzDyI count and cycle controls on the same shared row geometry', () => {
+        const css = editorCss();
+
+        expect(css).toMatch(/\.checkin-editor-cycle-select\s*\{[^}]*width:\s*94px;[^}]*height:\s*31px;/s);
+        expect(css).toMatch(/\.checkin-editor-repeat-controls\s*\{[^}]*gap:\s*8px;/s);
+        expect(css).toMatch(/\.checkin-editor-repeat-days\s*\{[^}]*grid-template-columns:\s*repeat\(7,\s*minmax\(0,\s*1fr\)\);[^}]*gap:\s*5px;/s);
+
+        expect(css).toMatch(/\.checkin-editor-count-grid\s*\{[^}]*display:\s*flex;[^}]*align-items:\s*center;[^}]*gap:\s*6px;/s);
+        expect(css).toMatch(/\.checkin-editor-count-grid\s+\.checkin-editor-field:nth-child\(1\)\s*\{[^}]*width:\s*75px;/s);
+        expect(css).toMatch(/\.checkin-editor-count-grid\s+\.checkin-editor-field:nth-child\(2\)\s*\{[^}]*width:\s*96px;/s);
+        expect(css).toMatch(/\.checkin-editor-count-grid\s+\.checkin-editor-field:nth-child\(3\)\s*\{[^}]*width:\s*112px;/s);
+        expect(css).toMatch(/\.checkin-editor-count-grid\s+\.checkin-editor-field\s*\{[^}]*height:\s*36px;[^}]*border-radius:\s*12px;/s);
+        expect(css).toMatch(/\.checkin-editor-count-grid\s+\.checkin-editor-field:last-child\s*\{[^}]*border-color:\s*#efdccd;[^}]*background:\s*#fff7f0;/s);
     });
 });
