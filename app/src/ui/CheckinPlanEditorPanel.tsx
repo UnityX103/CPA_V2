@@ -98,6 +98,18 @@ function itemColor(item: CheckinPlanItem): string {
     return ITEM_COLORS[resolveCheckinItemIcon(item)];
 }
 
+function countPerUseAmount(item: CheckinPlanItem): number {
+    return item.perUseAmount ?? item.countInputValue ?? 1;
+}
+
+function countPerUseUnit(item: CheckinPlanItem): string {
+    return item.perUseUnit ?? item.countUnitLabel ?? '次';
+}
+
+function countLoopCount(item: CheckinPlanItem): number {
+    return item.countLoopCount ?? 1;
+}
+
 function normalizeDraft(draft: CheckinPlanTemplate): CheckinPlanTemplate {
     return normalizePlanTemplate({
         ...draft,
@@ -105,12 +117,12 @@ function normalizeDraft(draft: CheckinPlanTemplate): CheckinPlanTemplate {
             ...item,
             title: item.title.trim() || (item.type === 'pomodoroFocus' ? '专注番茄' : '新项目'),
             targetCount: Math.max(1, Number(item.targetCount) || 1),
-            perUseAmount: Math.max(0, Number(item.perUseAmount) || 0),
-            perUseUnit: item.perUseUnit?.trim() || '次',
+            perUseAmount: Math.max(0, Number(countPerUseAmount(item)) || 0),
+            perUseUnit: countPerUseUnit(item).trim() || '次',
             countInputValue: Math.max(0, Number(item.countInputValue) || 0),
             countUnitSize: Math.max(1, Number(item.countUnitSize) || 1),
             countUnitLabel: item.countUnitLabel?.trim() || '次',
-            countLoopCount: Math.max(1, Number(item.countLoopCount) || 1),
+            countLoopCount: Math.max(1, Number(countLoopCount(item)) || 1),
         })),
     }) ?? clonePlanTemplate(draft);
 }
@@ -322,23 +334,21 @@ export function CheckinPlanEditorPanel({ initialTemplate }: CheckinPlanEditorPan
                                 {isCountMode ? (
                                     <div className="checkin-editor-count-grid checkin-editor-item-controls">
                                         <label className="checkin-editor-field">
-                                            <span>输入值</span>
+                                            <span>每次数量</span>
                                             <input
-                                                aria-label={`${item.title} 输入值`}
+                                                aria-label={`${item.title} 每次数量`}
                                                 type="number"
                                                 min={0}
-                                                value={item.countInputValue ?? item.targetCount}
-                                                onChange={(event) => updateItem(item.id, { countInputValue: Number(event.target.value) })}
+                                                value={countPerUseAmount(item)}
+                                                onChange={(event) => updateItem(item.id, { perUseAmount: Number(event.target.value) })}
                                             />
                                         </label>
-                                        <label className="checkin-editor-field">
-                                            <span>每轮次数</span>
+                                        <label className="checkin-editor-field checkin-editor-unit-field">
+                                            <span>单位</span>
                                             <input
-                                                aria-label={`${item.title} 每轮次数`}
-                                                type="number"
-                                                min={1}
-                                                value={item.countUnitSize ?? item.targetCount}
-                                                onChange={(event) => updateItem(item.id, { countUnitSize: Number(event.target.value) })}
+                                                aria-label={`${item.title} 单位设置`}
+                                                value={countPerUseUnit(item)}
+                                                onChange={(event) => updateItem(item.id, { perUseUnit: event.target.value })}
                                             />
                                         </label>
                                         <label className="checkin-editor-field">
@@ -347,7 +357,7 @@ export function CheckinPlanEditorPanel({ initialTemplate }: CheckinPlanEditorPan
                                                 aria-label={`${item.title} 循环次数`}
                                                 type="number"
                                                 min={1}
-                                                value={item.countLoopCount ?? 1}
+                                                value={countLoopCount(item)}
                                                 onChange={(event) => updateItem(item.id, { countLoopCount: Number(event.target.value) })}
                                             />
                                         </label>

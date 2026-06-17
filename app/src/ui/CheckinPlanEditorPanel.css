@@ -1105,6 +1105,10 @@
     text-align: right;
 }
 
+.checkin-editor-count-grid .checkin-editor-unit-field input {
+    text-align: left;
+}
+
 .checkin-editor-actions {
     justify-content: flex-end;
     padding: 4px 0;

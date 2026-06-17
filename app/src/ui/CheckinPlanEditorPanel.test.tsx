@@ -37,6 +37,26 @@ const baseTemplate: CheckinPlanTemplate = {
     }],
 };
 
+const countTemplate: CheckinPlanTemplate = {
+    schemaVersion: 2,
+    carryToNextWeek: true,
+    items: [{
+        id: 'pomodoro',
+        title: 'Pomodoro 专注',
+        type: 'pomodoroFocus',
+        targetCount: 6,
+        icon: 'clock',
+        repeatDays: ['mon', 'tue'],
+        editMode: 'count',
+        perUseAmount: 25,
+        perUseUnit: '分钟',
+        countInputValue: 4,
+        countUnitSize: 4,
+        countUnitLabel: '次',
+        countLoopCount: 1,
+    }],
+};
+
 function resetCheckinStore() {
     useCheckinStore.setState({
         planTemplate: structuredClone(baseTemplate),
@@ -73,20 +93,78 @@ describe('CheckinPlanEditorPanel', () => {
         expect(invokeMock).toHaveBeenCalledWith('close_checkin_editor_window');
     });
 
-    it('edits count metadata without changing target count', () => {
+    it('edits count metadata through the Pencil count controls without changing target count', () => {
         render(<CheckinPlanEditorPanel />);
 
         fireEvent.click(screen.getByRole('button', { name: '阅读 次数' }));
-        fireEvent.change(screen.getByLabelText('阅读 输入值'), { target: { value: '7' } });
-        fireEvent.change(screen.getByLabelText('阅读 每轮次数'), { target: { value: '4' } });
+        fireEvent.change(screen.getByLabelText('阅读 每次数量'), { target: { value: '7' } });
+        fireEvent.change(screen.getByLabelText('阅读 单位设置'), { target: { value: '页' } });
         fireEvent.change(screen.getByLabelText('阅读 循环次数'), { target: { value: '3' } });
         fireEvent.click(screen.getByRole('button', { name: '保存计划' }));
 
         expect(useCheckinStore.getState().planTemplate.items[0]).toMatchObject({
             targetCount: 2,
             editMode: 'count',
-            countInputValue: 7,
+            perUseAmount: 7,
+            perUseUnit: '页',
+            countUnitSize: 1,
+            countLoopCount: 3,
+        });
+    });
+
+    it('maps VZN4U R8wI7 to per-use amount without changing target or loop fields', () => {
+        useCheckinStore.setState({
+            planTemplate: structuredClone(countTemplate),
+            dailyRecords: {},
+            lastError: null,
+        });
+        render(<CheckinPlanEditorPanel />);
+
+        fireEvent.change(screen.getByLabelText('Pomodoro 专注 每次数量'), { target: { value: '30' } });
+        fireEvent.click(screen.getByRole('button', { name: '保存计划' }));
+
+        expect(useCheckinStore.getState().planTemplate.items[0]).toMatchObject({
+            targetCount: 6,
+            perUseAmount: 30,
+            perUseUnit: '分钟',
             countUnitSize: 4,
+            countLoopCount: 1,
+        });
+    });
+
+    it('maps VZN4U cwqXn to per-use unit without changing count unit size', () => {
+        useCheckinStore.setState({
+            planTemplate: structuredClone(countTemplate),
+            dailyRecords: {},
+            lastError: null,
+        });
+        render(<CheckinPlanEditorPanel />);
+
+        fireEvent.change(screen.getByLabelText('Pomodoro 专注 单位设置'), { target: { value: '页' } });
+        fireEvent.click(screen.getByRole('button', { name: '保存计划' }));
+
+        expect(useCheckinStore.getState().planTemplate.items[0]).toMatchObject({
+            perUseAmount: 25,
+            perUseUnit: '页',
+            countUnitSize: 4,
+            countLoopCount: 1,
+        });
+    });
+
+    it('maps VZN4U fiNze to loop count without changing per-use amount or unit', () => {
+        useCheckinStore.setState({
+            planTemplate: structuredClone(countTemplate),
+            dailyRecords: {},
+            lastError: null,
+        });
+        render(<CheckinPlanEditorPanel />);
+
+        fireEvent.change(screen.getByLabelText('Pomodoro 专注 循环次数'), { target: { value: '3' } });
+        fireEvent.click(screen.getByRole('button', { name: '保存计划' }));
+
+        expect(useCheckinStore.getState().planTemplate.items[0]).toMatchObject({
+            perUseAmount: 25,
+            perUseUnit: '分钟',
             countLoopCount: 3,
         });
     });
@@ -162,5 +240,6 @@ describe('CheckinPlanEditorPanel', () => {
         expect(css).toMatch(/\.checkin-editor-count-grid\s+\.checkin-editor-field:nth-child\(3\)\s*\{[^}]*width:\s*112px;/s);
         expect(css).toMatch(/\.checkin-editor-count-grid\s+\.checkin-editor-field\s*\{[^}]*height:\s*36px;[^}]*border-radius:\s*12px;/s);
         expect(css).toMatch(/\.checkin-editor-count-grid\s+\.checkin-editor-field:last-child\s*\{[^}]*border-color:\s*#efdccd;[^}]*background:\s*#fff7f0;/s);
+        expect(css).toMatch(/\.checkin-editor-count-grid\s+\.checkin-editor-unit-field input\s*\{[^}]*text-align:\s*left;/s);
     });
 });
