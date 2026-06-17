@@ -8,9 +8,11 @@ import type { BindingKeyEntry } from './bindingKey';
 import {
     buildUserPreferencesSnapshot,
     hydrateUserPreferencesSnapshot,
+    normalizeUserPreferencesSnapshot,
     type PersistedBindingKeyEntry,
     type UserPreferencesSnapshot,
 } from './userPreferences';
+import type { TodoSnapshot } from './todo';
 
 export interface CloudAccountData extends UserPreferencesSnapshot {
     updatedAt?: number;
@@ -31,6 +33,9 @@ type BindingKeyStore = UseBoundStore<StoreApi<{
 type CheckinStore = UseBoundStore<StoreApi<CheckinState & {
     hydrateCheckin: (snapshot: Pick<CheckinState, 'planTemplate' | 'dailyRecords'>) => void;
 }>>;
+type TodoStore = UseBoundStore<StoreApi<TodoSnapshot & {
+    hydrateTodo: (snapshot: Partial<TodoSnapshot>) => void;
+}>>;
 
 export interface CloudStores {
     pomodoro: PomodoroStore;
@@ -39,6 +44,7 @@ export interface CloudStores {
     network: NetworkStore;
     bindingKey: BindingKeyStore;
     checkin: CheckinStore;
+    todo: TodoStore;
 }
 
 export function buildCloudAccountData(stores: CloudStores): CloudAccountData {
@@ -49,23 +55,40 @@ export function hydrateCloudAccountData({ stores, data }: {
     stores: CloudStores;
     data: CloudAccountData;
 }): void {
-    hydrateUserPreferencesSnapshot({ stores, snapshot: data });
+    const normalized = normalizeUserPreferencesSnapshot(data);
+    if (!normalized) return;
+    hydrateUserPreferencesSnapshot({ stores, snapshot: normalized });
 }
 
 export function mergeCloudAccountDataConflict({ server, local }: {
     server: CloudAccountData;
     local: CloudAccountData;
 }): CloudAccountData {
+    const normalizedServer = normalizeUserPreferencesSnapshot(server) ?? server;
+    const normalizedLocal = normalizeUserPreferencesSnapshot(local) ?? local;
     return {
-        ...server,
-        pomodoro: { ...server.pomodoro, endActionVideo: { ...server.pomodoro.endActionVideo } },
-        settings: { ...server.settings },
-        appUpdate: { ...server.appUpdate },
-        network: { ...server.network },
-        bindingKey: cloneBindingKey(server.bindingKey),
+        ...normalizedServer,
+        updatedAt: server.updatedAt,
+        pomodoro: {
+            ...normalizedServer.pomodoro,
+            endActionVideo: { ...normalizedServer.pomodoro.endActionVideo },
+        },
+        settings: { ...normalizedServer.settings },
+        appUpdate: { ...normalizedServer.appUpdate },
+        network: { ...normalizedServer.network },
+        bindingKey: cloneBindingKey(normalizedServer.bindingKey),
         checkin: {
-            planTemplate: clonePlanTemplate(server.checkin.planTemplate),
-            dailyRecords: mergeDailyRecords(server.checkin.dailyRecords, local.checkin.dailyRecords),
+            planTemplate: clonePlanTemplate(normalizedServer.checkin.planTemplate),
+            dailyRecords: mergeDailyRecords(
+                normalizedServer.checkin.dailyRecords,
+                normalizedLocal.checkin.dailyRecords,
+            ),
+        },
+        todo: {
+            currentTaskTitle: normalizedServer.todo.currentTaskTitle,
+            items: normalizedServer.todo.items.map((item) => ({ ...item })),
+            activeFilter: normalizedServer.todo.activeFilter,
+            expanded: normalizedServer.todo.expanded,
         },
     };
 }

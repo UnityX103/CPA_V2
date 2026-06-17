@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useSettingsStore } from './settings';
 
-export const MAIN_WINDOW_BASE_SIZE = { width: 249, height: 171 } as const;
+export const MAIN_WINDOW_BASE_SIZE = { width: 605, height: 404 } as const;
 export const SETTINGS_WINDOW_BASE_SIZE = { width: 460, height: 440 } as const;
 export const SETTINGS_WINDOW_MIN_SIZE = { width: 360, height: 320 } as const;
 export const INPUT_COUNTER_BASE_WIDTH = 128;

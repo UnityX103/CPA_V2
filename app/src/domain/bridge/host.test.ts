@@ -11,6 +11,7 @@ import {
     networkSig,
     pomoSig,
     settingsSig,
+    todoSig,
 } from './host';
 import { useSettingsStore, type SettingsState } from '../settings';
 import { usePomodoroStore, type PomodoroState } from '../pomodoro';
@@ -21,6 +22,7 @@ import { BRIDGE_VERSION } from './protocol';
 import { useAppUpdateStore } from '../appUpdate';
 import { REMOTE_PLAYER_WINDOW_LABELS } from '../remotePlayerWindowLabels';
 import { defaultPlanTemplate, useCheckinStore } from '../checkin';
+import { useTodoStore } from '../todo';
 
 type BindingKeySigInput = Parameters<typeof bindingKeySig>[0];
 type BindingKeyStateWithPermission = BindingKeySigInput & {
@@ -109,6 +111,12 @@ beforeEach(() => {
         dailyRecords: {},
         lastError: null,
     });
+    useTodoStore.getState().hydrateTodo({
+        currentTaskTitle: '',
+        activeFilter: 'today',
+        expanded: true,
+        items: [],
+    });
 });
 
 describe('buildSnapshot', () => {
@@ -192,6 +200,22 @@ describe('buildSnapshot', () => {
                 },
             },
         });
+        useTodoStore.getState().hydrateTodo({
+            currentTaskTitle: 'Current task',
+            activeFilter: 'today',
+            expanded: true,
+            items: [{
+                id: 'todo-1',
+                title: 'Read TODO',
+                completed: false,
+                filter: 'today',
+                startTime: '09:30',
+                endTime: '10:00',
+                createdAt: 10,
+                updatedAt: 10,
+                completedAt: null,
+            }],
+        });
 
         const snap = buildSnapshot();
 
@@ -216,6 +240,9 @@ describe('buildSnapshot', () => {
         expect(snap.checkin.dailyRecords).toEqual(useCheckinStore.getState().dailyRecords);
         expect(snap.checkin.dailyRecords).not.toBe(useCheckinStore.getState().dailyRecords);
         expect(snap.checkin.dailyRecords['2026-05-18']).not.toBe(useCheckinStore.getState().dailyRecords['2026-05-18']);
+        expect(snap.todo.items).toEqual(useTodoStore.getState().items);
+        expect(snap.todo.items).not.toBe(useTodoStore.getState().items);
+        expect(snap.todo.items[0]).not.toBe(useTodoStore.getState().items[0]);
 
         snap.settings.dangerousChange!.nextValue = 2.0;
         snap.pomodoro.endActionVideo.customVideoPath = '/mutated.mp4';
@@ -227,6 +254,7 @@ describe('buildSnapshot', () => {
         snap.bindingKey.entries[0].input = { kind: 'mouse', button: 'right' };
         snap.checkin.dailyRecords['2026-05-18'].countsByItemId['manual-1'] = 99;
         snap.checkin.planTemplate.items[0].title = 'Mutated';
+        snap.todo.items[0].title = 'Mutated todo';
 
         expect(useSettingsStore.getState().dangerousChange?.nextValue).toBe(1.5);
         expect(usePomodoroStore.getState().endActionVideo.customVideoPath).toBe('/Users/xpy/Videos/focus-complete.mp4');
@@ -238,6 +266,7 @@ describe('buildSnapshot', () => {
         expect(useBindingKeyStore.getState().entries[0].input).toEqual({ kind: 'keyboard', code: 0 });
         expect(useCheckinStore.getState().dailyRecords['2026-05-18'].countsByItemId['manual-1']).toBe(1);
         expect(useCheckinStore.getState().planTemplate.items[0].title).toBe('Read');
+        expect(useTodoStore.getState().items[0].title).toBe('Read TODO');
     });
 
     it('includes committed scale and dangerous change state', () => {
@@ -662,6 +691,32 @@ describe('bridge host subscription signatures', () => {
 
         expect(checkinSig(base)).not.toBe(checkinSig(nextCount));
         expect(checkinSig(base)).not.toBe(checkinSig(nextError));
+    });
+
+    it('todoSig includes current task, items, filter, and expanded state', () => {
+        const base = {
+            currentTaskTitle: 'Now',
+            activeFilter: 'today' as const,
+            expanded: true,
+            items: [{
+                id: 'todo-1',
+                title: 'Read',
+                completed: false,
+                filter: 'today' as const,
+                startTime: '',
+                endTime: '',
+                createdAt: 1,
+                updatedAt: 1,
+                completedAt: null,
+            }],
+        };
+        const nextTitle = { ...base, currentTaskTitle: 'Later' };
+        const collapsed = { ...base, expanded: false };
+        const completed = { ...base, items: [{ ...base.items[0], completed: true }] };
+
+        expect(todoSig(base)).not.toBe(todoSig(nextTitle));
+        expect(todoSig(base)).not.toBe(todoSig(collapsed));
+        expect(todoSig(base)).not.toBe(todoSig(completed));
     });
 
     it('activeAppSig ignores heavy icon data but includes title changes', () => {

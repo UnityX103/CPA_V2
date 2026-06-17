@@ -6,6 +6,7 @@ import type { ActiveAppInfo } from '../activeApp';
 import type { AppUpdateSnapshot } from '../appUpdate';
 import type { CheckinPlanTemplate, DailyCheckinRecord } from '../checkin';
 import type { CloudAccountData } from '../cloudAccountData';
+import type { TodoSnapshot } from '../todo';
 
 export const EVT_STATE_REQUEST = 'app:state:request';
 export const EVT_STATE = 'app:state';
@@ -60,6 +61,7 @@ export interface BridgeSnapshot {
         dailyRecords: Record<string, DailyCheckinRecord>;
         lastError: string | null;
     };
+    todo: TodoSnapshot;
 }
 
 export type DispatchPayload =

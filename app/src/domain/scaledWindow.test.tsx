@@ -69,10 +69,10 @@ describe('useScaledWindowSize', () => {
             expect(invokeMock).toHaveBeenCalledWith('resize_scaled_window', {
                 args: {
                     label: 'main',
-                    baseWidth: 249,
-                    baseHeight: 171,
-                    minWidth: 249,
-                    minHeight: 171,
+                    baseWidth: MAIN_WINDOW_BASE_SIZE.width,
+                    baseHeight: MAIN_WINDOW_BASE_SIZE.height,
+                    minWidth: MAIN_WINDOW_BASE_SIZE.width,
+                    minHeight: MAIN_WINDOW_BASE_SIZE.height,
                     scale: 1.5,
                     defaultCenter: false,
                 },

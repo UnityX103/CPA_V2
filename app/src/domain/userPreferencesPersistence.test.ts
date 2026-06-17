@@ -126,8 +126,25 @@ function makeStores(): UserPreferencesStores {
         },
         hydrateCheckin: (snapshot: object) => set(snapshot),
     }));
+    const todo = create<any>((set) => ({
+        currentTaskTitle: '写当前任务',
+        activeFilter: 'week',
+        expanded: false,
+        items: [{
+            id: 'todo-1',
+            title: '整理今日待办',
+            completed: false,
+            filter: 'week',
+            startTime: '09:30',
+            endTime: '10:00',
+            createdAt: 1,
+            updatedAt: 1,
+            completedAt: null,
+        }],
+        hydrateTodo: (snapshot: object) => set({ ...snapshot, editingItemId: null }),
+    }));
 
-    return { pomodoro, settings, appUpdate, network, bindingKey, checkin } as UserPreferencesStores;
+    return { pomodoro, settings, appUpdate, network, bindingKey, checkin, todo } as UserPreferencesStores;
 }
 
 beforeEach(() => {
@@ -167,6 +184,22 @@ describe('user preferences persistence', () => {
             repeatDays: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'],
             editMode: 'cycle',
         });
+        expect(snapshot.todo).toEqual({
+            currentTaskTitle: '写当前任务',
+            activeFilter: 'week',
+            expanded: false,
+            items: [{
+                id: 'todo-1',
+                title: '整理今日待办',
+                completed: false,
+                filter: 'week',
+                startTime: '09:30',
+                endTime: '10:00',
+                createdAt: 1,
+                updatedAt: 1,
+                completedAt: null,
+            }],
+        });
     });
 
     it('hydrates durable fields without restoring volatile fields', () => {
@@ -176,6 +209,7 @@ describe('user preferences persistence', () => {
         snapshot.settings.checkinEnabled = true;
         snapshot.appUpdate.autoUpdateEnabled = true;
         snapshot.bindingKey.entries[0].label = 'Changed';
+        snapshot.todo.currentTaskTitle = 'Changed current task';
 
         hydrateUserPreferencesSnapshot({ stores, snapshot });
 
@@ -189,6 +223,8 @@ describe('user preferences persistence', () => {
             label: 'Changed',
             pressCount: 0,
         }));
+        expect(stores.todo.getState().currentTaskTitle).toBe('Changed current task');
+        expect(stores.todo.getState().items[0].title).toBe('整理今日待办');
     });
 
     it('normalizes malformed sections to defaults and clears missing synced key ids', () => {
@@ -204,6 +240,12 @@ describe('user preferences persistence', () => {
                 syncedKeyId: 'missing',
             },
             checkin: { planTemplate: 'bad', dailyRecords: {} },
+            todo: {
+                currentTaskTitle: 123,
+                activeFilter: 'unknown',
+                expanded: 'yes',
+                items: [{ id: 'todo-1', title: 'A', completed: true, filter: 'today', createdAt: 1, updatedAt: 2 }],
+            },
         });
 
         expect(normalized?.pomodoro.focusDurationSeconds).toBe(25 * 60);
@@ -214,6 +256,15 @@ describe('user preferences persistence', () => {
         expect(normalized?.bindingKey.syncedKeyId).toBe(null);
         expect(normalized?.bindingKey.entries).toHaveLength(1);
         expect(normalized?.checkin.planTemplate.schemaVersion).toBe(2);
+        expect(normalized?.todo.currentTaskTitle).toBe('');
+        expect(normalized?.todo.activeFilter).toBe('today');
+        expect(normalized?.todo.expanded).toBe(true);
+        expect(normalized?.todo.items[0]).toEqual(expect.objectContaining({
+            id: 'todo-1',
+            title: 'A',
+            completed: true,
+            filter: 'today',
+        }));
     });
 
     it('normalizes legacy weeklyPlan check-in preferences into planTemplate', () => {
