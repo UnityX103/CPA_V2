@@ -31,6 +31,7 @@ function makeStores(): UserPreferencesStores {
         isRunning: true,
         isPinned: true,
         autoStartBreak: false,
+        autoPinAfterFocus: false,
         consecutiveCompletedFocus: 2,
         endActionMode: 'playVideo',
         endActionVideo: { sourceKind: 'builtin', builtinVideoId: 'qianqian', customVideoPath: '' },
@@ -44,6 +45,7 @@ function makeStores(): UserPreferencesStores {
                 ...(resetProgress ? { currentRound: 1, remainingSeconds: focusDurationSeconds, isRunning: false } : {}),
             });
         },
+        setAutoPinAfterFocus: (autoPinAfterFocus: boolean) => set({ autoPinAfterFocus }),
         applyEndActionSettings: (endActionMode: string, endActionVideo: object) => set({ endActionMode, endActionVideo }),
     }));
     const settings = create<any>((set) => ({
@@ -126,25 +128,7 @@ function makeStores(): UserPreferencesStores {
         },
         hydrateCheckin: (snapshot: object) => set(snapshot),
     }));
-    const todo = create<any>((set) => ({
-        currentTaskTitle: '写当前任务',
-        activeFilter: 'week',
-        expanded: false,
-        items: [{
-            id: 'todo-1',
-            title: '整理今日待办',
-            completed: false,
-            filter: 'week',
-            startTime: '09:30',
-            endTime: '10:00',
-            createdAt: 1,
-            updatedAt: 1,
-            completedAt: null,
-        }],
-        hydrateTodo: (snapshot: object) => set({ ...snapshot, editingItemId: null }),
-    }));
-
-    return { pomodoro, settings, appUpdate, network, bindingKey, checkin, todo } as UserPreferencesStores;
+    return { pomodoro, settings, appUpdate, network, bindingKey, checkin } as UserPreferencesStores;
 }
 
 beforeEach(() => {
@@ -161,6 +145,7 @@ describe('user preferences persistence', () => {
             breakDurationSeconds: 300,
             totalRounds: 4,
             autoStartBreak: false,
+            autoPinAfterFocus: false,
             endActionMode: 'playVideo',
             endActionVideo: { sourceKind: 'builtin', builtinVideoId: 'qianqian', customVideoPath: '' },
         });
@@ -184,36 +169,21 @@ describe('user preferences persistence', () => {
             repeatDays: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'],
             editMode: 'cycle',
         });
-        expect(snapshot.todo).toEqual({
-            currentTaskTitle: '写当前任务',
-            activeFilter: 'week',
-            expanded: false,
-            items: [{
-                id: 'todo-1',
-                title: '整理今日待办',
-                completed: false,
-                filter: 'week',
-                startTime: '09:30',
-                endTime: '10:00',
-                createdAt: 1,
-                updatedAt: 1,
-                completedAt: null,
-            }],
-        });
     });
 
     it('hydrates durable fields without restoring volatile fields', () => {
         const stores = makeStores();
         const snapshot = buildUserPreferencesSnapshot(stores);
         snapshot.pomodoro.focusDurationSeconds = 900;
+        snapshot.pomodoro.autoPinAfterFocus = true;
         snapshot.settings.checkinEnabled = true;
         snapshot.appUpdate.autoUpdateEnabled = true;
         snapshot.bindingKey.entries[0].label = 'Changed';
-        snapshot.todo.currentTaskTitle = 'Changed current task';
 
         hydrateUserPreferencesSnapshot({ stores, snapshot });
 
         expect(stores.pomodoro.getState().focusDurationSeconds).toBe(900);
+        expect(stores.pomodoro.getState().autoPinAfterFocus).toBe(true);
         expect(stores.settings.getState().checkinEnabled).toBe(true);
         expect(stores.pomodoro.getState().currentRound).toBe(3);
         expect(stores.appUpdate.getState().autoUpdateEnabled).toBe(true);
@@ -223,14 +193,12 @@ describe('user preferences persistence', () => {
             label: 'Changed',
             pressCount: 0,
         }));
-        expect(stores.todo.getState().currentTaskTitle).toBe('Changed current task');
-        expect(stores.todo.getState().items[0].title).toBe('整理今日待办');
     });
 
     it('normalizes malformed sections to defaults and clears missing synced key ids', () => {
         const normalized = normalizeUserPreferencesSnapshot({
             schemaVersion: 1,
-            pomodoro: { focusDurationSeconds: 'bad' },
+            pomodoro: { focusDurationSeconds: 'bad', autoPinAfterFocus: false },
             settings: { uiScale: 99, autostartEnabled: true, checkinEnabled: false, planPanelEnabled: false },
             appUpdate: { autoUpdateEnabled: false },
             network: { autoConnect: true, playerName: '  Bob  ' },
@@ -240,15 +208,10 @@ describe('user preferences persistence', () => {
                 syncedKeyId: 'missing',
             },
             checkin: { planTemplate: 'bad', dailyRecords: {} },
-            todo: {
-                currentTaskTitle: 123,
-                activeFilter: 'unknown',
-                expanded: 'yes',
-                items: [{ id: 'todo-1', title: 'A', completed: true, filter: 'today', createdAt: 1, updatedAt: 2 }],
-            },
         });
 
         expect(normalized?.pomodoro.focusDurationSeconds).toBe(25 * 60);
+        expect(normalized?.pomodoro.autoPinAfterFocus).toBe(false);
         expect(normalized?.settings.uiScale).toBe(2);
         expect(normalized?.settings.checkinEnabled).toBe(false);
         expect(normalized?.settings.planPanelEnabled).toBe(false);
@@ -256,15 +219,6 @@ describe('user preferences persistence', () => {
         expect(normalized?.bindingKey.syncedKeyId).toBe(null);
         expect(normalized?.bindingKey.entries).toHaveLength(1);
         expect(normalized?.checkin.planTemplate.schemaVersion).toBe(2);
-        expect(normalized?.todo.currentTaskTitle).toBe('');
-        expect(normalized?.todo.activeFilter).toBe('today');
-        expect(normalized?.todo.expanded).toBe(true);
-        expect(normalized?.todo.items[0]).toEqual(expect.objectContaining({
-            id: 'todo-1',
-            title: 'A',
-            completed: true,
-            filter: 'today',
-        }));
     });
 
     it('normalizes legacy weeklyPlan check-in preferences into planTemplate', () => {

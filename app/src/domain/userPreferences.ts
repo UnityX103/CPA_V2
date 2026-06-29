@@ -27,14 +27,6 @@ import type {
 import { DEFAULT_BUILTIN_POMODORO_VIDEO_ID } from './pomodoroVideos';
 import type { PersistedSettingsSnapshot, SettingsState } from './settings';
 import type { AppUpdateSnapshot } from './appUpdate';
-import {
-    cloneTodoItem,
-    cloneTodoSnapshot,
-    defaultTodoSnapshot,
-    type TodoFilter,
-    type TodoItem,
-    type TodoSnapshot,
-} from './todo';
 
 export interface PersistedBindingKeyEntry {
     id: string;
@@ -51,6 +43,7 @@ export interface UserPreferencesSnapshot {
         breakDurationSeconds: number;
         totalRounds: number;
         autoStartBreak: boolean;
+        autoPinAfterFocus: boolean;
         endActionMode: PomodoroEndActionMode;
         endActionVideo: PomodoroEndActionVideo;
     };
@@ -76,7 +69,6 @@ export interface UserPreferencesSnapshot {
         planTemplate: CheckinPlanTemplate;
         dailyRecords: Record<string, DailyCheckinRecord>;
     };
-    todo: TodoSnapshot;
 }
 
 type Store<T> = UseBoundStore<StoreApi<T>>;
@@ -90,6 +82,7 @@ interface PomodoroStoreShape extends PomodoroState {
         autoStartBreak: boolean,
     ) => void;
     applyEndActionSettings: (mode: PomodoroEndActionMode, video: PomodoroEndActionVideo) => void;
+    setAutoPinAfterFocus: (enabled: boolean) => void;
 }
 
 interface SettingsStoreShape extends SettingsState {
@@ -111,10 +104,6 @@ interface CheckinStoreShape {
     hydrateCheckin: (snapshot: Pick<CheckinStoreShape, 'planTemplate' | 'dailyRecords'>) => void;
 }
 
-interface TodoStoreShape extends TodoSnapshot {
-    hydrateTodo: (snapshot: Partial<TodoSnapshot>) => void;
-}
-
 export interface UserPreferencesStores {
     pomodoro: Store<PomodoroStoreShape>;
     settings: Store<SettingsStoreShape>;
@@ -122,7 +111,6 @@ export interface UserPreferencesStores {
     network: Store<NetworkStateShape>;
     bindingKey: Store<BindingKeyStoreShape>;
     checkin: Store<CheckinStoreShape>;
-    todo: Store<TodoStoreShape>;
 }
 
 const DEFAULT_FOCUS_SECONDS = 25 * 60;
@@ -150,7 +138,6 @@ const CHECKIN_ITEM_ICONS = new Set<CheckinItemIcon>([
     'meditation',
 ]);
 const WEEKDAYS: WeekdayKey[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
-const TODO_FILTERS = new Set<TodoFilter>(['today', 'week', 'other']);
 
 export function defaultUserPreferencesSnapshot(): UserPreferencesSnapshot {
     return {
@@ -160,6 +147,7 @@ export function defaultUserPreferencesSnapshot(): UserPreferencesSnapshot {
             breakDurationSeconds: DEFAULT_BREAK_SECONDS,
             totalRounds: DEFAULT_TOTAL_ROUNDS,
             autoStartBreak: false,
+            autoPinAfterFocus: true,
             endActionMode: DEFAULT_END_ACTION_MODE,
             endActionVideo: {
                 sourceKind: 'builtin',
@@ -189,7 +177,6 @@ export function defaultUserPreferencesSnapshot(): UserPreferencesSnapshot {
             planTemplate: defaultPlanTemplate(),
             dailyRecords: {},
         },
-        todo: defaultTodoSnapshot(),
     };
 }
 
@@ -200,7 +187,6 @@ export function buildUserPreferencesSnapshot(stores: UserPreferencesStores): Use
     const network = stores.network.getState();
     const bindingKey = stores.bindingKey.getState();
     const checkin = stores.checkin.getState();
-    const todo = stores.todo.getState();
 
     return {
         schemaVersion: 1,
@@ -209,6 +195,7 @@ export function buildUserPreferencesSnapshot(stores: UserPreferencesStores): Use
             breakDurationSeconds: pomodoro.breakDurationSeconds,
             totalRounds: pomodoro.totalRounds,
             autoStartBreak: pomodoro.autoStartBreak,
+            autoPinAfterFocus: pomodoro.autoPinAfterFocus,
             endActionMode: pomodoro.endActionMode,
             endActionVideo: { ...pomodoro.endActionVideo },
         },
@@ -234,12 +221,6 @@ export function buildUserPreferencesSnapshot(stores: UserPreferencesStores): Use
             planTemplate: clonePlanTemplate(checkin.planTemplate),
             dailyRecords: cloneDailyRecords(checkin.dailyRecords),
         },
-        todo: cloneTodoSnapshot({
-            currentTaskTitle: todo.currentTaskTitle,
-            items: todo.items,
-            activeFilter: todo.activeFilter,
-            expanded: todo.expanded,
-        }),
     };
 }
 
@@ -258,6 +239,7 @@ export function hydrateUserPreferencesSnapshot({ stores, snapshot }: {
         snapshot.pomodoro.endActionMode,
         { ...snapshot.pomodoro.endActionVideo },
     );
+    stores.pomodoro.getState().setAutoPinAfterFocus(snapshot.pomodoro.autoPinAfterFocus);
     stores.settings.getState().hydrateSettings(snapshot.settings);
     stores.appUpdate.setState((state) => ({
         autoUpdateEnabled: snapshot.appUpdate.autoUpdateEnabled,
@@ -280,7 +262,6 @@ export function hydrateUserPreferencesSnapshot({ stores, snapshot }: {
         planTemplate: clonePlanTemplate(snapshot.checkin.planTemplate),
         dailyRecords: cloneDailyRecords(snapshot.checkin.dailyRecords),
     });
-    stores.todo.getState().hydrateTodo(cloneTodoSnapshot(snapshot.todo));
 }
 
 export function userPreferencesKey(snapshot: UserPreferencesSnapshot): string {
@@ -299,7 +280,6 @@ export function normalizeUserPreferencesSnapshot(
     const network = normalizeNetwork(value.network, fallback.network);
     const bindingKey = normalizeBindingKey(value.bindingKey, fallback.bindingKey);
     const checkin = normalizeCheckin(value.checkin, fallback.checkin);
-    const todo = normalizeTodo(value.todo, fallback.todo);
 
     return {
         schemaVersion: 1,
@@ -309,7 +289,6 @@ export function normalizeUserPreferencesSnapshot(
         network,
         bindingKey,
         checkin,
-        todo,
     };
 }
 
@@ -334,6 +313,9 @@ function normalizePomodoro(
         breakDurationSeconds: normalizeNonNegativeInteger(value.breakDurationSeconds, fallback.breakDurationSeconds),
         totalRounds: normalizePositiveInteger(value.totalRounds, fallback.totalRounds),
         autoStartBreak: typeof value.autoStartBreak === 'boolean' ? value.autoStartBreak : fallback.autoStartBreak,
+        autoPinAfterFocus: typeof value.autoPinAfterFocus === 'boolean'
+            ? value.autoPinAfterFocus
+            : fallback.autoPinAfterFocus,
         endActionMode: value.endActionMode === 'topWindow' || value.endActionMode === 'playVideo'
             ? value.endActionMode
             : fallback.endActionMode,
@@ -544,61 +526,12 @@ function normalizeDailyRecord(value: unknown): DailyCheckinRecord | null {
     };
 }
 
-function normalizeTodo(
-    value: unknown,
-    fallback: UserPreferencesSnapshot['todo'],
-): UserPreferencesSnapshot['todo'] {
-    if (!isObject(value)) return cloneTodoSnapshot(fallback);
-    const items = Array.isArray(value.items)
-        ? value.items.map(normalizeTodoItem).filter((item): item is TodoItem => item !== null)
-        : fallback.items.map(cloneTodoItem);
-    return {
-        currentTaskTitle: typeof value.currentTaskTitle === 'string'
-            ? value.currentTaskTitle
-            : fallback.currentTaskTitle,
-        items,
-        activeFilter: normalizeTodoFilter(value.activeFilter, fallback.activeFilter),
-        expanded: typeof value.expanded === 'boolean' ? value.expanded : fallback.expanded,
-    };
-}
-
-function normalizeTodoItem(value: unknown): TodoItem | null {
-    if (!isObject(value)) return null;
-    if (typeof value.id !== 'string' || !value.id) return null;
-    if (typeof value.title !== 'string') return null;
-    const createdAt = normalizeFiniteNumber(value.createdAt, Date.now());
-    const updatedAt = normalizeFiniteNumber(value.updatedAt, createdAt);
-    return {
-        id: value.id,
-        title: value.title,
-        completed: typeof value.completed === 'boolean' ? value.completed : false,
-        filter: normalizeTodoFilter(value.filter, 'today'),
-        startTime: typeof value.startTime === 'string' ? value.startTime : '',
-        endTime: typeof value.endTime === 'string' ? value.endTime : '',
-        createdAt,
-        updatedAt,
-        completedAt: value.completedAt === null || value.completedAt === undefined
-            ? null
-            : normalizeFiniteNumber(value.completedAt, updatedAt),
-    };
-}
-
-function normalizeTodoFilter(value: unknown, fallback: TodoFilter): TodoFilter {
-    return typeof value === 'string' && TODO_FILTERS.has(value as TodoFilter)
-        ? value as TodoFilter
-        : fallback;
-}
-
 function normalizePositiveInteger(value: unknown, fallback: number): number {
     return typeof value === 'number' && Number.isInteger(value) && value >= 1 ? value : fallback;
 }
 
 function normalizeNonNegativeInteger(value: unknown, fallback: number): number {
     return typeof value === 'number' && Number.isInteger(value) && value >= 0 ? value : fallback;
-}
-
-function normalizeFiniteNumber(value: unknown, fallback: number): number {
-    return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {

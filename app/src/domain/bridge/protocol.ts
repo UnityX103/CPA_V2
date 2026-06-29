@@ -6,7 +6,6 @@ import type { ActiveAppInfo } from '../activeApp';
 import type { AppUpdateSnapshot } from '../appUpdate';
 import type { CheckinPlanTemplate, DailyCheckinRecord } from '../checkin';
 import type { CloudAccountData } from '../cloudAccountData';
-import type { TodoSnapshot } from '../todo';
 
 export const EVT_STATE_REQUEST = 'app:state:request';
 export const EVT_STATE = 'app:state';
@@ -28,6 +27,7 @@ export interface BridgeSnapshot {
         breakDurationSeconds: number;
         totalRounds: number;
         autoStartBreak: boolean;
+        autoPinAfterFocus: boolean;
         endActionMode: PomodoroEndActionMode;
         endActionVideo: PomodoroEndActionVideo;
     };
@@ -61,7 +61,6 @@ export interface BridgeSnapshot {
         dailyRecords: Record<string, DailyCheckinRecord>;
         lastError: string | null;
     };
-    todo: TodoSnapshot;
 }
 
 export type DispatchPayload =
@@ -69,6 +68,7 @@ export type DispatchPayload =
     | { v: typeof BRIDGE_VERSION; store: 'settings';   action: 'setAutostartEnabled' | 'setCheckinEnabled' | 'setPlanPanelEnabled'; args: [boolean] }
     | { v: typeof BRIDGE_VERSION; store: 'settings';   action: 'applyDangerousChange' | 'revertDangerousChange'; args: [string] }
     | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'applySettings'; args: [number, number, number, boolean, boolean] }
+    | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'setAutoPinAfterFocus'; args: [boolean] }
     | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'applyEndActionSettings'; args: [PomodoroEndActionMode, PomodoroEndActionVideo] }
     | { v: typeof BRIDGE_VERSION; store: 'network';    action: 'createRoom' | 'joinRoom'; args: [string] }
     | { v: typeof BRIDGE_VERSION; store: 'network';    action: 'leaveRoom'; args: [] }

@@ -157,12 +157,14 @@ function PomodoroTab({ onApplyStateChange }: {
     const [focusMin, setFocusMin] = useState(Math.round(pomo.focusDurationSeconds / 60));
     const [breakMin, setBreakMin] = useState(Math.round(pomo.breakDurationSeconds / 60));
     const [autoStartBreak, setAutoStartBreak] = useState(pomo.autoStartBreak);
+    const [autoPinAfterFocus, setAutoPinAfterFocus] = useState(pomo.autoPinAfterFocus);
     const [endActionMode, setEndActionMode] = useState<PomodoroEndActionMode>(pomo.endActionMode);
     const [endActionVideo, setEndActionVideo] = useState<PomodoroEndActionVideo>({ ...pomo.endActionVideo });
     const committedRef = useRef({
         focusDurationSeconds: pomo.focusDurationSeconds,
         breakDurationSeconds: pomo.breakDurationSeconds,
         autoStartBreak: pomo.autoStartBreak,
+        autoPinAfterFocus: pomo.autoPinAfterFocus,
         endActionMode: pomo.endActionMode,
         endActionVideo: { ...pomo.endActionVideo },
     });
@@ -172,7 +174,8 @@ function PomodoroTab({ onApplyStateChange }: {
         const durationDraftDirty =
             focusMin * 60 !== previous.focusDurationSeconds ||
             breakMin * 60 !== previous.breakDurationSeconds ||
-            autoStartBreak !== previous.autoStartBreak;
+            autoStartBreak !== previous.autoStartBreak ||
+            autoPinAfterFocus !== previous.autoPinAfterFocus;
         const endActionDraftDirty =
             endActionMode !== previous.endActionMode ||
             !sameEndActionVideo(endActionVideo, previous.endActionVideo);
@@ -181,6 +184,7 @@ function PomodoroTab({ onApplyStateChange }: {
             setFocusMin(Math.round(pomo.focusDurationSeconds / 60));
             setBreakMin(Math.round(pomo.breakDurationSeconds / 60));
             setAutoStartBreak(pomo.autoStartBreak);
+            setAutoPinAfterFocus(pomo.autoPinAfterFocus);
         }
         if (!endActionDraftDirty) {
             setEndActionMode(pomo.endActionMode);
@@ -195,6 +199,7 @@ function PomodoroTab({ onApplyStateChange }: {
             focusDurationSeconds: pomo.focusDurationSeconds,
             breakDurationSeconds: pomo.breakDurationSeconds,
             autoStartBreak: pomo.autoStartBreak,
+            autoPinAfterFocus: pomo.autoPinAfterFocus,
             endActionMode: pomo.endActionMode,
             endActionVideo: { ...pomo.endActionVideo },
         };
@@ -202,6 +207,7 @@ function PomodoroTab({ onApplyStateChange }: {
         pomo.focusDurationSeconds,
         pomo.breakDurationSeconds,
         pomo.autoStartBreak,
+        pomo.autoPinAfterFocus,
         pomo.endActionMode,
         pomo.endActionVideo.sourceKind,
         pomo.endActionVideo.builtinVideoId,
@@ -217,6 +223,7 @@ function PomodoroTab({ onApplyStateChange }: {
         focusMin * 60 !== pomo.focusDurationSeconds ||
         breakMin * 60 !== pomo.breakDurationSeconds ||
         autoStartBreak !== pomo.autoStartBreak ||
+        autoPinAfterFocus !== pomo.autoPinAfterFocus ||
         endActionMode !== pomo.endActionMode ||
         !sameEndActionVideo(endActionVideo, pomo.endActionVideo);
     const hasMissingCustomVideo =
@@ -236,14 +243,18 @@ function PomodoroTab({ onApplyStateChange }: {
         const endActionChanged =
             endActionMode !== pomo.endActionMode ||
             !sameEndActionVideo(endActionVideo, pomo.endActionVideo);
+        const autoPinAfterFocusChanged = autoPinAfterFocus !== pomo.autoPinAfterFocus;
 
         if (durationChanged) {
             pomo.applySettings(focusSeconds, breakSeconds, pomo.totalRounds, true, autoStartBreak);
         }
+        if (autoPinAfterFocusChanged) {
+            pomo.setAutoPinAfterFocus(autoPinAfterFocus);
+        }
         if (endActionChanged) {
             pomo.applyEndActionSettings(endActionMode, endActionVideo);
         }
-    }, [canApply, focusMin, breakMin, autoStartBreak, endActionMode, endActionVideo, pomo]);
+    }, [canApply, focusMin, breakMin, autoStartBreak, autoPinAfterFocus, endActionMode, endActionVideo, pomo]);
 
     useEffect(() => {
         onApplyStateChange({
@@ -322,6 +333,11 @@ function PomodoroTab({ onApplyStateChange }: {
                         <div className="card pomo-row">
                             <span className="pomo-row-label">自动开始休息</span>
                             <Toggle checked={autoStartBreak} onChange={setAutoStartBreak} ariaLabel="自动开始休息" />
+                        </div>
+
+                        <div className="card pomo-row">
+                            <span className="pomo-row-label">自动制定</span>
+                            <Toggle checked={autoPinAfterFocus} onChange={setAutoPinAfterFocus} ariaLabel="自动制定" />
                         </div>
 
                         {/* pomoEndAction I6SsL5: 计时结束提示 → Dropdown */}
@@ -774,12 +790,12 @@ function GlobalTab() {
 
                 <div className="card">
                     <div className="card-row">
-                        <span className="card-label">TODO面板</span>
-                        <Toggle
-                            checked={settings.planPanelEnabled}
-                            onChange={settings.setPlanPanelEnabled}
-                            ariaLabel="TODO面板"
-                        />
+                    <span className="card-label">今日打卡面板</span>
+                    <Toggle
+                        checked={settings.planPanelEnabled}
+                        onChange={settings.setPlanPanelEnabled}
+                        ariaLabel="今日打卡面板"
+                    />
                     </div>
                 </div>
 

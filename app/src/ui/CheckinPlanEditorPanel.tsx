@@ -1,4 +1,4 @@
-import type { CSSProperties, PointerEvent } from 'react';
+import type { CSSProperties, DragEvent, PointerEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
@@ -137,6 +137,8 @@ export function CheckinPlanEditorPanel({ initialTemplate }: CheckinPlanEditorPan
     const [draft, setDraft] = useState(() => clonePlanTemplate(sourceTemplate));
     const [isDirty, setIsDirty] = useState(false);
     const [openIconPickerFor, setOpenIconPickerFor] = useState<string | null>(null);
+    const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
+    const [dropTargetItemId, setDropTargetItemId] = useState<string | null>(null);
 
     useEffect(() => {
         if (isDirty) return;
@@ -169,6 +171,52 @@ export function CheckinPlanEditorPanel({ initialTemplate }: CheckinPlanEditorPan
         }));
     };
 
+    const reorderItems = (dragId: string, targetId: string) => {
+        if (dragId === targetId) return;
+        setIsDirty(true);
+        setOpenIconPickerFor(null);
+        setDraft((current) => {
+            const fromIndex = current.items.findIndex((item) => item.id === dragId);
+            const toIndex = current.items.findIndex((item) => item.id === targetId);
+            if (fromIndex < 0 || toIndex < 0) return current;
+            const items = [...current.items];
+            const [dragged] = items.splice(fromIndex, 1);
+            items.splice(toIndex, 0, dragged);
+            return { ...current, items };
+        });
+    };
+
+    const startItemDrag = (event: DragEvent<HTMLElement>, itemId: string) => {
+        setDraggedItemId(itemId);
+        setDropTargetItemId(null);
+        if (event.dataTransfer) {
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', itemId);
+        }
+    };
+
+    const dragOverItem = (event: DragEvent<HTMLElement>, itemId: string) => {
+        if (!draggedItemId || draggedItemId === itemId) return;
+        event.preventDefault();
+        if (event.dataTransfer) {
+            event.dataTransfer.dropEffect = 'move';
+        }
+        setDropTargetItemId(itemId);
+    };
+
+    const dropItem = (event: DragEvent<HTMLElement>, itemId: string) => {
+        event.preventDefault();
+        const dragId = event.dataTransfer?.getData('text/plain') || draggedItemId;
+        if (dragId) reorderItems(dragId, itemId);
+        setDraggedItemId(null);
+        setDropTargetItemId(null);
+    };
+
+    const endItemDrag = () => {
+        setDraggedItemId(null);
+        setDropTargetItemId(null);
+    };
+
     const toggleRepeatDay = (item: CheckinPlanItem, day: WeekdayKey) => {
         const hasDay = item.repeatDays.includes(day);
         const repeatDays = hasDay
@@ -179,6 +227,10 @@ export function CheckinPlanEditorPanel({ initialTemplate }: CheckinPlanEditorPan
 
     const setEditMode = (item: CheckinPlanItem, editMode: CheckinEditMode) => {
         updateItem(item.id, { editMode });
+    };
+
+    const changeLoopCount = (item: CheckinPlanItem, delta: number) => {
+        updateItem(item.id, { countLoopCount: Math.max(1, countLoopCount(item) + delta) });
     };
 
     const closeWindow = () => {
@@ -241,8 +293,21 @@ export function CheckinPlanEditorPanel({ initialTemplate }: CheckinPlanEditorPan
                         return (
                             <article
                                 key={item.id}
-                                className="checkin-editor-item-row repeat-plan-item-row"
+                                className={[
+                                    'checkin-editor-item-row repeat-plan-item-row',
+                                    draggedItemId === item.id ? 'is-dragging' : '',
+                                    dropTargetItemId === item.id ? 'is-drop-target' : '',
+                                ].filter(Boolean).join(' ')}
                                 data-testid={`checkin-item-row-${item.id}`}
+                                data-no-window-drag
+                                draggable
+                                onDragStart={(event) => startItemDrag(event, item.id)}
+                                onDragOver={(event) => dragOverItem(event, item.id)}
+                                onDragLeave={() => {
+                                    if (dropTargetItemId === item.id) setDropTargetItemId(null);
+                                }}
+                                onDrop={(event) => dropItem(event, item.id)}
+                                onDragEnd={endItemDrag}
                                 style={{
                                     '--item-color': itemColor(item),
                                     '--checkin-item-color': itemColor(item),
@@ -286,17 +351,6 @@ export function CheckinPlanEditorPanel({ initialTemplate }: CheckinPlanEditorPan
                                             />
                                             <p>
                                                 <span>{subtitle}</span>
-                                                <label className="checkin-editor-target-inline">
-                                                    目标
-                                                    <input
-                                                        aria-label={`${item.title} 目标次数`}
-                                                        type="number"
-                                                        min={1}
-                                                        value={item.targetCount}
-                                                        onChange={(event) => updateItem(item.id, { targetCount: Number(event.target.value) })}
-                                                    />
-                                                    次
-                                                </label>
                                             </p>
                                         </div>
                                     </div>
@@ -326,7 +380,7 @@ export function CheckinPlanEditorPanel({ initialTemplate }: CheckinPlanEditorPan
                                             aria-label={`删除 ${item.title}`}
                                             onClick={() => removeItem(item.id)}
                                         >
-                                            ⋮
+                                            <TrashIcon />
                                         </button>
                                     </div>
                                 </div>
@@ -351,16 +405,27 @@ export function CheckinPlanEditorPanel({ initialTemplate }: CheckinPlanEditorPan
                                                 onChange={(event) => updateItem(item.id, { perUseUnit: event.target.value })}
                                             />
                                         </label>
-                                        <label className="checkin-editor-field">
-                                            <span>循环次数</span>
-                                            <input
-                                                aria-label={`${item.title} 循环次数`}
-                                                type="number"
-                                                min={1}
-                                                value={countLoopCount(item)}
-                                                onChange={(event) => updateItem(item.id, { countLoopCount: Number(event.target.value) })}
-                                            />
-                                        </label>
+                                        <div className="checkin-editor-loop-stepper" role="group" aria-label={`${item.title} 循环次数`}>
+                                            <button
+                                                type="button"
+                                                aria-label={`减少 ${item.title} 循环次数`}
+                                                onClick={() => changeLoopCount(item, -1)}
+                                            >
+                                                -
+                                            </button>
+                                            <div className="checkin-editor-loop-value">
+                                                <span>循环次数</span>
+                                                <strong aria-label={`${item.title} 循环次数值`}>{countLoopCount(item)} 轮</strong>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                className="is-plus"
+                                                aria-label={`增加 ${item.title} 循环次数`}
+                                                onClick={() => changeLoopCount(item, 1)}
+                                            >
+                                                +
+                                            </button>
+                                        </div>
                                     </div>
                                 ) : (
                                     <div className="checkin-editor-repeat-controls checkin-editor-item-controls">
@@ -395,5 +460,27 @@ export function CheckinPlanEditorPanel({ initialTemplate }: CheckinPlanEditorPan
                 <button type="button" className="checkin-editor-primary" onClick={savePlan}>保存计划</button>
             </footer>
         </div>
+    );
+}
+
+function TrashIcon() {
+    return (
+        <svg
+            aria-hidden="true"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        >
+            <path d="M3 6h18" />
+            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+            <path d="M10 11v6" />
+            <path d="M14 11v6" />
+        </svg>
     );
 }

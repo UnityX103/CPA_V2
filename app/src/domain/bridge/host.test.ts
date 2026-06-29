@@ -11,7 +11,6 @@ import {
     networkSig,
     pomoSig,
     settingsSig,
-    todoSig,
 } from './host';
 import { useSettingsStore, type SettingsState } from '../settings';
 import { usePomodoroStore, type PomodoroState } from '../pomodoro';
@@ -22,7 +21,6 @@ import { BRIDGE_VERSION } from './protocol';
 import { useAppUpdateStore } from '../appUpdate';
 import { REMOTE_PLAYER_WINDOW_LABELS } from '../remotePlayerWindowLabels';
 import { defaultPlanTemplate, useCheckinStore } from '../checkin';
-import { useTodoStore } from '../todo';
 
 type BindingKeySigInput = Parameters<typeof bindingKeySig>[0];
 type BindingKeyStateWithPermission = BindingKeySigInput & {
@@ -67,6 +65,7 @@ beforeEach(() => {
     });
     usePomodoroStore.setState({
         autoStartBreak: false,
+        autoPinAfterFocus: true,
         endActionMode: 'playVideo',
         endActionVideo: {
             sourceKind: 'builtin',
@@ -111,12 +110,6 @@ beforeEach(() => {
         dailyRecords: {},
         lastError: null,
     });
-    useTodoStore.getState().hydrateTodo({
-        currentTaskTitle: '',
-        activeFilter: 'today',
-        expanded: true,
-        items: [],
-    });
 });
 
 describe('buildSnapshot', () => {
@@ -125,7 +118,7 @@ describe('buildSnapshot', () => {
         useSettingsStore.setState({ autostartEnabled: true });
         useSettingsStore.setState({ checkinEnabled: false });
         useSettingsStore.setState({ planPanelEnabled: false });
-        usePomodoroStore.setState({ autoStartBreak: true });
+        usePomodoroStore.setState({ autoStartBreak: true, autoPinAfterFocus: false });
         const snap = buildSnapshot();
         expect(snap.v).toBe(BRIDGE_VERSION);
         expect(snap.settings.uiScale).toBe(1.5);
@@ -137,6 +130,7 @@ describe('buildSnapshot', () => {
         expect('targetMonitorIndex' in snap.settings).toBe(false);
         expect(snap.pomodoro.focusDurationSeconds).toBe(usePomodoroStore.getState().focusDurationSeconds);
         expect(snap.pomodoro.autoStartBreak).toBe(true);
+        expect(snap.pomodoro.autoPinAfterFocus).toBe(false);
         expect(snap.pomodoro.endActionMode).toBe(usePomodoroStore.getState().endActionMode);
         expect(snap.pomodoro.endActionVideo).toEqual(usePomodoroStore.getState().endActionVideo);
         expect(snap.network.status).toBe(useNetworkStore.getState().status);
@@ -200,22 +194,6 @@ describe('buildSnapshot', () => {
                 },
             },
         });
-        useTodoStore.getState().hydrateTodo({
-            currentTaskTitle: 'Current task',
-            activeFilter: 'today',
-            expanded: true,
-            items: [{
-                id: 'todo-1',
-                title: 'Read TODO',
-                completed: false,
-                filter: 'today',
-                startTime: '09:30',
-                endTime: '10:00',
-                createdAt: 10,
-                updatedAt: 10,
-                completedAt: null,
-            }],
-        });
 
         const snap = buildSnapshot();
 
@@ -240,9 +218,6 @@ describe('buildSnapshot', () => {
         expect(snap.checkin.dailyRecords).toEqual(useCheckinStore.getState().dailyRecords);
         expect(snap.checkin.dailyRecords).not.toBe(useCheckinStore.getState().dailyRecords);
         expect(snap.checkin.dailyRecords['2026-05-18']).not.toBe(useCheckinStore.getState().dailyRecords['2026-05-18']);
-        expect(snap.todo.items).toEqual(useTodoStore.getState().items);
-        expect(snap.todo.items).not.toBe(useTodoStore.getState().items);
-        expect(snap.todo.items[0]).not.toBe(useTodoStore.getState().items[0]);
 
         snap.settings.dangerousChange!.nextValue = 2.0;
         snap.pomodoro.endActionVideo.customVideoPath = '/mutated.mp4';
@@ -254,7 +229,6 @@ describe('buildSnapshot', () => {
         snap.bindingKey.entries[0].input = { kind: 'mouse', button: 'right' };
         snap.checkin.dailyRecords['2026-05-18'].countsByItemId['manual-1'] = 99;
         snap.checkin.planTemplate.items[0].title = 'Mutated';
-        snap.todo.items[0].title = 'Mutated todo';
 
         expect(useSettingsStore.getState().dangerousChange?.nextValue).toBe(1.5);
         expect(usePomodoroStore.getState().endActionVideo.customVideoPath).toBe('/Users/xpy/Videos/focus-complete.mp4');
@@ -266,7 +240,6 @@ describe('buildSnapshot', () => {
         expect(useBindingKeyStore.getState().entries[0].input).toEqual({ kind: 'keyboard', code: 0 });
         expect(useCheckinStore.getState().dailyRecords['2026-05-18'].countsByItemId['manual-1']).toBe(1);
         expect(useCheckinStore.getState().planTemplate.items[0].title).toBe('Read');
-        expect(useTodoStore.getState().items[0].title).toBe('Read TODO');
     });
 
     it('includes committed scale and dangerous change state', () => {
@@ -418,6 +391,19 @@ describe('applyDispatch', () => {
         expect(usePomodoroStore.getState().endActionVideo).toEqual(sampleEndActionVideo);
     });
 
+    it('routes pomodoro/setAutoPinAfterFocus to the main pomodoro store', () => {
+        usePomodoroStore.setState({ autoPinAfterFocus: true });
+
+        applyDispatch({
+            v: BRIDGE_VERSION,
+            store: 'pomodoro',
+            action: 'setAutoPinAfterFocus',
+            args: [false],
+        });
+
+        expect(usePomodoroStore.getState().autoPinAfterFocus).toBe(false);
+    });
+
     it('ignores payloads with a mismatched bridge version', () => {
         const before = useSettingsStore.getState().uiScale;
         applyDispatch({ v: 999 as 1, store: 'settings', action: 'setUiScale', args: [2.5] });
@@ -559,6 +545,7 @@ describe('bridge host subscription signatures', () => {
         const oneSecondRemaining: PomodoroState = { ...base, remainingSeconds: 1 };
         const ninetyNineSecondsRemaining: PomodoroState = { ...base, remainingSeconds: 99 };
         const topWindowEndAction: PomodoroState = { ...base, endActionMode: 'topWindow' };
+        const autoPinDisabled: PomodoroState = { ...base, autoPinAfterFocus: false };
         const otherVideo: PomodoroState = {
             ...base,
             endActionVideo: { ...sampleEndActionVideo, customVideoPath: '/other.mp4' },
@@ -566,6 +553,7 @@ describe('bridge host subscription signatures', () => {
 
         expect(pomoSig(oneSecondRemaining)).toBe(pomoSig(ninetyNineSecondsRemaining));
         expect(pomoSig(base)).not.toBe(pomoSig(topWindowEndAction));
+        expect(pomoSig(base)).not.toBe(pomoSig(autoPinDisabled));
         expect(pomoSig(base)).not.toBe(pomoSig(otherVideo));
     });
 
@@ -691,32 +679,6 @@ describe('bridge host subscription signatures', () => {
 
         expect(checkinSig(base)).not.toBe(checkinSig(nextCount));
         expect(checkinSig(base)).not.toBe(checkinSig(nextError));
-    });
-
-    it('todoSig includes current task, items, filter, and expanded state', () => {
-        const base = {
-            currentTaskTitle: 'Now',
-            activeFilter: 'today' as const,
-            expanded: true,
-            items: [{
-                id: 'todo-1',
-                title: 'Read',
-                completed: false,
-                filter: 'today' as const,
-                startTime: '',
-                endTime: '',
-                createdAt: 1,
-                updatedAt: 1,
-                completedAt: null,
-            }],
-        };
-        const nextTitle = { ...base, currentTaskTitle: 'Later' };
-        const collapsed = { ...base, expanded: false };
-        const completed = { ...base, items: [{ ...base.items[0], completed: true }] };
-
-        expect(todoSig(base)).not.toBe(todoSig(nextTitle));
-        expect(todoSig(base)).not.toBe(todoSig(collapsed));
-        expect(todoSig(base)).not.toBe(todoSig(completed));
     });
 
     it('activeAppSig ignores heavy icon data but includes title changes', () => {

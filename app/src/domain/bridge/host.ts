@@ -14,7 +14,6 @@ import {
     type CheckinState,
     type DailyCheckinRecord,
 } from '../checkin';
-import { cloneTodoSnapshot, useTodoStore, type TodoSnapshot } from '../todo';
 import { REMOTE_PLAYER_WINDOW_LABELS } from '../remotePlayerWindowLabels';
 import {
     BRIDGE_VERSION,
@@ -112,7 +111,6 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
     const a = useActiveAppStore.getState();
     const u = useAppUpdateStore.getState();
     const c = useCheckinStore.getState();
-    const t = useTodoStore.getState();
     return {
         v: BRIDGE_VERSION,
         settings: {
@@ -128,6 +126,7 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
             breakDurationSeconds: p.breakDurationSeconds,
             totalRounds: p.totalRounds,
             autoStartBreak: p.autoStartBreak,
+            autoPinAfterFocus: p.autoPinAfterFocus,
             endActionMode: p.endActionMode,
             endActionVideo: { ...p.endActionVideo },
         },
@@ -161,12 +160,6 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
             dailyRecords: cloneDailyCheckinRecords(c.dailyRecords),
             lastError: c.lastError,
         },
-        todo: cloneTodoSnapshot({
-            currentTaskTitle: t.currentTaskTitle,
-            items: t.items,
-            activeFilter: t.activeFilter,
-            expanded: t.expanded,
-        }),
     };
 }
 
@@ -192,6 +185,9 @@ export function applyDispatch(payload: DispatchPayload): void {
         case 'pomodoro': {
             if (payload.action === 'applySettings') {
                 usePomodoroStore.getState().applySettings(...payload.args);
+            }
+            if (payload.action === 'setAutoPinAfterFocus') {
+                usePomodoroStore.getState().setAutoPinAfterFocus(...payload.args);
             }
             if (payload.action === 'applyEndActionSettings') {
                 usePomodoroStore.getState().applyEndActionSettings(...payload.args);
@@ -289,6 +285,7 @@ export function pomoSig(s: {
     breakDurationSeconds: number;
     totalRounds: number;
     autoStartBreak: boolean;
+    autoPinAfterFocus: boolean;
     endActionMode: string;
     endActionVideo: { sourceKind: string; builtinVideoId: string; customVideoPath: string };
 }): string {
@@ -297,6 +294,7 @@ export function pomoSig(s: {
         s.breakDurationSeconds,
         s.totalRounds,
         s.autoStartBreak,
+        s.autoPinAfterFocus,
         s.endActionMode,
         s.endActionVideo.sourceKind,
         s.endActionVideo.builtinVideoId,
@@ -374,15 +372,6 @@ export function checkinSig(s: Pick<CheckinState, 'planTemplate' | 'dailyRecords'
     ]);
 }
 
-export function todoSig(s: TodoSnapshot): string {
-    return JSON.stringify([
-        s.currentTaskTitle,
-        s.items,
-        s.activeFilter,
-        s.expanded,
-    ]);
-}
-
 export function activeAppSig(s: { current: ActiveAppInfo | null }): string {
     if (!s.current) return JSON.stringify(null);
     const { icon_data_url: _iconDataUrl, ...withoutIcon } = s.current;
@@ -419,7 +408,6 @@ export function useBridgeHost(): void {
         let prevBindingKey = bindingKeySig(useBindingKeyStore.getState());
         let prevAppUpdate = appUpdateSig(useAppUpdateStore.getState());
         let prevCheckin = checkinSig(useCheckinStore.getState());
-        let prevTodo = todoSig(useTodoStore.getState());
         let prevActiveApp = activeAppSig(useActiveAppStore.getState());
         let prevActiveAppIdentity = activeAppIdentitySig(useActiveAppStore.getState());
         const subs: Array<() => void> = [
@@ -457,12 +445,6 @@ export function useBridgeHost(): void {
                 const sig = checkinSig(s);
                 if (sig === prevCheckin) return;
                 prevCheckin = sig;
-                void sendSnapshot();
-            }),
-            useTodoStore.subscribe((s) => {
-                const sig = todoSig(s);
-                if (sig === prevTodo) return;
-                prevTodo = sig;
                 void sendSnapshot();
             }),
             useActiveAppStore.subscribe((s) => {

@@ -6,6 +6,7 @@ import { DEFAULT_BUILTIN_POMODORO_VIDEO_ID } from './pomodoroVideos';
 export type PomodoroPhase = 'focus' | 'break' | 'completed';
 export type PomodoroEndActionMode = 'topWindow' | 'playVideo';
 export type PomodoroEndActionSourceKind = 'builtin' | 'custom';
+export type PomodoroPinSource = 'manual' | 'focusEndAuto' | null;
 
 export interface PomodoroEndActionVideo {
     sourceKind: PomodoroEndActionSourceKind;
@@ -29,7 +30,9 @@ export interface PomodoroState {
     currentPhase: PomodoroPhase;
     isRunning: boolean;
     isPinned: boolean;
+    pinSource: PomodoroPinSource;
     autoStartBreak: boolean;
+    autoPinAfterFocus: boolean;
     consecutiveCompletedFocus: number;
     endActionMode: PomodoroEndActionMode;
     endActionVideo: PomodoroEndActionVideo;
@@ -43,6 +46,8 @@ export interface PomodoroActions {
     reset: () => void;
     togglePin: () => void;
     setPinned: (isPinned: boolean) => void;
+    setPinnedFromFocusEnd: () => void;
+    setAutoPinAfterFocus: (enabled: boolean) => void;
     applySettings: (
         focusSeconds: number,
         breakSeconds: number,
@@ -77,7 +82,9 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
             currentPhase: 'focus',
             isRunning: false,
             isPinned: false,
+            pinSource: null,
             autoStartBreak: false,
+            autoPinAfterFocus: true,
             consecutiveCompletedFocus: 0,
             endActionMode: DEFAULT_END_ACTION_MODE,
             endActionVideo: DEFAULT_END_ACTION_VIDEO,
@@ -88,6 +95,15 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
             reset: () => {},
             togglePin: () => {},
             setPinned: () => {},
+            setPinnedFromFocusEnd: () => {},
+            setAutoPinAfterFocus: (enabled) => {
+                void dispatch({
+                    v: BRIDGE_VERSION,
+                    store: 'pomodoro',
+                    action: 'setAutoPinAfterFocus',
+                    args: [enabled],
+                });
+            },
             applySettings: (focusSeconds, breakSeconds, totalRounds, resetProgress, autoStartBreak) => {
                 void dispatch({
                     v: BRIDGE_VERSION,
@@ -170,7 +186,9 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
             currentPhase: 'focus',
             isRunning: false,
             isPinned: false,
+            pinSource: null,
             autoStartBreak: false,
+            autoPinAfterFocus: true,
             consecutiveCompletedFocus: 0,
             endActionMode: DEFAULT_END_ACTION_MODE,
             endActionVideo: DEFAULT_END_ACTION_VIDEO,
@@ -178,6 +196,10 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
 
             start: () => {
                 const state = get();
+                const autoPinReset =
+                    state.isPinned && state.pinSource === 'focusEndAuto'
+                        ? { isPinned: false, pinSource: null as PomodoroPinSource }
+                        : {};
                 if (state.currentPhase === 'completed') {
                     accumulator = 0;
                     set({
@@ -186,10 +208,14 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
                         remainingSeconds: state.focusDurationSeconds,
                         isRunning: true,
                         lastEndEvent: null,
+                        ...autoPinReset,
                     });
                     return;
                 }
-                set({ isRunning: true });
+                set({
+                    isRunning: true,
+                    ...(state.currentPhase === 'focus' ? autoPinReset : {}),
+                });
             },
             pause: () => set({ isRunning: false }),
             skip: () => {
@@ -210,10 +236,24 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
                     lastEndEvent: null,
                 });
             },
-            togglePin: () => set((s) => ({ isPinned: !s.isPinned })),
+            togglePin: () => set((s) => {
+                const isPinned = !s.isPinned;
+                return {
+                    isPinned,
+                    pinSource: isPinned ? 'manual' : null,
+                };
+            }),
             setPinned: (isPinned) => set((s) => (
-                s.isPinned === isPinned ? s : { isPinned }
+                s.isPinned === isPinned && s.pinSource === (isPinned ? 'manual' : null)
+                    ? s
+                    : { isPinned, pinSource: isPinned ? 'manual' : null }
             )),
+            setPinnedFromFocusEnd: () => {
+                const state = get();
+                if (!state.autoPinAfterFocus || state.isPinned) return;
+                set({ isPinned: true, pinSource: 'focusEndAuto' });
+            },
+            setAutoPinAfterFocus: (autoPinAfterFocus) => set({ autoPinAfterFocus }),
             applySettings: (focusSeconds, breakSeconds, totalRounds, resetProgress, autoStartBreak) => {
                 set({
                     focusDurationSeconds: focusSeconds,

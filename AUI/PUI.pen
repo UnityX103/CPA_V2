@@ -6686,7 +6686,7 @@
                                   "type": "frame",
                                   "id": "R8wI7",
                                   "name": "count/value-input",
-                                  "width": 75,
+                                  "width": 112,
                                   "height": 36,
                                   "fill": "#FFFFFFCC",
                                   "cornerRadius": 12,
@@ -6695,7 +6695,7 @@
                                   "strokeAlignment": "inner",
                                   "padding": [
                                     6,
-                                    8
+                                    10
                                   ],
                                   "justifyContent": "space_between",
                                   "alignItems": "center",
@@ -6725,17 +6725,17 @@
                                   "type": "frame",
                                   "id": "cwqXn",
                                   "name": "count/unit-dropdown",
-                                  "width": 96,
+                                  "width": 76,
                                   "height": 36,
                                   "fill": "#FFFFFFCC",
                                   "cornerRadius": 12,
                                   "stroke": "#E5E7EB",
                                   "strokeWidth": 1,
                                   "strokeAlignment": "inner",
-                                  "gap": 8,
+                                  "gap": 5,
                                   "padding": [
                                     6,
-                                    8
+                                    7
                                   ],
                                   "alignItems": "center",
                                   "children": [
@@ -6771,9 +6771,9 @@
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "fiNze",
-                                  "name": "count/loop-input",
-                                  "width": 112,
+                                  "id": "RIkEz",
+                                  "name": "count/loop-stepper",
+                                  "width": 114,
                                   "height": 36,
                                   "fill": "#FFF7F0",
                                   "cornerRadius": 12,
@@ -6781,44 +6781,87 @@
                                   "strokeWidth": 1,
                                   "strokeAlignment": "inner",
                                   "padding": [
-                                    6,
-                                    8
+                                    5,
+                                    6
                                   ],
                                   "justifyContent": "space_between",
                                   "alignItems": "center",
                                   "children": [
                                     {
-                                      "type": "text",
-                                      "id": "Qjs2U",
-                                      "fill": "#A28B79",
-                                      "content": "循环次数",
-                                      "fontFamily": "MaokenAssortedSans",
-                                      "fontSize": 10,
-                                      "fontWeight": "800"
-                                    },
-                                    {
                                       "type": "frame",
-                                      "id": "GNPc9",
-                                      "gap": 4,
+                                      "id": "PsTHb",
+                                      "name": "loop/decrement",
+                                      "width": 24,
+                                      "height": 24,
+                                      "fill": "#FFFFFF",
+                                      "cornerRadius": 999,
+                                      "stroke": "#E8C4A8",
+                                      "strokeWidth": 1,
+                                      "strokeAlignment": "inner",
+                                      "justifyContent": "center",
                                       "alignItems": "center",
                                       "children": [
                                         {
                                           "type": "text",
-                                          "id": "Gxkvo",
+                                          "id": "byKXE",
+                                          "name": "minus",
+                                          "fill": "#D15F3D",
+                                          "content": "-",
+                                          "fontFamily": "MaokenAssortedSans",
+                                          "fontSize": 15,
+                                          "fontWeight": "800"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "xnlWy",
+                                      "name": "loop/value",
+                                      "layout": "vertical",
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "DPEDA",
+                                          "name": "loop-label",
+                                          "fill": "#A28B79",
+                                          "content": "循环次数",
+                                          "fontFamily": "MaokenAssortedSans",
+                                          "fontSize": 9,
+                                          "fontWeight": "800"
+                                        },
+                                        {
+                                          "type": "text",
+                                          "id": "WX1ng",
+                                          "name": "loop-count",
                                           "fill": "#5B4636",
                                           "content": "1 轮",
                                           "fontFamily": "MaokenAssortedSans",
                                           "fontSize": 13,
                                           "fontWeight": "800"
-                                        },
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "VYqPg",
+                                      "name": "loop/increment",
+                                      "width": 24,
+                                      "height": 24,
+                                      "fill": "#D15F3D",
+                                      "cornerRadius": 999,
+                                      "justifyContent": "center",
+                                      "alignItems": "center",
+                                      "children": [
                                         {
-                                          "type": "icon",
-                                          "id": "x1ZcsP",
-                                          "width": 12,
-                                          "height": 12,
-                                          "icon": "chevron-down",
-                                          "library": "lucide",
-                                          "fill": "#D15F3D"
+                                          "type": "text",
+                                          "id": "iyzfY",
+                                          "name": "plus",
+                                          "fill": "#FFFFFF",
+                                          "content": "+",
+                                          "fontFamily": "MaokenAssortedSans",
+                                          "fontSize": 15,
+                                          "fontWeight": "800"
                                         }
                                       ]
                                     }
@@ -7291,58 +7334,6 @@
           "children": [
             {
               "type": "rectangle",
-              "cornerRadius": 18,
-              "id": "dr24Q",
-              "x": 12,
-              "y": 12,
-              "name": "current-task-card",
-              "fill": "#FFFDFBEE",
-              "width": 316,
-              "height": 68,
-              "stroke": "#EFDCCD",
-              "strokeWidth": 1,
-              "strokeAlignment": "inner"
-            },
-            {
-              "type": "text",
-              "id": "CelOn",
-              "x": 22,
-              "y": 22,
-              "name": "module-head-label",
-              "fill": "#5B4636",
-              "content": "当前执行",
-              "fontFamily": "MaokenAssortedSans",
-              "fontSize": 12,
-              "fontWeight": "700"
-            },
-            {
-              "type": "rectangle",
-              "cornerRadius": 12,
-              "id": "oTMkD",
-              "x": 22,
-              "y": 42,
-              "name": "current-task-input",
-              "fill": "#FFFFFFCC",
-              "width": 230,
-              "height": 28,
-              "stroke": "#EFDCCD",
-              "strokeWidth": 1,
-              "strokeAlignment": "inner"
-            },
-            {
-              "type": "text",
-              "id": "vLwSK",
-              "x": 32,
-              "y": 50,
-              "name": "current-task-placeholder",
-              "fill": "#A28B79",
-              "content": "输入正在处理的任务...",
-              "fontFamily": "MaokenAssortedSans",
-              "fontSize": 12,
-              "fontWeight": "700"
-            },
-            {
-              "type": "rectangle",
               "cornerRadius": 999,
               "id": "NGF0o",
               "x": 12,
@@ -7375,41 +7366,6 @@
               "name": "todo/collapse-label",
               "fill": "#D15F3D",
               "content": "收纳待办",
-              "fontFamily": "MaokenAssortedSans",
-              "fontSize": 11,
-              "fontWeight": "700"
-            },
-            {
-              "type": "rectangle",
-              "cornerRadius": 999,
-              "id": "XZLG8",
-              "x": 260,
-              "y": 42,
-              "name": "add-to-todo-bg",
-              "fill": "#D15F3D",
-              "width": 58,
-              "height": 28
-            },
-            {
-              "type": "icon",
-              "id": "ioG9I",
-              "x": 270,
-              "y": 50,
-              "name": "add-icon",
-              "width": 12,
-              "height": 12,
-              "icon": "plus",
-              "library": "lucide",
-              "fill": "#FFFFFF"
-            },
-            {
-              "type": "text",
-              "id": "O6S9fq",
-              "x": 286,
-              "y": 50.5,
-              "name": "add-label",
-              "fill": "#FFFFFF",
-              "content": "添加",
               "fontFamily": "MaokenAssortedSans",
               "fontSize": 11,
               "fontWeight": "700"
@@ -7495,6 +7451,15 @@
                   "fontWeight": "700"
                 }
               }
+            },
+            {
+              "id": "OwxRj",
+              "type": "ref",
+              "ref": "Ys0T8",
+              "name": "current-task-input-instance",
+              "x": 12,
+              "y": 12,
+              "width": 316
             }
           ]
         },
@@ -7519,7 +7484,8 @@
               "id": "Ys0T8",
               "x": 12,
               "y": 12,
-              "name": "todo/top-input-and-filter",
+              "name": "Component/CurrentTaskInput",
+              "reusable": true,
               "width": 316,
               "layout": "vertical",
               "gap": 8,

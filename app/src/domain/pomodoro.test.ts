@@ -18,6 +18,7 @@ describe('Pomodoro end action settings', () => {
             builtinVideoId: DEFAULT_BUILTIN_POMODORO_VIDEO_ID,
             customVideoPath: '',
         });
+        expect(store.getState().autoPinAfterFocus).toBe(true);
         expect(store.getState().lastEndEvent).toBeNull();
     });
 
@@ -188,6 +189,43 @@ describe('Pomodoro pin state', () => {
         store.getState().setPinned(false);
         expect(store.getState().isPinned).toBe(false);
     });
+
+    it('auto-pins after focus end and clears only when the next focus starts', () => {
+        const store = freshStore();
+        store.setState({ currentPhase: 'break', isRunning: false });
+
+        store.getState().setPinnedFromFocusEnd();
+
+        expect(store.getState().isPinned).toBe(true);
+
+        store.getState().start();
+        expect(store.getState().currentPhase).toBe('break');
+        expect(store.getState().isPinned).toBe(true);
+
+        store.setState({ currentPhase: 'focus', isRunning: false });
+        store.getState().start();
+        expect(store.getState().isPinned).toBe(false);
+    });
+
+    it('does not clear a user-selected manual pin when the next focus starts', () => {
+        const store = freshStore();
+
+        store.getState().setPinned(true);
+        store.getState().setPinnedFromFocusEnd();
+        store.setState({ currentPhase: 'focus', isRunning: false });
+        store.getState().start();
+
+        expect(store.getState().isPinned).toBe(true);
+    });
+
+    it('does not auto-pin after focus end when the setting is disabled', () => {
+        const store = freshStore();
+        store.setState({ autoPinAfterFocus: false });
+
+        store.getState().setPinnedFromFocusEnd();
+
+        expect(store.getState().isPinned).toBe(false);
+    });
 });
 
 describe('createPomodoroStore — settings-window mode', () => {
@@ -227,6 +265,20 @@ describe('createPomodoroStore — settings-window mode', () => {
                 builtinVideoId: DEFAULT_BUILTIN_POMODORO_VIDEO_ID,
                 customVideoPath: '/tmp/custom.mp4',
             }],
+        }));
+        spy.mockRestore();
+    });
+
+    it('setAutoPinAfterFocus dispatches instead of mutating local state', () => {
+        const spy = vi.spyOn(dispatchMod, 'dispatch').mockResolvedValue();
+        const store = createPomodoroStore({ isSettingsWindow: true });
+        store.getState().setAutoPinAfterFocus(false);
+        expect(store.getState().autoPinAfterFocus).toBe(true);
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({
+            v: BRIDGE_VERSION,
+            store: 'pomodoro',
+            action: 'setAutoPinAfterFocus',
+            args: [false],
         }));
         spy.mockRestore();
     });

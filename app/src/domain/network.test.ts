@@ -62,6 +62,7 @@ function makeCloudSnapshot(): CloudAccountData {
             breakDurationSeconds: 300,
             totalRounds: 4,
             autoStartBreak: false,
+            autoPinAfterFocus: true,
             endActionMode: 'playVideo',
             endActionVideo: { sourceKind: 'builtin', builtinVideoId: 'default', customVideoPath: '' },
         },
@@ -90,12 +91,6 @@ function makeCloudSnapshot(): CloudAccountData {
                 items: [],
             },
             dailyRecords: {},
-        },
-        todo: {
-            currentTaskTitle: '',
-            activeFilter: 'today',
-            expanded: true,
-            items: [],
         },
     };
 }

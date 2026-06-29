@@ -10,7 +10,6 @@ import { useActiveAppStore } from '../activeApp';
 import { useAppUpdateStore } from '../appUpdate';
 import { BRIDGE_VERSION, EVT_STATE, type BridgeSnapshot } from './protocol';
 import { defaultPlanTemplate, useCheckinStore } from '../checkin';
-import { useTodoStore } from '../todo';
 
 const { emitMock, listenMock, eventHandlers } = vi.hoisted(() => {
     const handlers = new Map<string, (event: { payload: unknown }) => void>();
@@ -76,6 +75,7 @@ function makeSample(): BridgeSnapshot {
             breakDurationSeconds: 120,
             totalRounds: 6,
             autoStartBreak: true,
+            autoPinAfterFocus: false,
             endActionMode: 'topWindow',
             endActionVideo: {
                 sourceKind: 'custom',
@@ -155,22 +155,6 @@ function makeSample(): BridgeSnapshot {
             },
             lastError: 'save failed',
         },
-        todo: {
-            currentTaskTitle: 'Current mirrored task',
-            activeFilter: 'week',
-            expanded: false,
-            items: [{
-                id: 'todo-1',
-                title: 'Mirrored todo',
-                completed: false,
-                filter: 'week',
-                startTime: '09:30',
-                endTime: '10:00',
-                createdAt: 10,
-                updatedAt: 10,
-                completedAt: null,
-            }],
-        },
     };
 }
 
@@ -190,6 +174,7 @@ beforeEach(() => {
     });
     usePomodoroStore.setState({
         autoStartBreak: false,
+        autoPinAfterFocus: true,
         endActionMode: 'playVideo',
         endActionVideo: {
             sourceKind: 'builtin',
@@ -229,12 +214,6 @@ beforeEach(() => {
         dailyRecords: {},
         lastError: null,
     });
-    useTodoStore.getState().hydrateTodo({
-        currentTaskTitle: '',
-        activeFilter: 'today',
-        expanded: true,
-        items: [],
-    });
 });
 
 afterEach(() => {
@@ -263,6 +242,7 @@ describe('applySnapshotToMirrors', () => {
         expect(usePomodoroStore.getState().breakDurationSeconds).toBe(120);
         expect(usePomodoroStore.getState().totalRounds).toBe(6);
         expect(usePomodoroStore.getState().autoStartBreak).toBe(true);
+        expect(usePomodoroStore.getState().autoPinAfterFocus).toBe(false);
         expect(usePomodoroStore.getState().endActionMode).toBe('topWindow');
         expect(usePomodoroStore.getState().endActionVideo).toEqual({
             sourceKind: 'custom',
@@ -299,13 +279,6 @@ describe('applySnapshotToMirrors', () => {
             processedPomodoroEndEventIds: [42],
         });
         expect(useCheckinStore.getState().lastError).toBe('save failed');
-        expect(useTodoStore.getState()).toMatchObject({
-            currentTaskTitle: 'Current mirrored task',
-            activeFilter: 'week',
-            expanded: false,
-            editingItemId: null,
-        });
-        expect(useTodoStore.getState().items[0].title).toBe('Mirrored todo');
     });
 
     it('detaches nested mirror state from the incoming snapshot object', () => {
@@ -333,9 +306,6 @@ describe('applySnapshotToMirrors', () => {
         expect(useCheckinStore.getState().dailyRecords).toEqual(sample.checkin.dailyRecords);
         expect(useCheckinStore.getState().dailyRecords).not.toBe(sample.checkin.dailyRecords);
         expect(useCheckinStore.getState().dailyRecords['2026-05-18']).not.toBe(sample.checkin.dailyRecords['2026-05-18']);
-        expect(useTodoStore.getState().items).toEqual(sample.todo.items);
-        expect(useTodoStore.getState().items).not.toBe(sample.todo.items);
-        expect(useTodoStore.getState().items[0]).not.toBe(sample.todo.items[0]);
 
         sample.settings.dangerousChange!.nextValue = 1.25;
         sample.pomodoro.endActionVideo.customVideoPath = '/mutated.mp4';
@@ -347,7 +317,6 @@ describe('applySnapshotToMirrors', () => {
         sample.bindingKey.entries[0].input = { kind: 'mouse', button: 'right' };
         sample.checkin.dailyRecords['2026-05-18'].countsByItemId['manual-1'] = 99;
         sample.checkin.planTemplate.items[0].title = 'Mutated';
-        sample.todo.items[0].title = 'Mutated todo';
 
         expect(useSettingsStore.getState().dangerousChange?.nextValue).toBe(2.0);
         expect(usePomodoroStore.getState().endActionVideo.customVideoPath).toBe('/Users/xpy/Videos/focus-complete.mp4');
@@ -359,7 +328,6 @@ describe('applySnapshotToMirrors', () => {
         expect(useBindingKeyStore.getState().entries[0].input).toEqual({ kind: 'keyboard', code: 0 });
         expect(useCheckinStore.getState().dailyRecords['2026-05-18'].countsByItemId['manual-1']).toBe(1);
         expect(useCheckinStore.getState().planTemplate.items[0].title).toBe('Read');
-        expect(useTodoStore.getState().items[0].title).toBe('Mirrored todo');
     });
 
     it('ignores snapshots with a mismatched bridge version', () => {

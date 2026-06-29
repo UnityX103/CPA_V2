@@ -6,7 +6,6 @@ import { usePomodoroStore } from './pomodoro';
 import { defaultPlanTemplate, useCheckinStore } from './checkin';
 import { useAppUpdateStore } from './appUpdate';
 import { useBindingKeyStore } from './bindingKey';
-import { useTodoStore } from './todo';
 
 const savePersistedUserPreferencesMock = vi.hoisted(() => vi.fn(async () => {}));
 
@@ -31,6 +30,7 @@ describe('useCloudAccountSync', () => {
             breakDurationSeconds: 300,
             totalRounds: 4,
             autoStartBreak: false,
+            autoPinAfterFocus: true,
         });
         useCheckinStore.getState().hydrateCheckin({
             planTemplate: defaultPlanTemplate(),
@@ -50,12 +50,6 @@ describe('useCloudAccountSync', () => {
             entries: [],
             syncedKeyId: null,
             capturingId: null,
-        });
-        useTodoStore.getState().hydrateTodo({
-            currentTaskTitle: '',
-            activeFilter: 'today',
-            expanded: true,
-            items: [],
         });
         savePersistedUserPreferencesMock.mockClear();
     });
@@ -98,6 +92,7 @@ describe('useCloudAccountSync', () => {
                         breakDurationSeconds: 60,
                         totalRounds: 2,
                         autoStartBreak: true,
+                        autoPinAfterFocus: false,
                         endActionMode: 'topWindow',
                         endActionVideo: { sourceKind: 'builtin', builtinVideoId: 'default', customVideoPath: '' },
                     },
@@ -129,12 +124,6 @@ describe('useCloudAccountSync', () => {
                         planTemplate: defaultPlanTemplate(),
                         dailyRecords: {},
                     },
-                    todo: {
-                        currentTaskTitle: 'Server todo',
-                        activeFilter: 'today',
-                        expanded: true,
-                        items: [],
-                    },
                 },
                 cloudDataUpdatedAt: 10,
                 cloudSyncStatus: 'synced',
@@ -145,7 +134,6 @@ describe('useCloudAccountSync', () => {
         expect(useAppUpdateStore.getState().autoUpdateEnabled).toBe(false);
         expect(useNetworkStore.getState().autoConnect).toBe(true);
         expect(useBindingKeyStore.getState().panelEnabled).toBe(false);
-        expect(useTodoStore.getState().currentTaskTitle).toBe('Server todo');
         expect(savePersistedUserPreferencesMock).toHaveBeenCalledTimes(1);
         expect(save).not.toHaveBeenCalled();
     });
@@ -189,6 +177,44 @@ describe('useCloudAccountSync', () => {
         expect(savePersistedUserPreferencesMock).toHaveBeenCalledWith(expect.objectContaining({
             pomodoro: expect.objectContaining({ focusDurationSeconds: 840 }),
         }));
+    });
+
+    it('saves local archive and schedules cloud upload when only autoPinAfterFocus changes', () => {
+        const save = vi.spyOn(useNetworkStore.getState(), 'saveUserData');
+        renderHook(() => useCloudAccountSync());
+
+        act(() => {
+            useNetworkStore.setState({
+                accountStatus: 'loggedIn',
+                accountUser: { userId: 'u1', username: 'Alice' },
+                cloudData: null,
+                cloudDataUpdatedAt: null,
+                cloudSyncStatus: 'synced',
+            });
+        });
+        save.mockClear();
+        savePersistedUserPreferencesMock.mockClear();
+
+        act(() => {
+            usePomodoroStore.getState().setAutoPinAfterFocus(false);
+            vi.advanceTimersByTime(999);
+        });
+
+        expect(savePersistedUserPreferencesMock).toHaveBeenCalledWith(expect.objectContaining({
+            pomodoro: expect.objectContaining({ autoPinAfterFocus: false }),
+        }));
+        expect(save).not.toHaveBeenCalled();
+
+        act(() => {
+            vi.advanceTimersByTime(1);
+        });
+
+        expect(save).toHaveBeenCalledWith(
+            expect.objectContaining({
+                pomodoro: expect.objectContaining({ autoPinAfterFocus: false }),
+            }),
+            null,
+        );
     });
 
     it('does not save default local data before startup hydration has completed', () => {

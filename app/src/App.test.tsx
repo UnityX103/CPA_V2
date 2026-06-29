@@ -151,9 +151,6 @@ vi.mock('./domain/userPreferencesPersistence', () => ({
 vi.mock('./ui/PomodoroPanel', () => ({
     PomodoroPanel: () => <div data-testid="pomodoro-panel" />,
 }));
-vi.mock('./ui/TodoPanel', () => ({
-    TodoPanel: () => <div data-testid="todo-panel" />,
-}));
 vi.mock('./ui/PomodoroEndActionLayer', () => ({
     PomodoroEndActionLayer: () => <div data-testid="pomodoro-end-layer" />,
 }));
@@ -165,15 +162,6 @@ vi.mock('./ui/RemoteRoster', () => ({
 }));
 
 const { default: App } = await import('./App');
-
-function defaultTodoSnapshot() {
-    return {
-        currentTaskTitle: '',
-        activeFilter: 'today' as const,
-        expanded: true,
-        items: [],
-    };
-}
 
 beforeEach(() => {
     appUpdateCleanup.mockClear();
@@ -272,11 +260,10 @@ afterEach(() => {
 });
 
 describe('main App window composition', () => {
-    it('renders the Pomodoro and TODO panels in the main window', () => {
+    it('renders the Pomodoro panel in the main window', () => {
         render(<App />);
 
         expect(screen.getByTestId('pomodoro-panel')).toBeInTheDocument();
-        expect(screen.getByTestId('todo-panel')).toBeInTheDocument();
         expect(screen.queryByTestId('remote-roster')).toBeNull();
         expect(useStateSync).toHaveBeenCalledTimes(1);
         expect(useCloudAccountSync).toHaveBeenCalledTimes(1);
@@ -285,15 +272,6 @@ describe('main App window composition', () => {
         expect(useBridgeHost).toHaveBeenCalledTimes(1);
         expect(useInputCounterWindowController).toHaveBeenCalledTimes(1);
         expect(useRemotePlayerWindowController).toHaveBeenCalledTimes(1);
-    });
-
-    it('hides the TODO panel when the TODO panel setting is disabled', () => {
-        useSettingsStore.setState({ planPanelEnabled: false });
-
-        render(<App />);
-
-        expect(screen.getByTestId('pomodoro-panel')).toBeInTheDocument();
-        expect(screen.queryByTestId('todo-panel')).toBeNull();
     });
 
     it('renders the app update restart notice layer', () => {
@@ -519,6 +497,7 @@ describe('main App window composition', () => {
                 breakDurationSeconds: 120,
                 totalRounds: 2,
                 autoStartBreak: true,
+                autoPinAfterFocus: true,
                 endActionMode: 'topWindow',
                 endActionVideo: { sourceKind: 'builtin', builtinVideoId: 'qianqian', customVideoPath: '' },
             },
@@ -550,7 +529,6 @@ describe('main App window composition', () => {
                 planTemplate: defaultPlanTemplate(),
                 dailyRecords: {},
             },
-            todo: defaultTodoSnapshot(),
         });
         restoreAccountSession.mockImplementation(async () => {
             useNetworkStore.setState({ accountStatus: 'guest' });
@@ -584,6 +562,7 @@ describe('main App window composition', () => {
                 breakDurationSeconds: 300,
                 totalRounds: 4,
                 autoStartBreak: true,
+                autoPinAfterFocus: true,
                 endActionMode: 'playVideo',
                 endActionVideo: { sourceKind: 'builtin', builtinVideoId: 'qianqian', customVideoPath: '' },
             },
@@ -608,7 +587,6 @@ describe('main App window composition', () => {
                 planTemplate: defaultPlanTemplate(),
                 dailyRecords: {},
             },
-            todo: defaultTodoSnapshot(),
         });
         restoreAccountSession.mockImplementation(async () => {
             useNetworkStore.setState({ accountStatus: 'guest' });
@@ -630,6 +608,7 @@ describe('main App window composition', () => {
                 breakDurationSeconds: 300,
                 totalRounds: 4,
                 autoStartBreak: true,
+                autoPinAfterFocus: true,
                 endActionMode: 'playVideo',
                 endActionVideo: { sourceKind: 'builtin', builtinVideoId: 'qianqian', customVideoPath: '' },
             },
@@ -655,7 +634,6 @@ describe('main App window composition', () => {
                 planTemplate: defaultPlanTemplate(),
                 dailyRecords: {},
             },
-            todo: defaultTodoSnapshot(),
         });
         restoreAccountSession.mockImplementation(() => new Promise(() => {}));
 
@@ -686,6 +664,7 @@ describe('main App window composition', () => {
                 breakDurationSeconds: 120,
                 totalRounds: 2,
                 autoStartBreak: false,
+                autoPinAfterFocus: true,
                 endActionMode: 'playVideo',
                 endActionVideo: { sourceKind: 'builtin', builtinVideoId: 'default', customVideoPath: '' },
             },
@@ -711,7 +690,6 @@ describe('main App window composition', () => {
                 planTemplate: defaultPlanTemplate(),
                 dailyRecords: {},
             },
-            todo: defaultTodoSnapshot(),
         });
         restoreAccountSession.mockImplementation(async () => {
             useNetworkStore.setState({
@@ -727,6 +705,7 @@ describe('main App window composition', () => {
                         breakDurationSeconds: 300,
                         totalRounds: 3,
                         autoStartBreak: true,
+                        autoPinAfterFocus: false,
                         endActionMode: 'topWindow',
                         endActionVideo: { sourceKind: 'builtin', builtinVideoId: 'qianqian', customVideoPath: '' },
                     },
@@ -751,12 +730,6 @@ describe('main App window composition', () => {
                     checkin: {
                         planTemplate: defaultPlanTemplate(),
                         dailyRecords: {},
-                    },
-                    todo: {
-                        currentTaskTitle: 'Cloud todo',
-                        activeFilter: 'today',
-                        expanded: true,
-                        items: [],
                     },
                 },
             });

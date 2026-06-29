@@ -1,6 +1,5 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { PomodoroPanel } from './ui/PomodoroPanel';
-import { TodoPanel } from './ui/TodoPanel';
 import { PomodoroEndActionLayer } from './ui/PomodoroEndActionLayer';
 import { AppUpdateReadyNotice } from './ui/AppUpdateReadyNotice';
 import { useStateSync } from './domain/stateSync';
@@ -20,7 +19,6 @@ import { loadPersistedCheckin } from './domain/checkinPersistence';
 import { usePomodoroStore } from './domain/pomodoro';
 import { useNetworkStore } from './domain/network';
 import { useCloudAccountSync } from './domain/cloudAccountSync';
-import { useTodoStore } from './domain/todo';
 import {
     buildUserPreferencesSnapshot,
     hydrateUserPreferencesSnapshot,
@@ -99,7 +97,6 @@ function userPreferenceStores(): UserPreferencesStores {
         network: useNetworkStore,
         bindingKey: useBindingKeyStore,
         checkin: useCheckinStore,
-        todo: useTodoStore,
     };
 }
 
@@ -166,7 +163,6 @@ export default function App() {
     useInputCounterWindowController();
     useRemotePlayerWindowController();
     const uiScale = useSettingsStore((s) => s.uiScale);
-    const todoPanelEnabled = useSettingsStore((s) => s.planPanelEnabled);
     const [localHydrated, setLocalHydrated] = useState(false);
     useCheckinWindowController(localHydrated);
     useCloudAccountSync({ enabled: localHydrated });
@@ -218,7 +214,6 @@ export default function App() {
                 stores.network.subscribe(scheduleSave),
                 stores.bindingKey.subscribe(scheduleSave),
                 stores.checkin.subscribe(scheduleSave),
-                stores.todo.subscribe(scheduleSave),
             );
         }
 
@@ -346,6 +341,10 @@ export default function App() {
             const event = state.lastEndEvent;
             if (!event || event === previous.lastEndEvent) return;
             if (event.fromPhase !== 'focus') return;
+            if (event.toPhase === 'break' && event.triggeredBy === 'timer') {
+                usePomodoroStore.getState().setPinnedFromFocusEnd();
+            }
+
             if (!useSettingsStore.getState().checkinEnabled) return;
 
             useCheckinStore.getState().applyPomodoroFocusCompletion(todayLocalDate(), event.id);
@@ -361,7 +360,6 @@ export default function App() {
         <div className="app-scale-root" style={{ '--app-ui-scale': String(uiScale) } as CSSProperties}>
             <div className="app-root">
                 <PomodoroPanel />
-                {todoPanelEnabled && <TodoPanel />}
                 <PomodoroEndActionLayer />
                 <AppUpdateReadyNotice />
             </div>

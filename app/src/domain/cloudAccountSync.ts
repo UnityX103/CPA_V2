@@ -11,7 +11,6 @@ import { useSettingsStore } from './settings';
 import { useAppUpdateStore } from './appUpdate';
 import { useBindingKeyStore } from './bindingKey';
 import { savePersistedUserPreferences } from './userPreferencesPersistence';
-import { useTodoStore } from './todo';
 
 const SAVE_DEBOUNCE_MS = 1000;
 
@@ -32,7 +31,6 @@ export function useCloudAccountSync(opts: { enabled?: boolean } = {}) {
             network: useNetworkStore,
             bindingKey: useBindingKeyStore,
             checkin: useCheckinStore,
-            todo: useTodoStore,
         };
 
         const clearTimer = () => {
@@ -103,6 +101,7 @@ export function useCloudAccountSync(opts: { enabled?: boolean } = {}) {
                 s.breakDurationSeconds !== p.breakDurationSeconds ||
                 s.totalRounds !== p.totalRounds ||
                 s.autoStartBreak !== p.autoStartBreak ||
+                s.autoPinAfterFocus !== p.autoPinAfterFocus ||
                 s.endActionMode !== p.endActionMode ||
                 s.endActionVideo !== p.endActionVideo
             ) {
@@ -146,18 +145,6 @@ export function useCloudAccountSync(opts: { enabled?: boolean } = {}) {
             }
         });
 
-        const unsubTodo = useTodoStore.subscribe((s, p) => {
-            if (
-                s.currentTaskTitle !== p.currentTaskTitle ||
-                s.items !== p.items ||
-                s.activeFilter !== p.activeFilter ||
-                s.expanded !== p.expanded
-            ) {
-                saveLocalNow();
-                scheduleSave();
-            }
-        });
-
         return () => {
             clearTimer();
             unsubNetwork();
@@ -166,7 +153,6 @@ export function useCloudAccountSync(opts: { enabled?: boolean } = {}) {
             unsubAppUpdate();
             unsubBindingKey();
             unsubCheckin();
-            unsubTodo();
         };
     }, [enabled]);
 }

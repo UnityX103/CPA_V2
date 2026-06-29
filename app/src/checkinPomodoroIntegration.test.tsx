@@ -201,6 +201,7 @@ beforeEach(() => {
         isRunning: false,
         isPinned: false,
         autoStartBreak: false,
+        autoPinAfterFocus: true,
         consecutiveCompletedFocus: 0,
         endActionMode: 'playVideo',
         endActionVideo: {
@@ -291,10 +292,10 @@ describe('checkin Pomodoro integration', () => {
         });
 
         expect(openCheckinEditorWindowMock).not.toHaveBeenCalled();
+        expect(usePomodoroStore.getState().isPinned).toBe(false);
     });
 
-    it('does not auto-pin the main window when focus naturally ends', () => {
-        const setPinnedSpy = vi.spyOn(usePomodoroStore.getState(), 'setPinned');
+    it('auto-pins the main window when focus naturally ends', () => {
         render(<App />);
 
         act(() => {
@@ -303,9 +304,20 @@ describe('checkin Pomodoro integration', () => {
             });
         });
 
-        expect(setPinnedSpy).not.toHaveBeenCalled();
+        expect(usePomodoroStore.getState().isPinned).toBe(true);
+    });
+
+    it('does not auto-pin the main window when automatic formulation is disabled', () => {
+        usePomodoroStore.setState({ autoPinAfterFocus: false });
+        render(<App />);
+
+        act(() => {
+            usePomodoroStore.setState({
+                lastEndEvent: { id: 15, fromPhase: 'focus', toPhase: 'break', triggeredBy: 'timer' },
+            });
+        });
+
         expect(usePomodoroStore.getState().isPinned).toBe(false);
-        setPinnedSpy.mockRestore();
     });
 
     it('does not write check-in records or open check-in panel when check-in is disabled', () => {
@@ -321,5 +333,6 @@ describe('checkin Pomodoro integration', () => {
         expect(useCheckinStore.getState().dailyRecords).toEqual({});
         expect(openTodayCheckinWindowMock).not.toHaveBeenCalled();
         expect(raiseTodayCheckinWindowMock).not.toHaveBeenCalled();
+        expect(usePomodoroStore.getState().isPinned).toBe(true);
     });
 });

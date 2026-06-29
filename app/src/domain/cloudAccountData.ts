@@ -12,7 +12,6 @@ import {
     type PersistedBindingKeyEntry,
     type UserPreferencesSnapshot,
 } from './userPreferences';
-import type { TodoSnapshot } from './todo';
 
 export interface CloudAccountData extends UserPreferencesSnapshot {
     updatedAt?: number;
@@ -33,10 +32,6 @@ type BindingKeyStore = UseBoundStore<StoreApi<{
 type CheckinStore = UseBoundStore<StoreApi<CheckinState & {
     hydrateCheckin: (snapshot: Pick<CheckinState, 'planTemplate' | 'dailyRecords'>) => void;
 }>>;
-type TodoStore = UseBoundStore<StoreApi<TodoSnapshot & {
-    hydrateTodo: (snapshot: Partial<TodoSnapshot>) => void;
-}>>;
-
 export interface CloudStores {
     pomodoro: PomodoroStore;
     settings: SettingsStore;
@@ -44,7 +39,6 @@ export interface CloudStores {
     network: NetworkStore;
     bindingKey: BindingKeyStore;
     checkin: CheckinStore;
-    todo: TodoStore;
 }
 
 export function buildCloudAccountData(stores: CloudStores): CloudAccountData {
@@ -83,12 +77,6 @@ export function mergeCloudAccountDataConflict({ server, local }: {
                 normalizedServer.checkin.dailyRecords,
                 normalizedLocal.checkin.dailyRecords,
             ),
-        },
-        todo: {
-            currentTaskTitle: normalizedServer.todo.currentTaskTitle,
-            items: normalizedServer.todo.items.map((item) => ({ ...item })),
-            activeFilter: normalizedServer.todo.activeFilter,
-            expanded: normalizedServer.todo.expanded,
         },
     };
 }

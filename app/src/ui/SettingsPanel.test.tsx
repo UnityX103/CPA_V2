@@ -81,6 +81,7 @@ beforeEach(() => {
         isRunning: false,
         isPinned: false,
         autoStartBreak: false,
+        autoPinAfterFocus: true,
         consecutiveCompletedFocus: 0,
         endActionMode: 'playVideo',
         endActionVideo: {
@@ -317,6 +318,7 @@ describe('PomodoroTab parity with gs1Tv', () => {
         expect(screen.getByText('休息时长')).toBeTruthy();
         // pomoFooter rows (WSnlp 视频文件 omitted — enabled:false in design)
         expect(screen.getByText('结束提示音')).toBeTruthy();
+        expect(screen.getByText('自动制定')).toBeTruthy();
         expect(screen.getByText('计时结束提示')).toBeTruthy();
         expect(screen.queryByText('视频文件')).toBeNull();
         expect(screen.queryByText('自定义视频文件')).toBeNull();
@@ -333,10 +335,12 @@ describe('PomodoroTab parity with gs1Tv', () => {
 
         const notif = screen.getByText('结束提示音');
         const autoStart = screen.getByText('自动开始休息');
+        const autoPin = screen.getByText('自动制定');
         const endAction = screen.getByText('计时结束提示');
 
         expect(notif.compareDocumentPosition(autoStart) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-        expect(autoStart.compareDocumentPosition(endAction) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(autoStart.compareDocumentPosition(autoPin) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(autoPin.compareDocumentPosition(endAction) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
 
     it('hides the ordinary Apply overlay until a Pomodoro setting changes', () => {
@@ -357,6 +361,16 @@ describe('PomodoroTab parity with gs1Tv', () => {
         fireEvent.click(screen.getByRole('button', { name: '应用' }));
 
         expect(usePomodoroStore.getState().autoStartBreak).toBe(true);
+        expect(screen.queryByRole('button', { name: '应用' })).toBeNull();
+    });
+
+    it('applies the 自动制定 toggle with the ordinary Pomodoro apply action', () => {
+        render(<SettingsPanel />);
+
+        fireEvent.click(screen.getByRole('button', { name: '自动制定' }));
+        fireEvent.click(screen.getByRole('button', { name: '应用' }));
+
+        expect(usePomodoroStore.getState().autoPinAfterFocus).toBe(false);
         expect(screen.queryByRole('button', { name: '应用' })).toBeNull();
     });
 });
@@ -642,7 +656,7 @@ describe('GlobalTab parity with Pdj9C', () => {
         expect(screen.getByText('界面缩放')).toBeTruthy();
         expect(screen.getByText('开机自启动')).toBeTruthy();
         expect(screen.getByText('打卡系统')).toBeTruthy();
-        expect(screen.getByText('TODO面板')).toBeTruthy();
+        expect(screen.getByText('今日打卡面板')).toBeTruthy();
         expect(screen.getByText('自动下载并安装更新')).toBeTruthy();
         expect(screen.getByText('按键计数')).toBeTruthy();
         expect(screen.queryByText('显示打开的' + '文件名')).toBeNull();
@@ -657,12 +671,12 @@ describe('GlobalTab parity with Pdj9C', () => {
         expect(screen.getByRole('button', { name: /添加输入/ })).toBeTruthy();
     });
 
-    it('keeps TODO panel between checkin system and app update controls', () => {
+    it('keeps today check-in panel between checkin system and app update controls', () => {
         render(<SettingsPanel />);
 
         const autostart = screen.getByText('开机自启动');
         const checkin = screen.getByText('打卡系统');
-        const planPanel = screen.getByText('TODO面板');
+        const planPanel = screen.getByText('今日打卡面板');
         const autoUpdate = screen.getByText('自动下载并安装更新');
         const bindingKey = screen.getByText('按键计数');
 
@@ -698,14 +712,14 @@ describe('GlobalTab parity with Pdj9C', () => {
         expect(setCheckinEnabled).toHaveBeenCalledWith(false);
     });
 
-    it('routes TODO panel toggles to the settings store action', () => {
+    it('routes today check-in panel toggles to the settings store action', () => {
         const setPlanPanelEnabled = vi.fn((enabled: boolean) => {
             useSettingsStore.setState({ planPanelEnabled: enabled });
         });
         useSettingsStore.setState({ setPlanPanelEnabled, planPanelEnabled: true });
         render(<SettingsPanel />);
 
-        const toggle = screen.getByRole('button', { name: 'TODO面板' });
+        const toggle = screen.getByRole('button', { name: '今日打卡面板' });
 
         expect(toggle.getAttribute('aria-pressed')).toBe('true');
         fireEvent.click(toggle);

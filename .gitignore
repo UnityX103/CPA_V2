@@ -26,6 +26,7 @@ Server/node_modules/
 
 # Claude Code harness
 .claude/
+.codex/run/
 
 # Local isolated implementation worktrees
 .worktrees/

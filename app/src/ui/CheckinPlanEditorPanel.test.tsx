@@ -84,6 +84,7 @@ describe('CheckinPlanEditorPanel', () => {
     it('edits repeat days in a draft and saves the template', () => {
         render(<CheckinPlanEditorPanel />);
 
+        expect(screen.queryByLabelText('阅读 目标次数')).not.toBeInTheDocument();
         fireEvent.click(screen.getByRole('button', { name: '阅读 周二' }));
         expect(useCheckinStore.getState().planTemplate.items[0].repeatDays).toEqual(['mon', 'wed']);
 
@@ -97,9 +98,12 @@ describe('CheckinPlanEditorPanel', () => {
         render(<CheckinPlanEditorPanel />);
 
         fireEvent.click(screen.getByRole('button', { name: '阅读 次数' }));
+        expect(screen.queryByLabelText('阅读 目标次数')).not.toBeInTheDocument();
+        expect(document.querySelector('.checkin-editor-target-inline')).not.toBeInTheDocument();
         fireEvent.change(screen.getByLabelText('阅读 每次数量'), { target: { value: '7' } });
         fireEvent.change(screen.getByLabelText('阅读 单位设置'), { target: { value: '页' } });
-        fireEvent.change(screen.getByLabelText('阅读 循环次数'), { target: { value: '3' } });
+        fireEvent.click(screen.getByRole('button', { name: '增加 阅读 循环次数' }));
+        fireEvent.click(screen.getByRole('button', { name: '增加 阅读 循环次数' }));
         fireEvent.click(screen.getByRole('button', { name: '保存计划' }));
 
         expect(useCheckinStore.getState().planTemplate.items[0]).toMatchObject({
@@ -159,7 +163,8 @@ describe('CheckinPlanEditorPanel', () => {
         });
         render(<CheckinPlanEditorPanel />);
 
-        fireEvent.change(screen.getByLabelText('Pomodoro 专注 循环次数'), { target: { value: '3' } });
+        fireEvent.click(screen.getByRole('button', { name: '增加 Pomodoro 专注 循环次数' }));
+        fireEvent.click(screen.getByRole('button', { name: '增加 Pomodoro 专注 循环次数' }));
         fireEvent.click(screen.getByRole('button', { name: '保存计划' }));
 
         expect(useCheckinStore.getState().planTemplate.items[0]).toMatchObject({
@@ -214,7 +219,7 @@ describe('CheckinPlanEditorPanel', () => {
         });
 
         expect(screen.getByDisplayValue('喝水')).toBeInTheDocument();
-        expect(screen.getByDisplayValue('3')).toBeInTheDocument();
+        expect(screen.queryByLabelText('喝水 目标次数')).not.toBeInTheDocument();
     });
 
     it('starts native drag from the editor background but not from controls', () => {
@@ -227,6 +232,48 @@ describe('CheckinPlanEditorPanel', () => {
         expect(startDraggingMock).toHaveBeenCalledTimes(1);
     });
 
+    it('shows a stable delete icon for row actions while keeping the delete name', () => {
+        render(<CheckinPlanEditorPanel />);
+
+        const deleteButton = screen.getByRole('button', { name: '删除 阅读' });
+
+        expect(deleteButton).toBeInTheDocument();
+        expect(deleteButton).not.toHaveTextContent('⋮');
+        expect(deleteButton.querySelector('svg')).toBeInTheDocument();
+    });
+
+    it('reorders plan items by dragging an entire row before saving', () => {
+        useCheckinStore.setState({
+            planTemplate: {
+                schemaVersion: 2,
+                carryToNextWeek: true,
+                items: [
+                    structuredClone(baseTemplate.items[0]),
+                    {
+                        ...structuredClone(baseTemplate.items[0]),
+                        id: 'water',
+                        title: '喝水',
+                        icon: 'droplet',
+                    },
+                ],
+            },
+            dailyRecords: {},
+            lastError: null,
+        });
+        render(<CheckinPlanEditorPanel />);
+
+        const readRow = screen.getByTestId('checkin-item-row-read');
+        const waterRow = screen.getByTestId('checkin-item-row-water');
+
+        expect(readRow).toHaveAttribute('draggable', 'true');
+        fireEvent.dragStart(readRow);
+        fireEvent.dragOver(waterRow);
+        fireEvent.drop(waterRow);
+        fireEvent.click(screen.getByRole('button', { name: '保存计划' }));
+
+        expect(useCheckinStore.getState().planTemplate.items.map((item) => item.id)).toEqual(['water', 'read']);
+    });
+
     it('keeps DzDyI count and cycle controls on the same shared row geometry', () => {
         const css = editorCss();
 
@@ -235,11 +282,12 @@ describe('CheckinPlanEditorPanel', () => {
         expect(css).toMatch(/\.checkin-editor-repeat-days\s*\{[^}]*grid-template-columns:\s*repeat\(7,\s*minmax\(0,\s*1fr\)\);[^}]*gap:\s*5px;/s);
 
         expect(css).toMatch(/\.checkin-editor-count-grid\s*\{[^}]*display:\s*flex;[^}]*align-items:\s*center;[^}]*gap:\s*6px;/s);
-        expect(css).toMatch(/\.checkin-editor-count-grid\s+\.checkin-editor-field:nth-child\(1\)\s*\{[^}]*width:\s*75px;/s);
-        expect(css).toMatch(/\.checkin-editor-count-grid\s+\.checkin-editor-field:nth-child\(2\)\s*\{[^}]*width:\s*96px;/s);
-        expect(css).toMatch(/\.checkin-editor-count-grid\s+\.checkin-editor-field:nth-child\(3\)\s*\{[^}]*width:\s*112px;/s);
-        expect(css).toMatch(/\.checkin-editor-count-grid\s+\.checkin-editor-field\s*\{[^}]*height:\s*36px;[^}]*border-radius:\s*12px;/s);
-        expect(css).toMatch(/\.checkin-editor-count-grid\s+\.checkin-editor-field:last-child\s*\{[^}]*border-color:\s*#efdccd;[^}]*background:\s*#fff7f0;/s);
+        expect(css).toMatch(/\.checkin-editor-count-grid\s+\.checkin-editor-field:nth-child\(1\)\s*\{[^}]*width:\s*112px;/s);
+        expect(css).toMatch(/\.checkin-editor-count-grid\s+\.checkin-editor-field:nth-child\(2\)\s*\{[^}]*width:\s*76px;/s);
+        expect(css).toMatch(/\.checkin-editor-count-grid\s+\.checkin-editor-loop-stepper\s*\{[^}]*width:\s*116px;/s);
+        expect(css).toMatch(/\.checkin-editor-count-grid\s+\.checkin-editor-field,\s*\.checkin-editor-count-grid\s+\.checkin-editor-loop-stepper\s*\{[^}]*height:\s*36px;[^}]*border-radius:\s*12px;/s);
+        expect(css).toMatch(/\.checkin-editor-count-grid\s+\.checkin-editor-loop-stepper\s*\{[^}]*border-color:\s*#efdccd;[^}]*background:\s*#fff7f0;/s);
+        expect(css).toMatch(/\.checkin-editor-loop-stepper button\.is-plus\s*\{[^}]*background:\s*#d15f3d;[^}]*color:\s*#ffffff;/s);
         expect(css).toMatch(/\.checkin-editor-count-grid\s+\.checkin-editor-unit-field input\s*\{[^}]*text-align:\s*left;/s);
     });
 });

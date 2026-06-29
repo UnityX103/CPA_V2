@@ -13,7 +13,6 @@ import {
     type CheckinPlanTemplate,
     type DailyCheckinRecord,
 } from '../checkin';
-import { cloneTodoSnapshot, useTodoStore, type TodoSnapshot } from '../todo';
 import {
     BRIDGE_VERSION,
     EVT_STATE,
@@ -76,10 +75,6 @@ function cloneDailyCheckinRecords(
     );
 }
 
-function cloneTodo(snapshot: TodoSnapshot): TodoSnapshot {
-    return cloneTodoSnapshot(snapshot);
-}
-
 function hasIconDataProperty(activeApp: ActiveAppInfo): boolean {
     return Object.prototype.hasOwnProperty.call(activeApp, 'icon_data_url');
 }
@@ -118,6 +113,7 @@ export function applySnapshotToMirrors(snap: BridgeSnapshot): void {
         breakDurationSeconds: snap.pomodoro.breakDurationSeconds,
         totalRounds: snap.pomodoro.totalRounds,
         autoStartBreak: snap.pomodoro.autoStartBreak,
+        autoPinAfterFocus: snap.pomodoro.autoPinAfterFocus,
         endActionMode: snap.pomodoro.endActionMode,
         endActionVideo: { ...snap.pomodoro.endActionVideo },
     });
@@ -152,10 +148,6 @@ export function applySnapshotToMirrors(snap: BridgeSnapshot): void {
         planTemplate: cloneCheckinPlanTemplate(snap.checkin.planTemplate),
         dailyRecords: cloneDailyCheckinRecords(snap.checkin.dailyRecords),
         lastError: snap.checkin.lastError,
-    });
-    useTodoStore.setState({
-        ...cloneTodo(snap.todo),
-        editingItemId: null,
     });
 }
 
