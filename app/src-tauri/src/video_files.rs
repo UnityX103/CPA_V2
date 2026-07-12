@@ -86,7 +86,7 @@ pub fn prepare_custom_alpha_video_path(
             return Ok(target.to_string_lossy().into_owned());
         }
 
-        let tmp = target.with_extension("mov.tmp");
+        let tmp = alpha_tmp_path(&target);
         let _ = fs::remove_file(&tmp);
         let status = run_ffmpeg_alpha_transcode(source, &tmp)?;
 
@@ -160,6 +160,16 @@ fn alpha_cache_filename(source: &Path) -> String {
 }
 
 #[cfg(not(target_os = "windows"))]
+fn alpha_tmp_path(target: &Path) -> std::path::PathBuf {
+    let filename = target
+        .file_stem()
+        .and_then(|stem| stem.to_str())
+        .filter(|stem| !stem.is_empty())
+        .unwrap_or("custom-video");
+    target.with_file_name(format!(".{filename}.tmp.mov"))
+}
+
+#[cfg(not(target_os = "windows"))]
 fn sanitize_cache_stem(stem: &str) -> String {
     stem.chars()
         .map(|ch| {
@@ -192,7 +202,7 @@ fn cached_alpha_video_is_fresh(source: &Path, target: &Path) -> bool {
 #[cfg(test)]
 mod tests {
     #[cfg(not(target_os = "windows"))]
-    use super::{alpha_cache_filename, sanitize_cache_stem};
+    use super::{alpha_cache_filename, alpha_tmp_path, sanitize_cache_stem};
     use super::{validate_webm_path, CustomVideoValidation};
     use std::fs;
     use std::path::Path;
@@ -295,5 +305,18 @@ mod tests {
     #[test]
     fn sanitize_cache_stem_replaces_path_unfriendly_characters() {
         assert_eq!(sanitize_cache_stem("focus end 千千"), "focus-end---");
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    #[test]
+    fn alpha_transcode_temp_path_keeps_a_mov_extension_for_ffmpeg_muxer_detection() {
+        let target = Path::new("/tmp/cpa-alpha/focus-end.mov");
+        let temp = alpha_tmp_path(target);
+
+        assert_eq!(temp, Path::new("/tmp/cpa-alpha/.focus-end.tmp.mov"));
+        assert_eq!(
+            temp.extension().and_then(|value| value.to_str()),
+            Some("mov")
+        );
     }
 }

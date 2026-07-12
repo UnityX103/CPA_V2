@@ -221,6 +221,26 @@ describe('SettingsPanel close button', () => {
     });
 });
 
+describe('SettingsPanel video editor navigation', () => {
+    it('opens the embedded video editing category from the settings sidebar', async () => {
+        render(<SettingsPanel />);
+
+        const tab = screen.getByRole('button', { name: '视频编辑' });
+        await act(async () => { fireEvent.click(tab); });
+
+        expect(useSettingsStore.getState().activeTab).toBe('videoEditor');
+        expect(screen.getByRole('heading', { name: '视频编辑' })).toBeTruthy();
+        expect(screen.getByRole('button', { name: '导入视频' })).toBeTruthy();
+        expect(screen.queryByLabelText('计时结束提示')).toBeNull();
+
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: '番茄钟' }));
+        });
+        expect(screen.queryByRole('heading', { name: '视频编辑' })).toBeNull();
+        expect(screen.getByLabelText('计时结束提示')).toBeTruthy();
+    });
+});
+
 describe('SettingsPanel geometry', () => {
     const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -263,6 +283,11 @@ describe('SettingsPanel geometry', () => {
         expect(css).toMatch(/\.settings-body\s*\{[^}]*flex-direction:\s*column\s*;/);
         expect(css).toMatch(/\.settings-nav\s*\{[^}]*width:\s*100%\s*;[^}]*flex-direction:\s*row\s*;/);
         expect(css).toMatch(/\.settings-tab\s*\{[^}]*flex:\s*1\s+0\s+auto\s*;/);
+    });
+
+    it('keeps the mounted video editor out of layout and accessibility when another tab is active', () => {
+        const css = readFileSync(path.join(here, 'SettingsPanel.css'), 'utf8');
+        expect(css).toMatch(/\.settings-video-editor-host\[hidden\]\s*\{[^}]*display:\s*none\s*;/);
     });
 
     it('settings modal layer can cover the unscaled window while content scales', () => {

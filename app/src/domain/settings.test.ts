@@ -50,6 +50,11 @@ describe('useSettingsStore', () => {
         expect(useSettingsStore.getState().activeTab).toBe('global');
     });
 
+    it('keeps video editing as settings-window-local navigation state', () => {
+        useSettingsStore.getState().setActiveTab('videoEditor');
+        expect(useSettingsStore.getState().activeTab).toBe('videoEditor');
+    });
+
     it('setUiScale clamps below MIN_SCALE', () => {
         useSettingsStore.getState().setUiScale(0.1);
         expect(useSettingsStore.getState().uiScale).toBe(MIN_SCALE);

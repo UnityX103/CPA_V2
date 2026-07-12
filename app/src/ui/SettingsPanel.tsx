@@ -30,6 +30,7 @@ import {
 } from '../domain/bindingKey';
 import { useAppUpdateStore, type AppUpdateStatus } from '../domain/appUpdate';
 import { InputBindingBadge } from './InputBindingBadge';
+import { VideoEditorPanel } from './VideoEditorPanel';
 import { shouldStartWindowDrag } from './windowDrag';
 import './SettingsPanel.css';
 
@@ -37,6 +38,7 @@ const TABS: Array<{ id: SettingsTab; label: string }> = [
     { id: 'pomodoro', label: '番茄钟' },
     { id: 'online', label: '联机' },
     { id: 'global', label: '全局' },
+    { id: 'videoEditor', label: '视频编辑' },
 ];
 
 interface OrdinaryApplyState {
@@ -70,9 +72,11 @@ export function SettingsPanel() {
     const dangerousChange = useSettingsStore((s) => s.dangerousChange);
     const revertDangerousChange = useSettingsStore((s) => s.revertDangerousChange);
     const [ordinaryApply, setOrdinaryApply] = useState<OrdinaryApplyState>(EMPTY_APPLY_STATE);
+    const [videoEditorMounted, setVideoEditorMounted] = useState(activeTab === 'videoEditor');
 
     useEffect(() => {
         setOrdinaryApply(EMPTY_APPLY_STATE);
+        if (activeTab === 'videoEditor') setVideoEditorMounted(true);
     }, [activeTab]);
 
     const onClose = () => {
@@ -119,6 +123,11 @@ export function SettingsPanel() {
                     {activeTab === 'pomodoro' && <PomodoroTab onApplyStateChange={setOrdinaryApply} />}
                     {activeTab === 'online' && <OnlineTab />}
                     {activeTab === 'global' && <GlobalTab />}
+                    {videoEditorMounted && (
+                        <div className="settings-video-editor-host" hidden={activeTab !== 'videoEditor'}>
+                            <VideoEditorPanel />
+                        </div>
+                    )}
                     <SettingsApplyRow
                         visible={ordinaryApply.dirty}
                         enabled={ordinaryApply.canApply}

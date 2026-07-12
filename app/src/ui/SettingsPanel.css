@@ -111,6 +111,18 @@
     background: transparent;
     line-height: 1;
     box-sizing: border-box;
+    white-space: nowrap;
+}
+
+.settings-video-editor-host {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+}
+
+.settings-video-editor-host[hidden] {
+    display: none;
 }
 
 .settings-tab.active {

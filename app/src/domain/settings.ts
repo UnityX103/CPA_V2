@@ -5,7 +5,7 @@ import { savePersistedSettings, type PersistedSettings } from './settingsPersist
 import { applyAutostartEnabled } from './autostart';
 import { DEFAULT_CHECKIN_ENABLED, DEFAULT_PLAN_PANEL_ENABLED } from './settingsDefaults';
 
-export type SettingsTab = 'pomodoro' | 'online' | 'global';
+export type SettingsTab = 'pomodoro' | 'online' | 'global' | 'videoEditor';
 export type DangerousSettingKind = 'uiScale';
 
 export interface DangerousChange {

@@ -2,6 +2,7 @@ mod accessibility;
 mod active_app;
 mod key_counter;
 mod scaled_window;
+mod video_editor;
 mod video_files;
 mod window_layout;
 mod window_helpers;
@@ -728,6 +729,9 @@ pub fn run() {
             accessibility::key_counter_health,
             accessibility::restart_key_counter_listener,
             accessibility::request_accessibility_permission,
+            video_editor::probe_video_for_editing,
+            video_editor::video_editor_runtime_status,
+            video_editor::process_background_removed_video,
             video_files::validate_custom_video_path,
             video_files::prepare_custom_alpha_video_path,
         ])

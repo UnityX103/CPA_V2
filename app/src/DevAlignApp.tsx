@@ -130,6 +130,7 @@ const TABS: Array<{ id: SettingsTab; label: string }> = [
     { id: 'pomodoro', label: '番茄钟' },
     { id: 'online', label: '联机' },
     { id: 'global', label: '全局' },
+    { id: 'videoEditor', label: '视频编辑' },
 ];
 
 function initialTargetId(): string {
