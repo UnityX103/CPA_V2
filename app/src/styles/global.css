@@ -141,8 +141,8 @@ button:focus-visible {
     display: flex;
     align-items: flex-start;
     justify-content: flex-start;
-    gap: 16px;
-    padding: 8px;
+    gap: 0;
+    padding: 0;
     zoom: var(--app-ui-scale);
 }
 

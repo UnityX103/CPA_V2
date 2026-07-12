@@ -312,10 +312,10 @@ describe('main App window composition', () => {
             expect(invokeMock).toHaveBeenCalledWith('resize_scaled_window', {
                 args: {
                     label: 'main',
-                    baseWidth: 605,
-                    baseHeight: 404,
-                    minWidth: 605,
-                    minHeight: 404,
+                    baseWidth: 233,
+                    baseHeight: 155,
+                    minWidth: 233,
+                    minHeight: 155,
                     scale: 1.5,
                     defaultCenter: false,
                 },
@@ -350,10 +350,10 @@ describe('main App window composition', () => {
             expect(invokeMock).toHaveBeenCalledWith('resize_scaled_window', {
                 args: {
                     label: 'main',
-                    baseWidth: 605,
-                    baseHeight: 404,
-                    minWidth: 605,
-                    minHeight: 404,
+                    baseWidth: 233,
+                    baseHeight: 155,
+                    minWidth: 233,
+                    minHeight: 155,
                     scale: 1.5,
                     defaultCenter: false,
                 },
@@ -404,7 +404,11 @@ describe('main App window composition', () => {
     });
 
     it('keeps autostart off when no persisted settings exist', async () => {
-        useSettingsStore.setState({ autostartEnabled: true });
+        useSettingsStore.setState({
+            autostartEnabled: true,
+            checkinEnabled: false,
+            planPanelEnabled: false,
+        });
         loadPersistedSettingsMock.mockResolvedValue(null);
         readAutostartEnabledMock.mockResolvedValue(false);
 
@@ -415,9 +419,10 @@ describe('main App window composition', () => {
         expect(savePersistedSettingsMock).not.toHaveBeenCalled();
         expect(savePersistedUserPreferencesMock).toHaveBeenCalledWith(
             expect.objectContaining({
-                settings: { uiScale: 1, autostartEnabled: false, checkinEnabled: true, planPanelEnabled: true },
+                settings: { uiScale: 1, autostartEnabled: false, checkinEnabled: false, planPanelEnabled: false },
             }),
         );
+        expect(invokeMock).not.toHaveBeenCalledWith('open_today_checkin_window');
     });
 
     it('does not let late startup hydration overwrite early settings changes', async () => {
@@ -554,7 +559,7 @@ describe('main App window composition', () => {
         }));
     });
 
-    it('opens the today check-in window after startup when unified preferences enable check-in and omit the plan panel flag', async () => {
+    it('keeps the today check-in window hidden when unified preferences omit the plan panel flag', async () => {
         loadPersistedUserPreferencesMock.mockResolvedValue({
             schemaVersion: 1,
             pomodoro: {
@@ -594,9 +599,8 @@ describe('main App window composition', () => {
 
         render(<App />);
 
-        await waitFor(() => {
-            expect(invokeMock).toHaveBeenCalledWith('open_today_checkin_window');
-        });
+        await waitFor(() => expect(useSettingsStore.getState().planPanelEnabled).toBe(false));
+        expect(invokeMock).not.toHaveBeenCalledWith('open_today_checkin_window');
     });
 
     it('opens the today check-in window from local preferences when account restore hangs', async () => {

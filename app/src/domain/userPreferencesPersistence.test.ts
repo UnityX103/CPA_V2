@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { create } from 'zustand';
 import {
     buildUserPreferencesSnapshot,
+    defaultUserPreferencesSnapshot,
     hydrateUserPreferencesSnapshot,
     normalizeUserPreferencesSnapshot,
     type UserPreferencesStores,
@@ -137,6 +138,15 @@ beforeEach(() => {
 });
 
 describe('user preferences persistence', () => {
+    it('defaults fresh installs to Pomodoro-only mode', () => {
+        expect(defaultUserPreferencesSnapshot().settings).toEqual({
+            uiScale: 1,
+            autostartEnabled: false,
+            checkinEnabled: false,
+            planPanelEnabled: false,
+        });
+    });
+
     it('builds durable snapshots without volatile runtime fields', () => {
         const snapshot = buildUserPreferencesSnapshot(makeStores());
 

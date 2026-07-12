@@ -221,19 +221,19 @@ mod tests {
     #[test]
     fn scaled_size_multiplies_base_dimensions() {
         assert_eq!(
-            scaled_size(249.0, 171.0, 1.5).unwrap(),
+            scaled_size(233.0, 155.0, 1.5).unwrap(),
             LogicalSizePair {
-                width: 373.5,
-                height: 256.5
+                width: 349.5,
+                height: 232.5
             }
         );
     }
 
     #[test]
     fn scaled_size_rejects_invalid_dimensions() {
-        assert!(scaled_size(0.0, 171.0, 1.0).is_err());
-        assert!(scaled_size(249.0, f64::NAN, 1.0).is_err());
-        assert!(scaled_size(249.0, 171.0, -1.0).is_err());
+        assert!(scaled_size(0.0, 155.0, 1.0).is_err());
+        assert!(scaled_size(233.0, f64::NAN, 1.0).is_err());
+        assert!(scaled_size(233.0, 155.0, -1.0).is_err());
     }
 
     #[test]

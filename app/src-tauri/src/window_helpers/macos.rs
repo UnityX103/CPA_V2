@@ -2,8 +2,10 @@
 
 use objc2::{define_class, msg_send, rc::Retained, runtime::AnyObject, MainThreadOnly};
 use objc2_app_kit::{NSAutoresizingMaskOptions, NSView, NSWindow};
-use objc2_foundation::MainThreadMarker;
+use objc2_foundation::{MainThreadMarker, NSPoint};
 use tauri::{Manager, WebviewWindow};
+
+use super::{main_panel_corner_radius, point_in_rounded_rect};
 
 define_class!(
     // SAFETY: NSView access is restricted to the main thread. `ivars = ()` is
@@ -20,6 +22,36 @@ define_class!(
         #[unsafe(method(acceptsFirstMouse:))]
         fn accepts_first_mouse(&self, _event: *mut AnyObject) -> bool {
             true
+        }
+    }
+);
+
+define_class!(
+    #[unsafe(super = NSView)]
+    #[thread_kind = MainThreadOnly]
+    #[name = "CPAMainPanelHitTestView"]
+    #[ivars = ()]
+    struct MainPanelHitTestView;
+
+    impl MainPanelHitTestView {
+        #[unsafe(method(acceptsFirstMouse:))]
+        fn accepts_first_mouse(&self, _event: *mut AnyObject) -> bool {
+            true
+        }
+
+        #[unsafe(method_id(hitTest:))]
+        fn hit_test(&self, point: NSPoint) -> Option<Retained<NSView>> {
+            let bounds = self.bounds();
+            let width = bounds.size.width;
+            let height = bounds.size.height;
+            let x = point.x - bounds.origin.x;
+            let y = point.y - bounds.origin.y;
+            let radius = main_panel_corner_radius(width, height);
+            if point_in_rounded_rect(width, height, radius, x, y) {
+                unsafe { msg_send![super(self), hitTest: point] }
+            } else {
+                None
+            }
         }
     }
 );
@@ -47,6 +79,41 @@ pub fn install_first_mouse_only_impl(window: &WebviewWindow) {
 
     let this = FirstMouseView::alloc(mtm).set_ivars(());
     let view: Retained<FirstMouseView> = unsafe { msg_send![super(this), initWithFrame: frame] };
+
+    old_content.removeFromSuperview();
+    view.addSubview(&old_content);
+    old_content.setAutoresizingMask(
+        NSAutoresizingMaskOptions::ViewWidthSizable | NSAutoresizingMaskOptions::ViewHeightSizable,
+    );
+    ns_window.setContentView(Some(&*view));
+}
+
+pub fn install_main_panel_hit_test_impl(window: &WebviewWindow) {
+    let ns_window_ptr = match window.ns_window() {
+        Ok(ptr) => ptr as *mut NSWindow,
+        Err(e) => {
+            eprintln!(
+                "[window_helpers/macos] ns_window() failed during main hit-test install: {e}"
+            );
+            return;
+        }
+    };
+    let mtm = MainThreadMarker::new()
+        .expect("main panel hit-test installation must run on the AppKit main thread");
+    let ns_window: &NSWindow = unsafe { &*ns_window_ptr };
+    let old_content: Retained<NSView> = match ns_window.contentView() {
+        Some(view) => view,
+        None => {
+            eprintln!(
+                "[window_helpers/macos] main window has no contentView; skipping hit-test install"
+            );
+            return;
+        }
+    };
+    let frame = old_content.frame();
+    let this = MainPanelHitTestView::alloc(mtm).set_ivars(());
+    let view: Retained<MainPanelHitTestView> =
+        unsafe { msg_send![super(this), initWithFrame: frame] };
 
     old_content.removeFromSuperview();
     view.addSubview(&old_content);

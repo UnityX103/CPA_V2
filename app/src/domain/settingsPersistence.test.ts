@@ -47,8 +47,8 @@ describe('settingsPersistence', () => {
         await expect(loadPersistedSettings()).resolves.toEqual({
             uiScale: 1.75,
             autostartEnabled: false,
-            checkinEnabled: true,
-            planPanelEnabled: true,
+            checkinEnabled: false,
+            planPanelEnabled: false,
         });
     });
 

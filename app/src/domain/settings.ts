@@ -3,6 +3,7 @@ import { dispatch } from './bridge/dispatch';
 import { BRIDGE_VERSION } from './bridge/protocol';
 import { savePersistedSettings, type PersistedSettings } from './settingsPersistence';
 import { applyAutostartEnabled } from './autostart';
+import { DEFAULT_CHECKIN_ENABLED, DEFAULT_PLAN_PANEL_ENABLED } from './settingsDefaults';
 
 export type SettingsTab = 'pomodoro' | 'online' | 'global';
 export type DangerousSettingKind = 'uiScale';
@@ -78,8 +79,8 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
             uiScale: 1.0,
             committedUiScale: 1.0,
             autostartEnabled: false,
-            checkinEnabled: true,
-            planPanelEnabled: true,
+            checkinEnabled: DEFAULT_CHECKIN_ENABLED,
+            planPanelEnabled: DEFAULT_PLAN_PANEL_ENABLED,
             dangerousChange: null,
             setActiveTab: (tab) => set({ activeTab: tab }),
             setUiScale: (scale) => {
@@ -124,8 +125,8 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
                     uiScale,
                     committedUiScale: uiScale,
                     autostartEnabled: snapshot.autostartEnabled ?? false,
-                    checkinEnabled: snapshot.checkinEnabled ?? true,
-                    planPanelEnabled: snapshot.planPanelEnabled ?? true,
+                    checkinEnabled: snapshot.checkinEnabled ?? DEFAULT_CHECKIN_ENABLED,
+                    planPanelEnabled: snapshot.planPanelEnabled ?? DEFAULT_PLAN_PANEL_ENABLED,
                     dangerousChange: null,
                 });
             },
@@ -136,8 +137,8 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
         uiScale: 1.0,
         committedUiScale: 1.0,
         autostartEnabled: false,
-        checkinEnabled: true,
-        planPanelEnabled: true,
+        checkinEnabled: DEFAULT_CHECKIN_ENABLED,
+        planPanelEnabled: DEFAULT_PLAN_PANEL_ENABLED,
         dangerousChange: null,
         setActiveTab: (tab) => set({ activeTab: tab }),
         setUiScale: (scale) => {
@@ -193,8 +194,8 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
                 uiScale,
                 committedUiScale: uiScale,
                 autostartEnabled: snapshot.autostartEnabled ?? false,
-                checkinEnabled: snapshot.checkinEnabled ?? true,
-                planPanelEnabled: snapshot.planPanelEnabled ?? true,
+                checkinEnabled: snapshot.checkinEnabled ?? DEFAULT_CHECKIN_ENABLED,
+                planPanelEnabled: snapshot.planPanelEnabled ?? DEFAULT_PLAN_PANEL_ENABLED,
                 dangerousChange: null,
             });
         },

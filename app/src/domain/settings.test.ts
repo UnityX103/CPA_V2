@@ -155,18 +155,18 @@ describe('useSettingsStore', () => {
         expect(settingsWindowStore.getState().autostartEnabled).toBe(false);
     });
 
-    it('defaults checkinEnabled to true', () => {
-        expect(useSettingsStore.getState().checkinEnabled).toBe(true);
-
+    it('defaults checkinEnabled to false', () => {
+        const mainWindowStore = createSettingsStore({ isSettingsWindow: false });
         const settingsWindowStore = createSettingsStore({ isSettingsWindow: true });
-        expect(settingsWindowStore.getState().checkinEnabled).toBe(true);
+        expect(mainWindowStore.getState().checkinEnabled).toBe(false);
+        expect(settingsWindowStore.getState().checkinEnabled).toBe(false);
     });
 
-    it('defaults planPanelEnabled to true', () => {
-        expect(useSettingsStore.getState().planPanelEnabled).toBe(true);
-
+    it('defaults planPanelEnabled to false', () => {
+        const mainWindowStore = createSettingsStore({ isSettingsWindow: false });
         const settingsWindowStore = createSettingsStore({ isSettingsWindow: true });
-        expect(settingsWindowStore.getState().planPanelEnabled).toBe(true);
+        expect(mainWindowStore.getState().planPanelEnabled).toBe(false);
+        expect(settingsWindowStore.getState().planPanelEnabled).toBe(false);
     });
 
     it('hydrates autostartEnabled from persisted settings', () => {
@@ -204,20 +204,20 @@ describe('useSettingsStore', () => {
         expect(useSettingsStore.getState().autostartEnabled).toBe(false);
     });
 
-    it('defaults missing persisted checkinEnabled to true during hydration', () => {
-        useSettingsStore.setState({ checkinEnabled: false });
+    it('defaults missing persisted checkinEnabled to false during hydration', () => {
+        useSettingsStore.setState({ checkinEnabled: true });
 
         useSettingsStore.getState().hydrateSettings({ uiScale: 1.25 });
 
-        expect(useSettingsStore.getState().checkinEnabled).toBe(true);
+        expect(useSettingsStore.getState().checkinEnabled).toBe(false);
     });
 
-    it('defaults missing persisted planPanelEnabled to true during hydration', () => {
-        useSettingsStore.setState({ planPanelEnabled: false });
+    it('defaults missing persisted planPanelEnabled to false during hydration', () => {
+        useSettingsStore.setState({ planPanelEnabled: true });
 
         useSettingsStore.getState().hydrateSettings({ uiScale: 1.25 });
 
-        expect(useSettingsStore.getState().planPanelEnabled).toBe(true);
+        expect(useSettingsStore.getState().planPanelEnabled).toBe(false);
     });
 
     it('setAutostartEnabled applies native setting and persists confirmed value', async () => {
@@ -355,14 +355,14 @@ describe('createSettingsStore — settings-window mode', () => {
         const spy = vi.spyOn(dispatchMod, 'dispatch').mockResolvedValue();
         const store = createSettingsStore({ isSettingsWindow: true });
 
-        store.getState().setCheckinEnabled(false);
+        store.getState().setCheckinEnabled(true);
 
-        expect(store.getState().checkinEnabled).toBe(true);
+        expect(store.getState().checkinEnabled).toBe(false);
         expect(spy).toHaveBeenCalledWith(expect.objectContaining({
             v: BRIDGE_VERSION,
             store: 'settings',
             action: 'setCheckinEnabled',
-            args: [false],
+            args: [true],
         }));
         spy.mockRestore();
     });
@@ -371,14 +371,14 @@ describe('createSettingsStore — settings-window mode', () => {
         const spy = vi.spyOn(dispatchMod, 'dispatch').mockResolvedValue();
         const store = createSettingsStore({ isSettingsWindow: true });
 
-        store.getState().setPlanPanelEnabled(false);
+        store.getState().setPlanPanelEnabled(true);
 
-        expect(store.getState().planPanelEnabled).toBe(true);
+        expect(store.getState().planPanelEnabled).toBe(false);
         expect(spy).toHaveBeenCalledWith(expect.objectContaining({
             v: BRIDGE_VERSION,
             store: 'settings',
             action: 'setPlanPanelEnabled',
-            args: [false],
+            args: [true],
         }));
         spy.mockRestore();
     });

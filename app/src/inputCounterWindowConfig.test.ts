@@ -35,8 +35,8 @@ describe('input counter independent window configuration', () => {
         const conf = JSON.parse(readFileSync(tauriConfPath, 'utf8'));
         const main = conf.app.windows.find((w: { label?: string }) => w.label === 'main');
 
-        expect(main.width).toBe(249);
-        expect(main.height).toBe(171);
+        expect(main.width).toBe(233);
+        expect(main.height).toBe(155);
     });
 });
 

@@ -208,8 +208,8 @@ fn pomodoro_video_screen_rect(app: tauri::AppHandle) -> Result<VideoScreenRect, 
     fallback_video_screen_rect(&app)
 }
 
-const MAIN_W: f64 = 249.0;
-const MAIN_H: f64 = 171.0;
+const MAIN_W: f64 = window_helpers::MAIN_PANEL_BASE_WIDTH;
+const MAIN_H: f64 = window_helpers::MAIN_PANEL_BASE_HEIGHT;
 const SETTINGS_W: f64 = 460.0;
 const SETTINGS_H: f64 = 440.0;
 const SETTINGS_MIN_W: f64 = 360.0;
@@ -567,6 +567,7 @@ pub fn run() {
             // Focus restorer: 主窗口拖/resize 末尾把 key 还回 settings (若可见)。
             // 配合 build_settings_window_hidden 一起完成 settings 窗口的 lifecycle 闭环。
             if let Some(window) = app.get_webview_window("main") {
+                window_helpers::install_main_panel_hit_test(&window);
                 window_helpers::install_focus_restorer(&window, app.handle().clone());
             }
             for label in [

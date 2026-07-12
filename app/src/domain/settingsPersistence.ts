@@ -1,4 +1,5 @@
 import { load } from '@tauri-apps/plugin-store';
+import { DEFAULT_CHECKIN_ENABLED, DEFAULT_PLAN_PANEL_ENABLED } from './settingsDefaults';
 
 const STORE_PATH = 'settings.json';
 const STORE_KEY = 'settings';
@@ -63,8 +64,8 @@ export async function loadPersistedSettings(): Promise<PersistedSettings | null>
         return {
             uiScale: value.uiScale,
             autostartEnabled: value.autostartEnabled ?? false,
-            checkinEnabled: value.checkinEnabled ?? true,
-            planPanelEnabled: value.planPanelEnabled ?? true,
+            checkinEnabled: value.checkinEnabled ?? DEFAULT_CHECKIN_ENABLED,
+            planPanelEnabled: value.planPanelEnabled ?? DEFAULT_PLAN_PANEL_ENABLED,
         };
     } catch (err) {
         console.warn('[settingsPersistence] load failed', err);

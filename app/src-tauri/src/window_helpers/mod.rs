@@ -1,5 +1,9 @@
 use tauri::WebviewWindow;
 
+pub(crate) const MAIN_PANEL_BASE_WIDTH: f64 = 233.0;
+pub(crate) const MAIN_PANEL_BASE_HEIGHT: f64 = 155.0;
+pub(crate) const MAIN_PANEL_CORNER_RADIUS: f64 = 24.0;
+
 #[cfg(target_os = "macos")]
 mod macos;
 #[cfg(not(any(target_os = "macos", target_os = "windows")))]
@@ -30,6 +34,55 @@ pub fn install_first_mouse_only(window: &WebviewWindow) {
     windows::install_first_mouse_only_impl(window);
     #[cfg(not(any(target_os = "macos", target_os = "windows")))]
     stub::install_first_mouse_only_impl(window);
+}
+
+/// Restrict the main window's native mouse hit area to the visible rounded
+/// Pomodoro panel. Transparent corner pixels pass through to windows below.
+pub fn install_main_panel_hit_test(window: &WebviewWindow) {
+    #[cfg(target_os = "macos")]
+    macos::install_main_panel_hit_test_impl(window);
+    #[cfg(target_os = "windows")]
+    windows::install_main_panel_hit_test_impl(window);
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
+    stub::install_main_panel_hit_test_impl(window);
+}
+
+pub(crate) fn main_panel_corner_radius(width: f64, height: f64) -> f64 {
+    let scale = (width / MAIN_PANEL_BASE_WIDTH)
+        .min(height / MAIN_PANEL_BASE_HEIGHT)
+        .max(0.0);
+    MAIN_PANEL_CORNER_RADIUS * scale
+}
+
+pub(crate) fn point_in_rounded_rect(width: f64, height: f64, radius: f64, x: f64, y: f64) -> bool {
+    if !width.is_finite()
+        || !height.is_finite()
+        || !radius.is_finite()
+        || !x.is_finite()
+        || !y.is_finite()
+        || width <= 0.0
+        || height <= 0.0
+        || x < 0.0
+        || x > width
+        || y < 0.0
+        || y > height
+    {
+        return false;
+    }
+
+    let radius = radius.max(0.0).min(width / 2.0).min(height / 2.0);
+    if radius == 0.0
+        || (x >= radius && x <= width - radius)
+        || (y >= radius && y <= height - radius)
+    {
+        return true;
+    }
+
+    let center_x = if x < radius { radius } else { width - radius };
+    let center_y = if y < radius { radius } else { height - radius };
+    let dx = x - center_x;
+    let dy = y - center_y;
+    dx * dx + dy * dy <= radius * radius
 }
 
 /// Install native focus restoration so moving/resizing the main window returns
@@ -96,6 +149,24 @@ mod tests {
             compute_centered_origin((0, 0), (400, 300), (460, 440)),
             (-30, -70),
         );
+    }
+
+    #[test]
+    fn main_panel_hit_test_follows_rounded_panel_edges() {
+        assert!(point_in_rounded_rect(233.0, 155.0, 24.0, 116.5, 77.5));
+        assert!(point_in_rounded_rect(233.0, 155.0, 24.0, 0.0, 24.0));
+        assert!(point_in_rounded_rect(233.0, 155.0, 24.0, 233.0, 131.0));
+        assert!(!point_in_rounded_rect(233.0, 155.0, 24.0, 0.0, 0.0));
+        assert!(!point_in_rounded_rect(233.0, 155.0, 24.0, 232.0, 1.0));
+        assert!(!point_in_rounded_rect(233.0, 155.0, 24.0, -0.1, 77.5));
+    }
+
+    #[test]
+    fn main_panel_hit_test_scales_with_the_window() {
+        let radius = main_panel_corner_radius(466.0, 310.0);
+        assert_eq!(radius, 48.0);
+        assert!(point_in_rounded_rect(466.0, 310.0, radius, 0.0, 48.0));
+        assert!(!point_in_rounded_rect(466.0, 310.0, radius, 0.0, 0.0));
     }
 
     #[cfg(target_os = "macos")]

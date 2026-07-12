@@ -132,7 +132,7 @@ describe('cloudAccountData', () => {
             uiScale: 1.25,
             autostartEnabled: true,
             checkinEnabled: false,
-            planPanelEnabled: true,
+            planPanelEnabled: false,
         });
         expect(snapshot.appUpdate).toEqual({ autoUpdateEnabled: false });
         expect(snapshot.network).toEqual({ autoConnect: true, playerName: 'Alice' });

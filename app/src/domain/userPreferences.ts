@@ -27,6 +27,7 @@ import type {
 import { DEFAULT_BUILTIN_POMODORO_VIDEO_ID } from './pomodoroVideos';
 import type { PersistedSettingsSnapshot, SettingsState } from './settings';
 import type { AppUpdateSnapshot } from './appUpdate';
+import { DEFAULT_CHECKIN_ENABLED, DEFAULT_PLAN_PANEL_ENABLED } from './settingsDefaults';
 
 export interface PersistedBindingKeyEntry {
     id: string;
@@ -158,8 +159,8 @@ export function defaultUserPreferencesSnapshot(): UserPreferencesSnapshot {
         settings: {
             uiScale: 1,
             autostartEnabled: false,
-            checkinEnabled: true,
-            planPanelEnabled: true,
+            checkinEnabled: DEFAULT_CHECKIN_ENABLED,
+            planPanelEnabled: DEFAULT_PLAN_PANEL_ENABLED,
         },
         appUpdate: {
             autoUpdateEnabled: true,
