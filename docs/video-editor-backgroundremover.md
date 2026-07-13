@@ -49,7 +49,7 @@ Windows 使用相同布局和 `.exe` 文件名。
 - U2NetP：4,683,258 bytes，SHA-256 `e7567cde013fb64813973ce6e1ecc25a80c05c3ca7adbc5a54f3c3d90991b854`。
 - FFmpeg：8.1.2，自固定源码构建。
 - libvpx：1.16.0，静态链接；FFmpeg 仍提供 `libvpx` 和 `hevc_videotoolbox`。
-- PyInstaller：6.16.0，one-dir worker，发布 staging 去除 symlink。
+- PyInstaller：6.16.0，one-dir worker，发布 staging 去除 symlink；冻结入口固定为 `app/scripts/packaging/backgroundremover-entry.py`，并在进入 CLI 前调用 `multiprocessing.freeze_support()`。
 - macOS x86_64：CPython 3.9.6、PyTorch 2.2.2、TorchVision 0.17.2、NumPy 1.26.4、SciPy 1.13.1、scikit-image 0.24.0。
 - macOS ARM64：CPython 3.12.12、PyTorch 2.13.0、TorchVision 0.28.0、NumPy 2.4.6、SciPy 1.18.0、scikit-image 0.26.0。
 
@@ -60,6 +60,8 @@ FFmpeg 使用 `--disable-autodetect --disable-network` 和静态 libvpx，只依
 MoviePy 被设置为 `FFMPEG_BINARY=auto-detect`，worker 不再捎带 imageio-ffmpeg 或 PyAV 的另一套 FFmpeg，而是复用同一 payload 的 `bin/ffmpeg`。
 
 冻结 worker 启动时设置 `NUMBA_DISABLE_JIT=1`，并把 `NUMBA_CACHE_DIR` 指向任务/系统临时目录。原因是 PyInstaller 中的 `pymatting` 没有可供 Numba `cache=True` 使用的源码定位器；只更换缓存目录仍会在启动时失败。该设置同时覆盖构建 smoke、运行时健康探测和正式抠图任务，猫狗全帧 alpha 语义 E2E 用于防止兼容设置悄悄破坏 matte。
+
+冻结入口必须先调用 `multiprocessing.freeze_support()`。BackgroundRemover 的视频路径会启动 `multiprocessing.Manager`；如果直接冻结 console-script，子进程的 `--multiprocessing-fork` 参数会落入 Click/argparse 并导致真实处理失败，即使 `--help` smoke 仍然通过。
 
 ## 仓库保存与忽略内容
 

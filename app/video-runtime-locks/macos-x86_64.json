@@ -4,17 +4,17 @@
   "backgroundRemoverCommit": "fa480627829759b902f8c233388d7aa67ab38099",
   "components": {
     "ffmpeg": {
-      "source": "https://ffmpeg.org/releases/ffmpeg-8.1.2.tar.xz#sha256=464beb5e7bf0c311e68b45ae2f04e9cc2af88851abb4082231742a74d97b524c+libvpx-v1.16.0#sha256=7a479a3c66b9f5d5542a4c6a1b7d3768a983b1e5c14c60a9396edc9b649e015c",
+      "source": "https://ffmpeg.org/releases/ffmpeg-8.1.2.tar.xz#sha256=464beb5e7bf0c311e68b45ae2f04e9cc2af88851abb4082231742a74d97b524c+libvpx-v1.16.0#sha256=7a479a3c66b9f5d5542a4c6a1b7d3768a983b1e5c14c60a9396edc9b649e015c+recipe=clang17-macos14-static-libvpx-disable-autodetect-disable-network",
       "version": "8.1.2",
-      "sha256": "0d1219b64783b389e19559321b83a46bab432669e9f4aabcd1ad8028483568cf"
+      "sha256": "1c21ad36e58a42016b06f01e8bdad42920da645c72ee50f0cadf2b617401f2f7"
     },
     "ffprobe": {
-      "source": "https://ffmpeg.org/releases/ffmpeg-8.1.2.tar.xz#sha256=464beb5e7bf0c311e68b45ae2f04e9cc2af88851abb4082231742a74d97b524c+libvpx-v1.16.0#sha256=7a479a3c66b9f5d5542a4c6a1b7d3768a983b1e5c14c60a9396edc9b649e015c",
+      "source": "https://ffmpeg.org/releases/ffmpeg-8.1.2.tar.xz#sha256=464beb5e7bf0c311e68b45ae2f04e9cc2af88851abb4082231742a74d97b524c+libvpx-v1.16.0#sha256=7a479a3c66b9f5d5542a4c6a1b7d3768a983b1e5c14c60a9396edc9b649e015c+recipe=clang17-macos14-static-libvpx-disable-autodetect-disable-network",
       "version": "8.1.2",
-      "sha256": "e5983fe06a620bd63225012710ea82f32955344871d181a6e21a1bcc01e22581"
+      "sha256": "6794dd8d5ad090c2893ddecf1ffbdb930999c72cff16d35d9ce809c63e3b0f3a"
     },
     "backgroundRemover": {
-      "source": "git+https://github.com/nadermx/backgroundremover.git@fa480627829759b902f8c233388d7aa67ab38099#patch-24d6dbde7474f667-macos-x86_64-pyinstaller-6.16.0",
+      "source": "git+https://github.com/nadermx/backgroundremover.git@fa480627829759b902f8c233388d7aa67ab38099#patch-24d6dbde7474f667896d335979fe18890c92a85793c2dc9e4c72e5d08ed564f1-macos-x86_64",
       "patches": [
         {
           "id": "force-cpu-device-env-v1",
@@ -23,19 +23,19 @@
         }
       ],
       "pythonVersion": "3.9.6",
-      "pythonSource": "Apple-Xcode-26.4-build-17E192-Python3.framework-x86_64",
+      "pythonSource": "Apple-CommandLineTools-26.4-build-17E192-Python3.framework-x86_64",
       "torchVersion": "2.2.2",
-      "torchSource": "https://files.pythonhosted.org/packages/7f/52/5b3b8d72c7a2087fee6849ecd0bf17b584241d7bc204aebd62c926f68064/torch-2.2.2-cp39-none-macosx_10_9_x86_64.whl#sha256=dff696de90d6f6d1e8200e9892861fd4677306d0ef604cb18f2134186f719f82",
-      "packager": "PyInstaller-6.16.0-one-dir-target_arch=x86_64-patch=force-cpu-device-env-v1-flattened-rpath-cleaned-ad-hoc-signed",
-      "treeSha256": "4a94472aa48f27cadb5f713f36de9e0a6f0705a803a44bc15cdcefaadf8f5525"
+      "torchSource": "https://download.pytorch.org/whl/cpu/torch-2.2.2-cp39-none-macosx_10_9_x86_64.whl#sha256=f13762818dc280feca7e30f60995a17ba8d1d1ab33fefb6d07fd2c8ff1571eaa",
+      "packager": "PyInstaller-6.16.0-one-dir-x86_64-fa480627-patch-24d6dbde-flattened-imageio-metadata-ad-hoc-signed-disable-library-validation-entitlement-multiprocessing-freeze-support-entry-267775e4-external-rpaths-removed",
+      "treeSha256": "2d8c2a5a2ad25a2679483d8b82c093b76f5695d4ce37d294ae38390a13f97421"
     },
     "u2netp": {
       "source": "https://raw.githubusercontent.com/nadermx/backgroundremover/fa480627829759b902f8c233388d7aa67ab38099/models/u2netp.pth",
       "sha256": "e7567cde013fb64813973ce6e1ecc25a80c05c3ca7adbc5a54f3c3d90991b854"
     },
     "licenses": {
-      "source": "artifact://cpa-video-runtime-license-pack-macos-x86_64-2026-07-12-patch-v2-macos14",
-      "treeSha256": "b03d4035f233ed789a1f45690c12ac6bad0bdb8253d4196c8dd0624597a31c33"
+      "source": "artifact://cpa-video-runtime-license-pack-macos-x86_64-2026-07-13-rebuild-v3",
+      "treeSha256": "67715c0320e7407c06440643d0f3917a549122bcc8a63f5c156b355c3834550e"
     }
   }
 }

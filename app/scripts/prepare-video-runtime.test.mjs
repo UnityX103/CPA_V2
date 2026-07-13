@@ -30,6 +30,12 @@ import {
 
 const tempRoots = [];
 const SCRIPT_PATH = join(process.cwd(), 'scripts', 'prepare-video-runtime.mjs');
+const BACKGROUND_REMOVER_ENTRY_PATH = join(
+    process.cwd(),
+    'scripts',
+    'packaging',
+    'backgroundremover-entry.py',
+);
 const REQUIRED_LICENSES = [
     'BackgroundRemover-LICENSE.txt',
     'FFmpeg-LICENSE.txt',
@@ -589,13 +595,25 @@ describe('prepare-video-runtime', () => {
             'macos-x86_64',
             { PATH: '/runtime/bin' },
             '/private/tmp',
+            '/runtime/bin/ffmpeg',
         )).toEqual({
             PATH: '/runtime/bin',
             BACKGROUNDREMOVER_DEVICE: 'cpu',
             U2NETP_PATH: '/runtime/models/u2netp.pth',
+            FFMPEG_BINARY: 'auto-detect',
+            IMAGEIO_FFMPEG_EXE: '/runtime/bin/ffmpeg',
             NUMBA_DISABLE_JIT: '1',
             NUMBA_CACHE_DIR: '/private/tmp/cpa-video-runtime-numba-cache-macos-x86_64',
         });
+    });
+
+    it('tracks a frozen entry point that handles multiprocessing child arguments', () => {
+        const source = readFileSync(BACKGROUND_REMOVER_ENTRY_PATH, 'utf8');
+        const freezeSupport = source.indexOf('multiprocessing.freeze_support()');
+        const mainCall = source.indexOf('\n    main()');
+
+        expect(freezeSupport).toBeGreaterThan(-1);
+        expect(mainCall).toBeGreaterThan(freezeSupport);
     });
 
     it('rejects a locked FFmpeg binary containing the non-redistributable build flag', async () => {

@@ -65,10 +65,20 @@ function windowsStableArtifactName(originalArtifactName, version, platform) {
     return githubAssetName(originalArtifactName);
 }
 
+function macStableArtifactName(originalArtifactName, platform) {
+    if (!originalArtifactName.toLowerCase().endsWith('.app.tar.gz')) {
+        return githubAssetName(originalArtifactName);
+    }
+    return platform === 'darwin-aarch64' ? 'app-aarch64.tar.gz' : 'app.tar.gz';
+}
+
 function releaseArtifactName(originalArtifactName, baseUrl, version, platform) {
     if (!isGithubReleaseDownloadBase(baseUrl)) return originalArtifactName;
     if (isWindowsPlatform(platform)) {
         return windowsStableArtifactName(originalArtifactName, version, platform);
+    }
+    if (platform.startsWith('darwin-')) {
+        return macStableArtifactName(originalArtifactName, platform);
     }
     return githubAssetName(originalArtifactName);
 }

@@ -13,7 +13,7 @@ import {
     stat,
     writeFile,
 } from 'node:fs/promises';
-import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { delimiter, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
@@ -511,11 +511,20 @@ export function backgroundRemoverSmokeEnvironment(
     target,
     environment = process.env,
     temporaryRoot = tmpdir(),
+    ffmpegPath = null,
 ) {
+    const runtimeBin = ffmpegPath ? dirname(ffmpegPath) : null;
+    const path = runtimeBin && environment.PATH !== runtimeBin
+        && !environment.PATH?.startsWith(`${runtimeBin}${delimiter}`)
+        ? [runtimeBin, environment.PATH].filter(Boolean).join(delimiter)
+        : environment.PATH;
     return {
         ...environment,
+        ...(path ? { PATH: path } : {}),
         BACKGROUNDREMOVER_DEVICE: 'cpu',
         U2NETP_PATH: modelPath,
+        FFMPEG_BINARY: 'auto-detect',
+        ...(ffmpegPath ? { IMAGEIO_FFMPEG_EXE: ffmpegPath } : {}),
         NUMBA_DISABLE_JIT: '1',
         NUMBA_CACHE_DIR: join(temporaryRoot, `cpa-video-runtime-numba-cache-${target}`),
     };
@@ -569,7 +578,13 @@ async function smokeRuntime(paths, target, policy, manifest) {
         ['--help'],
         VIDEO_RUNTIME_SMOKE_TIMEOUTS.backgroundRemover,
         {
-            env: backgroundRemoverSmokeEnvironment(paths.model, target),
+            env: backgroundRemoverSmokeEnvironment(
+                paths.model,
+                target,
+                process.env,
+                tmpdir(),
+                paths.ffmpeg,
+            ),
         },
     );
 }
