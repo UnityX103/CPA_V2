@@ -8,6 +8,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output, Stdio};
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::OnceLock;
 use std::thread;
 use std::time::{Duration, Instant};
 use tauri::{AppHandle, Emitter, Manager};
@@ -19,6 +20,7 @@ const EXECUTABLE_PROBE_TIMEOUT: Duration = Duration::from_secs(3);
 const EXTERNAL_BACKGROUND_REMOVER_PROBE_TIMEOUT: Duration = Duration::from_secs(120);
 const EXECUTABLE_PROBE_POLL_INTERVAL: Duration = Duration::from_millis(10);
 static JOB_COUNTER: AtomicU64 = AtomicU64::new(1);
+static GENERATED_OUTPUT_ROOT_STATE: OnceLock<Result<PathBuf, String>> = OnceLock::new();
 
 #[derive(Debug, Clone, Copy, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -680,7 +682,7 @@ pub async fn prepare_video_editor_temp_output_path(
 ) -> Result<String, String> {
     tauri::async_runtime::spawn_blocking(move || {
         validate_job_id(&job_id)?;
-        let root = generated_output_root(&app)?;
+        let root = prepared_generated_output_root(&app)?;
         let output = prepare_temp_output_path_at(&root, &job_id)?;
         crate::video_files::allow_video_asset_file(&app, &output)?;
         Ok(output.to_string_lossy().into_owned())
@@ -696,7 +698,7 @@ pub async fn export_video_editor_generated_output(
     input_path: String,
 ) -> Result<Option<String>, String> {
     tauri::async_runtime::spawn_blocking(move || {
-        let root = generated_output_root(&app)?;
+        let root = prepared_generated_output_root(&app)?;
         let generated = validate_generated_webm_path(&root, Path::new(&generated_path))?;
         let default_filename = edited_video_output_filename(&input_path);
         let Some(selected) = app
@@ -724,6 +726,37 @@ fn generated_output_root(app: &AppHandle) -> Result<PathBuf, String> {
         .app_cache_dir()
         .map(|path| path.join("video-editor").join("generated"))
         .map_err(|error| format!("无法打开视频编辑缓存目录：{error}"))
+}
+
+fn prepared_generated_output_root(app: &AppHandle) -> Result<PathBuf, String> {
+    GENERATED_OUTPUT_ROOT_STATE
+        .get_or_init(|| {
+            let root = generated_output_root(app)?;
+            reset_generated_output_root(&root)?;
+            crate::video_files::cleanup_generated_preview_cache(app)?;
+            ensure_generated_output_root(&root)
+        })
+        .clone()
+}
+
+fn reset_generated_output_root(root: &Path) -> Result<(), String> {
+    match fs::symlink_metadata(root) {
+        Ok(metadata) if metadata.file_type().is_symlink() => {
+            return Err("视频编辑临时目录不能是符号链接".to_string());
+        }
+        Ok(metadata) if metadata.is_dir() => {
+            fs::remove_dir_all(root)
+                .map_err(|error| format!("无法清理旧的视频编辑临时目录：{error}"))?;
+        }
+        Ok(_) => return Err("视频编辑临时目录不是文件夹".to_string()),
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+        Err(error) => return Err(format!("无法读取视频编辑临时目录：{error}")),
+    }
+    let parent = root
+        .parent()
+        .ok_or_else(|| "视频编辑临时目录缺少父目录".to_string())?;
+    fs::create_dir_all(parent).map_err(|error| format!("无法创建视频编辑缓存目录：{error}"))?;
+    create_private_directory(root).map_err(|error| format!("无法创建视频编辑临时目录：{error}"))
 }
 
 fn ensure_generated_output_root(root: &Path) -> Result<PathBuf, String> {
@@ -1019,7 +1052,7 @@ fn process_video(
     app: &AppHandle,
     mut request: VideoProcessRequest,
 ) -> Result<VideoProcessResult, String> {
-    let root = generated_output_root(app)?;
+    let root = prepared_generated_output_root(app)?;
     let output = validate_prepared_output_path(&root, Path::new(&request.output_path))?;
     request.output_path = output.to_string_lossy().into_owned();
     process_video_with_progress(request, |job_id, percent, stage| {
@@ -1686,6 +1719,28 @@ mod tests {
             );
         }
 
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn clears_previous_session_generated_outputs_before_the_first_new_job() {
+        let root = std::env::temp_dir().join(format!(
+            "cpa-video-editor-session-cleanup-test-{}-{}",
+            std::process::id(),
+            TEST_FILE_COUNTER.fetch_add(1, Ordering::Relaxed)
+        ));
+        let stale_directory = root.join("stale-job");
+        fs::create_dir_all(&stale_directory).expect("create stale generated directory");
+        fs::write(
+            stale_directory.join("result.webm"),
+            b"stale generated preview",
+        )
+        .expect("write stale generated preview");
+
+        reset_generated_output_root(&root).expect("reset generated output root");
+
+        assert!(root.is_dir());
+        assert!(!stale_directory.exists());
         let _ = fs::remove_dir_all(root);
     }
 

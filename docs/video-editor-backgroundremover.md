@@ -106,7 +106,7 @@ release 应用只从当前可执行文件推导安装包内 payload：macOS 使�
 
 smoke 只在同一操作系统且宿主能执行目标架构时默认开启：Apple Silicon 可原生执行 ARM64，也可通过 Rosetta 执行 x86_64；Intel Mac 不会尝试执行 ARM64；Windows 只接受 x86_64 host/target。无论是否执行 smoke，静态校验都会拒绝 Universal、混合架构和错误架构文件。
 
-每次点击生成都使用唯一的应用缓存路径，避免 macOS HEVC 兼容预览复用旧缓存。生成后的兼容预览只有触发 `canplay` 才能确认为可播放；`loadedmetadata` 不再被当成可解码证明。导出只将该受管临时 WebM 复制到用户选择的最终路径，不触发第二次抠图；番茄钟结束视频只使用最终导出路径，不持久引用可能被清理的应用缓存文件。
+每次点击生成都使用唯一的应用缓存路径，避免 macOS HEVC 兼容预览复用旧缓存。同一应用会话内不会抢删仍可能被 Windows 预览占用的 WebM；下一次启动并首次使用视频编辑器时，会清理上次会话的受管生成目录。macOS 中由受管临时源生成的 MOV 单独存入 `alpha-videos/video-editor-generated/` 并随下次会话清理，用户自行选择的透明视频缓存即使文件名也是 `result.webm` 也不会被误删。生成后的兼容预览只有触发 `canplay` 才能确认为可播放；`loadedmetadata` 不再被当成可解码证明。导出只将该受管临时 WebM 复制到用户选择的最终路径，不触发第二次抠图；番茄钟结束视频只使用最终导出路径，不持久引用可能被清理的应用缓存文件。
 
 ## 准备目标 payload
 

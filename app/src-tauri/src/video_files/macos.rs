@@ -11,15 +11,59 @@ pub(super) fn atomic_replace_file(source: &Path, destination: &Path) -> std::io:
     fs::rename(source, destination)
 }
 
+pub(super) fn cleanup_generated_preview_cache(app: &tauri::AppHandle) -> Result<(), String> {
+    let app_cache = app
+        .path()
+        .app_cache_dir()
+        .map_err(|error| format!("无法打开视频缓存目录：{error}"))?;
+    let cache_dir = app_cache
+        .join("alpha-videos")
+        .join("video-editor-generated");
+    cleanup_generated_preview_cache_at(&cache_dir)
+}
+
+pub(super) fn cleanup_generated_preview_cache_at(cache_dir: &Path) -> Result<(), String> {
+    match fs::symlink_metadata(cache_dir) {
+        Ok(metadata) if metadata.file_type().is_symlink() => {
+            return Err("透明视频缓存目录不能是符号链接".to_string());
+        }
+        Ok(metadata) if metadata.is_dir() => {
+            fs::remove_dir_all(cache_dir)
+                .map_err(|error| format!("无法清理旧的生成视频预览：{error}"))?;
+        }
+        Ok(_) => return Err("透明视频缓存目录不是文件夹".to_string()),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+        Err(error) => return Err(format!("无法读取透明视频缓存目录：{error}")),
+    }
+    Ok(())
+}
+
+pub(super) fn alpha_cache_dir(app_cache: &Path, source: &Path) -> PathBuf {
+    let alpha_root = app_cache.join("alpha-videos");
+    let generated_root = app_cache.join("video-editor").join("generated");
+    let is_generated_source = source
+        .canonicalize()
+        .ok()
+        .zip(generated_root.canonicalize().ok())
+        .is_some_and(|(source, root)| {
+            source.parent().and_then(Path::parent) == Some(root.as_path())
+        });
+    if is_generated_source {
+        alpha_root.join("video-editor-generated")
+    } else {
+        alpha_root
+    }
+}
+
 pub(super) fn prepare_playable_path(
     app: &tauri::AppHandle,
     source: &Path,
 ) -> Result<PathBuf, String> {
-    let cache_dir = app
+    let app_cache = app
         .path()
         .app_cache_dir()
-        .map_err(|error| format!("无法打开视频缓存目录：{error}"))?
-        .join("alpha-videos");
+        .map_err(|error| format!("无法打开视频缓存目录：{error}"))?;
+    let cache_dir = alpha_cache_dir(&app_cache, source);
     fs::create_dir_all(&cache_dir).map_err(|error| format!("无法创建视频缓存目录：{error}"))?;
 
     let target = cache_dir.join(alpha_cache_filename(source));

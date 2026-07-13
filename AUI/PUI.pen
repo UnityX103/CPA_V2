@@ -7671,7 +7671,6 @@
       "name": "Video Editor Settings Panel",
       "reusable": true,
       "width": 572,
-      "height": 1292,
       "fill": "#FFFFFF00",
       "layout": "vertical",
       "gap": 12,
@@ -7864,29 +7863,6 @@
                   "name": "videoTool-裁剪",
                   "width": "fill_container",
                   "height": 30,
-                  "fill": "#FFFFFF00",
-                  "cornerRadius": 8,
-                  "justifyContent": "center",
-                  "alignItems": "center",
-                  "children": [
-                    {
-                      "type": "text",
-                      "id": "GBD8g",
-                      "name": "videoToolLabel-裁剪",
-                      "fill": "#6B7280",
-                      "content": "裁剪",
-                      "fontFamily": "MaokenAssortedSans",
-                      "fontSize": 12,
-                      "fontWeight": "600"
-                    }
-                  ]
-                },
-                {
-                  "type": "frame",
-                  "id": "U2vxDy",
-                  "name": "videoTool-画笔剔除",
-                  "width": "fill_container",
-                  "height": 30,
                   "fill": "#FFFFFF",
                   "cornerRadius": 8,
                   "effect": {
@@ -7904,9 +7880,32 @@
                   "children": [
                     {
                       "type": "text",
+                      "id": "GBD8g",
+                      "name": "videoToolLabel-裁剪",
+                      "fill": "#5B4636",
+                      "content": "裁剪",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "U2vxDy",
+                  "name": "videoTool-画笔剔除",
+                  "width": "fill_container",
+                  "height": 30,
+                  "fill": "#FFFFFF00",
+                  "cornerRadius": 8,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
                       "id": "tHsmW",
                       "name": "videoToolLabel-画笔剔除",
-                      "fill": "#5B4636",
+                      "fill": "#6B7280",
                       "content": "画笔剔除",
                       "fontFamily": "MaokenAssortedSans",
                       "fontSize": 12,
@@ -8200,6 +8199,7 @@
                   "x": 305,
                   "y": 104,
                   "name": "videoEraseBrushStroke",
+                  "enabled": false,
                   "geometry": "M8 64c34-42 74 6 104-32 18-20 34-7 50-24",
                   "viewBox": [
                     0,
@@ -8214,6 +8214,20 @@
                   "strokeWidth": 18,
                   "strokeLinejoin": "round",
                   "strokeLinecap": "round"
+                },
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 8,
+                  "id": "r25efb",
+                  "x": 40,
+                  "y": 24,
+                  "name": "videoCropOverlay",
+                  "fill": "#FFFFFF0D",
+                  "width": 460,
+                  "height": 212,
+                  "stroke": "#D15F3D",
+                  "strokeWidth": 2,
+                  "strokeAlignment": "inner"
                 }
               ]
             }
@@ -8231,14 +8245,36 @@
           "padding": 16,
           "children": [
             {
-              "type": "text",
-              "id": "aIiL7",
-              "name": "videoCropTimeTitle",
-              "fill": "#1A1A1A",
-              "content": "裁剪与时间",
-              "fontFamily": "MaokenAssortedSans",
-              "fontSize": 14,
-              "fontWeight": "700"
+              "type": "frame",
+              "id": "w3EwG",
+              "name": "videoCropTimeHeading",
+              "width": "fill_container",
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "ca37v",
+                  "name": "videoCropTimeTitle",
+                  "fill": "#1A1A1A",
+                  "content": "裁剪与时间",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 14,
+                  "fontWeight": "700"
+                },
+                {
+                  "id": "tCsEb",
+                  "type": "ref",
+                  "ref": "RPLJq",
+                  "name": "videoRestoreButton",
+                  "width": 76,
+                  "descendants": {
+                    "zgOkx": {
+                      "content": "复原"
+                    }
+                  }
+                }
+              ]
             },
             {
               "type": "frame",
@@ -8524,8 +8560,11 @@
         {
           "type": "frame",
           "id": "FEiHB",
+          "x": 0,
+          "y": 709,
           "name": "videoMaskControlsCard",
-          "width": "fill_container",
+          "enabled": false,
+          "width": 572,
           "fill": "#F6F7F8",
           "cornerRadius": 16,
           "layout": "vertical",
@@ -8721,8 +8760,11 @@
             {
               "type": "frame",
               "id": "F6b42",
+              "x": 16,
+              "y": 16,
               "name": "videoProgressWrap",
-              "width": "fill_container",
+              "enabled": false,
+              "width": 540,
               "layout": "vertical",
               "gap": 6,
               "children": [
@@ -8786,12 +8828,12 @@
               "id": "QrdcS",
               "type": "ref",
               "ref": "Za5wE",
-              "name": "videoSaveButton",
+              "name": "videoGenerateButton",
               "width": "fill_container",
               "height": 38,
               "descendants": {
                 "oNDTH": {
-                  "content": "保存透明视频",
+                  "content": "生成透明视频",
                   "fontSize": 13
                 }
               }
@@ -9081,7 +9123,7 @@
             {
               "type": "frame",
               "id": "bzrJY",
-              "name": "videoResultRow",
+              "name": "videoGeneratedResultRow",
               "width": "fill_container",
               "gap": 10,
               "justifyContent": "space_between",
@@ -9090,7 +9132,7 @@
                 {
                   "type": "frame",
                   "id": "mnEig",
-                  "name": "videoResultCopy",
+                  "name": "videoGeneratedResultCopy",
                   "width": "fill_container",
                   "layout": "vertical",
                   "gap": 4,
@@ -9098,9 +9140,9 @@
                     {
                       "type": "text",
                       "id": "n9IkDc",
-                      "name": "videoSavedLabel",
+                      "name": "videoGeneratedLabel",
                       "fill": "#6B7280",
-                      "content": "已保存",
+                      "content": "已生成临时成品",
                       "fontFamily": "MaokenAssortedSans",
                       "fontSize": 11,
                       "fontWeight": "600"
@@ -9108,7 +9150,60 @@
                     {
                       "type": "text",
                       "id": "zdxFB",
-                      "name": "videoSavedFilename",
+                      "name": "videoGeneratedFilename",
+                      "fill": "#1A1A1A",
+                      "content": "result.webm",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 12,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "id": "q5z9z9",
+                  "type": "ref",
+                  "ref": "RPLJq",
+                  "name": "videoExportButton",
+                  "width": 120,
+                  "descendants": {
+                    "zgOkx": {
+                      "content": "导出透明视频"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "Nb5Lw",
+              "name": "videoExportedResultRow",
+              "width": "fill_container",
+              "gap": 10,
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "TBme3",
+                  "name": "videoExportedResultCopy",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "m6UEM",
+                      "name": "videoExportedLabel",
+                      "fill": "#6B7280",
+                      "content": "已导出",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 11,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "OPxBF",
+                      "name": "videoExportedFilename",
                       "fill": "#1A1A1A",
                       "content": "cat-alpha.webm",
                       "fontFamily": "MaokenAssortedSans",
@@ -9118,7 +9213,7 @@
                   ]
                 },
                 {
-                  "id": "q5z9z9",
+                  "id": "mgMCj",
                   "type": "ref",
                   "ref": "RPLJq",
                   "name": "videoSetPomodoroButton",

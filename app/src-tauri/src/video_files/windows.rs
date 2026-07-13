@@ -24,6 +24,10 @@ pub(super) fn atomic_replace_file(source: &Path, destination: &Path) -> std::io:
     }
 }
 
+pub(super) fn cleanup_generated_preview_cache(_app: &tauri::AppHandle) -> Result<(), String> {
+    Ok(())
+}
+
 pub(super) fn prepare_playable_path(
     _app: &tauri::AppHandle,
     source: &Path,

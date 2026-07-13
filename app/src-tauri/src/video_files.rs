@@ -40,6 +40,10 @@ pub(crate) fn atomic_replace_file(source: &Path, destination: &Path) -> std::io:
     platform::atomic_replace_file(source, destination)
 }
 
+pub(crate) fn cleanup_generated_preview_cache(app: &tauri::AppHandle) -> Result<(), String> {
+    platform::cleanup_generated_preview_cache(app)
+}
+
 pub(crate) fn validate_webm_path(path: &Path) -> CustomVideoValidation {
     if path.is_relative() {
         return invalid("视频路径必须是绝对路径");
@@ -106,8 +110,9 @@ fn prepare_custom_alpha_video_path_blocking(
 mod tests {
     #[cfg(target_os = "macos")]
     use super::platform::{
-        alpha_cache_filename, alpha_tmp_path, ffmpeg_alpha_transcode_arguments,
-        run_ffmpeg_alpha_transcode_with_program, sanitize_cache_stem,
+        alpha_cache_dir, alpha_cache_filename, alpha_tmp_path, cleanup_generated_preview_cache_at,
+        ffmpeg_alpha_transcode_arguments, run_ffmpeg_alpha_transcode_with_program,
+        sanitize_cache_stem,
     };
     use super::{allow_video_asset_file, validate_webm_path, CustomVideoValidation};
     use std::fs;
@@ -279,6 +284,60 @@ mod tests {
             temp.extension().and_then(|value| value.to_str()),
             Some("mov")
         );
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn generated_preview_cleanup_keeps_non_editor_alpha_cache_files() {
+        let cache_root = std::env::temp_dir().join(format!(
+            "cpa-generated-preview-cleanup-test-{}",
+            std::process::id()
+        ));
+        let generated_dir = cache_root.join("video-editor-generated");
+        fs::create_dir_all(&generated_dir).expect("create generated alpha cache directory");
+        let generated = generated_dir.join("result-v2-0123456789abcdef.mov");
+        let generated_partial = generated_dir.join(".result-v2-0123456789abcdef.tmp.mov");
+        let custom = cache_root.join("result-v2-fedcba9876543210.mov");
+        fs::write(&generated, b"generated").expect("write generated preview");
+        fs::write(&generated_partial, b"partial").expect("write generated partial");
+        fs::write(&custom, b"custom").expect("write custom preview");
+
+        cleanup_generated_preview_cache_at(&generated_dir).expect("cleanup generated previews");
+
+        assert!(!generated_dir.exists());
+        assert_eq!(fs::read(&custom).unwrap(), b"custom");
+        let _ = fs::remove_dir_all(cache_root);
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn generated_sources_use_a_dedicated_alpha_cache_directory() {
+        let app_cache = std::env::temp_dir().join(format!(
+            "cpa-alpha-cache-routing-test-{}",
+            std::process::id()
+        ));
+        let generated = app_cache
+            .join("video-editor")
+            .join("generated")
+            .join("job-1")
+            .join("result.webm");
+        let custom = app_cache.join("picked-videos").join("result.webm");
+        fs::create_dir_all(generated.parent().unwrap()).expect("create generated source directory");
+        fs::create_dir_all(custom.parent().unwrap()).expect("create custom source directory");
+        fs::write(&generated, b"generated").expect("write generated source");
+        fs::write(&custom, b"custom").expect("write custom source");
+
+        assert_eq!(
+            alpha_cache_dir(&app_cache, &generated),
+            app_cache
+                .join("alpha-videos")
+                .join("video-editor-generated")
+        );
+        assert_eq!(
+            alpha_cache_dir(&app_cache, &custom),
+            app_cache.join("alpha-videos")
+        );
+        let _ = fs::remove_dir_all(app_cache);
     }
 
     #[cfg(target_os = "macos")]
