@@ -1,6 +1,6 @@
 # BackgroundRemover 视频编辑与自包含运行时
 
-CPA_V2 在设置窗口中提供“视频编辑”栏目。用户可以导入任意主体视频，裁剪时间与画面、调整 alpha 阈值、用画笔静态剔除区域，保存透明视频，并把保存结果设为番茄钟结束提示。
+CPA_V2 在设置窗口中提供“视频编辑”栏目。用户可以导入任意主体视频，裁剪时间与画面、调整 alpha 阈值、用画笔静态剔除区域，生成透明视频后立即预览，再按需导出并设为番茄钟结束提示。
 
 ## 处理链
 
@@ -10,8 +10,9 @@ CPA_V2 在设置窗口中提供“视频编辑”栏目。用户可以导入任�
 2. FFmpeg 按时间段与矩形裁剪出中间视频。
 3. BackgroundRemover + U2NetP 生成逐帧 matte。
 4. FFmpeg 将软阈值和画笔 PGM mask 合并到 alpha。
-5. 保存 VP8 Alpha WebM，并验证 `codec_name=vp8` 与 `alpha_mode=1`。
+5. 将 VP8 Alpha WebM 生成到应用缓存中的唯一受管路径，并验证 `codec_name=vp8` 与 `alpha_mode=1`。
 6. macOS 播放时用同一份内置 FFmpeg 转成 HEVC Alpha MOV；Windows 直接使用 WebM。
+7. 生成完成后自动预览临时成品；最终导出只复制已生成文件，不再重复运行 BackgroundRemover。
 
 画笔坐标相对于裁剪后画面，并静态应用到片段的每一帧。阈值只把低于阈值的 alpha 清零，保留阈值以上的软边缘。
 
@@ -105,7 +106,7 @@ release 应用只从当前可执行文件推导安装包内 payload：macOS 使�
 
 smoke 只在同一操作系统且宿主能执行目标架构时默认开启：Apple Silicon 可原生执行 ARM64，也可通过 Rosetta 执行 x86_64；Intel Mac 不会尝试执行 ARM64；Windows 只接受 x86_64 host/target。无论是否执行 smoke，静态校验都会拒绝 Universal、混合架构和错误架构文件。
 
-保存后的兼容预览只有触发 `canplay` 才能设为番茄钟结束视频；`loadedmetadata` 不再被当成可解码证明，store action 也会再次检查权威 playback state。
+每次点击生成都使用唯一的应用缓存路径，避免 macOS HEVC 兼容预览复用旧缓存。生成后的兼容预览只有触发 `canplay` 才能确认为可播放；`loadedmetadata` 不再被当成可解码证明。导出只将该受管临时 WebM 复制到用户选择的最终路径，不触发第二次抠图；番茄钟结束视频只使用最终导出路径，不持久引用可能被清理的应用缓存文件。
 
 ## 准备目标 payload
 

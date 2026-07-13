@@ -3,13 +3,14 @@ mod windows;
 
 use serde::{Deserialize, Serialize};
 use std::ffi::{OsStr, OsString};
-use std::fs;
+use std::fs::{self, File, OpenOptions};
+use std::io;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output, Stdio};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::thread;
 use std::time::{Duration, Instant};
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_dialog::DialogExt;
 
 const MAX_BRUSH_STROKES: usize = 256;
@@ -673,28 +674,171 @@ pub async fn probe_video_for_editing(path: String) -> Result<VideoProbe, String>
 }
 
 #[tauri::command]
-pub async fn pick_edited_video_output_path(
+pub async fn prepare_video_editor_temp_output_path(
     app: AppHandle,
+    job_id: String,
+) -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        validate_job_id(&job_id)?;
+        let root = generated_output_root(&app)?;
+        let output = prepare_temp_output_path_at(&root, &job_id)?;
+        crate::video_files::allow_video_asset_file(&app, &output)?;
+        Ok(output.to_string_lossy().into_owned())
+    })
+    .await
+    .map_err(|error| format!("视频临时输出准备任务异常结束：{error}"))?
+}
+
+#[tauri::command]
+pub async fn export_video_editor_generated_output(
+    app: AppHandle,
+    generated_path: String,
     input_path: String,
 ) -> Result<Option<String>, String> {
     tauri::async_runtime::spawn_blocking(move || {
+        let root = generated_output_root(&app)?;
+        let generated = validate_generated_webm_path(&root, Path::new(&generated_path))?;
         let default_filename = edited_video_output_filename(&input_path);
-        app.dialog()
+        let Some(selected) = app
+            .dialog()
             .file()
             .set_file_name(default_filename)
             .add_filter("透明 WebM 视频", &["webm"])
             .blocking_save_file()
-            .map(|path| {
-                let path = path
-                    .into_path()
-                    .map_err(|error| format!("无法读取视频保存路径：{error}"))?;
-                crate::video_files::allow_video_asset_file(&app, &path)?;
-                Ok(path.to_string_lossy().into_owned())
-            })
-            .transpose()
+        else {
+            return Ok(None);
+        };
+        let destination = selected
+            .into_path()
+            .map_err(|error| format!("无法读取视频导出路径：{error}"))?;
+        export_generated_video_to_path(&root, &generated, &destination)?;
+        crate::video_files::allow_video_asset_file(&app, &destination)?;
+        Ok(Some(destination.to_string_lossy().into_owned()))
     })
     .await
-    .map_err(|error| format!("视频保存对话框异常结束：{error}"))?
+    .map_err(|error| format!("视频导出对话框异常结束：{error}"))?
+}
+
+fn generated_output_root(app: &AppHandle) -> Result<PathBuf, String> {
+    app.path()
+        .app_cache_dir()
+        .map(|path| path.join("video-editor").join("generated"))
+        .map_err(|error| format!("无法打开视频编辑缓存目录：{error}"))
+}
+
+fn ensure_generated_output_root(root: &Path) -> Result<PathBuf, String> {
+    match fs::symlink_metadata(root) {
+        Ok(metadata) if metadata.file_type().is_symlink() => {
+            return Err("视频编辑临时目录不能是符号链接".to_string());
+        }
+        Ok(metadata) if !metadata.is_dir() => {
+            return Err("视频编辑临时目录不是文件夹".to_string());
+        }
+        Ok(_) => {}
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {
+            let parent = root
+                .parent()
+                .ok_or_else(|| "视频编辑临时目录缺少父目录".to_string())?;
+            fs::create_dir_all(parent)
+                .map_err(|error| format!("无法创建视频编辑缓存目录：{error}"))?;
+            create_private_directory(root)
+                .map_err(|error| format!("无法创建视频编辑临时目录：{error}"))?;
+        }
+        Err(error) => return Err(format!("无法读取视频编辑临时目录：{error}")),
+    }
+    root.canonicalize()
+        .map_err(|error| format!("无法读取视频编辑临时目录路径：{error}"))
+}
+
+fn prepare_temp_output_path_at(root: &Path, job_id: &str) -> Result<PathBuf, String> {
+    validate_job_id(job_id)?;
+    let root = ensure_generated_output_root(root)?;
+    for _ in 0..10 {
+        let sequence = JOB_COUNTER.fetch_add(1, Ordering::Relaxed);
+        let directory = root.join(format!("{job_id}-{}-{sequence}", std::process::id()));
+        match create_private_directory(&directory) {
+            Ok(()) => return Ok(directory.join("result.webm")),
+            Err(error) if error.kind() == io::ErrorKind::AlreadyExists => continue,
+            Err(error) => return Err(format!("无法创建生成视频临时目录：{error}")),
+        }
+    }
+    Err("无法创建唯一的生成视频临时目录".to_string())
+}
+
+fn validate_prepared_output_path(root: &Path, path: &Path) -> Result<PathBuf, String> {
+    if !path.is_absolute() || !has_allowed_extension(path, &["webm"]) {
+        return Err("生成视频必须使用应用临时目录中的绝对 .webm 路径".to_string());
+    }
+    let root = ensure_generated_output_root(root)?;
+    let parent = path
+        .parent()
+        .ok_or_else(|| "生成视频临时路径缺少父目录".to_string())?
+        .canonicalize()
+        .map_err(|error| format!("无法读取生成视频临时目录：{error}"))?;
+    if parent.parent() != Some(root.as_path()) {
+        return Err("生成视频路径不在应用临时目录中".to_string());
+    }
+    if path.file_name().and_then(|name| name.to_str()) != Some("result.webm") {
+        return Err("生成视频临时文件名无效".to_string());
+    }
+    match fs::symlink_metadata(path) {
+        Ok(metadata) if metadata.file_type().is_symlink() => {
+            return Err("生成视频路径不能是符号链接".to_string());
+        }
+        Ok(metadata) if !metadata.is_file() => {
+            return Err("生成视频路径不是普通文件".to_string());
+        }
+        Ok(_) => {}
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+        Err(error) => return Err(format!("无法读取生成视频路径：{error}")),
+    }
+    Ok(parent.join("result.webm"))
+}
+
+fn validate_generated_webm_path(root: &Path, path: &Path) -> Result<PathBuf, String> {
+    let path = validate_prepared_output_path(root, path)?;
+    let metadata = fs::metadata(&path).map_err(|error| format!("无法读取已生成视频：{error}"))?;
+    if !metadata.is_file() || metadata.len() == 0 {
+        return Err("已生成视频为空".to_string());
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt;
+        if metadata.nlink() > 1 {
+            return Err("已生成视频不能是硬链接".to_string());
+        }
+    }
+    path.canonicalize()
+        .map_err(|error| format!("无法读取已生成视频路径：{error}"))
+}
+
+fn export_generated_video_to_path(
+    root: &Path,
+    generated: &Path,
+    destination: &Path,
+) -> Result<(), String> {
+    let generated = validate_generated_webm_path(root, generated)?;
+    let destination = validate_output_path(destination)?;
+    if paths_are_equal(&generated, &destination) {
+        return Err("生成视频和导出视频不能是同一个文件".to_string());
+    }
+
+    let staging = OutputStagingDir::new(&destination, "export")?;
+    let partial = staging.path().join("result.webm");
+    let mut source =
+        File::open(&generated).map_err(|error| format!("无法打开已生成视频：{error}"))?;
+    let mut target = OpenOptions::new()
+        .create_new(true)
+        .write(true)
+        .open(&partial)
+        .map_err(|error| format!("无法创建导出暂存视频：{error}"))?;
+    io::copy(&mut source, &mut target).map_err(|error| format!("无法复制已生成视频：{error}"))?;
+    target
+        .sync_all()
+        .map_err(|error| format!("无法同步导出暂存视频：{error}"))?;
+    drop(target);
+    ensure_nonempty_file(&partial, "导出暂存视频")?;
+    replace_output_file(&partial, &destination, &generated)
 }
 
 fn edited_video_output_filename(input_path: &str) -> String {
@@ -873,8 +1017,11 @@ pub async fn process_background_removed_video(
 
 fn process_video(
     app: &AppHandle,
-    request: VideoProcessRequest,
+    mut request: VideoProcessRequest,
 ) -> Result<VideoProcessResult, String> {
+    let root = generated_output_root(app)?;
+    let output = validate_prepared_output_path(&root, Path::new(&request.output_path))?;
+    request.output_path = output.to_string_lossy().into_owned();
     process_video_with_progress(request, |job_id, percent, stage| {
         emit_progress(app, job_id, percent, stage);
     })
@@ -1130,10 +1277,8 @@ fn current_platform_model_candidates(manifest_dir: &Path, home: Option<&Path>) -
 }
 
 fn resolve_u2netp_model() -> Option<PathBuf> {
-    let configured = development_runtime_override(
-        std::env::var_os("U2NETP_PATH"),
-        cfg!(debug_assertions),
-    );
+    let configured =
+        development_runtime_override(std::env::var_os("U2NETP_PATH"), cfg!(debug_assertions));
     configured
         .into_iter()
         .chain(current_platform_model_candidates(
@@ -1319,18 +1464,8 @@ fn replace_output_file(partial: &Path, output: &Path, input: &Path) -> Result<()
     if paths_are_equal(input, &output) {
         return Err("输入视频和输出视频不能是同一个文件".to_string());
     }
-
-    #[cfg(unix)]
-    {
-        fs::rename(partial, output).map_err(|error| format!("无法保存编辑后的视频：{error}"))
-    }
-    #[cfg(not(unix))]
-    {
-        if output.exists() {
-            fs::remove_file(&output).map_err(|error| format!("无法替换已有输出视频：{error}"))?;
-        }
-        fs::rename(partial, output).map_err(|error| format!("无法保存编辑后的视频：{error}"))
-    }
+    crate::video_files::atomic_replace_file(partial, &output)
+        .map_err(|error| format!("无法保存编辑后的视频：{error}"))
 }
 
 struct JobTempDir {
@@ -1515,6 +1650,91 @@ mod tests {
         drop(staging);
         assert!(!staging_path.exists());
         let _ = fs::remove_dir_all(input.parent().unwrap());
+    }
+
+    #[test]
+    fn prepares_unique_managed_webm_paths_for_generated_previews() {
+        let root = std::env::temp_dir().join(format!(
+            "cpa-video-editor-generated-path-test-{}-{}",
+            std::process::id(),
+            TEST_FILE_COUNTER.fetch_add(1, Ordering::Relaxed)
+        ));
+
+        let first =
+            prepare_temp_output_path_at(&root, "job-1").expect("prepare first generated output");
+        fs::write(&first, b"first generated preview").expect("write first generated preview");
+        let second =
+            prepare_temp_output_path_at(&root, "job-2").expect("prepare second generated output");
+
+        assert_ne!(first, second);
+        assert_eq!(fs::read(&first).unwrap(), b"first generated preview");
+        assert!(first.starts_with(root.canonicalize().unwrap()));
+        assert_eq!(
+            first.file_name().and_then(|name| name.to_str()),
+            Some("result.webm")
+        );
+        validate_prepared_output_path(&root, &first).expect("first path is managed");
+        validate_prepared_output_path(&root, &second).expect("second path is managed");
+
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let parent = first.parent().unwrap();
+            assert_eq!(
+                fs::metadata(parent).unwrap().permissions().mode() & 0o777,
+                0o700
+            );
+        }
+
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn exports_a_managed_generated_video_without_changing_the_source() {
+        let root = std::env::temp_dir().join(format!(
+            "cpa-video-editor-export-test-{}-{}",
+            std::process::id(),
+            TEST_FILE_COUNTER.fetch_add(1, Ordering::Relaxed)
+        ));
+        let source =
+            prepare_temp_output_path_at(&root, "job-1").expect("prepare managed generated output");
+        fs::write(&source, b"generated-alpha-webm").expect("write generated source");
+        let destination_dir = root.parent().unwrap().join(format!(
+            "cpa-video-editor-export-destination-{}",
+            TEST_FILE_COUNTER.fetch_add(1, Ordering::Relaxed)
+        ));
+        fs::create_dir_all(&destination_dir).expect("create export destination");
+        let destination = destination_dir.join("cat-transparent.webm");
+        fs::write(&destination, b"old-export").expect("write old export");
+
+        export_generated_video_to_path(&root, &source, &destination)
+            .expect("export generated video");
+
+        assert_eq!(fs::read(&source).unwrap(), b"generated-alpha-webm");
+        assert_eq!(fs::read(&destination).unwrap(), b"generated-alpha-webm");
+
+        let _ = fs::remove_dir_all(root);
+        let _ = fs::remove_dir_all(destination_dir);
+    }
+
+    #[test]
+    fn rejects_exporting_a_webm_outside_the_managed_generated_root() {
+        let managed_root = std::env::temp_dir().join(format!(
+            "cpa-video-editor-managed-root-test-{}-{}",
+            std::process::id(),
+            TEST_FILE_COUNTER.fetch_add(1, Ordering::Relaxed)
+        ));
+        fs::create_dir_all(&managed_root).expect("create managed root");
+        let outside = temp_video("webm");
+        let destination = outside.parent().unwrap().join("export.webm");
+
+        let error =
+            export_generated_video_to_path(&managed_root, &outside, &destination).unwrap_err();
+
+        assert!(error.contains("应用临时目录"));
+        assert!(!destination.exists());
+        let _ = fs::remove_dir_all(managed_root);
+        let _ = fs::remove_dir_all(outside.parent().unwrap());
     }
 
     #[test]
@@ -1915,13 +2135,11 @@ mod tests {
 
         assert!(mac.contains(&PathBuf::from("/usr/local/bin/ffmpeg")));
         let current_macos_target = macos::runtime_target();
-        assert!(mac
-            .iter()
-            .any(|path| path.ends_with(
-                Path::new("video-runtime")
-                    .join(current_macos_target.directory_name)
-                    .join("bin/ffmpeg")
-            )));
+        assert!(mac.iter().any(|path| path.ends_with(
+            Path::new("video-runtime")
+                .join(current_macos_target.directory_name)
+                .join("bin/ffmpeg")
+        )));
         assert!(mac_worker.contains(&PathBuf::from("/usr/local/bin/backgroundremover")));
 
         #[cfg(target_arch = "x86_64")]

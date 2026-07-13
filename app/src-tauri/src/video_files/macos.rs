@@ -7,6 +7,10 @@ use tauri::Manager;
 
 const ALPHA_CACHE_VERSION: u8 = 2;
 
+pub(super) fn atomic_replace_file(source: &Path, destination: &Path) -> std::io::Result<()> {
+    fs::rename(source, destination)
+}
+
 pub(super) fn prepare_playable_path(
     app: &tauri::AppHandle,
     source: &Path,

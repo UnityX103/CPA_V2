@@ -33,7 +33,8 @@ export function VideoEditorPanel() {
         isApplyingToPomodoro,
         progress,
         error,
-        savedPath,
+        generatedPath,
+        exportedPath,
         resultPreviewSrc,
         resultPreviewPlaybackState,
         appliedToPomodoro,
@@ -201,19 +202,33 @@ export function VideoEditorPanel() {
                             </div>
                         </section>
 
-                        <section className="card video-editor-controls-card">
-                            <h3 className="card-title">裁剪与时间</h3>
-                            <div className="video-editor-number-grid">
-                                <EditorNumber label="裁剪 X" value={draft.crop.x} min={0} disabled={editingLocked} onChange={(value) => setCropPart(editor.setCrop, draft.crop, 'x', value)} />
-                                <EditorNumber label="裁剪 Y" value={draft.crop.y} min={0} disabled={editingLocked} onChange={(value) => setCropPart(editor.setCrop, draft.crop, 'y', value)} />
-                                <EditorNumber label="裁剪宽度" value={draft.crop.width} min={2} disabled={editingLocked} onChange={(value) => setCropPart(editor.setCrop, draft.crop, 'width', value)} />
-                                <EditorNumber label="裁剪高度" value={draft.crop.height} min={2} disabled={editingLocked} onChange={(value) => setCropPart(editor.setCrop, draft.crop, 'height', value)} />
-                                <EditorNumber label="开始时间" value={draft.startSeconds} min={0} step={0.1} suffix="秒" disabled={editingLocked} onChange={editor.setStartSeconds} />
-                                <EditorNumber label="结束时间" value={draft.endSeconds} min={0.1} step={0.1} suffix="秒" disabled={editingLocked} onChange={editor.setEndSeconds} />
-                            </div>
-                        </section>
+                        {tool === 'crop' && (
+                            <section className="card video-editor-controls-card">
+                                <div className="video-editor-heading-row">
+                                    <h3 className="card-title">裁剪与时间</h3>
+                                    <button
+                                        type="button"
+                                        className="btn btn-secondary btn-fit"
+                                        aria-label="复原裁剪与时间"
+                                        disabled={editingLocked}
+                                        onClick={editor.restoreOriginal}
+                                    >
+                                        复原
+                                    </button>
+                                </div>
+                                <div className="video-editor-number-grid">
+                                    <EditorNumber label="裁剪 X" value={draft.crop.x} min={0} disabled={editingLocked} onChange={(value) => setCropPart(editor.setCrop, draft.crop, 'x', value)} />
+                                    <EditorNumber label="裁剪 Y" value={draft.crop.y} min={0} disabled={editingLocked} onChange={(value) => setCropPart(editor.setCrop, draft.crop, 'y', value)} />
+                                    <EditorNumber label="裁剪宽度" value={draft.crop.width} min={2} disabled={editingLocked} onChange={(value) => setCropPart(editor.setCrop, draft.crop, 'width', value)} />
+                                    <EditorNumber label="裁剪高度" value={draft.crop.height} min={2} disabled={editingLocked} onChange={(value) => setCropPart(editor.setCrop, draft.crop, 'height', value)} />
+                                    <EditorNumber label="开始时间" value={draft.startSeconds} min={0} step={0.1} suffix="秒" disabled={editingLocked} onChange={editor.setStartSeconds} />
+                                    <EditorNumber label="结束时间" value={draft.endSeconds} min={0.1} step={0.1} suffix="秒" disabled={editingLocked} onChange={editor.setEndSeconds} />
+                                </div>
+                            </section>
+                        )}
 
-                        <section className="card video-editor-controls-card">
+                        {tool === 'erase' && (
+                            <section className="card video-editor-controls-card">
                             <label className="video-editor-range-row">
                                 <span className="card-label">背景清除阈值（越高剔除越多）</span>
                                 <span className="video-editor-range-value">{draft.threshold}</span>
@@ -245,7 +260,8 @@ export function VideoEditorPanel() {
                                 <button type="button" className="btn btn-secondary btn-fit" disabled={editingLocked || draft.strokes.length === 0} onClick={editor.clearStrokes}>清空画笔</button>
                                 <span className="video-editor-stroke-count">{draft.strokes.length} 笔</span>
                             </div>
-                        </section>
+                            </section>
+                        )}
 
                         <section className="card video-editor-save-card">
                             {isProcessing && progress && (
@@ -260,7 +276,7 @@ export function VideoEditorPanel() {
                             <button
                                 type="button"
                                 className="btn btn-primary btn-block video-editor-save"
-                                aria-label="保存透明视频"
+                                aria-label="生成透明视频"
                                 disabled={
                                     !runtime?.ready
                                     || isLoading
@@ -269,22 +285,20 @@ export function VideoEditorPanel() {
                                     || isPreparingResultPreview
                                     || isApplyingToPomodoro
                                 }
-                                onClick={() => { void editor.saveVideo(); }}
+                                onClick={() => { void editor.generateVideo(); }}
                             >
-                                {isChoosingOutput
-                                    ? '选择保存位置…'
-                                    : isProcessing
+                                {isProcessing
                                     ? 'BackgroundRemover 处理中…'
                                     : isPreparingResultPreview
                                         ? '正在准备兼容预览…'
-                                        : '保存透明视频'}
+                                        : '生成透明视频'}
                             </button>
-                            {savedPath && isPreparingResultPreview && (
+                            {generatedPath && isPreparingResultPreview && (
                                 <div className="video-editor-result-preparing" role="status">
                                     正在准备可播放的透明成品预览…
                                 </div>
                             )}
-                            {savedPath && resultPreviewSrc && (
+                            {generatedPath && resultPreviewSrc && (
                                 <div className="video-editor-result-preview">
                                     <div className="video-editor-result-preview-copy">
                                         <span className="card-label">透明成品预览</span>
@@ -305,16 +319,39 @@ export function VideoEditorPanel() {
                                     </div>
                                     {resultPreviewPlaybackState === 'error' && (
                                         <div className="video-editor-error" role="alert">
-                                            透明成品已保存，但当前系统无法播放兼容预览
+                                            透明成品已生成，但当前系统无法播放兼容预览
                                         </div>
                                     )}
                                 </div>
                             )}
-                            {savedPath && (
+                            {generatedPath && (
                                 <div className="video-editor-result">
                                     <div>
-                                        <span className="card-label">已保存</span>
-                                        <strong>{fileNameFromPath(savedPath)}</strong>
+                                        <span className="card-label">已生成临时成品</span>
+                                        <strong>{fileNameFromPath(generatedPath)}</strong>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className="btn btn-secondary btn-fit"
+                                        aria-label="导出透明视频"
+                                        disabled={
+                                            isLoading
+                                            || isChoosingOutput
+                                            || isProcessing
+                                            || isApplyingToPomodoro
+                                            || isPreparingResultPreview
+                                        }
+                                        onClick={() => { void editor.exportVideo(); }}
+                                    >
+                                        {isChoosingOutput ? '选择导出位置…' : '导出透明视频'}
+                                    </button>
+                                </div>
+                            )}
+                            {exportedPath && (
+                                <div className="video-editor-result">
+                                    <div>
+                                        <span className="card-label">已导出</span>
+                                        <strong>{fileNameFromPath(exportedPath)}</strong>
                                     </div>
                                     <button
                                         type="button"
@@ -326,19 +363,10 @@ export function VideoEditorPanel() {
                                             || isProcessing
                                             || isApplyingToPomodoro
                                             || isPreparingResultPreview
-                                            || resultPreviewPlaybackState !== 'ready'
                                         }
                                         onClick={() => { void editor.setAsPomodoroVideo(); }}
                                     >
-                                        {isApplyingToPomodoro
-                                            ? '设置中…'
-                                            : isPreparingResultPreview
-                                                ? '预览准备中…'
-                                                : resultPreviewPlaybackState === 'ready'
-                                                    ? '设为番茄钟结束视频'
-                                                    : resultPreviewPlaybackState === 'error'
-                                                        ? '预览不可播放'
-                                                        : '等待预览可播放'}
+                                        {isApplyingToPomodoro ? '设置中…' : '设为番茄钟结束视频'}
                                     </button>
                                 </div>
                             )}

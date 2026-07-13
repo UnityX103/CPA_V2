@@ -12,9 +12,10 @@ import {
     type VideoProcessRequest,
 } from './videoEditor';
 import {
+    exportVideoEditorGeneratedOutput,
     listenVideoEditorProgress,
-    pickEditedVideoOutputPath,
     pickVideoForEditing,
+    prepareVideoEditorTempOutputPath,
     prepareVideoEditorResultPreview,
     probeVideoForEditing,
     processBackgroundRemovedVideo,
@@ -41,7 +42,8 @@ export interface VideoEditorDependencies {
         handler: (progress: VideoEditorProgress) => void,
     ) => Promise<() => void>;
     pickInput: () => Promise<string | null>;
-    pickOutput: (inputPath: string) => Promise<string | null>;
+    prepareTempOutput: (jobId: string) => Promise<string>;
+    exportGenerated: (generatedPath: string, inputPath: string) => Promise<string | null>;
     previewSrc: (path: string) => string;
     prepareResultPreview: (path: string) => Promise<string>;
     probe: (path: string) => Promise<VideoProbe>;
@@ -67,7 +69,8 @@ export interface VideoEditorState {
     isApplyingToPomodoro: boolean;
     progress: VideoEditorProgress | null;
     error: string;
-    savedPath: string;
+    generatedPath: string;
+    exportedPath: string;
     resultPreviewSrc: string;
     resultPreviewPlaybackState: ResultPreviewPlaybackState;
     appliedToPomodoro: boolean;
@@ -78,7 +81,8 @@ export interface VideoEditorActions {
     refreshRuntime: () => Promise<void>;
     attachProgressListener: () => Promise<() => void>;
     chooseVideo: () => Promise<void>;
-    saveVideo: () => Promise<void>;
+    generateVideo: () => Promise<void>;
+    exportVideo: () => Promise<void>;
     setAsPomodoroVideo: () => Promise<void>;
     markResultPreviewReady: () => void;
     markResultPreviewError: () => void;
@@ -87,6 +91,7 @@ export interface VideoEditorActions {
     setCrop: (crop: VideoCrop) => void;
     setStartSeconds: (value: number) => void;
     setEndSeconds: (value: number) => void;
+    restoreOriginal: () => void;
     setThreshold: (value: number) => void;
     setBrushRadius: (value: number) => void;
     beginStroke: (point: BrushPoint) => void;
@@ -100,7 +105,8 @@ export type VideoEditorStore = UseBoundStore<StoreApi<VideoEditorState & VideoEd
 const defaultDependencies: VideoEditorDependencies = {
     listenProgress: listenVideoEditorProgress,
     pickInput: pickVideoForEditing,
-    pickOutput: pickEditedVideoOutputPath,
+    prepareTempOutput: prepareVideoEditorTempOutputPath,
+    exportGenerated: exportVideoEditorGeneratedOutput,
     previewSrc: videoEditorPreviewSrc,
     prepareResultPreview: prepareVideoEditorResultPreview,
     probe: probeVideoForEditing,
@@ -131,7 +137,8 @@ function initialState(): VideoEditorState {
         isApplyingToPomodoro: false,
         progress: null,
         error: '',
-        savedPath: '',
+        generatedPath: '',
+        exportedPath: '',
         resultPreviewSrc: '',
         resultPreviewPlaybackState: 'idle',
         appliedToPomodoro: false,
@@ -160,7 +167,8 @@ export function createVideoEditorStore(
 
                 return {
                     draft,
-                    savedPath: '',
+                    generatedPath: '',
+                    exportedPath: '',
                     resultPreviewSrc: '',
                     resultPreviewPlaybackState: 'idle',
                     appliedToPomodoro: false,
@@ -216,7 +224,8 @@ export function createVideoEditorStore(
                     set({
                         draft,
                         previewSrc: dependencies.previewSrc(path),
-                        savedPath: '',
+                        generatedPath: '',
+                        exportedPath: '',
                         resultPreviewSrc: '',
                         resultPreviewPlaybackState: 'idle',
                         isPreparingResultPreview: false,
@@ -229,7 +238,7 @@ export function createVideoEditorStore(
                     if (requestGeneration === generation) set({ isLoading: false });
                 }
             },
-            saveVideo: async () => {
+            generateVideo: async () => {
                 const state = get();
                 if (
                     !state.draft.sourcePath
@@ -241,29 +250,29 @@ export function createVideoEditorStore(
                     || state.isApplyingToPomodoro
                 ) return;
                 const requestGeneration = generation;
-                set({ error: '', isChoosingOutput: true });
+                const jobId = dependencies.createJobId();
+                activeJobId = jobId;
+                set({
+                    error: '',
+                    isProcessing: true,
+                    generatedPath: '',
+                    exportedPath: '',
+                    resultPreviewSrc: '',
+                    resultPreviewPlaybackState: 'idle',
+                    isPreparingResultPreview: false,
+                    appliedToPomodoro: false,
+                    progress: { jobId, percent: 0, stage: '准备视频' },
+                });
                 try {
-                    const outputPath = await dependencies.pickOutput(state.draft.sourcePath);
-                    if (!outputPath || requestGeneration !== generation) return;
-                    const jobId = dependencies.createJobId();
-                    activeJobId = jobId;
-                    set({
-                        isChoosingOutput: false,
-                        isProcessing: true,
-                        savedPath: '',
-                        resultPreviewSrc: '',
-                        resultPreviewPlaybackState: 'idle',
-                        isPreparingResultPreview: false,
-                        appliedToPomodoro: false,
-                        progress: { jobId, percent: 0, stage: '准备视频' },
-                    });
+                    const outputPath = await dependencies.prepareTempOutput(jobId);
+                    if (requestGeneration !== generation) return;
                     const result = await dependencies.process(
                         buildVideoProcessRequest(state.draft, outputPath, jobId),
                     );
                     if (requestGeneration !== generation) return;
                     activeJobId = null;
                     set({
-                        savedPath: result.outputPath,
+                        generatedPath: result.outputPath,
                         resultPreviewSrc: '',
                         resultPreviewPlaybackState: 'loading',
                         isProcessing: false,
@@ -287,7 +296,7 @@ export function createVideoEditorStore(
                                 resultPreviewSrc: '',
                                 resultPreviewPlaybackState: 'error',
                                 isPreparingResultPreview: false,
-                                error: `透明视频已保存，但无法准备可播放预览：${errorMessage(error)}`,
+                                error: `透明视频已生成，但无法准备可播放预览：${errorMessage(error)}`,
                             });
                         }
                     }
@@ -297,19 +306,43 @@ export function createVideoEditorStore(
                     if (requestGeneration === generation) {
                         activeJobId = null;
                         set({
-                            isChoosingOutput: false,
                             isProcessing: false,
                             isPreparingResultPreview: false,
                         });
                     }
                 }
             },
+            exportVideo: async () => {
+                const state = get();
+                if (
+                    !state.generatedPath
+                    || !state.draft.sourcePath
+                    || state.isLoading
+                    || state.isChoosingOutput
+                    || state.isProcessing
+                    || state.isPreparingResultPreview
+                    || state.isApplyingToPomodoro
+                ) return;
+                const requestGeneration = generation;
+                set({ error: '', isChoosingOutput: true });
+                try {
+                    const exportedPath = await dependencies.exportGenerated(
+                        state.generatedPath,
+                        state.draft.sourcePath,
+                    );
+                    if (exportedPath && requestGeneration === generation) {
+                        set({ exportedPath, appliedToPomodoro: false });
+                    }
+                } catch (error) {
+                    if (requestGeneration === generation) set({ error: errorMessage(error) });
+                } finally {
+                    if (requestGeneration === generation) set({ isChoosingOutput: false });
+                }
+            },
             setAsPomodoroVideo: async () => {
                 const state = get();
                 if (
-                    !state.savedPath
-                    || !state.resultPreviewSrc
-                    || state.resultPreviewPlaybackState !== 'ready'
+                    !state.exportedPath
                     || state.isLoading
                     || state.isChoosingOutput
                     || state.isPreparingResultPreview
@@ -327,7 +360,7 @@ export function createVideoEditorStore(
                         sourceKind: 'custom',
                         builtinVideoId:
                             currentVideo.builtinVideoId || DEFAULT_BUILTIN_POMODORO_VIDEO_ID,
-                        customVideoPath: state.savedPath,
+                        customVideoPath: state.exportedPath,
                     });
                     if (requestGeneration === generation) set({ appliedToPomodoro: true });
                 } catch (error) {
@@ -352,6 +385,7 @@ export function createVideoEditorStore(
             setCrop: (crop) => reduceDraft({ type: 'setCrop', crop }),
             setStartSeconds: (value) => reduceDraft({ type: 'setStartSeconds', value }),
             setEndSeconds: (value) => reduceDraft({ type: 'setEndSeconds', value }),
+            restoreOriginal: () => reduceDraft({ type: 'restoreOriginal' }),
             setThreshold: (value) => reduceDraft({ type: 'setThreshold', value }),
             setBrushRadius: (value) => reduceDraft({ type: 'setBrushRadius', value }),
             beginStroke: (point) => reduceDraft({ type: 'beginStroke', point }),

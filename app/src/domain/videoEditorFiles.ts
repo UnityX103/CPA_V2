@@ -43,8 +43,16 @@ export async function prepareVideoEditorResultPreview(path: string): Promise<str
     return customVideoSrc(path);
 }
 
-export async function pickEditedVideoOutputPath(inputPath: string): Promise<string | null> {
-    return invoke<string | null>('pick_edited_video_output_path', {
+export async function prepareVideoEditorTempOutputPath(jobId: string): Promise<string> {
+    return invoke<string>('prepare_video_editor_temp_output_path', { jobId });
+}
+
+export async function exportVideoEditorGeneratedOutput(
+    generatedPath: string,
+    inputPath: string,
+): Promise<string | null> {
+    return invoke<string | null>('export_video_editor_generated_output', {
+        generatedPath,
         inputPath,
     });
 }

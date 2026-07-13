@@ -69,6 +69,54 @@ describe('video editor draft', () => {
         expect(withEnd.endSeconds).toBe(0.1);
     });
 
+    it('restores the original frame and duration without resetting erase settings', () => {
+        const loaded = createVideoEditorDraft('/Users/xpy/Videos/cat.mp4', PROBE);
+        const cropped = videoEditorReducer(loaded, {
+            type: 'setCrop',
+            crop: { x: 10, y: 20, width: 400, height: 300 },
+        });
+        const trimmed = videoEditorReducer(
+            videoEditorReducer(cropped, { type: 'setStartSeconds', value: 0.5 }),
+            { type: 'setEndSeconds', value: 2.5 },
+        );
+        const painted = videoEditorReducer(
+            videoEditorReducer(
+                videoEditorReducer(trimmed, { type: 'setThreshold', value: 96 }),
+                { type: 'setBrushRadius', value: 0.08 },
+            ),
+            { type: 'beginStroke', point: { x: 0.5, y: 0.5 } },
+        );
+
+        const restored = videoEditorReducer(painted, { type: 'restoreOriginal' });
+
+        expect(restored).toMatchObject({
+            crop: { x: 0, y: 0, width: 854, height: 480 },
+            startSeconds: 0,
+            endSeconds: 3.5,
+            threshold: 96,
+            brushRadius: 0.08,
+            strokes: [],
+        });
+    });
+
+    it('keeps crop-relative brush strokes when restore only resets trim time', () => {
+        const loaded = createVideoEditorDraft('/Users/xpy/Videos/cat.mp4', PROBE);
+        const trimmed = videoEditorReducer(
+            videoEditorReducer(loaded, { type: 'setStartSeconds', value: 0.5 }),
+            { type: 'setEndSeconds', value: 2.5 },
+        );
+        const painted = videoEditorReducer(trimmed, {
+            type: 'beginStroke',
+            point: { x: 0.5, y: 0.5 },
+        });
+
+        const restored = videoEditorReducer(painted, { type: 'restoreOriginal' });
+
+        expect(restored.startSeconds).toBe(0);
+        expect(restored.endSeconds).toBe(3.5);
+        expect(restored.strokes).toEqual(painted.strokes);
+    });
+
     it('clamps alpha threshold and brush radius to supported ranges', () => {
         const loaded = createVideoEditorDraft('/Users/xpy/Videos/cat.mp4', PROBE);
         const threshold = videoEditorReducer(loaded, { type: 'setThreshold', value: 999 });

@@ -11,7 +11,8 @@ const applyEndActionSettings = usePomodoroStore.getState().applyEndActionSetting
 const native = vi.hoisted(() => ({
     listenProgress: vi.fn(),
     pickInput: vi.fn(),
-    pickOutput: vi.fn(),
+    prepareTempOutput: vi.fn(),
+    exportGenerated: vi.fn(),
     previewSrc: vi.fn(),
     prepareResultPreview: vi.fn(),
     probe: vi.fn(),
@@ -21,8 +22,9 @@ const native = vi.hoisted(() => ({
 
 vi.mock('../domain/videoEditorFiles', () => ({
     listenVideoEditorProgress: native.listenProgress,
-    pickEditedVideoOutputPath: native.pickOutput,
+    exportVideoEditorGeneratedOutput: native.exportGenerated,
     pickVideoForEditing: native.pickInput,
+    prepareVideoEditorTempOutputPath: native.prepareTempOutput,
     prepareVideoEditorResultPreview: native.prepareResultPreview,
     probeVideoForEditing: native.probe,
     processBackgroundRemovedVideo: native.process,
@@ -33,7 +35,8 @@ vi.mock('../domain/videoEditorFiles', () => ({
 beforeEach(() => {
     native.listenProgress.mockReset();
     native.pickInput.mockReset();
-    native.pickOutput.mockReset();
+    native.prepareTempOutput.mockReset();
+    native.exportGenerated.mockReset();
     native.previewSrc.mockReset();
     native.prepareResultPreview.mockReset();
     native.probe.mockReset();
@@ -43,13 +46,18 @@ beforeEach(() => {
     native.listenProgress.mockResolvedValue(() => {});
     native.runtimeStatus.mockResolvedValue({ ready: true, message: '运行环境已就绪' });
     native.pickInput.mockResolvedValue('/Users/xpy/Videos/cat.mp4');
-    native.pickOutput.mockResolvedValue('/Users/xpy/Videos/cat-transparent.webm');
+    native.prepareTempOutput.mockResolvedValue(
+        '/Users/xpy/Library/Caches/app/video-editor/generated/job-output.webm',
+    );
+    native.exportGenerated.mockResolvedValue('/Users/xpy/Videos/cat-transparent.webm');
     native.previewSrc.mockImplementation((path: string) => `asset://localhost${path}`);
     native.prepareResultPreview.mockResolvedValue(
         'asset://localhost/Users/xpy/Library/Caches/app/alpha-videos/cat-transparent.mov',
     );
     native.probe.mockResolvedValue({ width: 854, height: 480, durationSeconds: 3.5, frameRate: 24 });
-    native.process.mockResolvedValue({ outputPath: '/Users/xpy/Videos/cat-transparent.webm' });
+    native.process.mockResolvedValue({
+        outputPath: '/Users/xpy/Library/Caches/app/video-editor/generated/job-output.webm',
+    });
 
     usePomodoroStore.setState({
         applyEndActionSettings,
@@ -73,6 +81,20 @@ async function loadVideo(): Promise<void> {
     await waitFor(() => expect(screen.getByLabelText('视频预览')).toBeTruthy());
 }
 
+async function generateVideo(): Promise<void> {
+    await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: '生成透明视频' }));
+    });
+    await screen.findByText('job-output.webm');
+}
+
+async function exportVideo(): Promise<void> {
+    await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: '导出透明视频' }));
+    });
+    await screen.findByText('cat-transparent.webm');
+}
+
 describe('VideoEditorPanel', () => {
     it('shows runtime readiness and imports a probed video', async () => {
         await loadVideo();
@@ -86,15 +108,15 @@ describe('VideoEditorPanel', () => {
         );
     });
 
-    it('saves crop, soft threshold and brush edits, then sets the result as the Pomodoro video', async () => {
+    it('generates, previews and exports edits before setting the exported file as the Pomodoro video', async () => {
         await loadVideo();
 
         fireEvent.change(screen.getByLabelText('裁剪宽度'), { target: { value: '400' } });
         fireEvent.blur(screen.getByLabelText('裁剪宽度'));
         fireEvent.change(screen.getByLabelText('结束时间'), { target: { value: '2.5' } });
         fireEvent.blur(screen.getByLabelText('结束时间'));
-        fireEvent.change(screen.getByLabelText('背景清除阈值'), { target: { value: '64' } });
         fireEvent.click(screen.getByRole('button', { name: '剔除画笔' }));
+        fireEvent.change(screen.getByLabelText('背景清除阈值'), { target: { value: '64' } });
 
         const stage = screen.getByLabelText('视频编辑预览区');
         Object.defineProperty(stage, 'getBoundingClientRect', {
@@ -106,14 +128,15 @@ describe('VideoEditorPanel', () => {
         fireEvent.pointerUp(stage, { pointerId: 7, clientX: 210, clientY: 120 });
 
         await act(async () => {
-            fireEvent.click(screen.getByRole('button', { name: '保存透明视频' }));
+            fireEvent.click(screen.getByRole('button', { name: '生成透明视频' }));
         });
 
+        expect(native.prepareTempOutput).toHaveBeenCalledTimes(1);
         expect(native.process).toHaveBeenCalledTimes(1);
         const request = native.process.mock.calls[0][0];
         expect(request).toMatchObject({
             inputPath: '/Users/xpy/Videos/cat.mp4',
-            outputPath: '/Users/xpy/Videos/cat-transparent.webm',
+            outputPath: '/Users/xpy/Library/Caches/app/video-editor/generated/job-output.webm',
             crop: { x: 0, y: 0, width: 400, height: 480 },
             startSeconds: 0,
             endSeconds: 2.5,
@@ -124,13 +147,24 @@ describe('VideoEditorPanel', () => {
             points: [{ x: 0.25, y: 0.25 }, { x: 0.5, y: 0.5 }],
         }]);
 
-        expect(await screen.findByText('cat-transparent.webm')).toBeTruthy();
+        expect(await screen.findByText('job-output.webm')).toBeTruthy();
         const resultPreview = screen.getByLabelText('透明成品视频预览');
         expect(resultPreview.getAttribute('src')).toBe(
             'asset://localhost/Users/xpy/Library/Caches/app/alpha-videos/cat-transparent.mov',
         );
         expect(resultPreview.parentElement?.className).toContain('video-editor-alpha-stage');
-        fireEvent.canPlay(resultPreview);
+        expect(screen.queryByRole('button', { name: '设为番茄钟结束视频' })).toBeNull();
+
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: '导出透明视频' }));
+        });
+
+        expect(native.exportGenerated).toHaveBeenCalledWith(
+            '/Users/xpy/Library/Caches/app/video-editor/generated/job-output.webm',
+            '/Users/xpy/Videos/cat.mp4',
+        );
+        expect(native.process).toHaveBeenCalledTimes(1);
+        expect(await screen.findByText('cat-transparent.webm')).toBeTruthy();
         fireEvent.click(screen.getByRole('button', { name: '设为番茄钟结束视频' }));
         expect(await screen.findByText('已设为番茄钟结束视频')).toBeTruthy();
 
@@ -169,17 +203,54 @@ describe('VideoEditorPanel', () => {
         expect(stroke?.getAttribute('stroke-width')).toBe('12');
     });
 
-    it('requires a new save after changing rendered output settings', async () => {
+    it('shows only the active module controls and restores the original crop data', async () => {
+        await loadVideo();
+
+        expect(screen.getByLabelText('裁剪宽度')).toBeTruthy();
+        expect(screen.getByRole('button', { name: '复原裁剪与时间' })).toBeTruthy();
+        expect(screen.queryByLabelText('背景清除阈值')).toBeNull();
+        expect(screen.queryByLabelText('画笔大小')).toBeNull();
+
+        fireEvent.change(screen.getByLabelText('裁剪 X'), { target: { value: '10' } });
+        fireEvent.blur(screen.getByLabelText('裁剪 X'));
+        fireEvent.change(screen.getByLabelText('裁剪宽度'), { target: { value: '400' } });
+        fireEvent.blur(screen.getByLabelText('裁剪宽度'));
+        fireEvent.change(screen.getByLabelText('开始时间'), { target: { value: '0.5' } });
+        fireEvent.blur(screen.getByLabelText('开始时间'));
+        fireEvent.change(screen.getByLabelText('结束时间'), { target: { value: '2.5' } });
+        fireEvent.blur(screen.getByLabelText('结束时间'));
+        fireEvent.click(screen.getByRole('button', { name: '复原裁剪与时间' }));
+
+        expect(screen.getByLabelText('裁剪 X')).toHaveProperty('value', '0');
+        expect(screen.getByLabelText('裁剪宽度')).toHaveProperty('value', '854');
+        expect(screen.getByLabelText('开始时间')).toHaveProperty('value', '0');
+        expect(screen.getByLabelText('结束时间')).toHaveProperty('value', '3.5');
+
+        fireEvent.click(screen.getByRole('button', { name: '剔除画笔' }));
+        expect(screen.queryByLabelText('裁剪宽度')).toBeNull();
+        expect(screen.queryByRole('button', { name: '复原裁剪与时间' })).toBeNull();
+        expect(screen.getByLabelText('背景清除阈值')).toBeTruthy();
+        expect(screen.getByLabelText('画笔大小')).toBeTruthy();
+
+        fireEvent.click(screen.getByRole('button', { name: '播放预览' }));
+        expect(screen.queryByLabelText('裁剪宽度')).toBeNull();
+        expect(screen.queryByLabelText('背景清除阈值')).toBeNull();
+        expect(screen.queryByLabelText('画笔大小')).toBeNull();
+    });
+
+    it('requires a new generation after changing rendered output settings', async () => {
         await loadVideo();
         await act(async () => {
-            fireEvent.click(screen.getByRole('button', { name: '保存透明视频' }));
+            fireEvent.click(screen.getByRole('button', { name: '生成透明视频' }));
         });
-        expect(await screen.findByText('cat-transparent.webm')).toBeTruthy();
+        expect(await screen.findByText('job-output.webm')).toBeTruthy();
 
+        fireEvent.click(screen.getByRole('button', { name: '剔除画笔' }));
         fireEvent.change(screen.getByLabelText('背景清除阈值'), { target: { value: '80' } });
 
-        expect(screen.queryByText('cat-transparent.webm')).toBeNull();
+        expect(screen.queryByText('job-output.webm')).toBeNull();
         expect(screen.queryByLabelText('透明成品视频预览')).toBeNull();
+        expect(screen.queryByRole('button', { name: '导出透明视频' })).toBeNull();
         expect(screen.queryByRole('button', { name: '设为番茄钟结束视频' })).toBeNull();
     });
 
@@ -192,9 +263,11 @@ describe('VideoEditorPanel', () => {
         }) => void;
         await loadVideo();
         await act(async () => {
-            fireEvent.click(screen.getByRole('button', { name: '保存透明视频' }));
+            fireEvent.click(screen.getByRole('button', { name: '生成透明视频' }));
         });
-        fireEvent.canPlay(await screen.findByLabelText('透明成品视频预览'));
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: '导出透明视频' }));
+        });
         native.pickInput.mockResolvedValue('/Users/xpy/Videos/dog.mp4');
         native.probe.mockImplementationOnce(() => new Promise((resolve) => {
             finishProbe = resolve;
@@ -204,7 +277,11 @@ describe('VideoEditorPanel', () => {
         await waitFor(() => expect(native.probe).toHaveBeenCalledTimes(2));
 
         expect(screen.getByLabelText('裁剪宽度')).toHaveProperty('disabled', true);
-        expect(screen.getByRole('button', { name: '保存透明视频' })).toHaveProperty(
+        expect(screen.getByRole('button', { name: '生成透明视频' })).toHaveProperty(
+            'disabled',
+            true,
+        );
+        expect(screen.getByRole('button', { name: '导出透明视频' })).toHaveProperty(
             'disabled',
             true,
         );
@@ -225,10 +302,8 @@ describe('VideoEditorPanel', () => {
             applyEndActionSettings: vi.fn(() => new Promise<void>((resolve) => { confirm = resolve; })),
         });
         await loadVideo();
-        await act(async () => {
-            fireEvent.click(screen.getByRole('button', { name: '保存透明视频' }));
-        });
-        fireEvent.canPlay(await screen.findByLabelText('透明成品视频预览'));
+        await generateVideo();
+        await exportVideo();
 
         fireEvent.click(screen.getByRole('button', { name: '设为番茄钟结束视频' }));
 
@@ -244,10 +319,8 @@ describe('VideoEditorPanel', () => {
             applyEndActionSettings: vi.fn().mockRejectedValue(new Error('主窗口保存失败')),
         });
         await loadVideo();
-        await act(async () => {
-            fireEvent.click(screen.getByRole('button', { name: '保存透明视频' }));
-        });
-        fireEvent.canPlay(await screen.findByLabelText('透明成品视频预览'));
+        await generateVideo();
+        await exportVideo();
 
         fireEvent.click(screen.getByRole('button', { name: '设为番茄钟结束视频' }));
 
@@ -262,15 +335,16 @@ describe('VideoEditorPanel', () => {
         }));
         await loadVideo();
 
-        fireEvent.click(screen.getByRole('button', { name: '保存透明视频' }));
+        fireEvent.click(screen.getByRole('button', { name: '生成透明视频' }));
         await waitFor(() => expect(native.prepareResultPreview).toHaveBeenCalledTimes(1));
 
         expect(screen.getByText('正在准备可播放的透明成品预览…')).toBeTruthy();
         expect(screen.queryByLabelText('透明成品视频预览')).toBeNull();
-        expect(screen.getByRole('button', { name: '设为番茄钟结束视频' })).toHaveProperty(
+        expect(screen.getByRole('button', { name: '导出透明视频' })).toHaveProperty(
             'disabled',
             true,
         );
+        expect(screen.queryByRole('button', { name: '设为番茄钟结束视频' })).toBeNull();
 
         finishPreview('asset://localhost/cache/cat-transparent.mov');
         const preview = await screen.findByLabelText('透明成品视频预览');
@@ -278,53 +352,50 @@ describe('VideoEditorPanel', () => {
             'asset://localhost/cache/cat-transparent.mov',
         );
         expect(preview.getAttribute('preload')).toBe('auto');
-        expect(screen.getByRole('button', { name: '设为番茄钟结束视频' })).toHaveProperty(
+        expect(screen.getByRole('button', { name: '导出透明视频' })).toHaveProperty(
             'disabled',
-            true,
+            false,
         );
-        fireEvent.loadedMetadata(preview);
-        expect(screen.getByRole('button', { name: '设为番茄钟结束视频' })).toHaveProperty(
-            'disabled',
-            true,
+        expect(screen.queryByRole('button', { name: '设为番茄钟结束视频' })).toBeNull();
+    });
+
+    it('still exports and allows Pomodoro selection when the compatible preview cannot play', async () => {
+        await loadVideo();
+        await generateVideo();
+
+        fireEvent.error(await screen.findByLabelText('透明成品视频预览'));
+
+        expect((await screen.findByRole('alert')).textContent).toContain(
+            '透明成品已生成，但当前系统无法播放兼容预览',
         );
-        fireEvent.canPlay(preview);
+        expect(screen.queryByRole('button', { name: '设为番茄钟结束视频' })).toBeNull();
+
+        await exportVideo();
+
+        expect(native.process).toHaveBeenCalledTimes(1);
         expect(screen.getByRole('button', { name: '设为番茄钟结束视频' })).toHaveProperty(
             'disabled',
             false,
         );
     });
 
-    it('blocks Pomodoro selection when the compatible preview cannot play', async () => {
-        await loadVideo();
-        await act(async () => {
-            fireEvent.click(screen.getByRole('button', { name: '保存透明视频' }));
-        });
-
-        fireEvent.error(await screen.findByLabelText('透明成品视频预览'));
-
-        expect((await screen.findByRole('alert')).textContent).toContain(
-            '透明成品已保存，但当前系统无法播放兼容预览',
-        );
-        expect(screen.getByRole('button', { name: '设为番茄钟结束视频' })).toHaveProperty(
-            'disabled',
-            true,
-        );
-    });
-
-    it('keeps the saved file but blocks Pomodoro selection when result preparation fails', async () => {
+    it('keeps the generated file exportable when result preview preparation fails', async () => {
         native.prepareResultPreview.mockRejectedValue(new Error('HEVC Alpha 转换失败'));
         await loadVideo();
 
-        fireEvent.click(screen.getByRole('button', { name: '保存透明视频' }));
+        await generateVideo();
 
-        expect(await screen.findByText('cat-transparent.webm')).toBeTruthy();
         expect((await screen.findByRole('alert')).textContent).toContain(
-            '透明视频已保存，但无法准备可播放预览：HEVC Alpha 转换失败',
+            '透明视频已生成，但无法准备可播放预览：HEVC Alpha 转换失败',
         );
         expect(screen.queryByLabelText('透明成品视频预览')).toBeNull();
+
+        await exportVideo();
+
+        expect(native.process).toHaveBeenCalledTimes(1);
         expect(screen.getByRole('button', { name: '设为番茄钟结束视频' })).toHaveProperty(
             'disabled',
-            true,
+            false,
         );
     });
 
@@ -358,7 +429,9 @@ describe('VideoEditorPanel', () => {
         fireEvent.pointerMove(stage, { pointerId: 8, clientX: 200, clientY: 100 });
         fireEvent.pointerUp(stage, { pointerId: 8, clientX: 200, clientY: 100 });
 
-        expect(screen.getByText('0 笔')).toBeTruthy();
+        expect(screen.queryByText('0 笔')).toBeNull();
+        expect(screen.queryByLabelText('裁剪宽度')).toBeNull();
+        expect(screen.queryByLabelText('背景清除阈值')).toBeNull();
         expect(stage.className).toContain('tool-preview');
     });
 
@@ -370,7 +443,7 @@ describe('VideoEditorPanel', () => {
         await loadVideo();
 
         expect(screen.getByText('未找到 BackgroundRemover，请先安装运行环境')).toBeTruthy();
-        expect(screen.getByRole('button', { name: '保存透明视频' })).toHaveProperty('disabled', true);
+        expect(screen.getByRole('button', { name: '生成透明视频' })).toHaveProperty('disabled', true);
     });
 
     it('leaves the checking state when the native runtime probe never answers', async () => {
@@ -427,7 +500,7 @@ describe('VideoEditorPanel', () => {
         await loadVideo();
 
         await act(async () => {
-            fireEvent.click(screen.getByRole('button', { name: '保存透明视频' }));
+            fireEvent.click(screen.getByRole('button', { name: '生成透明视频' }));
         });
 
         expect((await screen.findByRole('alert')).textContent).toContain('BackgroundRemover 执行失败');
@@ -444,11 +517,14 @@ describe('VideoEditorPanel', () => {
         native.process.mockReturnValue(new Promise((resolve) => { finish = resolve; }));
         await loadVideo();
 
-        fireEvent.click(screen.getByRole('button', { name: '保存透明视频' }));
+        fireEvent.click(screen.getByRole('button', { name: '生成透明视频' }));
         await waitFor(() => expect(native.process).toHaveBeenCalledTimes(1));
         const jobId = native.process.mock.calls[0][0].jobId as string;
 
         expect(screen.getByLabelText('裁剪宽度')).toHaveProperty('disabled', true);
+        expect(screen.queryByLabelText('背景清除阈值')).toBeNull();
+        fireEvent.click(screen.getByRole('button', { name: '剔除画笔' }));
+        expect(screen.queryByLabelText('裁剪宽度')).toBeNull();
         expect(screen.getByLabelText('背景清除阈值')).toHaveProperty('disabled', true);
         expect(screen.getByLabelText('画笔大小')).toHaveProperty('disabled', true);
 
@@ -462,7 +538,9 @@ describe('VideoEditorPanel', () => {
         expect(screen.getByLabelText('视频处理进度')).toHaveProperty('value', 40);
 
         await act(async () => {
-            finish?.({ outputPath: '/Users/xpy/Videos/cat-transparent.webm' });
+            finish?.({
+                outputPath: '/Users/xpy/Library/Caches/app/video-editor/generated/job-output.webm',
+            });
         });
     });
 

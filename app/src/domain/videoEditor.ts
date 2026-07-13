@@ -49,6 +49,7 @@ export type VideoEditorAction =
     | { readonly type: 'setCrop'; readonly crop: VideoCrop }
     | { readonly type: 'setStartSeconds'; readonly value: number }
     | { readonly type: 'setEndSeconds'; readonly value: number }
+    | { readonly type: 'restoreOriginal' }
     | { readonly type: 'setThreshold'; readonly value: number }
     | { readonly type: 'setBrushRadius'; readonly value: number }
     | { readonly type: 'beginStroke'; readonly point: BrushPoint }
@@ -117,6 +118,17 @@ export function videoEditorReducer(
                 ...state,
                 startSeconds: roundSeconds(Math.min(state.startSeconds, endSeconds - MIN_TRIM_SECONDS)),
                 endSeconds,
+            };
+        }
+        case 'restoreOriginal': {
+            if (!state.probe) return state;
+            const original = createVideoEditorDraft(state.sourcePath, state.probe);
+            return {
+                ...state,
+                crop: original.crop,
+                startSeconds: original.startSeconds,
+                endSeconds: original.endSeconds,
+                strokes: sameCrop(state.crop, original.crop) ? state.strokes : [],
             };
         }
         case 'setThreshold':

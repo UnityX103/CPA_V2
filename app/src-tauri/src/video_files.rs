@@ -36,6 +36,10 @@ pub(crate) fn allow_video_asset_file<R: Runtime>(
         .map_err(|error| format!("无法授权视频文件用于应用内预览：{error}"))
 }
 
+pub(crate) fn atomic_replace_file(source: &Path, destination: &Path) -> std::io::Result<()> {
+    platform::atomic_replace_file(source, destination)
+}
+
 pub(crate) fn validate_webm_path(path: &Path) -> CustomVideoValidation {
     if path.is_relative() {
         return invalid("视频路径必须是绝对路径");

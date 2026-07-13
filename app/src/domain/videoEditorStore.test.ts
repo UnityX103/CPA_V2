@@ -4,13 +4,17 @@ import {
     type VideoEditorDependencies,
 } from './videoEditorStore';
 
+const GENERATED_PATH = '/tmp/cpa-video-editor/generated/job-1/result.webm';
+const EXPORTED_PATH = '/Users/xpy/Videos/cat-transparent.webm';
+
 function dependencies(
     overrides: Partial<VideoEditorDependencies> = {},
 ): VideoEditorDependencies {
     return {
         listenProgress: vi.fn().mockResolvedValue(() => {}),
         pickInput: vi.fn().mockResolvedValue('/Users/xpy/Videos/cat.mp4'),
-        pickOutput: vi.fn().mockResolvedValue('/Users/xpy/Videos/cat-transparent.webm'),
+        prepareTempOutput: vi.fn().mockResolvedValue(GENERATED_PATH),
+        exportGenerated: vi.fn().mockResolvedValue(EXPORTED_PATH),
         previewSrc: vi.fn((path: string) => `asset://localhost${path}`),
         probe: vi.fn().mockResolvedValue({
             width: 854,
@@ -18,9 +22,7 @@ function dependencies(
             durationSeconds: 3.5,
             frameRate: 24,
         }),
-        process: vi.fn().mockResolvedValue({
-            outputPath: '/Users/xpy/Videos/cat-transparent.webm',
-        }),
+        process: vi.fn(async (request) => ({ outputPath: request.outputPath })),
         prepareResultPreview: vi.fn(async (path: string) => (
             `asset://playable${path.replace(/\.webm$/i, '.mov')}`
         )),
@@ -39,7 +41,7 @@ function dependencies(
     };
 }
 
-async function saveEditedVideo(store: ReturnType<typeof createVideoEditorStore>): Promise<void> {
+async function generateEditedVideo(store: ReturnType<typeof createVideoEditorStore>): Promise<void> {
     await store.getState().refreshRuntime();
     await store.getState().chooseVideo();
     store.getState().setCrop({ x: 0, y: 0, width: 400, height: 480 });
@@ -47,21 +49,63 @@ async function saveEditedVideo(store: ReturnType<typeof createVideoEditorStore>)
     store.getState().setThreshold(64);
     store.getState().beginStroke({ x: 0.25, y: 0.25 });
     store.getState().extendStroke({ x: 0.5, y: 0.5 });
-    await store.getState().saveVideo();
+    await store.getState().generateVideo();
     store.getState().markResultPreviewReady();
 }
 
 describe('video editor store workflow', () => {
-    it('owns import, edit and transparent-video save state', async () => {
+    it('generates a temporary preview before export and exports without reprocessing', async () => {
+        const prepareTempOutput = vi.fn().mockResolvedValue(
+            '/tmp/cpa-video-editor/generated/job-1/result.webm',
+        );
+        const exportGenerated = vi.fn().mockResolvedValue(
+            '/Users/xpy/Videos/cat-transparent.webm',
+        );
+        const deps = dependencies({
+            prepareTempOutput,
+            exportGenerated,
+            process: vi.fn(async (request) => ({ outputPath: request.outputPath })),
+        } as Partial<VideoEditorDependencies>);
+        const store = createVideoEditorStore(deps);
+        await store.getState().refreshRuntime();
+        await store.getState().chooseVideo();
+
+        await store.getState().generateVideo();
+
+        expect(prepareTempOutput).toHaveBeenCalledWith('job-1');
+        expect(deps.process).toHaveBeenCalledTimes(1);
+        expect(deps.process).toHaveBeenCalledWith(expect.objectContaining({
+            outputPath: '/tmp/cpa-video-editor/generated/job-1/result.webm',
+        }));
+        expect(deps.prepareResultPreview).toHaveBeenCalledWith(
+            '/tmp/cpa-video-editor/generated/job-1/result.webm',
+        );
+        expect(store.getState()).toMatchObject({
+            generatedPath: '/tmp/cpa-video-editor/generated/job-1/result.webm',
+            exportedPath: '',
+        });
+
+        await store.getState().exportVideo();
+
+        expect(exportGenerated).toHaveBeenCalledWith(
+            '/tmp/cpa-video-editor/generated/job-1/result.webm',
+            '/Users/xpy/Videos/cat.mp4',
+        );
+        expect(deps.process).toHaveBeenCalledTimes(1);
+        expect(deps.prepareResultPreview).toHaveBeenCalledTimes(1);
+        expect(store.getState().exportedPath).toBe('/Users/xpy/Videos/cat-transparent.webm');
+    });
+
+    it('owns import, edit and temporary transparent-video generation state', async () => {
         const deps = dependencies();
         const store = createVideoEditorStore(deps);
 
-        await saveEditedVideo(store);
+        await generateEditedVideo(store);
 
         expect(deps.process).toHaveBeenCalledWith({
             jobId: 'job-1',
             inputPath: '/Users/xpy/Videos/cat.mp4',
-            outputPath: '/Users/xpy/Videos/cat-transparent.webm',
+            outputPath: GENERATED_PATH,
             crop: { x: 0, y: 0, width: 400, height: 480 },
             startSeconds: 0,
             endSeconds: 2.5,
@@ -73,8 +117,9 @@ describe('video editor store workflow', () => {
         });
         expect(store.getState()).toMatchObject({
             previewSrc: 'asset://localhost/Users/xpy/Videos/cat.mp4',
-            savedPath: '/Users/xpy/Videos/cat-transparent.webm',
-            resultPreviewSrc: 'asset://playable/Users/xpy/Videos/cat-transparent.mov',
+            generatedPath: GENERATED_PATH,
+            exportedPath: '',
+            resultPreviewSrc: 'asset://playable/tmp/cpa-video-editor/generated/job-1/result.mov',
             isPreparingResultPreview: false,
             isProcessing: false,
             error: '',
@@ -84,70 +129,73 @@ describe('video editor store workflow', () => {
     it('clears a saved-result preview when importing a different source', async () => {
         const deps = dependencies();
         const store = createVideoEditorStore(deps);
-        await saveEditedVideo(store);
+        await generateEditedVideo(store);
         vi.mocked(deps.pickInput).mockResolvedValue('/Users/xpy/Videos/dog.mp4');
 
         await store.getState().chooseVideo();
 
         expect(store.getState().previewSrc).toBe('asset://localhost/Users/xpy/Videos/dog.mp4');
-        expect(store.getState().savedPath).toBe('');
+        expect(store.getState().generatedPath).toBe('');
+        expect(store.getState().exportedPath).toBe('');
         expect(store.getState().resultPreviewSrc).toBe('');
     });
 
     it('clears the previous result preview while a replacement render is running', async () => {
         const deps = dependencies();
         const store = createVideoEditorStore(deps);
-        await saveEditedVideo(store);
+        await generateEditedVideo(store);
         let finish!: (result: { outputPath: string }) => void;
-        vi.mocked(deps.pickOutput).mockResolvedValue('/Users/xpy/Videos/cat-v2.webm');
+        vi.mocked(deps.prepareTempOutput).mockResolvedValue('/tmp/cpa-video-editor/generated/job-2/result.webm');
         vi.mocked(deps.process).mockReturnValue(new Promise((resolve) => { finish = resolve; }));
 
-        const pending = store.getState().saveVideo();
+        const pending = store.getState().generateVideo();
         await vi.waitFor(() => expect(deps.process).toHaveBeenCalledTimes(2));
 
-        expect(store.getState().savedPath).toBe('');
+        expect(store.getState().generatedPath).toBe('');
         expect(store.getState().resultPreviewSrc).toBe('');
-        finish({ outputPath: '/Users/xpy/Videos/cat-v2.webm' });
+        finish({ outputPath: '/tmp/cpa-video-editor/generated/job-2/result.webm' });
         await pending;
         expect(store.getState().resultPreviewSrc).toBe(
-            'asset://playable/Users/xpy/Videos/cat-v2.mov',
+            'asset://playable/tmp/cpa-video-editor/generated/job-2/result.mov',
         );
     });
 
-    it('opens only one save workflow while the output picker is pending', async () => {
+    it('opens only one export workflow while the output picker is pending', async () => {
         let finishPick!: (path: string | null) => void;
         const deps = dependencies({
-            pickOutput: vi.fn(() => new Promise<string | null>((resolve) => {
+            exportGenerated: vi.fn(() => new Promise<string | null>((resolve) => {
                 finishPick = resolve;
             })),
         });
         const store = createVideoEditorStore(deps);
-        await store.getState().refreshRuntime();
-        await store.getState().chooseVideo();
+        await generateEditedVideo(store);
 
-        const first = store.getState().saveVideo();
+        const first = store.getState().exportVideo();
         await vi.waitFor(() => expect(store.getState().isChoosingOutput).toBe(true));
-        const second = store.getState().saveVideo();
+        const second = store.getState().exportVideo();
         store.getState().setThreshold(200);
 
-        expect(deps.pickOutput).toHaveBeenCalledTimes(1);
-        expect(store.getState().draft.threshold).toBe(24);
+        expect(deps.exportGenerated).toHaveBeenCalledTimes(1);
+        expect(store.getState().draft.threshold).toBe(64);
         finishPick(null);
         await Promise.all([first, second]);
         expect(store.getState().isChoosingOutput).toBe(false);
-        expect(deps.process).not.toHaveBeenCalled();
+        expect(deps.process).toHaveBeenCalledTimes(1);
+        expect(store.getState().generatedPath).toBe(GENERATED_PATH);
     });
 
     it('invalidates a saved result after an output-affecting edit', async () => {
         const deps = dependencies();
         const store = createVideoEditorStore(deps);
-        await saveEditedVideo(store);
+        await generateEditedVideo(store);
+        await store.getState().exportVideo();
         await store.getState().setAsPomodoroVideo();
 
         store.getState().setThreshold(96);
 
         expect(store.getState()).toMatchObject({
-            savedPath: '',
+            generatedPath: '',
+            exportedPath: '',
             resultPreviewSrc: '',
             appliedToPomodoro: false,
             error: '',
@@ -158,14 +206,14 @@ describe('video editor store workflow', () => {
 
     it('keeps a saved result when an edit does not change rendered output', async () => {
         const store = createVideoEditorStore(dependencies());
-        await saveEditedVideo(store);
+        await generateEditedVideo(store);
 
         store.getState().setThreshold(64);
         store.getState().setBrushRadius(0.1);
 
         expect(store.getState()).toMatchObject({
-            savedPath: '/Users/xpy/Videos/cat-transparent.webm',
-            resultPreviewSrc: 'asset://playable/Users/xpy/Videos/cat-transparent.mov',
+            generatedPath: GENERATED_PATH,
+            resultPreviewSrc: 'asset://playable/tmp/cpa-video-editor/generated/job-1/result.mov',
         });
     });
 
@@ -181,12 +229,12 @@ describe('video editor store workflow', () => {
         await store.getState().chooseVideo();
         const originalThreshold = store.getState().draft.threshold;
 
-        const pending = store.getState().saveVideo();
+        const pending = store.getState().generateVideo();
         await vi.waitFor(() => expect(store.getState().isProcessing).toBe(true));
         store.getState().setThreshold(200);
 
         expect(store.getState().draft.threshold).toBe(originalThreshold);
-        finish({ outputPath: '/Users/xpy/Videos/cat-transparent.webm' });
+        finish({ outputPath: GENERATED_PATH });
         await pending;
     });
 
@@ -199,7 +247,7 @@ describe('video editor store workflow', () => {
         }) => void;
         const deps = dependencies();
         const store = createVideoEditorStore(deps);
-        await saveEditedVideo(store);
+        await generateEditedVideo(store);
         vi.mocked(deps.pickInput).mockResolvedValue('/Users/xpy/Videos/dog.mp4');
         vi.mocked(deps.probe).mockImplementationOnce(() => new Promise((resolve) => {
             finishProbe = resolve;
@@ -207,7 +255,7 @@ describe('video editor store workflow', () => {
 
         const choosing = store.getState().chooseVideo();
         await vi.waitFor(() => expect(store.getState().isLoading).toBe(true));
-        await store.getState().saveVideo();
+        await store.getState().generateVideo();
         await store.getState().setAsPomodoroVideo();
         store.getState().setThreshold(200);
 
@@ -219,13 +267,14 @@ describe('video editor store workflow', () => {
         await choosing;
         expect(store.getState()).toMatchObject({
             isLoading: false,
-            savedPath: '',
+            generatedPath: '',
+            exportedPath: '',
             resultPreviewSrc: '',
         });
         expect(store.getState().draft.sourcePath).toBe('/Users/xpy/Videos/dog.mp4');
     });
 
-    it('blocks Pomodoro selection until the playable result preview is prepared', async () => {
+    it('blocks Pomodoro selection until the generated video has been exported', async () => {
         let finishPreview!: (src: string) => void;
         const deps = dependencies({
             prepareResultPreview: vi.fn(() => new Promise<string>((resolve) => {
@@ -236,10 +285,10 @@ describe('video editor store workflow', () => {
         await store.getState().refreshRuntime();
         await store.getState().chooseVideo();
 
-        const pending = store.getState().saveVideo();
+        const pending = store.getState().generateVideo();
         await vi.waitFor(() => expect(deps.prepareResultPreview).toHaveBeenCalledTimes(1));
 
-        expect(store.getState().savedPath).toBe('/Users/xpy/Videos/cat-transparent.webm');
+        expect(store.getState().generatedPath).toBe(GENERATED_PATH);
         expect(store.getState().isPreparingResultPreview).toBe(true);
         expect(store.getState().resultPreviewSrc).toBe('');
         await store.getState().setAsPomodoroVideo();
@@ -254,12 +303,12 @@ describe('video editor store workflow', () => {
         await store.getState().setAsPomodoroVideo();
         expect(deps.applyPomodoroVideo).not.toHaveBeenCalled();
 
-        store.getState().markResultPreviewReady();
+        await store.getState().exportVideo();
         await store.getState().setAsPomodoroVideo();
         expect(deps.applyPomodoroVideo).toHaveBeenCalledTimes(1);
     });
 
-    it('keeps the saved path but reports a playable-preview preparation failure', async () => {
+    it('keeps the generated path exportable when playable-preview preparation fails', async () => {
         const deps = dependencies({
             prepareResultPreview: vi.fn().mockRejectedValue(
                 new Error('HEVC Alpha 转换失败'),
@@ -267,23 +316,30 @@ describe('video editor store workflow', () => {
         });
         const store = createVideoEditorStore(deps);
 
-        await saveEditedVideo(store);
+        await generateEditedVideo(store);
 
-        expect(store.getState().savedPath).toBe('/Users/xpy/Videos/cat-transparent.webm');
+        expect(store.getState().generatedPath).toBe(GENERATED_PATH);
         expect(store.getState().resultPreviewSrc).toBe('');
         expect(store.getState().isPreparingResultPreview).toBe(false);
         expect(store.getState().error).toBe(
-            '透明视频已保存，但无法准备可播放预览：HEVC Alpha 转换失败',
+            '透明视频已生成，但无法准备可播放预览：HEVC Alpha 转换失败',
         );
+        await store.getState().exportVideo();
+        expect(store.getState().exportedPath).toBe(EXPORTED_PATH);
         await store.getState().setAsPomodoroVideo();
-        expect(deps.applyPomodoroVideo).not.toHaveBeenCalled();
+        expect(deps.applyPomodoroVideo).toHaveBeenCalledWith('playVideo', {
+            sourceKind: 'custom',
+            builtinVideoId: 'qianqian',
+            customVideoPath: EXPORTED_PATH,
+        });
     });
 
     it('shows success only after the authoritative Pomodoro setting is confirmed', async () => {
         let confirm!: () => void;
         const applyPomodoroVideo = vi.fn(() => new Promise<void>((resolve) => { confirm = resolve; }));
         const store = createVideoEditorStore(dependencies({ applyPomodoroVideo }));
-        await saveEditedVideo(store);
+        await generateEditedVideo(store);
+        await store.getState().exportVideo();
 
         const pending = store.getState().setAsPomodoroVideo();
 
@@ -305,7 +361,8 @@ describe('video editor store workflow', () => {
         const store = createVideoEditorStore(dependencies({
             applyPomodoroVideo: vi.fn().mockRejectedValue(new Error('主窗口保存失败')),
         }));
-        await saveEditedVideo(store);
+        await generateEditedVideo(store);
+        await store.getState().exportVideo();
 
         await store.getState().setAsPomodoroVideo();
 

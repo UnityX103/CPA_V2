@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { VideoProcessRequest } from './videoEditor';
 import {
+    exportVideoEditorGeneratedOutput,
     listenVideoEditorProgress,
-    pickEditedVideoOutputPath,
     pickVideoForEditing,
+    prepareVideoEditorTempOutputPath,
     prepareVideoEditorResultPreview,
     probeVideoForEditing,
     processBackgroundRemovedVideo,
@@ -17,14 +18,12 @@ const {
     invokeMock,
     listenMock,
     openMock,
-    saveMock,
 } = vi.hoisted(() => ({
     convertFileSrcMock: vi.fn(),
     customVideoSrcMock: vi.fn(),
     invokeMock: vi.fn(),
     listenMock: vi.fn(),
     openMock: vi.fn(),
-    saveMock: vi.fn(),
 }));
 
 vi.mock('@tauri-apps/api/core', () => ({
@@ -38,7 +37,6 @@ vi.mock('./videoFiles', () => ({ customVideoSrc: customVideoSrcMock }));
 
 vi.mock('@tauri-apps/plugin-dialog', () => ({
     open: openMock,
-    save: saveMock,
 }));
 
 describe('video editor native adapter', () => {
@@ -48,7 +46,6 @@ describe('video editor native adapter', () => {
         invokeMock.mockReset();
         listenMock.mockReset();
         openMock.mockReset();
-        saveMock.mockReset();
     });
 
     it('picks a common video format for editing', async () => {
@@ -99,16 +96,28 @@ describe('video editor native adapter', () => {
         expect(convertFileSrcMock).not.toHaveBeenCalled();
     });
 
-    it('offers a WebM save path derived from the input filename', async () => {
+    it('asks native code for a unique managed temporary output path', async () => {
+        invokeMock.mockResolvedValue('/tmp/cpa-video-editor/generated/job-1/result.webm');
+
+        await expect(prepareVideoEditorTempOutputPath('job-1')).resolves.toBe(
+            '/tmp/cpa-video-editor/generated/job-1/result.webm',
+        );
+        expect(invokeMock).toHaveBeenCalledWith('prepare_video_editor_temp_output_path', {
+            jobId: 'job-1',
+        });
+    });
+
+    it('exports the generated file without submitting another processing request', async () => {
         invokeMock.mockResolvedValue('/Users/xpy/Videos/cat-transparent.webm');
 
-        await expect(pickEditedVideoOutputPath('/Users/xpy/Videos/cat.mp4')).resolves.toBe(
-            '/Users/xpy/Videos/cat-transparent.webm',
-        );
-        expect(invokeMock).toHaveBeenCalledWith('pick_edited_video_output_path', {
+        await expect(exportVideoEditorGeneratedOutput(
+            '/tmp/cpa-video-editor/generated/job-1/result.webm',
+            '/Users/xpy/Videos/cat.mp4',
+        )).resolves.toBe('/Users/xpy/Videos/cat-transparent.webm');
+        expect(invokeMock).toHaveBeenCalledWith('export_video_editor_generated_output', {
+            generatedPath: '/tmp/cpa-video-editor/generated/job-1/result.webm',
             inputPath: '/Users/xpy/Videos/cat.mp4',
         });
-        expect(saveMock).not.toHaveBeenCalled();
     });
 
     it('submits the complete edit request and returns the saved path', async () => {
