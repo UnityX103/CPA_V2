@@ -1,15 +1,15 @@
 use serde::Serialize;
-#[cfg(not(target_os = "windows"))]
-use std::collections::hash_map::DefaultHasher;
-#[cfg(not(target_os = "windows"))]
-use std::fs;
-#[cfg(not(target_os = "windows"))]
-use std::hash::{Hash, Hasher};
+use std::fs::File;
 use std::path::Path;
-#[cfg(not(target_os = "windows"))]
-use std::process::Command;
-#[cfg(not(target_os = "windows"))]
-use tauri::Manager;
+use tauri::{Manager, Runtime};
+
+#[cfg(target_os = "macos")]
+#[path = "video_files/macos.rs"]
+mod platform;
+
+#[cfg(target_os = "windows")]
+#[path = "video_files/windows.rs"]
+mod platform;
 
 #[derive(Debug, Serialize, PartialEq, Eq)]
 pub struct CustomVideoValidation {
@@ -22,6 +22,18 @@ fn invalid(message: &str) -> CustomVideoValidation {
         ok: false,
         message: Some(message.to_string()),
     }
+}
+
+pub(crate) fn allow_video_asset_file<R: Runtime>(
+    app: &tauri::AppHandle<R>,
+    path: &Path,
+) -> Result<(), String> {
+    if !path.is_absolute() {
+        return Err("视频资源路径必须是绝对路径".to_string());
+    }
+    app.asset_protocol_scope()
+        .allow_file(path)
+        .map_err(|error| format!("无法授权视频文件用于应用内预览：{error}"))
 }
 
 pub(crate) fn validate_webm_path(path: &Path) -> CustomVideoValidation {
@@ -41,6 +53,9 @@ pub(crate) fn validate_webm_path(path: &Path) -> CustomVideoValidation {
     if !path.is_file() {
         return invalid("视频文件不存在，请重新选择");
     }
+    if File::open(path).is_err() {
+        return invalid("视频文件无法读取，请重新选择");
+    }
 
     CustomVideoValidation {
         ok: true,
@@ -54,7 +69,18 @@ pub fn validate_custom_video_path(path: String) -> CustomVideoValidation {
 }
 
 #[tauri::command]
-pub fn prepare_custom_alpha_video_path(
+pub async fn prepare_custom_alpha_video_path(
+    app: tauri::AppHandle,
+    path: String,
+) -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        prepare_custom_alpha_video_path_blocking(app, path)
+    })
+    .await
+    .map_err(|error| format!("透明视频预览任务异常结束：{error}"))?
+}
+
+fn prepare_custom_alpha_video_path_blocking(
     app: tauri::AppHandle,
     path: String,
 ) -> Result<String, String> {
@@ -66,146 +92,45 @@ pub fn prepare_custom_alpha_video_path(
             .unwrap_or_else(|| "自定义视频不可用".to_string()));
     }
 
-    #[cfg(target_os = "windows")]
-    {
-        let _ = app;
-        return Ok(source.to_string_lossy().into_owned());
-    }
+    let playable_path = platform::prepare_playable_path(&app, source)?;
 
-    #[cfg(not(target_os = "windows"))]
-    {
-        let cache_dir = app
-            .path()
-            .app_cache_dir()
-            .map_err(|e| format!("无法打开视频缓存目录：{e}"))?
-            .join("alpha-videos");
-        fs::create_dir_all(&cache_dir).map_err(|e| format!("无法创建视频缓存目录：{e}"))?;
-
-        let target = cache_dir.join(alpha_cache_filename(source));
-        if cached_alpha_video_is_fresh(source, &target) {
-            return Ok(target.to_string_lossy().into_owned());
-        }
-
-        let tmp = alpha_tmp_path(&target);
-        let _ = fs::remove_file(&tmp);
-        let status = run_ffmpeg_alpha_transcode(source, &tmp)?;
-
-        if !status.success() {
-            let _ = fs::remove_file(&tmp);
-            return Err("透明 WebM 转换失败，请确认视频包含可解码的 alpha 通道".to_string());
-        }
-
-        fs::rename(&tmp, &target).map_err(|e| format!("无法保存转换后的视频：{e}"))?;
-        Ok(target.to_string_lossy().into_owned())
-    }
-}
-
-#[cfg(not(target_os = "windows"))]
-fn run_ffmpeg_alpha_transcode(
-    source: &Path,
-    target: &Path,
-) -> Result<std::process::ExitStatus, String> {
-    let mut last_error = None;
-    for ffmpeg in [
-        "ffmpeg",
-        "/opt/homebrew/bin/ffmpeg",
-        "/usr/local/bin/ffmpeg",
-    ] {
-        match Command::new(ffmpeg)
-            .arg("-hide_banner")
-            .arg("-loglevel")
-            .arg("error")
-            .arg("-y")
-            .arg("-c:v")
-            .arg("libvpx")
-            .arg("-i")
-            .arg(source)
-            .arg("-an")
-            .arg("-vf")
-            .arg("format=bgra")
-            .arg("-c:v")
-            .arg("hevc_videotoolbox")
-            .arg("-allow_sw")
-            .arg("1")
-            .arg("-alpha_quality")
-            .arg("1")
-            .arg("-tag:v")
-            .arg("hvc1")
-            .arg(target)
-            .status()
-        {
-            Ok(status) => return Ok(status),
-            Err(error) => last_error = Some(error.to_string()),
-        }
-    }
-
-    Err(format!(
-        "无法转换透明 WebM：需要可用的 ffmpeg（{}）",
-        last_error.unwrap_or_else(|| "未找到 ffmpeg".to_string())
-    ))
-}
-
-#[cfg(not(target_os = "windows"))]
-fn alpha_cache_filename(source: &Path) -> String {
-    let mut hasher = DefaultHasher::new();
-    source.to_string_lossy().hash(&mut hasher);
-    let hash = hasher.finish();
-    let stem = source
-        .file_stem()
-        .and_then(|stem| stem.to_str())
-        .map(sanitize_cache_stem)
-        .filter(|stem| !stem.is_empty())
-        .unwrap_or_else(|| "custom-video".to_string());
-    format!("{stem}-{hash:016x}.mov")
-}
-
-#[cfg(not(target_os = "windows"))]
-fn alpha_tmp_path(target: &Path) -> std::path::PathBuf {
-    let filename = target
-        .file_stem()
-        .and_then(|stem| stem.to_str())
-        .filter(|stem| !stem.is_empty())
-        .unwrap_or("custom-video");
-    target.with_file_name(format!(".{filename}.tmp.mov"))
-}
-
-#[cfg(not(target_os = "windows"))]
-fn sanitize_cache_stem(stem: &str) -> String {
-    stem.chars()
-        .map(|ch| {
-            if ch.is_ascii_alphanumeric() || ch == '-' || ch == '_' {
-                ch
-            } else {
-                '-'
-            }
-        })
-        .collect()
-}
-
-#[cfg(not(target_os = "windows"))]
-fn cached_alpha_video_is_fresh(source: &Path, target: &Path) -> bool {
-    let Ok(target_meta) = fs::metadata(target) else {
-        return false;
-    };
-    if !target_meta.is_file() || target_meta.len() == 0 {
-        return false;
-    }
-    let Ok(source_modified) = fs::metadata(source).and_then(|meta| meta.modified()) else {
-        return false;
-    };
-    let Ok(target_modified) = target_meta.modified() else {
-        return false;
-    };
-    target_modified >= source_modified
+    allow_video_asset_file(&app, &playable_path)?;
+    Ok(playable_path.to_string_lossy().into_owned())
 }
 
 #[cfg(test)]
 mod tests {
-    #[cfg(not(target_os = "windows"))]
-    use super::{alpha_cache_filename, alpha_tmp_path, sanitize_cache_stem};
-    use super::{validate_webm_path, CustomVideoValidation};
+    #[cfg(target_os = "macos")]
+    use super::platform::{
+        alpha_cache_filename, alpha_tmp_path, ffmpeg_alpha_transcode_arguments,
+        run_ffmpeg_alpha_transcode_with_program, sanitize_cache_stem,
+    };
+    use super::{allow_video_asset_file, validate_webm_path, CustomVideoValidation};
     use std::fs;
     use std::path::Path;
+    use tauri::Manager;
+
+    #[test]
+    fn video_asset_scope_allows_only_the_requested_file() {
+        let dir =
+            std::env::temp_dir().join(format!("cpa-video-asset-scope-test-{}", std::process::id()));
+        fs::create_dir_all(&dir).expect("create temp dir");
+        let requested = dir.join("requested.webm");
+        let sibling = dir.join("sibling.webm");
+        fs::write(&sibling, b"sibling").expect("write sibling video");
+
+        let app = tauri::test::mock_app();
+        allow_video_asset_file(app.handle(), &requested).expect("allow requested video");
+        fs::write(&requested, b"requested").expect("write requested video");
+        let scope = app.asset_protocol_scope();
+
+        assert!(scope.is_allowed(&requested));
+        assert!(!scope.is_allowed(&sibling));
+
+        let _ = fs::remove_file(requested);
+        let _ = fs::remove_file(sibling);
+        let _ = fs::remove_dir(dir);
+    }
 
     #[test]
     fn accepts_existing_absolute_lowercase_webm_path() {
@@ -265,6 +190,37 @@ mod tests {
         );
     }
 
+    #[cfg(unix)]
+    #[test]
+    fn rejects_an_unreadable_webm_path() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let dir = std::env::temp_dir().join(format!(
+            "cpa-video-files-unreadable-test-{}",
+            std::process::id()
+        ));
+        fs::create_dir_all(&dir).expect("create temp dir");
+        let path = dir.join("completion.webm");
+        fs::write(&path, b"webm").expect("write temp webm");
+        let mut permissions = fs::metadata(&path).unwrap().permissions();
+        permissions.set_mode(0o000);
+        fs::set_permissions(&path, permissions).unwrap();
+
+        assert_eq!(
+            validate_webm_path(&path),
+            CustomVideoValidation {
+                ok: false,
+                message: Some("视频文件无法读取，请重新选择".to_string())
+            }
+        );
+
+        let mut permissions = fs::metadata(&path).unwrap().permissions();
+        permissions.set_mode(0o600);
+        let _ = fs::set_permissions(&path, permissions);
+        let _ = fs::remove_file(path);
+        let _ = fs::remove_dir(dir);
+    }
+
     #[test]
     fn rejects_non_webm_extension() {
         let path =
@@ -290,24 +246,25 @@ mod tests {
         );
     }
 
-    #[cfg(not(target_os = "windows"))]
+    #[cfg(target_os = "macos")]
     #[test]
     fn alpha_cache_filename_keeps_extension_and_hashes_absolute_path() {
         let a = alpha_cache_filename(Path::new("/Users/xpy/Videos/focus end.webm"));
         let b = alpha_cache_filename(Path::new("/Users/xpy/Other/focus end.webm"));
 
         assert!(a.starts_with("focus-end-"));
+        assert!(a.contains("-v2-"));
         assert!(a.ends_with(".mov"));
         assert_ne!(a, b);
     }
 
-    #[cfg(not(target_os = "windows"))]
+    #[cfg(target_os = "macos")]
     #[test]
     fn sanitize_cache_stem_replaces_path_unfriendly_characters() {
         assert_eq!(sanitize_cache_stem("focus end 千千"), "focus-end---");
     }
 
-    #[cfg(not(target_os = "windows"))]
+    #[cfg(target_os = "macos")]
     #[test]
     fn alpha_transcode_temp_path_keeps_a_mov_extension_for_ffmpeg_muxer_detection() {
         let target = Path::new("/tmp/cpa-alpha/focus-end.mov");
@@ -318,5 +275,40 @@ mod tests {
             temp.extension().and_then(|value| value.to_str()),
             Some("mov")
         );
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn alpha_transcode_explicitly_selects_the_mov_muxer() {
+        let arguments = ffmpeg_alpha_transcode_arguments(
+            Path::new("/tmp/source.webm"),
+            Path::new("/tmp/output.partial.mov"),
+        );
+        let arguments: Vec<String> = arguments
+            .into_iter()
+            .map(|argument| argument.to_string_lossy().into_owned())
+            .collect();
+
+        assert!(arguments.windows(2).any(|pair| pair == ["-f", "mov"]));
+        assert!(arguments
+            .windows(2)
+            .any(|pair| pair == ["-movflags", "+faststart"]));
+        assert_eq!(
+            arguments.last().map(String::as_str),
+            Some("/tmp/output.partial.mov")
+        );
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn alpha_transcode_rejects_a_nonzero_ffmpeg_exit_status() {
+        let error = run_ffmpeg_alpha_transcode_with_program(
+            Path::new("/usr/bin/false"),
+            Path::new("/tmp/source.webm"),
+            Path::new("/tmp/output.partial.mov"),
+        )
+        .unwrap_err();
+
+        assert!(error.starts_with("透明 WebM 转换失败"));
     }
 }

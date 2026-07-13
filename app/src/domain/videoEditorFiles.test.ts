@@ -4,14 +4,23 @@ import {
     listenVideoEditorProgress,
     pickEditedVideoOutputPath,
     pickVideoForEditing,
+    prepareVideoEditorResultPreview,
     probeVideoForEditing,
     processBackgroundRemovedVideo,
     videoEditorRuntimeStatus,
     videoEditorPreviewSrc,
 } from './videoEditorFiles';
 
-const { convertFileSrcMock, invokeMock, listenMock, openMock, saveMock } = vi.hoisted(() => ({
+const {
+    convertFileSrcMock,
+    customVideoSrcMock,
+    invokeMock,
+    listenMock,
+    openMock,
+    saveMock,
+} = vi.hoisted(() => ({
     convertFileSrcMock: vi.fn(),
+    customVideoSrcMock: vi.fn(),
     invokeMock: vi.fn(),
     listenMock: vi.fn(),
     openMock: vi.fn(),
@@ -25,6 +34,8 @@ vi.mock('@tauri-apps/api/core', () => ({
 
 vi.mock('@tauri-apps/api/event', () => ({ listen: listenMock }));
 
+vi.mock('./videoFiles', () => ({ customVideoSrc: customVideoSrcMock }));
+
 vi.mock('@tauri-apps/plugin-dialog', () => ({
     open: openMock,
     save: saveMock,
@@ -33,6 +44,7 @@ vi.mock('@tauri-apps/plugin-dialog', () => ({
 describe('video editor native adapter', () => {
     beforeEach(() => {
         convertFileSrcMock.mockReset();
+        customVideoSrcMock.mockReset();
         invokeMock.mockReset();
         listenMock.mockReset();
         openMock.mockReset();
@@ -71,16 +83,32 @@ describe('video editor native adapter', () => {
         );
     });
 
+    it('prepares edited alpha output through the shared playable custom-video path', async () => {
+        customVideoSrcMock.mockResolvedValue(
+            'asset://localhost/Users/xpy/Library/Caches/app/alpha-videos/cat.mov',
+        );
+
+        await expect(
+            prepareVideoEditorResultPreview('/Users/xpy/Videos/cat-transparent.webm'),
+        ).resolves.toBe(
+            'asset://localhost/Users/xpy/Library/Caches/app/alpha-videos/cat.mov',
+        );
+        expect(customVideoSrcMock).toHaveBeenCalledWith(
+            '/Users/xpy/Videos/cat-transparent.webm',
+        );
+        expect(convertFileSrcMock).not.toHaveBeenCalled();
+    });
+
     it('offers a WebM save path derived from the input filename', async () => {
-        saveMock.mockResolvedValue('/Users/xpy/Videos/cat-transparent.webm');
+        invokeMock.mockResolvedValue('/Users/xpy/Videos/cat-transparent.webm');
 
         await expect(pickEditedVideoOutputPath('/Users/xpy/Videos/cat.mp4')).resolves.toBe(
             '/Users/xpy/Videos/cat-transparent.webm',
         );
-        expect(saveMock).toHaveBeenCalledWith({
-            defaultPath: 'cat-transparent.webm',
-            filters: [{ name: '透明 WebM 视频', extensions: ['webm'] }],
+        expect(invokeMock).toHaveBeenCalledWith('pick_edited_video_output_path', {
+            inputPath: '/Users/xpy/Videos/cat.mp4',
         });
+        expect(saveMock).not.toHaveBeenCalled();
     });
 
     it('submits the complete edit request and returns the saved path', async () => {

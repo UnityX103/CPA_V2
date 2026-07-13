@@ -12,10 +12,11 @@
 #[cfg(target_os = "macos")]
 #[test]
 fn focus_restorer_fires_after_main_window_move() {
-    use std::io::Read;
+    use std::io::{BufRead, BufReader};
     use std::process::{Command, Stdio};
+    use std::sync::mpsc;
     use std::thread;
-    use std::time::Duration;
+    use std::time::{Duration, Instant};
 
     let mut child = Command::new(env!("CARGO_BIN_EXE_app"))
         .env("CPA_E2E_TRIGGER_FOCUS_RESTORE", "1")
@@ -23,17 +24,36 @@ fn focus_restorer_fires_after_main_window_move() {
         .spawn()
         .expect("spawn target/debug/app");
 
-    let mut stderr = child.stderr.take().expect("stderr piped");
+    let stderr = child.stderr.take().expect("stderr piped");
+    let (line_tx, line_rx) = mpsc::channel();
+    let stderr_reader = thread::spawn(move || {
+        let mut stderr_buf = String::new();
+        for line in BufReader::new(stderr).lines() {
+            let Ok(line) = line else { break };
+            stderr_buf.push_str(&line);
+            stderr_buf.push('\n');
+            let _ = line_tx.send(line);
+        }
+        stderr_buf
+    });
 
-    // Budget: 1.5s setup + 0.2 + 0.5 ≈ 2.2s; doubled for variance.
-    thread::sleep(Duration::from_secs(5));
+    // Rosetta may need several extra seconds to start the x64 debug app. Wait for
+    // the actual completion marker instead of killing the child after a fixed sleep.
+    let deadline = Instant::now() + Duration::from_secs(20);
+    while Instant::now() < deadline {
+        let remaining = deadline.saturating_duration_since(Instant::now());
+        match line_rx.recv_timeout(remaining.min(Duration::from_millis(250))) {
+            Ok(line) if line.contains("[e2e focus] done") => break,
+            Ok(_) | Err(mpsc::RecvTimeoutError::Timeout) => {}
+            Err(mpsc::RecvTimeoutError::Disconnected) => break,
+        }
+    }
 
     // Cleanup before assertions so a failing assertion does not leak a zombie.
     let _ = child.kill();
     let _ = child.wait();
 
-    let mut stderr_buf = String::new();
-    let _ = stderr.read_to_string(&mut stderr_buf);
+    let stderr_buf = stderr_reader.join().expect("stderr reader panicked");
 
     // Sanity: trigger桩 actually ran end-to-end
     assert!(

@@ -729,6 +729,7 @@ pub fn run() {
             accessibility::key_counter_health,
             accessibility::restart_key_counter_listener,
             accessibility::request_accessibility_permission,
+            video_editor::pick_edited_video_output_path,
             video_editor::probe_video_for_editing,
             video_editor::video_editor_runtime_status,
             video_editor::process_background_removed_video,

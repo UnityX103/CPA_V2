@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "supportedTargets": [
+    "macos-x86_64",
+    "macos-arm64",
+    "windows-x86_64"
+  ],
+  "backgroundRemover": {
+    "repository": "https://github.com/nadermx/backgroundremover.git",
+    "commit": "fa480627829759b902f8c233388d7aa67ab38099",
+    "license": "MIT",
+    "patches": [
+      {
+        "id": "force-cpu-device-env-v1",
+        "path": "scripts/patches/backgroundremover-force-cpu.patch",
+        "sha256": "24d6dbde7474f667896d335979fe18890c92a85793c2dc9e4c72e5d08ed564f1"
+      }
+    ],
+    "packagingRule": "The release lock and runtime manifest must repeat the exact patch id/path/SHA-256 set below, plus the bundled Python and PyTorch versions and the tool used to create a relocatable worker for the release target architecture. A copied virtualenv entry script is not a self-contained worker."
+  },
+  "u2netp": {
+    "source": "https://raw.githubusercontent.com/nadermx/backgroundremover/fa480627829759b902f8c233388d7aa67ab38099/models/u2netp.pth",
+    "sha256": "e7567cde013fb64813973ce6e1ecc25a80c05c3ca7adbc5a54f3c3d90991b854",
+    "size": 4683258
+  },
+  "ffmpeg": {
+    "requiredEncoders": [
+      "libvpx"
+    ],
+    "macosRequiredEncoders": [
+      "hevc_videotoolbox"
+    ],
+    "provenanceRule": "Every release lock must name the FFmpeg version, an immutable binary source matching the release target architecture, and its SHA-256. Mutable latest/download URLs are not accepted as reproducible provenance.",
+    "licenseRule": "The license pack must contain the license and configure/build provenance for the exact FFmpeg binary. Builds containing --enable-nonfree are rejected because they cannot be redistributed. Whether an otherwise redistributable build is LGPL or GPL depends on its enabled libraries."
+  },
+  "licenses": {
+    "requiredFiles": [
+      "BackgroundRemover-LICENSE.txt",
+      "FFmpeg-LICENSE.txt",
+      "Python-LICENSE.txt",
+      "PyTorch-LICENSE.txt",
+      "TorchVision-LICENSE.txt",
+      "PyInstaller-COPYING.txt",
+      "U2NetP-NOTICE.txt",
+      "runtime-NOTICES.txt"
+    ]
+  }
+}

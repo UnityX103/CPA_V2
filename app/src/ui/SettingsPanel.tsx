@@ -18,6 +18,7 @@ import {
     DEFAULT_BUILTIN_POMODORO_VIDEO_ID,
 } from '../domain/pomodoroVideos';
 import { pickCustomWebmPath } from '../domain/videoFiles';
+import { fileNameFromPath } from '../domain/filePath';
 import { useNetworkStore } from '../domain/network';
 import {
     labelForInput,
@@ -261,7 +262,10 @@ function PomodoroTab({ onApplyStateChange }: {
             pomo.setAutoPinAfterFocus(autoPinAfterFocus);
         }
         if (endActionChanged) {
-            pomo.applyEndActionSettings(endActionMode, endActionVideo);
+            void Promise.resolve(pomo.applyEndActionSettings(endActionMode, endActionVideo))
+                .catch((error) => {
+                    console.warn('[settings] failed to apply Pomodoro end action', error);
+                });
         }
     }, [canApply, focusMin, breakMin, autoStartBreak, autoPinAfterFocus, endActionMode, endActionVideo, pomo]);
 
@@ -280,7 +284,7 @@ function PomodoroTab({ onApplyStateChange }: {
     const showCustomVideoRow = showVideoOptions && endActionVideo.sourceKind === 'custom';
 
     const customVideoName = endActionVideo.customVideoPath
-        ? pathBasename(endActionVideo.customVideoPath)
+        ? fileNameFromPath(endActionVideo.customVideoPath)
         : '未选择';
 
     const setVideoOption = (value: string) => {
@@ -411,10 +415,6 @@ function sameEndActionVideo(a: PomodoroEndActionVideo, b: PomodoroEndActionVideo
         a.builtinVideoId === b.builtinVideoId &&
         a.customVideoPath === b.customVideoPath
     );
-}
-
-function pathBasename(path: string): string {
-    return path.split(/[\\/]/).pop() || path;
 }
 
 /* ============================================================

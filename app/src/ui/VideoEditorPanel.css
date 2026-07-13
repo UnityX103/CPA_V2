@@ -1,3 +1,5 @@
+/* VideoEditorPanel ←→ PUI.pen Video Editor Settings Panel (Ynz0h). */
+
 .video-editor-scroll {
     padding-bottom: 8px;
 }
@@ -45,6 +47,10 @@
 }
 
 .video-editor-runtime {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
     padding: 7px 9px;
     border-radius: 9px;
     font-size: 11px;
@@ -62,6 +68,21 @@
     color: #9A3412;
     background: #FFF7ED;
     border: 1px solid #FED7AA;
+}
+
+.video-editor-runtime > span {
+    min-width: 0;
+}
+
+.video-editor-runtime-retry {
+    flex: 0 0 auto;
+    min-height: 24px;
+    padding: 0 8px;
+    border: 1px solid currentColor;
+    border-radius: 7px;
+    color: inherit;
+    font-size: 10px;
+    font-weight: 700;
 }
 
 .video-editor-meta {
@@ -92,14 +113,8 @@
     box-shadow: 0 1px 4px rgba(90, 62, 44, 0.10);
 }
 
-.video-editor-stage {
-    position: relative;
-    width: 100%;
-    min-height: 120px;
-    max-height: 280px;
-    overflow: hidden;
-    border-radius: 12px;
-    border: 1px solid var(--settings-stroke);
+.video-editor-stage,
+.video-editor-alpha-stage {
     background-color: #DEE2E6;
     background-image:
         linear-gradient(45deg, #BFC5CA 25%, transparent 25%),
@@ -108,6 +123,16 @@
         linear-gradient(-45deg, transparent 75%, #BFC5CA 75%);
     background-size: 20px 20px;
     background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+}
+
+.video-editor-stage {
+    position: relative;
+    width: 100%;
+    min-height: 120px;
+    max-height: 280px;
+    overflow: hidden;
+    border-radius: 12px;
+    border: 1px solid var(--settings-stroke);
     touch-action: none;
     cursor: crosshair;
 }
@@ -215,6 +240,47 @@
     min-height: 38px;
 }
 
+.video-editor-result-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.video-editor-result-preview-copy {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+.video-editor-result-preparing {
+    padding: 8px 10px;
+    border: 1px solid var(--input-stroke);
+    border-radius: 9px;
+    color: var(--text-secondary);
+    background: var(--settings-card-bg);
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.video-editor-alpha-stage {
+    width: 100%;
+    min-height: 120px;
+    max-height: 280px;
+    overflow: hidden;
+    border: 1px solid var(--settings-stroke);
+    border-radius: 12px;
+}
+
+.video-editor-alpha-stage video {
+    display: block;
+    width: 100%;
+    max-height: 280px;
+    object-fit: contain;
+}
+
 .video-editor-result strong {
     display: block;
     max-width: 170px;
@@ -258,6 +324,7 @@
 
 @media (max-width: 430px) {
     .video-editor-heading-row,
+    .video-editor-result-preview-copy,
     .video-editor-result {
         align-items: stretch;
         flex-direction: column;

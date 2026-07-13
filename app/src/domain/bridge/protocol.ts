@@ -10,6 +10,7 @@ import type { CloudAccountData } from '../cloudAccountData';
 export const EVT_STATE_REQUEST = 'app:state:request';
 export const EVT_STATE = 'app:state';
 export const EVT_DISPATCH = 'app:dispatch';
+export const EVT_DISPATCH_RESULT = 'app:dispatch:result';
 export const BRIDGE_VERSION = 1 as const;
 
 export interface BridgeSnapshot {
@@ -85,3 +86,17 @@ export type DispatchPayload =
     | { v: typeof BRIDGE_VERSION; store: 'appUpdate';  action: 'checkNow' | 'restartForUpdate'; args: [] }
     | { v: typeof BRIDGE_VERSION; store: 'checkin';    action: 'setPlanTemplate'; args: [CheckinPlanTemplate] }
     | { v: typeof BRIDGE_VERSION; store: 'checkin';    action: 'incrementItem'; args: [string, string] };
+
+export interface ConfirmedDispatchRequest {
+    requestId: string;
+    replyTo: string;
+    payload: DispatchPayload;
+}
+
+export interface DispatchResult {
+    requestId: string;
+    ok: boolean;
+    error?: string;
+}
+
+export type DispatchEventPayload = DispatchPayload | ConfirmedDispatchRequest;

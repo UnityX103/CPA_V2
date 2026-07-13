@@ -7,6 +7,10 @@ node_modules/
 dist/
 .next/
 app/tmp/
+# Prepared video-editor runtime payloads are large, platform-specific release
+# inputs. Keep only the tracked policy/README; stage one verified target payload
+# locally with app/scripts/prepare-video-runtime.mjs.
+app/src-tauri/video-runtime/*/
 
 # OS
 .DS_Store

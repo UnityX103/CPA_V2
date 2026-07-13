@@ -241,11 +241,11 @@ describe('createPomodoroStore — settings-window mode', () => {
         spy.mockRestore();
     });
 
-    it('applyEndActionSettings dispatches instead of mutating local state', () => {
-        const spy = vi.spyOn(dispatchMod, 'dispatch').mockResolvedValue();
+    it('applyEndActionSettings waits for authoritative confirmation instead of mutating local state', async () => {
+        const spy = vi.spyOn(dispatchMod, 'dispatchConfirmed').mockResolvedValue();
         const store = createPomodoroStore({ isSettingsWindow: true });
         const before = store.getState().endActionMode;
-        store.getState().applyEndActionSettings('topWindow', {
+        await store.getState().applyEndActionSettings('topWindow', {
             sourceKind: 'custom',
             builtinVideoId: DEFAULT_BUILTIN_POMODORO_VIDEO_ID,
             customVideoPath: '/tmp/custom.mp4',
@@ -265,7 +265,21 @@ describe('createPomodoroStore — settings-window mode', () => {
                 builtinVideoId: DEFAULT_BUILTIN_POMODORO_VIDEO_ID,
                 customVideoPath: '/tmp/custom.mp4',
             }],
-        }));
+        }), { replyTo: 'settings' });
+        spy.mockRestore();
+    });
+
+    it('applyEndActionSettings exposes a failed authoritative confirmation', async () => {
+        const spy = vi.spyOn(dispatchMod, 'dispatchConfirmed')
+            .mockRejectedValue(new Error('主窗口保存失败'));
+        const store = createPomodoroStore({ isSettingsWindow: true });
+
+        await expect(Promise.resolve(store.getState().applyEndActionSettings('playVideo', {
+            sourceKind: 'custom',
+            builtinVideoId: DEFAULT_BUILTIN_POMODORO_VIDEO_ID,
+            customVideoPath: '/tmp/custom.webm',
+        }))).rejects.toThrow('主窗口保存失败');
+
         spy.mockRestore();
     });
 

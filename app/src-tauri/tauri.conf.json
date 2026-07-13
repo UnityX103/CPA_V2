@@ -6,7 +6,8 @@
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "npm run build",
+    "beforeBuildCommand": "npm run video-runtime:verify-build && npm run build",
+    "beforeBundleCommand": "npm run video-runtime:verify-build",
     "frontendDist": "../dist"
   },
   "app": {
@@ -36,8 +37,12 @@
     "active": true,
     "targets": "all",
     "createUpdaterArtifacts": true,
+    "resources": [
+      "video-runtime/"
+    ],
     "macOS": {
-      "signingIdentity": "-"
+      "signingIdentity": "-",
+      "minimumSystemVersion": "14.0"
     },
     "icon": [
       "icons/32x32.png",

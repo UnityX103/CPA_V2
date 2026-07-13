@@ -1,7 +1,7 @@
 /* Pencil 设计稿 PUI.pen 设计 token 同步 — 与 PUI.pen 的变量 / 重复出现的色板逐项对齐。
  * 数值取自具体 reusable 节点：
  *   panel = pomodoroPanel(YRqeB) / PlayerCard(drqFB) / InputCounterPanel(ZmuFh)
- *   settings = Unified Settings Panel(vnYnS) + 子面板(gs1Tv/8Le5R/v2ZgA/Pdj9C)
+ *   settings = Unified Settings Panel(vnYnS) + 子面板(gs1Tv/8Le5R/v2ZgA/Pdj9C/Ynz0h)
  *   button/input/dialog = Component Library(ce62U) 中的 reusable 组件
  */
 :root {

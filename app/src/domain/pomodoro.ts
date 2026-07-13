@@ -1,5 +1,5 @@
 import { create, type StoreApi, type UseBoundStore } from 'zustand';
-import { dispatch } from './bridge/dispatch';
+import { dispatch, dispatchConfirmed } from './bridge/dispatch';
 import { BRIDGE_VERSION } from './bridge/protocol';
 import { DEFAULT_BUILTIN_POMODORO_VIDEO_ID } from './pomodoroVideos';
 
@@ -55,7 +55,10 @@ export interface PomodoroActions {
         resetProgress: boolean,
         autoStartBreak: boolean,
     ) => void;
-    applyEndActionSettings: (mode: PomodoroEndActionMode, video: PomodoroEndActionVideo) => void;
+    applyEndActionSettings: (
+        mode: PomodoroEndActionMode,
+        video: PomodoroEndActionVideo,
+    ) => Promise<void> | void;
     tick: (deltaSeconds: number) => void;
 }
 
@@ -113,12 +116,12 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
                 });
             },
             applyEndActionSettings: (mode, video) => {
-                void dispatch({
+                return dispatchConfirmed({
                     v: BRIDGE_VERSION,
                     store: 'pomodoro',
                     action: 'applyEndActionSettings',
                     args: [mode, video],
-                });
+                }, { replyTo: 'settings' });
             },
             tick: () => {},
         }));

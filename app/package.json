@@ -1,7 +1,7 @@
 {
   "name": "app",
   "private": true,
-  "description": "CPA_V2 desktop-pet pomodoro Tauri app; x64/x86_64 desktop startup and release targets only.",
+  "description": "CPA_V2 desktop-pet pomodoro Tauri app with macOS x64/ARM64 and Windows x64 packages.",
   "version": "0.1.9",
   "type": "module",
   "scripts": {
@@ -9,6 +9,11 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "release:updater": "node scripts/prepare-updater-release.mjs",
+    "video-runtime:lock": "node scripts/prepare-video-runtime.mjs lock",
+    "video-runtime:prepare": "node scripts/prepare-video-runtime.mjs prepare",
+    "video-runtime:verify": "node scripts/prepare-video-runtime.mjs verify",
+    "video-runtime:verify-build": "node scripts/self-contained-video-build.mjs verify",
+    "build:self-contained": "node scripts/self-contained-video-build.mjs build",
     "test:player-card-visual": "node scripts/compare-player-card.mjs",
     "test": "vitest run",
     "tauri": "tauri"

@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "target": "macos-arm64",
+  "backgroundRemoverCommit": "fa480627829759b902f8c233388d7aa67ab38099",
+  "components": {
+    "ffmpeg": {
+      "source": "https://ffmpeg.org/releases/ffmpeg-8.1.2.tar.xz#sha256=464beb5e7bf0c311e68b45ae2f04e9cc2af88851abb4082231742a74d97b524c+libvpx-v1.16.0#sha256=7a479a3c66b9f5d5542a4c6a1b7d3768a983b1e5c14c60a9396edc9b649e015c",
+      "version": "8.1.2",
+      "sha256": "5c32e1f30f95ebb00ad4f104532472e01d0bcd0765dcb84c6eeba195dc000f31"
+    },
+    "ffprobe": {
+      "source": "https://ffmpeg.org/releases/ffmpeg-8.1.2.tar.xz#sha256=464beb5e7bf0c311e68b45ae2f04e9cc2af88851abb4082231742a74d97b524c+libvpx-v1.16.0#sha256=7a479a3c66b9f5d5542a4c6a1b7d3768a983b1e5c14c60a9396edc9b649e015c",
+      "version": "8.1.2",
+      "sha256": "2e05a91039d6bed00e5d5966c28cb917fd9ab4b449366b649dc5e4b41b191cda"
+    },
+    "backgroundRemover": {
+      "source": "git+https://github.com/nadermx/backgroundremover.git@fa480627829759b902f8c233388d7aa67ab38099#macos-arm64-pyinstaller-6.16.0-force-cpu-v1",
+      "patches": [
+        {
+          "id": "force-cpu-device-env-v1",
+          "path": "scripts/patches/backgroundremover-force-cpu.patch",
+          "sha256": "24d6dbde7474f667896d335979fe18890c92a85793c2dc9e4c72e5d08ed564f1"
+        }
+      ],
+      "pythonVersion": "3.12.12",
+      "pythonSource": "https://github.com/astral-sh/python-build-standalone/releases/download/20260114/cpython-3.12.12%2B20260114-aarch64-apple-darwin-install_only_stripped.tar.gz#sha256=ed1f300bd3b45aa481d887b2dd8e12f989b583f67755c219a6092756a09b609f",
+      "torchVersion": "2.13.0",
+      "torchSource": "https://files.pythonhosted.org/packages/c4/3a/ed0f4d4d1dcde03bced7aac9a28e800abcdc0cbd06b6775044c9fbd877b7/torch-2.13.0-cp312-cp312-macosx_14_0_arm64.whl#sha256=2fe228aba290d14b9f31b049be550dbd469c3fd3013d7a19705b30454da97027",
+      "packager": "PyInstaller 6.16.0 one-dir; clean fa480627 + audited force-cpu patch; flattened; ad-hoc signed; frozen-worker Numba JIT disabled; CPU matte semantic E2E 2026-07-12",
+      "treeSha256": "5075ff8cddf67eb57fd43656516c5307a35a077dc1c0b5837bd0be2215ed649d"
+    },
+    "u2netp": {
+      "source": "https://raw.githubusercontent.com/nadermx/backgroundremover/fa480627829759b902f8c233388d7aa67ab38099/models/u2netp.pth",
+      "sha256": "e7567cde013fb64813973ce6e1ecc25a80c05c3ca7adbc5a54f3c3d90991b854"
+    },
+    "licenses": {
+      "source": "artifact://cpa-video-runtime-license-pack-macos-arm64-2026-07-12-cpu-v3-macos14",
+      "treeSha256": "aaa58441aabc920bf137320651d2574d4a77b27f68f86992c3bd9d305984011e"
+    }
+  }
+}

@@ -18,10 +18,14 @@ import { REMOTE_PLAYER_WINDOW_LABELS } from '../remotePlayerWindowLabels';
 import {
     BRIDGE_VERSION,
     EVT_DISPATCH,
+    EVT_DISPATCH_RESULT,
     EVT_STATE,
     EVT_STATE_REQUEST,
     type BridgeSnapshot,
+    type ConfirmedDispatchRequest,
+    type DispatchEventPayload,
     type DispatchPayload,
+    type DispatchResult,
 } from './protocol';
 
 function clonePlayer(player: RemotePlayer): RemotePlayer {
@@ -163,7 +167,7 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
     };
 }
 
-export function applyDispatch(payload: DispatchPayload): void {
+export async function applyDispatch(payload: DispatchPayload): Promise<void> {
     if (payload.v !== BRIDGE_VERSION) {
         console.warn('[bridge] dispatch version mismatch:', payload.v);
         return;
@@ -174,7 +178,7 @@ export function applyDispatch(payload: DispatchPayload): void {
             switch (payload.action) {
                 case 'setUiScale': s.setUiScale(...payload.args); return;
                 case 'previewDangerousUiScale': s.previewDangerousUiScale(...payload.args); return;
-                case 'setAutostartEnabled': void s.setAutostartEnabled(...payload.args); return;
+                case 'setAutostartEnabled': await s.setAutostartEnabled(...payload.args); return;
                 case 'setCheckinEnabled': s.setCheckinEnabled(...payload.args); return;
                 case 'setPlanPanelEnabled': s.setPlanPanelEnabled(...payload.args); return;
                 case 'applyDangerousChange': s.applyDangerousChange(...payload.args); return;
@@ -190,21 +194,21 @@ export function applyDispatch(payload: DispatchPayload): void {
                 usePomodoroStore.getState().setAutoPinAfterFocus(...payload.args);
             }
             if (payload.action === 'applyEndActionSettings') {
-                usePomodoroStore.getState().applyEndActionSettings(...payload.args);
+                await usePomodoroStore.getState().applyEndActionSettings(...payload.args);
             }
             return;
         }
         case 'network': {
             const n = useNetworkStore.getState();
             switch (payload.action) {
-                case 'createRoom':     void n.createRoom(...payload.args); return;
-                case 'joinRoom':       void n.joinRoom(...payload.args); return;
+                case 'createRoom':     await n.createRoom(...payload.args); return;
+                case 'joinRoom':       await n.joinRoom(...payload.args); return;
                 case 'leaveRoom':      n.leaveRoom(); return;
                 case 'setAutoConnect': n.setAutoConnect(...payload.args); return;
                 case 'setPlayerName':  n.setPlayerName(...payload.args); return;
-                case 'createAccount':  void n.createAccount(...payload.args); return;
-                case 'login':          void n.login(...payload.args); return;
-                case 'restoreAccountSession': void n.restoreAccountSession(); return;
+                case 'createAccount':  await n.createAccount(...payload.args); return;
+                case 'login':          await n.login(...payload.args); return;
+                case 'restoreAccountSession': await n.restoreAccountSession(); return;
                 case 'logout':         n.logout(); return;
             }
             return;
@@ -224,9 +228,9 @@ export function applyDispatch(payload: DispatchPayload): void {
         case 'appUpdate': {
             const u = useAppUpdateStore.getState();
             switch (payload.action) {
-                case 'setAutoUpdateEnabled': void u.setAutoUpdateEnabled(...payload.args); return;
-                case 'checkNow': void u.checkNow(); return;
-                case 'restartForUpdate': void u.restartForUpdate(); return;
+                case 'setAutoUpdateEnabled': await u.setAutoUpdateEnabled(...payload.args); return;
+                case 'checkNow': await u.checkNow(); return;
+                case 'restartForUpdate': await u.restartForUpdate(); return;
             }
             return;
         }
@@ -239,6 +243,34 @@ export function applyDispatch(payload: DispatchPayload): void {
             return;
         }
     }
+}
+
+function isConfirmedDispatchRequest(
+    payload: DispatchEventPayload,
+): payload is ConfirmedDispatchRequest {
+    return 'requestId' in payload && 'replyTo' in payload && 'payload' in payload;
+}
+
+export async function handleDispatchEvent(payload: DispatchEventPayload): Promise<void> {
+    if (!isConfirmedDispatchRequest(payload)) {
+        await applyDispatch(payload);
+        return;
+    }
+
+    let result: DispatchResult;
+    try {
+        await applyDispatch(payload.payload);
+        result = { requestId: payload.requestId, ok: true };
+    } catch (error) {
+        result = {
+            requestId: payload.requestId,
+            ok: false,
+            error: error instanceof Error ? error.message : String(error),
+        };
+    }
+
+    const replyWindow = await WebviewWindow.getByLabel(payload.replyTo);
+    await replyWindow?.emit(EVT_DISPATCH_RESULT, result);
 }
 
 export const MIRROR_WINDOW_LABELS = [
@@ -395,7 +427,11 @@ export function useBridgeHost(): void {
             })
             .catch((err) => { console.warn('[bridge] failed to attach listener', err); });
 
-        listen<DispatchPayload>(EVT_DISPATCH, (e) => { applyDispatch(e.payload); })
+        listen<DispatchEventPayload>(EVT_DISPATCH, (e) => {
+            void handleDispatchEvent(e.payload).catch((error) => {
+                console.warn('[bridge] failed to handle dispatch', error);
+            });
+        })
             .then((u) => {
                 if (cancelled) u();
                 else unlistens.push(u);

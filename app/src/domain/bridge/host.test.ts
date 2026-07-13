@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
     applyDispatch,
+    handleDispatchEvent,
     activeAppIdentitySig,
     activeAppSig,
     appUpdateSig,
@@ -17,10 +18,19 @@ import { usePomodoroStore, type PomodoroState } from '../pomodoro';
 import { useNetworkStore, type NetworkStateShape } from '../network';
 import { useBindingKeyStore } from '../bindingKey';
 import { useActiveAppStore } from '../activeApp';
-import { BRIDGE_VERSION } from './protocol';
+import { BRIDGE_VERSION, EVT_DISPATCH_RESULT } from './protocol';
 import { useAppUpdateStore } from '../appUpdate';
 import { REMOTE_PLAYER_WINDOW_LABELS } from '../remotePlayerWindowLabels';
 import { defaultPlanTemplate, useCheckinStore } from '../checkin';
+
+const confirmedDispatchMocks = vi.hoisted(() => ({
+    emit: vi.fn(),
+    getByLabel: vi.fn(),
+}));
+
+vi.mock('@tauri-apps/api/webviewWindow', () => ({
+    WebviewWindow: { getByLabel: confirmedDispatchMocks.getByLabel },
+}));
 
 type BindingKeySigInput = Parameters<typeof bindingKeySig>[0];
 type BindingKeyStateWithPermission = BindingKeySigInput & {
@@ -54,6 +64,9 @@ const sampleRemoteState = {
 };
 
 beforeEach(() => {
+    confirmedDispatchMocks.emit.mockReset();
+    confirmedDispatchMocks.getByLabel.mockReset();
+    confirmedDispatchMocks.getByLabel.mockResolvedValue({ emit: confirmedDispatchMocks.emit });
     useSettingsStore.setState({
         uiScale: 1.0,
         committedUiScale: 1.0,
@@ -494,6 +507,56 @@ describe('applyDispatch', () => {
 
         expect(useCheckinStore.getState().planTemplate).toEqual(nextTemplate);
         expect(useCheckinStore.getState().dailyRecords['2026-05-25'].countsByItemId['pomodoro-focus']).toBe(1);
+    });
+});
+
+describe('handleDispatchEvent', () => {
+    it('acknowledges a confirmed dispatch only after applying it to the authoritative store', async () => {
+        await handleDispatchEvent({
+            requestId: 'request-ok',
+            replyTo: 'settings',
+            payload: {
+                v: BRIDGE_VERSION,
+                store: 'pomodoro',
+                action: 'applyEndActionSettings',
+                args: ['playVideo', sampleEndActionVideo],
+            },
+        });
+
+        expect(usePomodoroStore.getState().endActionVideo).toEqual(sampleEndActionVideo);
+        expect(confirmedDispatchMocks.getByLabel).toHaveBeenCalledWith('settings');
+        expect(confirmedDispatchMocks.emit).toHaveBeenCalledWith(EVT_DISPATCH_RESULT, {
+            requestId: 'request-ok',
+            ok: true,
+        });
+    });
+
+    it('returns a failed acknowledgement when the authoritative action throws', async () => {
+        const original = usePomodoroStore.getState().applyEndActionSettings;
+        usePomodoroStore.setState({
+            applyEndActionSettings: vi.fn().mockRejectedValue(new Error('持久化失败')),
+        });
+
+        try {
+            await handleDispatchEvent({
+                requestId: 'request-failed',
+                replyTo: 'settings',
+                payload: {
+                    v: BRIDGE_VERSION,
+                    store: 'pomodoro',
+                    action: 'applyEndActionSettings',
+                    args: ['playVideo', sampleEndActionVideo],
+                },
+            });
+        } finally {
+            usePomodoroStore.setState({ applyEndActionSettings: original });
+        }
+
+        expect(confirmedDispatchMocks.emit).toHaveBeenCalledWith(EVT_DISPATCH_RESULT, {
+            requestId: 'request-failed',
+            ok: false,
+            error: '持久化失败',
+        });
     });
 });
 

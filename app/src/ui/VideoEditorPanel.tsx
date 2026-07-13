@@ -1,157 +1,68 @@
 import {
     useEffect,
     useMemo,
-    useReducer,
     useRef,
     useState,
     type CSSProperties,
-    type Dispatch,
     type PointerEvent as ReactPointerEvent,
 } from 'react';
 import {
-    buildVideoProcessRequest,
-    INITIAL_VIDEO_EDITOR_DRAFT,
-    videoEditorReducer,
     type BrushPoint,
     type VideoCrop,
-    type VideoEditorAction,
     type VideoProbe,
 } from '../domain/videoEditor';
 import {
-    listenVideoEditorProgress,
-    pickEditedVideoOutputPath,
-    pickVideoForEditing,
-    probeVideoForEditing,
-    processBackgroundRemovedVideo,
-    videoEditorPreviewSrc,
-    videoEditorRuntimeStatus,
-    type VideoEditorProgress,
-    type VideoEditorRuntimeStatus,
-} from '../domain/videoEditorFiles';
-import { usePomodoroStore } from '../domain/pomodoro';
-import { DEFAULT_BUILTIN_POMODORO_VIDEO_ID } from '../domain/pomodoroVideos';
+    useVideoEditorLifecycle,
+    useVideoEditorStore,
+} from '../domain/videoEditorStore';
+import { fileNameFromPath } from '../domain/filePath';
 import './VideoEditorPanel.css';
 
-type EditorTool = 'preview' | 'crop' | 'erase';
-
 export function VideoEditorPanel() {
-    const [draft, dispatch] = useReducer(videoEditorReducer, INITIAL_VIDEO_EDITOR_DRAFT);
-    const [previewSrc, setPreviewSrc] = useState('');
-    const [tool, setTool] = useState<EditorTool>('crop');
-    const [runtime, setRuntime] = useState<VideoEditorRuntimeStatus | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
-    const [isProcessing, setIsProcessing] = useState(false);
-    const [progress, setProgress] = useState<VideoEditorProgress | null>(null);
-    const [error, setError] = useState('');
-    const [savedPath, setSavedPath] = useState('');
-    const [appliedToPomodoro, setAppliedToPomodoro] = useState(false);
+    useVideoEditorLifecycle();
+    const editor = useVideoEditorStore();
+    const {
+        draft,
+        previewSrc,
+        tool,
+        runtime,
+        isLoading,
+        isChoosingOutput,
+        isProcessing,
+        isPreparingResultPreview,
+        isApplyingToPomodoro,
+        progress,
+        error,
+        savedPath,
+        resultPreviewSrc,
+        resultPreviewPlaybackState,
+        appliedToPomodoro,
+    } = editor;
     const activePointerRef = useRef<number | null>(null);
     const cropStartRef = useRef<BrushPoint | null>(null);
-    const activeJobIdRef = useRef<string | null>(null);
-
-    useEffect(() => {
-        let active = true;
-        void videoEditorRuntimeStatus()
-            .then((status) => {
-                if (active) setRuntime(status);
-            })
-            .catch((cause) => {
-                if (active) {
-                    setRuntime({ ready: false, message: errorMessage(cause) });
-                }
-            });
-        return () => { active = false; };
-    }, []);
-
-    useEffect(() => {
-        let active = true;
-        let unlisten: (() => void) | undefined;
-        void listenVideoEditorProgress((event) => {
-            if (event.jobId === activeJobIdRef.current) setProgress(event);
-        }).then((cleanup) => {
-            if (active) unlisten = cleanup;
-            else cleanup();
-        });
-        return () => {
-            active = false;
-            unlisten?.();
-        };
-    }, []);
-
-    const chooseVideo = async () => {
-        setError('');
-        setIsLoading(true);
-        try {
-            const path = await pickVideoForEditing();
-            if (!path) return;
-            const probe = await probeVideoForEditing(path);
-            dispatch({ type: 'clearStrokes' });
-            dispatch({ type: 'load', sourcePath: path, probe });
-            setPreviewSrc(videoEditorPreviewSrc(path));
-            setSavedPath('');
-            setAppliedToPomodoro(false);
-            setTool('crop');
-        } catch (cause) {
-            setError(errorMessage(cause));
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const saveVideo = async () => {
-        if (!draft.sourcePath || !runtime?.ready || isProcessing) return;
-        setError('');
-        const outputPath = await pickEditedVideoOutputPath(draft.sourcePath);
-        if (!outputPath) return;
-
-        const jobId = createJobId();
-        activeJobIdRef.current = jobId;
-        setIsProcessing(true);
-        setSavedPath('');
-        setAppliedToPomodoro(false);
-        setProgress({ jobId, percent: 0, stage: '准备视频' });
-        try {
-            const result = await processBackgroundRemovedVideo(
-                buildVideoProcessRequest(draft, outputPath, jobId),
-            );
-            setSavedPath(result.outputPath);
-            setProgress({ jobId, percent: 100, stage: '处理完成' });
-        } catch (cause) {
-            setError(errorMessage(cause));
-        } finally {
-            activeJobIdRef.current = null;
-            setIsProcessing(false);
-        }
-    };
-
-    const setAsPomodoroVideo = () => {
-        if (!savedPath) return;
-        const pomodoro = usePomodoroStore.getState();
-        pomodoro.applyEndActionSettings('playVideo', {
-            sourceKind: 'custom',
-            builtinVideoId:
-                pomodoro.endActionVideo.builtinVideoId || DEFAULT_BUILTIN_POMODORO_VIDEO_ID,
-            customVideoPath: savedPath,
-        });
-        setAppliedToPomodoro(true);
-    };
+    const editingLocked = isLoading
+        || isChoosingOutput
+        || isProcessing
+        || isPreparingResultPreview
+        || isApplyingToPomodoro;
 
     const previewStyle = useMemo(() => previewVideoStyle(draft.crop, draft.probe, tool), [
         draft.crop,
         draft.probe,
         tool,
     ]);
+    const brushPreview = brushPreviewGeometry(draft.crop);
 
     const onPreviewPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
-        if (!draft.probe || tool === 'preview' || event.button !== 0 || isProcessing) return;
+        if (!draft.probe || tool === 'preview' || event.button !== 0 || editingLocked) return;
         const point = pointInElement(event);
         activePointerRef.current = event.pointerId;
         event.currentTarget.setPointerCapture?.(event.pointerId);
         if (tool === 'erase') {
-            dispatch({ type: 'beginStroke', point });
+            editor.beginStroke(point);
         } else {
             cropStartRef.current = point;
-            dispatch({ type: 'setCrop', crop: cropFromPoints(point, point, draft.probe.width, draft.probe.height) });
+            editor.setCrop(cropFromPoints(point, point, draft.probe.width, draft.probe.height));
         }
     };
 
@@ -159,19 +70,16 @@ export function VideoEditorPanel() {
         if (activePointerRef.current !== event.pointerId || !draft.probe) return;
         const point = pointInElement(event);
         if (tool === 'erase') {
-            dispatch({ type: 'extendStroke', point });
+            editor.extendStroke(point);
             return;
         }
         if (cropStartRef.current) {
-            dispatch({
-                type: 'setCrop',
-                crop: cropFromPoints(
-                    cropStartRef.current,
-                    point,
-                    draft.probe.width,
-                    draft.probe.height,
-                ),
-            });
+            editor.setCrop(cropFromPoints(
+                cropStartRef.current,
+                point,
+                draft.probe.width,
+                draft.probe.height,
+            ));
         }
     };
 
@@ -195,14 +103,30 @@ export function VideoEditorPanel() {
                             type="button"
                             className="btn btn-secondary video-editor-import"
                             aria-label="导入视频"
-                            disabled={isLoading || isProcessing}
-                            onClick={() => { void chooseVideo(); }}
+                            disabled={
+                                isLoading
+                                || isChoosingOutput
+                                || isProcessing
+                                || isPreparingResultPreview
+                                || isApplyingToPomodoro
+                            }
+                            onClick={() => { void editor.chooseVideo(); }}
                         >
                             {isLoading ? '读取中…' : '导入视频'}
                         </button>
                     </div>
                     <div className={`video-editor-runtime ${runtime?.ready ? 'ready' : 'missing'}`}>
-                        {runtime?.message ?? '正在检查 BackgroundRemover…'}
+                        <span>{runtime?.message ?? '正在检查 BackgroundRemover…'}</span>
+                        {runtime && !runtime.ready ? (
+                            <button
+                                type="button"
+                                className="video-editor-runtime-retry"
+                                aria-label="重新检查运行环境"
+                                onClick={() => { void editor.refreshRuntime(); }}
+                            >
+                                重新检查
+                            </button>
+                        ) : null}
                     </div>
                 </section>
 
@@ -218,19 +142,19 @@ export function VideoEditorPanel() {
                                     type="button"
                                     className={tool === 'preview' ? 'active' : ''}
                                     aria-label="播放预览"
-                                    onClick={() => setTool('preview')}
+                                    onClick={() => editor.setTool('preview')}
                                 >预览</button>
                                 <button
                                     type="button"
                                     className={tool === 'crop' ? 'active' : ''}
                                     aria-label="裁剪工具"
-                                    onClick={() => setTool('crop')}
+                                    onClick={() => editor.setTool('crop')}
                                 >裁剪</button>
                                 <button
                                     type="button"
                                     className={tool === 'erase' ? 'active' : ''}
                                     aria-label="剔除画笔"
-                                    onClick={() => setTool('erase')}
+                                    onClick={() => editor.setTool('erase')}
                                 >画笔剔除</button>
                             </div>
                             <div
@@ -253,14 +177,21 @@ export function VideoEditorPanel() {
                                 {tool === 'crop' ? (
                                     <div className="video-editor-crop-box" style={cropOverlayStyle(draft.crop, draft.probe)} />
                                 ) : tool === 'erase' ? (
-                                    <svg className="video-editor-brush-overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true">
+                                    <svg
+                                        className="video-editor-brush-overlay"
+                                        viewBox={`0 0 ${brushPreview.width} ${brushPreview.height}`}
+                                        preserveAspectRatio="none"
+                                        aria-hidden="true"
+                                    >
                                         {draft.strokes.map((stroke, index) => (
                                             <polyline
                                                 key={`${index}-${stroke.points.length}`}
-                                                points={stroke.points.map((point) => `${point.x * 1000},${point.y * 1000}`).join(' ')}
+                                                points={stroke.points.map((point) => (
+                                                    `${point.x * brushPreview.width},${point.y * brushPreview.height}`
+                                                )).join(' ')}
                                                 fill="none"
                                                 stroke="rgba(239, 68, 68, 0.72)"
-                                                strokeWidth={stroke.radius * 2000}
+                                                strokeWidth={stroke.radius * 2 * brushPreview.shortEdge}
                                                 strokeLinecap="round"
                                                 strokeLinejoin="round"
                                             />
@@ -273,12 +204,12 @@ export function VideoEditorPanel() {
                         <section className="card video-editor-controls-card">
                             <h3 className="card-title">裁剪与时间</h3>
                             <div className="video-editor-number-grid">
-                                <EditorNumber label="裁剪 X" value={draft.crop.x} min={0} onChange={(value) => setCropPart(dispatch, draft.crop, 'x', value)} />
-                                <EditorNumber label="裁剪 Y" value={draft.crop.y} min={0} onChange={(value) => setCropPart(dispatch, draft.crop, 'y', value)} />
-                                <EditorNumber label="裁剪宽度" value={draft.crop.width} min={2} onChange={(value) => setCropPart(dispatch, draft.crop, 'width', value)} />
-                                <EditorNumber label="裁剪高度" value={draft.crop.height} min={2} onChange={(value) => setCropPart(dispatch, draft.crop, 'height', value)} />
-                                <EditorNumber label="开始时间" value={draft.startSeconds} min={0} step={0.1} suffix="秒" onChange={(value) => dispatch({ type: 'setStartSeconds', value })} />
-                                <EditorNumber label="结束时间" value={draft.endSeconds} min={0.1} step={0.1} suffix="秒" onChange={(value) => dispatch({ type: 'setEndSeconds', value })} />
+                                <EditorNumber label="裁剪 X" value={draft.crop.x} min={0} disabled={editingLocked} onChange={(value) => setCropPart(editor.setCrop, draft.crop, 'x', value)} />
+                                <EditorNumber label="裁剪 Y" value={draft.crop.y} min={0} disabled={editingLocked} onChange={(value) => setCropPart(editor.setCrop, draft.crop, 'y', value)} />
+                                <EditorNumber label="裁剪宽度" value={draft.crop.width} min={2} disabled={editingLocked} onChange={(value) => setCropPart(editor.setCrop, draft.crop, 'width', value)} />
+                                <EditorNumber label="裁剪高度" value={draft.crop.height} min={2} disabled={editingLocked} onChange={(value) => setCropPart(editor.setCrop, draft.crop, 'height', value)} />
+                                <EditorNumber label="开始时间" value={draft.startSeconds} min={0} step={0.1} suffix="秒" disabled={editingLocked} onChange={editor.setStartSeconds} />
+                                <EditorNumber label="结束时间" value={draft.endSeconds} min={0.1} step={0.1} suffix="秒" disabled={editingLocked} onChange={editor.setEndSeconds} />
                             </div>
                         </section>
 
@@ -292,7 +223,8 @@ export function VideoEditorPanel() {
                                     min={0}
                                     max={255}
                                     value={draft.threshold}
-                                    onChange={(event) => dispatch({ type: 'setThreshold', value: Number(event.currentTarget.value) })}
+                                    disabled={editingLocked}
+                                    onChange={(event) => editor.setThreshold(Number(event.currentTarget.value))}
                                 />
                             </label>
                             <label className="video-editor-range-row">
@@ -304,12 +236,13 @@ export function VideoEditorPanel() {
                                     min={5}
                                     max={200}
                                     value={Math.round(draft.brushRadius * 1000)}
-                                    onChange={(event) => dispatch({ type: 'setBrushRadius', value: Number(event.currentTarget.value) / 1000 })}
+                                    disabled={editingLocked}
+                                    onChange={(event) => editor.setBrushRadius(Number(event.currentTarget.value) / 1000)}
                                 />
                             </label>
                             <div className="card-actions">
-                                <button type="button" className="btn btn-secondary btn-fit" disabled={draft.strokes.length === 0} onClick={() => dispatch({ type: 'undoStroke' })}>撤销一笔</button>
-                                <button type="button" className="btn btn-secondary btn-fit" disabled={draft.strokes.length === 0} onClick={() => dispatch({ type: 'clearStrokes' })}>清空画笔</button>
+                                <button type="button" className="btn btn-secondary btn-fit" disabled={editingLocked || draft.strokes.length === 0} onClick={editor.undoStroke}>撤销一笔</button>
+                                <button type="button" className="btn btn-secondary btn-fit" disabled={editingLocked || draft.strokes.length === 0} onClick={editor.clearStrokes}>清空画笔</button>
                                 <span className="video-editor-stroke-count">{draft.strokes.length} 笔</span>
                             </div>
                         </section>
@@ -328,19 +261,84 @@ export function VideoEditorPanel() {
                                 type="button"
                                 className="btn btn-primary btn-block video-editor-save"
                                 aria-label="保存透明视频"
-                                disabled={!runtime?.ready || isProcessing}
-                                onClick={() => { void saveVideo(); }}
+                                disabled={
+                                    !runtime?.ready
+                                    || isLoading
+                                    || isChoosingOutput
+                                    || isProcessing
+                                    || isPreparingResultPreview
+                                    || isApplyingToPomodoro
+                                }
+                                onClick={() => { void editor.saveVideo(); }}
                             >
-                                {isProcessing ? 'BackgroundRemover 处理中…' : '保存透明视频'}
+                                {isChoosingOutput
+                                    ? '选择保存位置…'
+                                    : isProcessing
+                                    ? 'BackgroundRemover 处理中…'
+                                    : isPreparingResultPreview
+                                        ? '正在准备兼容预览…'
+                                        : '保存透明视频'}
                             </button>
+                            {savedPath && isPreparingResultPreview && (
+                                <div className="video-editor-result-preparing" role="status">
+                                    正在准备可播放的透明成品预览…
+                                </div>
+                            )}
+                            {savedPath && resultPreviewSrc && (
+                                <div className="video-editor-result-preview">
+                                    <div className="video-editor-result-preview-copy">
+                                        <span className="card-label">透明成品预览</span>
+                                        <span>已应用当前裁剪、阈值与画笔效果</span>
+                                    </div>
+                                    <div className="video-editor-alpha-stage">
+                                        <video
+                                            aria-label="透明成品视频预览"
+                                            src={resultPreviewSrc}
+                                            controls
+                                            muted
+                                            loop
+                                            playsInline
+                                            preload="auto"
+                                            onCanPlay={editor.markResultPreviewReady}
+                                            onError={editor.markResultPreviewError}
+                                        />
+                                    </div>
+                                    {resultPreviewPlaybackState === 'error' && (
+                                        <div className="video-editor-error" role="alert">
+                                            透明成品已保存，但当前系统无法播放兼容预览
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                             {savedPath && (
                                 <div className="video-editor-result">
                                     <div>
                                         <span className="card-label">已保存</span>
-                                        <strong>{pathBasename(savedPath)}</strong>
+                                        <strong>{fileNameFromPath(savedPath)}</strong>
                                     </div>
-                                    <button type="button" className="btn btn-secondary btn-fit" aria-label="设为番茄钟结束视频" onClick={setAsPomodoroVideo}>
-                                        设为番茄钟结束视频
+                                    <button
+                                        type="button"
+                                        className="btn btn-secondary btn-fit"
+                                        aria-label="设为番茄钟结束视频"
+                                        disabled={
+                                            isLoading
+                                            || isChoosingOutput
+                                            || isProcessing
+                                            || isApplyingToPomodoro
+                                            || isPreparingResultPreview
+                                            || resultPreviewPlaybackState !== 'ready'
+                                        }
+                                        onClick={() => { void editor.setAsPomodoroVideo(); }}
+                                    >
+                                        {isApplyingToPomodoro
+                                            ? '设置中…'
+                                            : isPreparingResultPreview
+                                                ? '预览准备中…'
+                                                : resultPreviewPlaybackState === 'ready'
+                                                    ? '设为番茄钟结束视频'
+                                                    : resultPreviewPlaybackState === 'error'
+                                                        ? '预览不可播放'
+                                                        : '等待预览可播放'}
                                     </button>
                                 </div>
                             )}
@@ -365,6 +363,7 @@ function EditorNumber({
     min,
     step = 1,
     suffix = 'px',
+    disabled = false,
     onChange,
 }: {
     label: string;
@@ -372,6 +371,7 @@ function EditorNumber({
     min: number;
     step?: number;
     suffix?: string;
+    disabled?: boolean;
     onChange: (value: number) => void;
 }) {
     const [draftValue, setDraftValue] = useState(String(value));
@@ -403,6 +403,7 @@ function EditorNumber({
                     value={draftValue}
                     min={min}
                     step={step}
+                    disabled={disabled}
                     onChange={(event) => setDraftValue(event.currentTarget.value)}
                     onBlur={commit}
                     onKeyDown={(event) => {
@@ -420,12 +421,12 @@ function EditorNumber({
 }
 
 function setCropPart(
-    dispatch: Dispatch<VideoEditorAction>,
+    setCrop: (crop: VideoCrop) => void,
     crop: VideoCrop,
     key: keyof VideoCrop,
     value: number,
 ): void {
-    dispatch({ type: 'setCrop', crop: { ...crop, [key]: value } });
+    setCrop({ ...crop, [key]: value });
 }
 
 function pointInElement(event: ReactPointerEvent<HTMLElement>): BrushPoint {
@@ -456,19 +457,31 @@ function cropOverlayStyle(crop: VideoCrop, probe: VideoProbe): CSSProperties {
     };
 }
 
+function brushPreviewGeometry(crop: VideoCrop): {
+    width: number;
+    height: number;
+    shortEdge: number;
+} {
+    const width = Math.max(1, crop.width);
+    const height = Math.max(1, crop.height);
+    return { width, height, shortEdge: Math.min(width, height) };
+}
+
 function previewVideoStyle(
     crop: VideoCrop,
     probe: VideoProbe | null,
-    tool: EditorTool,
+    tool: 'preview' | 'crop' | 'erase',
 ): { stage: CSSProperties; video: CSSProperties } {
     if (!probe || tool === 'crop') {
+        const width = probe?.width ?? 16;
+        const height = probe?.height ?? 9;
         return {
-            stage: { aspectRatio: probe ? `${probe.width} / ${probe.height}` : '16 / 9' },
+            stage: previewStageStyle(width, height),
             video: { inset: 0, width: '100%', height: '100%' },
         };
     }
     return {
-        stage: { aspectRatio: `${crop.width} / ${crop.height}` },
+        stage: previewStageStyle(crop.width, crop.height),
         video: {
             width: `${(probe.width / crop.width) * 100}%`,
             height: `${(probe.height / crop.height) * 100}%`,
@@ -478,15 +491,12 @@ function previewVideoStyle(
     };
 }
 
-function pathBasename(path: string): string {
-    return path.split(/[\\/]/).pop() || path;
-}
-
-function createJobId(): string {
-    return globalThis.crypto?.randomUUID?.() ?? `video-edit-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-}
-
-function errorMessage(error: unknown): string {
-    if (error instanceof Error) return error.message;
-    return typeof error === 'string' ? error : '视频处理失败，请检查运行环境后重试';
+function previewStageStyle(width: number, height: number): CSSProperties {
+    const safeWidth = Math.max(1, width);
+    const safeHeight = Math.max(1, height);
+    return {
+        aspectRatio: `${safeWidth} / ${safeHeight}`,
+        maxWidth: `min(100%, ${(280 * safeWidth) / safeHeight}px)`,
+        marginInline: 'auto',
+    };
 }

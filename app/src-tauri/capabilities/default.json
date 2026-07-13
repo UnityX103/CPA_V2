@@ -29,7 +29,6 @@
     "autostart:allow-disable",
     "autostart:allow-is-enabled",
     "dialog:allow-open",
-    "dialog:allow-save",
     "dialog:allow-message",
     "store:allow-load",
     "store:allow-get",

@@ -47,3 +47,6 @@ windows = { version = "0.58", features = [
     "Win32_UI_HiDpi",
     "Win32_Graphics_Gdi",
 ] }
+
+[dev-dependencies]
+tauri = { version = "2", features = ["test", "protocol-asset"] }

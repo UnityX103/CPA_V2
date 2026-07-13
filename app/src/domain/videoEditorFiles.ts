@@ -1,7 +1,8 @@
 import { convertFileSrc, invoke } from '@tauri-apps/api/core';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
-import { open, save } from '@tauri-apps/plugin-dialog';
+import { open } from '@tauri-apps/plugin-dialog';
 import type { VideoProbe, VideoProcessRequest } from './videoEditor';
+import { customVideoSrc } from './videoFiles';
 
 export interface VideoProcessResult {
     readonly outputPath: string;
@@ -38,14 +39,14 @@ export function videoEditorPreviewSrc(path: string): string {
     return convertFileSrc(path);
 }
 
+export async function prepareVideoEditorResultPreview(path: string): Promise<string> {
+    return customVideoSrc(path);
+}
+
 export async function pickEditedVideoOutputPath(inputPath: string): Promise<string | null> {
-    const filename = pathBasename(inputPath);
-    const stem = filename.replace(/\.[^.]+$/, '') || 'edited-video';
-    const selected = await save({
-        defaultPath: `${stem}-transparent.webm`,
-        filters: [{ name: '透明 WebM 视频', extensions: ['webm'] }],
+    return invoke<string | null>('pick_edited_video_output_path', {
+        inputPath,
     });
-    return typeof selected === 'string' ? selected : null;
 }
 
 export async function processBackgroundRemovedVideo(
@@ -62,8 +63,4 @@ export async function listenVideoEditorProgress(
     handler: (progress: VideoEditorProgress) => void,
 ): Promise<UnlistenFn> {
     return listen<VideoEditorProgress>('video-editor-progress', (event) => handler(event.payload));
-}
-
-function pathBasename(path: string): string {
-    return path.split(/[\\/]/).pop() || path;
 }
