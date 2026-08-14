@@ -2,49 +2,18 @@ import { describe, expect, it, vi } from 'vitest';
 import { createPomodoroStore } from './pomodoro';
 import * as dispatchMod from './bridge/dispatch';
 import { BRIDGE_VERSION } from './bridge/protocol';
-import { DEFAULT_BUILTIN_POMODORO_VIDEO_ID } from './pomodoroVideos';
 
 function freshStore() {
     return createPomodoroStore({ isSettingsWindow: false });
 }
 
-describe('Pomodoro end action settings', () => {
-    it('defaults to playVideo with bundled qianqian video', () => {
+describe('Pomodoro end action', () => {
+    it('only supports bringing the main window to the top', () => {
         const store = freshStore();
-
-        expect(store.getState().endActionMode).toBe('playVideo');
-        expect(store.getState().endActionVideo).toEqual({
-            sourceKind: 'builtin',
-            builtinVideoId: DEFAULT_BUILTIN_POMODORO_VIDEO_ID,
-            customVideoPath: '',
-        });
-        expect(store.getState().autoPinAfterFocus).toBe(true);
-        expect(store.getState().lastEndEvent).toBeNull();
-    });
-
-    it('applies end-action settings without resetting timer progress', () => {
-        const store = freshStore();
-        store.getState().applySettings(60, 30, 4, true, false);
-        store.getState().start();
-        for (let i = 0; i < 10; i += 1) {
-            store.getState().tick(1);
-        }
-
-        store.getState().applyEndActionSettings('topWindow', {
-            sourceKind: 'custom',
-            builtinVideoId: DEFAULT_BUILTIN_POMODORO_VIDEO_ID,
-            customVideoPath: '/tmp/custom.mp4',
-        });
 
         expect(store.getState().endActionMode).toBe('topWindow');
-        expect(store.getState().endActionVideo).toEqual({
-            sourceKind: 'custom',
-            builtinVideoId: DEFAULT_BUILTIN_POMODORO_VIDEO_ID,
-            customVideoPath: '/tmp/custom.mp4',
-        });
-        expect(store.getState().currentPhase).toBe('focus');
-        expect(store.getState().remainingSeconds).toBe(50);
-        expect(store.getState().isRunning).toBe(true);
+        expect(store.getState().autoPinAfterFocus).toBe(true);
+        expect(store.getState().lastEndEvent).toBeNull();
     });
 });
 
@@ -238,48 +207,6 @@ describe('createPomodoroStore — settings-window mode', () => {
         expect(spy).toHaveBeenCalledWith(expect.objectContaining({
             v: BRIDGE_VERSION, store: 'pomodoro', action: 'applySettings', args: [900, 180, 5, true, false],
         }));
-        spy.mockRestore();
-    });
-
-    it('applyEndActionSettings waits for authoritative confirmation instead of mutating local state', async () => {
-        const spy = vi.spyOn(dispatchMod, 'dispatchConfirmed').mockResolvedValue();
-        const store = createPomodoroStore({ isSettingsWindow: true });
-        const before = store.getState().endActionMode;
-        await store.getState().applyEndActionSettings('topWindow', {
-            sourceKind: 'custom',
-            builtinVideoId: DEFAULT_BUILTIN_POMODORO_VIDEO_ID,
-            customVideoPath: '/tmp/custom.mp4',
-        });
-        expect(store.getState().endActionMode).toBe(before);
-        expect(store.getState().endActionVideo).toEqual({
-            sourceKind: 'builtin',
-            builtinVideoId: DEFAULT_BUILTIN_POMODORO_VIDEO_ID,
-            customVideoPath: '',
-        });
-        expect(spy).toHaveBeenCalledWith(expect.objectContaining({
-            v: BRIDGE_VERSION,
-            store: 'pomodoro',
-            action: 'applyEndActionSettings',
-            args: ['topWindow', {
-                sourceKind: 'custom',
-                builtinVideoId: DEFAULT_BUILTIN_POMODORO_VIDEO_ID,
-                customVideoPath: '/tmp/custom.mp4',
-            }],
-        }), { replyTo: 'settings' });
-        spy.mockRestore();
-    });
-
-    it('applyEndActionSettings exposes a failed authoritative confirmation', async () => {
-        const spy = vi.spyOn(dispatchMod, 'dispatchConfirmed')
-            .mockRejectedValue(new Error('主窗口保存失败'));
-        const store = createPomodoroStore({ isSettingsWindow: true });
-
-        await expect(Promise.resolve(store.getState().applyEndActionSettings('playVideo', {
-            sourceKind: 'custom',
-            builtinVideoId: DEFAULT_BUILTIN_POMODORO_VIDEO_ID,
-            customVideoPath: '/tmp/custom.webm',
-        }))).rejects.toThrow('主窗口保存失败');
-
         spy.mockRestore();
     });
 

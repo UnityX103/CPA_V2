@@ -1,10 +1,9 @@
 import type { BindingInput, BindingKeyEntry } from '../bindingKey';
 import type { DangerousChange } from '../settings';
 import type { AccountStatus, AccountUser, CloudSyncStatus, ConnectionStatus, RemotePlayer } from '../network';
-import type { PomodoroEndActionMode, PomodoroEndActionVideo } from '../pomodoro';
+import type { PomodoroEndActionMode } from '../pomodoro';
 import type { ActiveAppInfo } from '../activeApp';
 import type { AppUpdateSnapshot } from '../appUpdate';
-import type { CheckinPlanTemplate, DailyCheckinRecord } from '../checkin';
 import type { CloudAccountData } from '../cloudAccountData';
 
 export const EVT_STATE_REQUEST = 'app:state:request';
@@ -19,8 +18,6 @@ export interface BridgeSnapshot {
         uiScale: number;
         committedUiScale: number;
         autostartEnabled: boolean;
-        checkinEnabled: boolean;
-        planPanelEnabled: boolean;
         dangerousChange: DangerousChange | null;
     };
     pomodoro: {
@@ -30,7 +27,6 @@ export interface BridgeSnapshot {
         autoStartBreak: boolean;
         autoPinAfterFocus: boolean;
         endActionMode: PomodoroEndActionMode;
-        endActionVideo: PomodoroEndActionVideo;
     };
     network: {
         autoConnect: boolean;
@@ -57,20 +53,14 @@ export interface BridgeSnapshot {
         syncedKeyId: string | null;
     };
     appUpdate: AppUpdateSnapshot;
-    checkin: {
-        planTemplate: CheckinPlanTemplate;
-        dailyRecords: Record<string, DailyCheckinRecord>;
-        lastError: string | null;
-    };
 }
 
 export type DispatchPayload =
     | { v: typeof BRIDGE_VERSION; store: 'settings';   action: 'setUiScale' | 'previewDangerousUiScale'; args: [number] }
-    | { v: typeof BRIDGE_VERSION; store: 'settings';   action: 'setAutostartEnabled' | 'setCheckinEnabled' | 'setPlanPanelEnabled'; args: [boolean] }
+    | { v: typeof BRIDGE_VERSION; store: 'settings';   action: 'setAutostartEnabled'; args: [boolean] }
     | { v: typeof BRIDGE_VERSION; store: 'settings';   action: 'applyDangerousChange' | 'revertDangerousChange'; args: [string] }
     | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'applySettings'; args: [number, number, number, boolean, boolean] }
     | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'setAutoPinAfterFocus'; args: [boolean] }
-    | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'applyEndActionSettings'; args: [PomodoroEndActionMode, PomodoroEndActionVideo] }
     | { v: typeof BRIDGE_VERSION; store: 'network';    action: 'createRoom' | 'joinRoom'; args: [string] }
     | { v: typeof BRIDGE_VERSION; store: 'network';    action: 'leaveRoom'; args: [] }
     | { v: typeof BRIDGE_VERSION; store: 'network';    action: 'setAutoConnect'; args: [boolean] }
@@ -83,9 +73,7 @@ export type DispatchPayload =
     | { v: typeof BRIDGE_VERSION; store: 'bindingKey'; action: 'completeCapture'; args: [BindingInput, string] }
     | { v: typeof BRIDGE_VERSION; store: 'bindingKey'; action: 'addEntry'; args: [] }
     | { v: typeof BRIDGE_VERSION; store: 'appUpdate';  action: 'setAutoUpdateEnabled'; args: [boolean] }
-    | { v: typeof BRIDGE_VERSION; store: 'appUpdate';  action: 'checkNow' | 'restartForUpdate'; args: [] }
-    | { v: typeof BRIDGE_VERSION; store: 'checkin';    action: 'setPlanTemplate'; args: [CheckinPlanTemplate] }
-    | { v: typeof BRIDGE_VERSION; store: 'checkin';    action: 'incrementItem'; args: [string, string] };
+    | { v: typeof BRIDGE_VERSION; store: 'appUpdate';  action: 'checkNow' | 'restartForUpdate'; args: [] };
 
 export interface ConfirmedDispatchRequest {
     requestId: string;

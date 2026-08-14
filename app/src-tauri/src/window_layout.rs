@@ -23,7 +23,7 @@ struct WindowLayoutSnapshot {
 pub fn is_supported_window_label(label: &str) -> bool {
     matches!(
         label,
-        "main" | "settings" | "today-checkin" | "checkin-editor" | "input-counter"
+        "main" | "settings" | "input-counter"
     )
 }
 
@@ -156,8 +156,6 @@ mod tests {
     fn supported_labels_are_explicit() {
         assert!(is_supported_window_label("main"));
         assert!(is_supported_window_label("settings"));
-        assert!(is_supported_window_label("today-checkin"));
-        assert!(is_supported_window_label("checkin-editor"));
         assert!(is_supported_window_label("input-counter"));
         assert!(!is_supported_window_label("remote-player"));
     }

@@ -8,17 +8,7 @@ import {
     MIN_SCALE,
     MAX_SCALE,
 } from '../domain/settings';
-import {
-    usePomodoroStore,
-    type PomodoroEndActionMode,
-    type PomodoroEndActionVideo,
-} from '../domain/pomodoro';
-import {
-    BUILTIN_POMODORO_VIDEOS,
-    DEFAULT_BUILTIN_POMODORO_VIDEO_ID,
-} from '../domain/pomodoroVideos';
-import { pickCustomWebmPath } from '../domain/videoFiles';
-import { fileNameFromPath } from '../domain/filePath';
+import { usePomodoroStore } from '../domain/pomodoro';
 import { useNetworkStore } from '../domain/network';
 import {
     labelForInput,
@@ -148,7 +138,7 @@ function SettingsApplyRow({ visible, enabled, onApply }: {
 }
 
 /* ============================================================
- * Pomodoro Settings (gs1Tv)
+ * Pomodoro Settings
  * ============================================================ */
 
 function PomodoroTab({ onApplyStateChange }: {
@@ -159,15 +149,11 @@ function PomodoroTab({ onApplyStateChange }: {
     const [breakMin, setBreakMin] = useState(Math.round(pomo.breakDurationSeconds / 60));
     const [autoStartBreak, setAutoStartBreak] = useState(pomo.autoStartBreak);
     const [autoPinAfterFocus, setAutoPinAfterFocus] = useState(pomo.autoPinAfterFocus);
-    const [endActionMode, setEndActionMode] = useState<PomodoroEndActionMode>(pomo.endActionMode);
-    const [endActionVideo, setEndActionVideo] = useState<PomodoroEndActionVideo>({ ...pomo.endActionVideo });
     const committedRef = useRef({
         focusDurationSeconds: pomo.focusDurationSeconds,
         breakDurationSeconds: pomo.breakDurationSeconds,
         autoStartBreak: pomo.autoStartBreak,
         autoPinAfterFocus: pomo.autoPinAfterFocus,
-        endActionMode: pomo.endActionMode,
-        endActionVideo: { ...pomo.endActionVideo },
     });
 
     useEffect(() => {
@@ -177,23 +163,11 @@ function PomodoroTab({ onApplyStateChange }: {
             breakMin * 60 !== previous.breakDurationSeconds ||
             autoStartBreak !== previous.autoStartBreak ||
             autoPinAfterFocus !== previous.autoPinAfterFocus;
-        const endActionDraftDirty =
-            endActionMode !== previous.endActionMode ||
-            !sameEndActionVideo(endActionVideo, previous.endActionVideo);
-
         if (!durationDraftDirty) {
             setFocusMin(Math.round(pomo.focusDurationSeconds / 60));
             setBreakMin(Math.round(pomo.breakDurationSeconds / 60));
             setAutoStartBreak(pomo.autoStartBreak);
             setAutoPinAfterFocus(pomo.autoPinAfterFocus);
-        }
-        if (!endActionDraftDirty) {
-            setEndActionMode(pomo.endActionMode);
-            setEndActionVideo((current) =>
-                sameEndActionVideo(current, pomo.endActionVideo)
-                    ? current
-                    : { ...pomo.endActionVideo }
-            );
         }
 
         committedRef.current = {
@@ -201,37 +175,24 @@ function PomodoroTab({ onApplyStateChange }: {
             breakDurationSeconds: pomo.breakDurationSeconds,
             autoStartBreak: pomo.autoStartBreak,
             autoPinAfterFocus: pomo.autoPinAfterFocus,
-            endActionMode: pomo.endActionMode,
-            endActionVideo: { ...pomo.endActionVideo },
         };
     }, [
         pomo.focusDurationSeconds,
         pomo.breakDurationSeconds,
         pomo.autoStartBreak,
         pomo.autoPinAfterFocus,
-        pomo.endActionMode,
-        pomo.endActionVideo.sourceKind,
-        pomo.endActionVideo.builtinVideoId,
-        pomo.endActionVideo.customVideoPath,
         focusMin,
         breakMin,
         autoStartBreak,
-        endActionMode,
-        endActionVideo,
+        autoPinAfterFocus,
     ]);
 
     const dirty =
         focusMin * 60 !== pomo.focusDurationSeconds ||
         breakMin * 60 !== pomo.breakDurationSeconds ||
         autoStartBreak !== pomo.autoStartBreak ||
-        autoPinAfterFocus !== pomo.autoPinAfterFocus ||
-        endActionMode !== pomo.endActionMode ||
-        !sameEndActionVideo(endActionVideo, pomo.endActionVideo);
-    const hasMissingCustomVideo =
-        endActionMode === 'playVideo' &&
-        endActionVideo.sourceKind === 'custom' &&
-        !endActionVideo.customVideoPath;
-    const canApply = dirty && !hasMissingCustomVideo;
+        autoPinAfterFocus !== pomo.autoPinAfterFocus;
+    const canApply = dirty;
 
     const apply = useCallback(() => {
         if (!canApply) return;
@@ -241,9 +202,6 @@ function PomodoroTab({ onApplyStateChange }: {
             focusSeconds !== pomo.focusDurationSeconds ||
             breakSeconds !== pomo.breakDurationSeconds ||
             autoStartBreak !== pomo.autoStartBreak;
-        const endActionChanged =
-            endActionMode !== pomo.endActionMode ||
-            !sameEndActionVideo(endActionVideo, pomo.endActionVideo);
         const autoPinAfterFocusChanged = autoPinAfterFocus !== pomo.autoPinAfterFocus;
 
         if (durationChanged) {
@@ -252,13 +210,7 @@ function PomodoroTab({ onApplyStateChange }: {
         if (autoPinAfterFocusChanged) {
             pomo.setAutoPinAfterFocus(autoPinAfterFocus);
         }
-        if (endActionChanged) {
-            void Promise.resolve(pomo.applyEndActionSettings(endActionMode, endActionVideo))
-                .catch((error) => {
-                    console.warn('[settings] failed to apply Pomodoro end action', error);
-                });
-        }
-    }, [canApply, focusMin, breakMin, autoStartBreak, autoPinAfterFocus, endActionMode, endActionVideo, pomo]);
+    }, [canApply, focusMin, breakMin, autoStartBreak, autoPinAfterFocus, pomo]);
 
     useEffect(() => {
         onApplyStateChange({
@@ -267,44 +219,6 @@ function PomodoroTab({ onApplyStateChange }: {
             apply,
         });
     }, [onApplyStateChange, dirty, canApply, apply]);
-
-    const selectedVideoOption = endActionVideo.sourceKind === 'custom'
-        ? 'custom'
-        : endActionVideo.builtinVideoId;
-    const showVideoOptions = endActionMode === 'playVideo';
-    const showCustomVideoRow = showVideoOptions && endActionVideo.sourceKind === 'custom';
-
-    const customVideoName = endActionVideo.customVideoPath
-        ? fileNameFromPath(endActionVideo.customVideoPath)
-        : '未选择';
-
-    const setVideoOption = (value: string) => {
-        setEndActionMode('playVideo');
-        if (value === 'custom') {
-            setEndActionVideo((current) => ({
-                sourceKind: 'custom',
-                builtinVideoId: current.builtinVideoId || DEFAULT_BUILTIN_POMODORO_VIDEO_ID,
-                customVideoPath: current.customVideoPath,
-            }));
-            return;
-        }
-        setEndActionVideo((current) => ({
-            sourceKind: 'builtin',
-            builtinVideoId: value,
-            customVideoPath: current.customVideoPath,
-        }));
-    };
-
-    const chooseCustomVideo = async () => {
-        const path = await pickCustomWebmPath();
-        if (!path) return;
-        setEndActionMode('playVideo');
-        setEndActionVideo((current) => ({
-            sourceKind: 'custom',
-            builtinVideoId: current.builtinVideoId || DEFAULT_BUILTIN_POMODORO_VIDEO_ID,
-            customVideoPath: path,
-        }));
-    };
 
     return (
         <>
@@ -344,67 +258,10 @@ function PomodoroTab({ onApplyStateChange }: {
                             <Toggle checked={autoPinAfterFocus} onChange={setAutoPinAfterFocus} ariaLabel="自动制定" />
                         </div>
 
-                        {/* pomoEndAction I6SsL5: 计时结束提示 → Dropdown */}
-                        <div className="card pomo-row">
-                            <span className="pomo-row-label">计时结束提示</span>
-                            <select
-                                className="dropdown dropdown-fit"
-                                aria-label="计时结束提示"
-                                value={endActionMode}
-                                onChange={(e) => setEndActionMode(e.currentTarget.value as PomodoroEndActionMode)}
-                            >
-                                <option value="topWindow">弹窗到顶部</option>
-                                <option value="playVideo">播放视频</option>
-                            </select>
-                        </div>
-
-                        {/* pomoVideoPath WSnlp: enabled:false → 设计稿收起，不渲染 */}
-                        {showVideoOptions && (
-                            <div className="card pomo-row">
-                                <span className="pomo-row-label">视频选项</span>
-                                <select
-                                    className="dropdown dropdown-fit"
-                                    aria-label="视频选项"
-                                    value={selectedVideoOption}
-                                    onChange={(e) => setVideoOption(e.currentTarget.value)}
-                                >
-                                    {BUILTIN_POMODORO_VIDEOS.map((video) => (
-                                        <option key={video.id} value={video.id}>{video.name}</option>
-                                    ))}
-                                    <option value="custom">自定义视频</option>
-                                </select>
-                            </div>
-                        )}
-
-                        {/* pomoVideoCustom Jvg0I: 自定义视频文件 → 状态文字 + 文件夹图标 */}
-                        {showCustomVideoRow && (
-                            <button
-                                className="card pomo-row pomo-row-button"
-                                type="button"
-                                aria-label="选择自定义视频"
-                                onClick={() => { void chooseCustomVideo(); }}
-                            >
-                                <span className="pomo-row-label">自定义视频文件</span>
-                                <span className="pomo-row-right">
-                                    <span className={`pomo-row-value ${endActionVideo.customVideoPath ? 'pomo-row-value-link' : 'pomo-row-value-muted'}`}>
-                                        {customVideoName}
-                                    </span>
-                                    <FolderIcon />
-                                </span>
-                            </button>
-                        )}
                     </div>
                 </div>
             </div>
         </>
-    );
-}
-
-function sameEndActionVideo(a: PomodoroEndActionVideo, b: PomodoroEndActionVideo): boolean {
-    return (
-        a.sourceKind === b.sourceKind &&
-        a.builtinVideoId === b.builtinVideoId &&
-        a.customVideoPath === b.customVideoPath
     );
 }
 
@@ -777,28 +634,6 @@ function GlobalTab() {
                     </div>
                 </div>
 
-                <div className="card">
-                    <div className="card-row">
-                        <span className="card-label">打卡系统</span>
-                        <Toggle
-                            checked={settings.checkinEnabled}
-                            onChange={settings.setCheckinEnabled}
-                            ariaLabel="打卡系统"
-                        />
-                    </div>
-                </div>
-
-                <div className="card">
-                    <div className="card-row">
-                    <span className="card-label">今日打卡面板</span>
-                    <Toggle
-                        checked={settings.planPanelEnabled}
-                        onChange={settings.setPlanPanelEnabled}
-                        ariaLabel="今日打卡面板"
-                    />
-                    </div>
-                </div>
-
                 <AppUpdateSettingsRow />
 
                 {/* gspBindingKey yjJtt */}
@@ -1093,16 +928,6 @@ function PlusIcon() {
     return (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M5 12h14M12 5v14" />
-        </svg>
-    );
-}
-
-function FolderIcon() {
-    /* lucide `folder` — Pencil YQwLD: 16×16. Color comes from parent via currentColor;
-     * see .pomo-row-right (color: var(--text-secondary)) */
-    return (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />
         </svg>
     );
 }

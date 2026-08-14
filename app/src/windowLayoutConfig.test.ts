@@ -83,7 +83,7 @@ describe('main window fit-panel layout', () => {
 
         expect(source).toMatch(/const MAIN_W:\s*f64\s*=\s*window_helpers::MAIN_PANEL_BASE_WIDTH/);
         expect(source).toMatch(/const MAIN_H:\s*f64\s*=\s*window_helpers::MAIN_PANEL_BASE_HEIGHT/);
-        expect(source).toMatch(/const CHECKIN_EDITOR_MIN_W:\s*f64\s*=\s*360\.0/);
-        expect(source).toMatch(/const CHECKIN_EDITOR_MIN_H:\s*f64\s*=\s*420\.0/);
+        expect(source).toMatch(/const SETTINGS_MIN_W:\s*f64\s*=\s*360\.0/);
+        expect(source).toMatch(/const SETTINGS_MIN_H:\s*f64\s*=\s*320\.0/);
     });
 });

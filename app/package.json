@@ -9,11 +9,6 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "release:updater": "node scripts/prepare-updater-release.mjs",
-    "video-runtime:lock": "node scripts/prepare-video-runtime.mjs lock",
-    "video-runtime:prepare": "node scripts/prepare-video-runtime.mjs prepare",
-    "video-runtime:verify": "node scripts/prepare-video-runtime.mjs verify",
-    "video-runtime:verify-build": "node scripts/self-contained-video-build.mjs verify",
-    "build:self-contained": "node scripts/self-contained-video-build.mjs build",
     "test:player-card-visual": "node scripts/compare-player-card.mjs",
     "test": "vitest run",
     "tauri": "tauri"
@@ -21,8 +16,6 @@
   "dependencies": {
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-autostart": "^2.5.1",
-    "@tauri-apps/plugin-dialog": "^2.7.1",
-    "@tauri-apps/plugin-opener": "^2",
     "@tauri-apps/plugin-process": "^2.3.1",
     "@tauri-apps/plugin-store": "^2.4.3",
     "@tauri-apps/plugin-updater": "^2.10.1",

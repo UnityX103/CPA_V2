@@ -8,12 +8,6 @@ import { useBindingKeyStore, type BindingKeyEntry } from '../bindingKey';
 import { useActiveAppStore, type ActiveAppInfo } from '../activeApp';
 import { useAppUpdateStore } from '../appUpdate';
 import {
-    clonePlanTemplate,
-    useCheckinStore,
-    type CheckinPlanTemplate,
-    type DailyCheckinRecord,
-} from '../checkin';
-import {
     BRIDGE_VERSION,
     EVT_STATE,
     EVT_STATE_REQUEST,
@@ -52,29 +46,6 @@ function cloneDangerousChange(change: DangerousChange | null): DangerousChange |
     return change ? { ...change } : null;
 }
 
-function cloneCheckinPlanTemplate(template: CheckinPlanTemplate): CheckinPlanTemplate {
-    return clonePlanTemplate(template);
-}
-
-function cloneDailyCheckinRecord(record: DailyCheckinRecord): DailyCheckinRecord {
-    return {
-        date: record.date,
-        countsByItemId: { ...record.countsByItemId },
-        processedPomodoroEndEventIds: [...record.processedPomodoroEndEventIds],
-    };
-}
-
-function cloneDailyCheckinRecords(
-    records: Record<string, DailyCheckinRecord>,
-): Record<string, DailyCheckinRecord> {
-    return Object.fromEntries(
-        Object.entries(records).map(([date, record]) => [
-            date,
-            cloneDailyCheckinRecord(record),
-        ]),
-    );
-}
-
 function hasIconDataProperty(activeApp: ActiveAppInfo): boolean {
     return Object.prototype.hasOwnProperty.call(activeApp, 'icon_data_url');
 }
@@ -104,8 +75,6 @@ export function applySnapshotToMirrors(snap: BridgeSnapshot): void {
         uiScale: snap.settings.uiScale,
         committedUiScale: snap.settings.committedUiScale,
         autostartEnabled: snap.settings.autostartEnabled,
-        checkinEnabled: snap.settings.checkinEnabled,
-        planPanelEnabled: snap.settings.planPanelEnabled,
         dangerousChange: cloneDangerousChange(snap.settings.dangerousChange),
     });
     usePomodoroStore.setState({
@@ -115,7 +84,6 @@ export function applySnapshotToMirrors(snap: BridgeSnapshot): void {
         autoStartBreak: snap.pomodoro.autoStartBreak,
         autoPinAfterFocus: snap.pomodoro.autoPinAfterFocus,
         endActionMode: snap.pomodoro.endActionMode,
-        endActionVideo: { ...snap.pomodoro.endActionVideo },
     });
     useNetworkStore.setState({
         autoConnect: snap.network.autoConnect,
@@ -144,11 +112,6 @@ export function applySnapshotToMirrors(snap: BridgeSnapshot): void {
         syncedKeyId: snap.bindingKey.syncedKeyId,
     });
     useAppUpdateStore.getState().applySnapshot({ ...snap.appUpdate });
-    useCheckinStore.setState({
-        planTemplate: cloneCheckinPlanTemplate(snap.checkin.planTemplate),
-        dailyRecords: cloneDailyCheckinRecords(snap.checkin.dailyRecords),
-        lastError: snap.checkin.lastError,
-    });
 }
 
 export function useBridgeClient(): boolean {

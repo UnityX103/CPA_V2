@@ -113,28 +113,6 @@ button:focus-visible {
     zoom: var(--app-ui-scale);
 }
 
-.today-checkin-window-root {
-    --app-ui-scale: 1;
-    position: relative;
-    width: fit-content;
-    height: fit-content;
-    padding: 0;
-    overflow: hidden;
-    background: transparent;
-    zoom: var(--app-ui-scale);
-}
-
-.checkin-editor-window-root {
-    --app-ui-scale: 1;
-    position: relative;
-    width: fit-content;
-    height: fit-content;
-    padding: 0;
-    overflow: hidden;
-    background: transparent;
-    zoom: var(--app-ui-scale);
-}
-
 .app-root {
     width: fit-content;
     height: fit-content;

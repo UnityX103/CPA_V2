@@ -1,11 +1,10 @@
-/* SettingsPanel ←→ PUI.pen vnYnS (Unified Settings Panel) + 子面板
+/* SettingsPanel
  * 外壳: 初始窗口 460x440，内容随 settings window 宽度/高度自适应；
- *        WSnlp 视频文件行按设计 enabled:false 直接不渲染。
  * padding 20, gap 16, radius 20, fill #FFFFFF, stroke 1px #F1E5D8
  * head 8QyVE: title (font 18/700) + closeBtn UAbZg
  * body 3kLAl: sidebar(71) + content
  *   sidebar qvEam: width 84, padding [8,0], radius 5, bg #F6F7F8
- *     tabs: padding [10,14], active fill #FFFFFF; video tab A0aFrs
+ *     tabs: padding [10,14], active fill #FFFFFF
  *   content NCXdZ: vertical, contentArea 2RdBk(padding 16) + uspApply EkvuW(absolute, w349 h38)
  *
  * 子面板共用：cardSection radius 16, padding 16, bg #F6F7F8
@@ -87,7 +86,7 @@
     overflow: hidden;
 }
 
-/* sidebar qvEam — 84px 与 PUI.pen 视频编辑栏目 A0aFrs 同步 */
+/* sidebar qvEam */
 .settings-nav {
     width: var(--settings-sidebar-w);
     background: var(--settings-sidebar-bg);
@@ -112,17 +111,6 @@
     line-height: 1;
     box-sizing: border-box;
     white-space: nowrap;
-}
-
-.settings-video-editor-host {
-    display: flex;
-    flex: 1;
-    min-width: 0;
-    min-height: 0;
-}
-
-.settings-video-editor-host[hidden] {
-    display: none;
 }
 
 .settings-tab.active {
@@ -821,7 +809,7 @@
     color: var(--text-secondary);
 }
 
-/* Frjkw 的 fit-content 变体 — pomoEndAction / pomoVideoPath 用的窄 dropdown */
+/* Frjkw 的 fit-content 变体 */
 .dropdown-fit { width: auto; }
 
 /* online tab root must position the overlay */

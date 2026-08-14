@@ -2,27 +2,6 @@ import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
 const DEFAULT_FILE_PATH = join(process.cwd(), 'data', 'user-data.json');
-const WEEKDAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
-const CHECKIN_ITEM_ICONS = new Set([
-    'activity',
-    'dumbbell',
-    'bookOpen',
-    'droplet',
-    'listChecks',
-    'sparkle',
-    'coffee',
-    'moon',
-    'sun',
-    'leaf',
-    'music',
-    'pencil',
-    'target',
-    'flame',
-    'heart',
-    'apple',
-    'clock',
-    'meditation'
-]);
 
 export class UserDataStoreError extends Error
 {
@@ -155,8 +134,7 @@ function normalizeSnapshot(value)
         settings: normalizeSettings(value.settings),
         appUpdate: normalizeAppUpdate(value.appUpdate),
         network: normalizeNetwork(value.network),
-        bindingKey: normalizeBindingKey(value.bindingKey),
-        checkin: normalizeCheckin(value.checkin)
+        bindingKey: normalizeBindingKey(value.bindingKey)
     };
 }
 
@@ -166,25 +144,15 @@ function normalizePomodoro(value)
     {
         throw new UserDataStoreError('INVALID_USER_DATA', '番茄设置缺失');
     }
-    const endActionMode = value.endActionMode === 'topWindow' || value.endActionMode === 'playVideo'
-        ? value.endActionMode
-        : null;
-    if (!endActionMode || !value.endActionVideo || typeof value.endActionVideo !== 'object')
-    {
-        throw new UserDataStoreError('INVALID_USER_DATA', '番茄结束动作不正确');
-    }
-    const sourceKind = value.endActionVideo.sourceKind === 'custom' ? 'custom' : 'builtin';
     return {
         focusDurationSeconds: normalizePositiveInteger(value.focusDurationSeconds),
         breakDurationSeconds: normalizeNonNegativeInteger(value.breakDurationSeconds),
         totalRounds: normalizePositiveInteger(value.totalRounds),
         autoStartBreak: Boolean(value.autoStartBreak),
-        endActionMode,
-        endActionVideo: {
-            sourceKind,
-            builtinVideoId: clampString(value.endActionVideo.builtinVideoId, 128),
-            customVideoPath: clampString(value.endActionVideo.customVideoPath, 1024)
-        }
+        autoPinAfterFocus: typeof value.autoPinAfterFocus === 'boolean'
+            ? value.autoPinAfterFocus
+            : true,
+        endActionMode: 'topWindow'
     };
 }
 
@@ -294,105 +262,6 @@ function normalizeBindingInput(value)
     return null;
 }
 
-function normalizeCheckin(value)
-{
-    if (!value || typeof value !== 'object')
-    {
-        throw new UserDataStoreError('INVALID_USER_DATA', '计划缺失');
-    }
-    return {
-        weeklyPlan: normalizeWeeklyPlan(value.weeklyPlan),
-        dailyRecords: normalizeDailyRecords(value.dailyRecords)
-    };
-}
-
-function normalizeWeeklyPlan(value)
-{
-    if (!value || typeof value !== 'object' || !value.days || typeof value.days !== 'object')
-    {
-        throw new UserDataStoreError('INVALID_USER_DATA', '周计划格式不正确');
-    }
-    const days = {};
-    for (const day of WEEKDAYS)
-    {
-        days[day] = normalizeDayPlan(value.days[day]);
-    }
-    return {
-        weekStartDate: clampString(value.weekStartDate, 32),
-        carryToNextWeek: Boolean(value.carryToNextWeek),
-        days
-    };
-}
-
-function normalizeDayPlan(value)
-{
-    if (!value || typeof value !== 'object')
-    {
-        throw new UserDataStoreError('INVALID_USER_DATA', '日计划格式不正确');
-    }
-    if (value.kind === 'inherit' || value.kind === 'rest') return { kind: value.kind };
-    if (value.kind !== 'items' || !Array.isArray(value.items))
-    {
-        throw new UserDataStoreError('INVALID_USER_DATA', '日计划项目格式不正确');
-    }
-    return { kind: 'items', items: value.items.map(normalizeCheckinItem) };
-}
-
-function normalizeCheckinItem(value)
-{
-    if (!value || typeof value !== 'object')
-    {
-        throw new UserDataStoreError('INVALID_USER_DATA', '计划项格式不正确');
-    }
-    if (value.type !== 'manual' && value.type !== 'pomodoroFocus')
-    {
-        throw new UserDataStoreError('INVALID_USER_DATA', '计划项类型不正确');
-    }
-    const icon = typeof value.icon === 'string' && CHECKIN_ITEM_ICONS.has(value.icon)
-        ? value.icon
-        : undefined;
-    return stripUndefinedFields({
-        id: clampString(value.id, 128),
-        title: clampString(value.title, 128),
-        type: value.type,
-        targetCount: normalizePositiveInteger(value.targetCount),
-        icon,
-        perUseAmount: value.perUseAmount === undefined ? undefined : Math.max(0, Number(value.perUseAmount) || 0),
-        perUseUnit: value.perUseUnit === undefined ? undefined : clampString(value.perUseUnit, 32)
-    });
-}
-
-function normalizeDailyRecords(value)
-{
-    if (!value || typeof value !== 'object' || Array.isArray(value))
-    {
-        throw new UserDataStoreError('INVALID_USER_DATA', '打卡记录格式不正确');
-    }
-    return Object.fromEntries(
-        Object.entries(value).map(([date, record]) => [clampString(date, 32), normalizeDailyRecord(record)])
-    );
-}
-
-function normalizeDailyRecord(value)
-{
-    if (!value || typeof value !== 'object' || !value.countsByItemId || typeof value.countsByItemId !== 'object')
-    {
-        throw new UserDataStoreError('INVALID_USER_DATA', '打卡记录格式不正确');
-    }
-    return {
-        date: clampString(value.date, 32),
-        countsByItemId: Object.fromEntries(
-            Object.entries(value.countsByItemId).map(([id, count]) => [
-                clampString(id, 128),
-                Math.max(0, Number.isFinite(count) ? Number(count) : 0)
-            ])
-        ),
-        processedPomodoroEndEventIds: Array.isArray(value.processedPomodoroEndEventIds)
-            ? value.processedPomodoroEndEventIds.filter(Number.isInteger)
-            : []
-    };
-}
-
 function normalizePositiveInteger(value)
 {
     if (!Number.isInteger(value) || value < 1)
@@ -423,11 +292,6 @@ function clampNumber(value, min, max)
 function clampString(value, maxLength)
 {
     return typeof value === 'string' ? value.slice(0, maxLength) : '';
-}
-
-function stripUndefinedFields(value)
-{
-    return Object.fromEntries(Object.entries(value).filter(([, item]) => item !== undefined));
 }
 
 function cloneSnapshot(snapshot)

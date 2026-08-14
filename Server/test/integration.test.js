@@ -97,30 +97,14 @@ function validUserDataPayload()
             breakDurationSeconds: 300,
             totalRounds: 4,
             autoStartBreak: false,
-            endActionMode: 'playVideo',
-            endActionVideo: { sourceKind: 'builtin', builtinVideoId: 'default', customVideoPath: '' }
+            autoPinAfterFocus: true,
+            endActionMode: 'topWindow'
         },
         settings: {
             uiScale: 1,
             showActiveAppWindowTitle: true,
             autostartEnabled: false,
             autoPinOnFocusEnd: true
-        },
-        checkin: {
-            weeklyPlan: {
-                weekStartDate: '2026-05-18',
-                carryToNextWeek: true,
-                days: {
-                    mon: { kind: 'items', items: [] },
-                    tue: { kind: 'inherit' },
-                    wed: { kind: 'inherit' },
-                    thu: { kind: 'inherit' },
-                    fri: { kind: 'inherit' },
-                    sat: { kind: 'inherit' },
-                    sun: { kind: 'rest' }
-                }
-            },
-            dailyRecords: {}
         }
     };
 }

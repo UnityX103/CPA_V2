@@ -4,7 +4,6 @@ import {
     cloudAccountDataKey,
     hydrateCloudAccountData,
 } from './cloudAccountData';
-import { useCheckinStore } from './checkin';
 import { useNetworkStore } from './network';
 import { usePomodoroStore } from './pomodoro';
 import { useSettingsStore } from './settings';
@@ -30,7 +29,6 @@ export function useCloudAccountSync(opts: { enabled?: boolean } = {}) {
             appUpdate: useAppUpdateStore,
             network: useNetworkStore,
             bindingKey: useBindingKeyStore,
-            checkin: useCheckinStore,
         };
 
         const clearTimer = () => {
@@ -101,9 +99,7 @@ export function useCloudAccountSync(opts: { enabled?: boolean } = {}) {
                 s.breakDurationSeconds !== p.breakDurationSeconds ||
                 s.totalRounds !== p.totalRounds ||
                 s.autoStartBreak !== p.autoStartBreak ||
-                s.autoPinAfterFocus !== p.autoPinAfterFocus ||
-                s.endActionMode !== p.endActionMode ||
-                s.endActionVideo !== p.endActionVideo
+                s.autoPinAfterFocus !== p.autoPinAfterFocus
             ) {
                 saveLocalNow();
                 scheduleSave();
@@ -138,13 +134,6 @@ export function useCloudAccountSync(opts: { enabled?: boolean } = {}) {
             }
         });
 
-        const unsubCheckin = useCheckinStore.subscribe((s, p) => {
-            if (s.planTemplate !== p.planTemplate || s.dailyRecords !== p.dailyRecords) {
-                saveLocalNow();
-                scheduleSave();
-            }
-        });
-
         return () => {
             clearTimer();
             unsubNetwork();
@@ -152,7 +141,6 @@ export function useCloudAccountSync(opts: { enabled?: boolean } = {}) {
             unsubSettings();
             unsubAppUpdate();
             unsubBindingKey();
-            unsubCheckin();
         };
     }, [enabled]);
 }

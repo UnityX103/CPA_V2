@@ -32,12 +32,8 @@ function validSnapshot(overrides = {})
             breakDurationSeconds: 300,
             totalRounds: 4,
             autoStartBreak: false,
-            endActionMode: 'playVideo',
-            endActionVideo: {
-                sourceKind: 'builtin',
-                builtinVideoId: 'default',
-                customVideoPath: ''
-            }
+            autoPinAfterFocus: true,
+            endActionMode: 'topWindow'
         },
         settings: {
             uiScale: 1,
@@ -63,39 +59,6 @@ function validSnapshot(overrides = {})
                 pressCount: 99
             }],
             syncedKeyId: 'space'
-        },
-        checkin: {
-            weeklyPlan: {
-                weekStartDate: '2026-05-18',
-                carryToNextWeek: true,
-                days: {
-                    mon: {
-                        kind: 'items',
-                        items: [{
-                            id: 'pomodoro-focus',
-                            title: '专注番茄',
-                            type: 'pomodoroFocus',
-                            targetCount: 4,
-                            icon: 'clock',
-                            perUseAmount: 25,
-                            perUseUnit: '分钟'
-                        }]
-                    },
-                    tue: { kind: 'inherit' },
-                    wed: { kind: 'inherit' },
-                    thu: { kind: 'inherit' },
-                    fri: { kind: 'inherit' },
-                    sat: { kind: 'inherit' },
-                    sun: { kind: 'rest' }
-                }
-            },
-            dailyRecords: {
-                '2026-05-21': {
-                    date: '2026-05-21',
-                    countsByItemId: { 'pomodoro-focus': 2 },
-                    processedPomodoroEndEventIds: [1, 2]
-                }
-            }
         },
         ...overrides
     };

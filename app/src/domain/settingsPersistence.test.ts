@@ -26,8 +26,6 @@ describe('settingsPersistence', () => {
             uiScale: 1.75,
             [obsoleteActiveTitleKey]: false,
             autostartEnabled: true,
-            checkinEnabled: false,
-            planPanelEnabled: false,
             [obsoleteAutoPinKey]: false,
         });
         const { loadPersistedSettings } = await import('./settingsPersistence');
@@ -35,20 +33,16 @@ describe('settingsPersistence', () => {
         await expect(loadPersistedSettings()).resolves.toEqual({
             uiScale: 1.75,
             autostartEnabled: true,
-            checkinEnabled: false,
-            planPanelEnabled: false,
         });
     });
 
-    it('defaults missing autostartEnabled, checkinEnabled, and planPanelEnabled for older v1 settings', async () => {
+    it('defaults missing autostartEnabled for older v1 settings', async () => {
         store.get.mockResolvedValue({ v: 1, uiScale: 1.75 });
         const { loadPersistedSettings } = await import('./settingsPersistence');
 
         await expect(loadPersistedSettings()).resolves.toEqual({
             uiScale: 1.75,
             autostartEnabled: false,
-            checkinEnabled: false,
-            planPanelEnabled: false,
         });
     });
 
@@ -65,32 +59,6 @@ describe('settingsPersistence', () => {
             uiScale: 1.75,
             [obsoleteActiveTitleKey]: true,
             autostartEnabled: 'yes',
-            checkinEnabled: true,
-        });
-        const { loadPersistedSettings } = await import('./settingsPersistence');
-
-        await expect(loadPersistedSettings()).resolves.toBeNull();
-    });
-
-    it('ignores malformed checkin settings', async () => {
-        store.get.mockResolvedValue({
-            v: 1,
-            uiScale: 1.75,
-            autostartEnabled: true,
-            checkinEnabled: 'yes',
-        });
-        const { loadPersistedSettings } = await import('./settingsPersistence');
-
-        await expect(loadPersistedSettings()).resolves.toBeNull();
-    });
-
-    it('ignores malformed plan panel settings', async () => {
-        store.get.mockResolvedValue({
-            v: 1,
-            uiScale: 1.75,
-            autostartEnabled: true,
-            checkinEnabled: true,
-            planPanelEnabled: 'yes',
         });
         const { loadPersistedSettings } = await import('./settingsPersistence');
 
@@ -103,16 +71,12 @@ describe('settingsPersistence', () => {
         await savePersistedSettings({
             uiScale: 2,
             autostartEnabled: true,
-            checkinEnabled: false,
-            planPanelEnabled: false,
         });
 
         expect(store.set).toHaveBeenCalledWith('settings', {
             v: 1,
             uiScale: 2,
             autostartEnabled: true,
-            checkinEnabled: false,
-            planPanelEnabled: false,
         });
         expect(store.save).toHaveBeenCalledTimes(1);
     });

@@ -64,7 +64,7 @@ beforeEach(() => {
                     activeApp: {
                         name: 'Rider',
                         bundleId: 'com.jetbrains.rider',
-                        windowTitle: 'Plan.md',
+                        windowTitle: 'Notes.md',
                     },
                     bindingKey: {
                         keyLabel: 'Space',
@@ -88,7 +88,7 @@ describe('RemotePlayerCardApp', () => {
 
         expect(useBridgeClientMock).toHaveBeenCalledTimes(1);
         expect(screen.getByText('远端玩家')).toBeInTheDocument();
-        expect(screen.getByText('Plan.md')).toBeInTheDocument();
+        expect(screen.getByText('Notes.md')).toBeInTheDocument();
         expect(screen.queryByText('本地玩家')).toBeNull();
     });
 

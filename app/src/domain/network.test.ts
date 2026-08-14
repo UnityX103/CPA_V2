@@ -63,14 +63,11 @@ function makeCloudSnapshot(): CloudAccountData {
             totalRounds: 4,
             autoStartBreak: false,
             autoPinAfterFocus: true,
-            endActionMode: 'playVideo',
-            endActionVideo: { sourceKind: 'builtin', builtinVideoId: 'default', customVideoPath: '' },
+            endActionMode: 'topWindow',
         },
         settings: {
             uiScale: 1,
             autostartEnabled: false,
-            checkinEnabled: true,
-            planPanelEnabled: true,
         },
         appUpdate: {
             autoUpdateEnabled: true,
@@ -83,14 +80,6 @@ function makeCloudSnapshot(): CloudAccountData {
             panelEnabled: true,
             entries: [],
             syncedKeyId: null,
-        },
-        checkin: {
-            planTemplate: {
-                schemaVersion: 2,
-                carryToNextWeek: true,
-                items: [],
-            },
-            dailyRecords: {},
         },
     };
 }

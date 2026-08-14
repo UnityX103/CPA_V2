@@ -2,12 +2,9 @@ mod accessibility;
 mod active_app;
 mod key_counter;
 mod scaled_window;
-mod video_editor;
-mod video_files;
 mod window_layout;
 mod window_helpers;
 
-use serde::Serialize;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
@@ -74,141 +71,6 @@ fn get_active_app() -> Option<active_app::ActiveAppInfo> {
     active_app::current_active_app()
 }
 
-#[derive(Debug, Serialize, Clone, Copy)]
-#[serde(rename_all = "camelCase")]
-struct VideoScreenRect {
-    x: f64,
-    y: f64,
-    width: f64,
-    height: f64,
-}
-
-#[derive(Debug, Clone, Copy)]
-struct MatchRect {
-    x: f64,
-    y: f64,
-    width: f64,
-    height: f64,
-}
-
-impl MatchRect {
-    fn from_video_rect(rect: VideoScreenRect) -> Self {
-        Self {
-            x: rect.x,
-            y: rect.y,
-            width: rect.width,
-            height: rect.height,
-        }
-    }
-
-    fn center(&self) -> (f64, f64) {
-        (self.x + self.width / 2.0, self.y + self.height / 2.0)
-    }
-}
-
-fn overlap_area(a: MatchRect, b: MatchRect) -> f64 {
-    let left = a.x.max(b.x);
-    let top = a.y.max(b.y);
-    let right = (a.x + a.width).min(b.x + b.width);
-    let bottom = (a.y + a.height).min(b.y + b.height);
-    let width = (right - left).max(0.0);
-    let height = (bottom - top).max(0.0);
-    width * height
-}
-
-fn contains_point(rect: MatchRect, point: (f64, f64)) -> bool {
-    point.0 >= rect.x
-        && point.0 <= rect.x + rect.width
-        && point.1 >= rect.y
-        && point.1 <= rect.y + rect.height
-}
-
-fn monitor_video_rect(monitor: &tauri::Monitor) -> VideoScreenRect {
-    let position = monitor.position();
-    let size = monitor.size();
-    let scale = monitor.scale_factor();
-    VideoScreenRect {
-        x: position.x as f64 / scale,
-        y: position.y as f64 / scale,
-        width: size.width as f64 / scale,
-        height: size.height as f64 / scale,
-    }
-}
-
-fn monitor_physical_rect(monitor: &tauri::Monitor) -> MatchRect {
-    let position = monitor.position();
-    let size = monitor.size();
-    MatchRect {
-        x: position.x as f64,
-        y: position.y as f64,
-        width: size.width as f64,
-        height: size.height as f64,
-    }
-}
-
-fn best_monitor_rect_for_bounds(
-    bounds: active_app::AppWindowBounds,
-    monitors: &[tauri::Monitor],
-) -> Option<VideoScreenRect> {
-    let target = MatchRect {
-        x: bounds.x,
-        y: bounds.y,
-        width: bounds.width,
-        height: bounds.height,
-    };
-    let target_center = target.center();
-
-    monitors
-        .iter()
-        .map(|monitor| {
-            let physical = monitor_physical_rect(monitor);
-            let logical = MatchRect::from_video_rect(monitor_video_rect(monitor));
-            let physical_score = overlap_area(target, physical)
-                + if contains_point(physical, target_center) {
-                    1.0
-                } else {
-                    0.0
-                };
-            let logical_score = overlap_area(target, logical)
-                + if contains_point(logical, target_center) {
-                    1.0
-                } else {
-                    0.0
-                };
-            (
-                physical_score.max(logical_score),
-                monitor_video_rect(monitor),
-            )
-        })
-        .max_by(|(a, _), (b, _)| a.total_cmp(b))
-        .filter(|(score, _)| *score > 0.0)
-        .map(|(_, rect)| rect)
-}
-
-fn fallback_video_screen_rect(app: &tauri::AppHandle) -> Result<VideoScreenRect, String> {
-    if let Some(main) = app.get_webview_window("main") {
-        if let Some(monitor) = main.current_monitor().map_err(|e| e.to_string())? {
-            return Ok(monitor_video_rect(&monitor));
-        }
-    }
-    let monitor = app
-        .primary_monitor()
-        .map_err(|e| e.to_string())?
-        .ok_or_else(|| "no monitor available".to_string())?;
-    Ok(monitor_video_rect(&monitor))
-}
-
-#[tauri::command]
-fn pomodoro_video_screen_rect(app: tauri::AppHandle) -> Result<VideoScreenRect, String> {
-    let monitors = app.available_monitors().map_err(|e| e.to_string())?;
-    if let Some(bounds) = active_app::current_active_app_window_bounds() {
-        if let Some(rect) = best_monitor_rect_for_bounds(bounds, &monitors) {
-            return Ok(rect);
-        }
-    }
-    fallback_video_screen_rect(&app)
-}
-
 const MAIN_W: f64 = window_helpers::MAIN_PANEL_BASE_WIDTH;
 const MAIN_H: f64 = window_helpers::MAIN_PANEL_BASE_HEIGHT;
 const SETTINGS_W: f64 = 460.0;
@@ -217,12 +79,6 @@ const SETTINGS_MIN_W: f64 = 360.0;
 const SETTINGS_MIN_H: f64 = 320.0;
 const INPUT_COUNTER_W: f64 = 128.0;
 const INPUT_COUNTER_H: f64 = 84.0;
-const TODAY_CHECKIN_W: f64 = 278.0;
-const TODAY_CHECKIN_H: f64 = 289.0;
-const CHECKIN_EDITOR_W: f64 = 460.0;
-const CHECKIN_EDITOR_H: f64 = 898.0;
-const CHECKIN_EDITOR_MIN_W: f64 = 360.0;
-const CHECKIN_EDITOR_MIN_H: f64 = 420.0;
 
 /// 计算设置窗口在主窗口所在 monitor 的中心位置（物理像素）。
 /// 多显示器下保证设置窗弹在用户当前屏，而非系统主屏。
@@ -252,8 +108,6 @@ fn window_layout_min_size(label: &str) -> Option<(f64, f64)> {
         "main" => Some((MAIN_W, MAIN_H)),
         "settings" => Some((SETTINGS_MIN_W, SETTINGS_MIN_H)),
         "input-counter" => Some((INPUT_COUNTER_W, INPUT_COUNTER_H)),
-        "today-checkin" => Some((TODAY_CHECKIN_W, TODAY_CHECKIN_H)),
-        "checkin-editor" => Some((CHECKIN_EDITOR_MIN_W, CHECKIN_EDITOR_MIN_H)),
         _ => None,
     }
 }
@@ -319,62 +173,6 @@ fn build_input_counter_window_hidden(
     let w = WebviewWindowBuilder::new(app, "input-counter", url)
         .title("按键统计")
         .inner_size(INPUT_COUNTER_W, INPUT_COUNTER_H)
-        .resizable(false)
-        .transparent(true)
-        .decorations(false)
-        .shadow(false)
-        .skip_taskbar(true)
-        .visible(false)
-        .always_on_top(false)
-        .build()?;
-    window_helpers::install_first_mouse_only(&w);
-
-    let w_for_hide = w.clone();
-    w.on_window_event(move |event| {
-        if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-            api.prevent_close();
-            let _ = w_for_hide.hide();
-        }
-    });
-
-    Ok(w)
-}
-
-fn build_today_checkin_window(
-    app: &tauri::AppHandle,
-) -> Result<tauri::WebviewWindow, tauri::Error> {
-    let url = WebviewUrl::App("index.html?window=today-checkin".into());
-    let w = WebviewWindowBuilder::new(app, "today-checkin", url)
-        .title("今日打卡")
-        .inner_size(TODAY_CHECKIN_W, TODAY_CHECKIN_H)
-        .resizable(false)
-        .transparent(true)
-        .decorations(false)
-        .shadow(false)
-        .skip_taskbar(true)
-        .visible(false)
-        .always_on_top(false)
-        .build()?;
-    window_helpers::install_first_mouse_only(&w);
-
-    let w_for_hide = w.clone();
-    w.on_window_event(move |event| {
-        if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-            api.prevent_close();
-            let _ = w_for_hide.hide();
-        }
-    });
-
-    Ok(w)
-}
-
-fn build_checkin_editor_window_hidden(
-    app: &tauri::AppHandle,
-) -> Result<tauri::WebviewWindow, tauri::Error> {
-    let url = WebviewUrl::App("index.html?window=checkin-editor".into());
-    let w = WebviewWindowBuilder::new(app, "checkin-editor", url)
-        .title("打卡计划")
-        .inner_size(CHECKIN_EDITOR_W, CHECKIN_EDITOR_H)
         .resizable(false)
         .transparent(true)
         .decorations(false)
@@ -477,40 +275,9 @@ fn focus_existing_window(app: tauri::AppHandle, label: &str) -> Result<(), Strin
 #[tauri::command]
 async fn focus_app_window(app: tauri::AppHandle, label: String) -> Result<(), String> {
     match label.as_str() {
-        "main" | "checkin-editor" => focus_existing_window(app, label.as_str()),
+        "main" => focus_existing_window(app, label.as_str()),
         _ => Err(format!("{label} window cannot be focused by this command")),
     }
-}
-
-#[tauri::command]
-async fn open_today_checkin_window(app: tauri::AppHandle) -> Result<(), String> {
-    focus_existing_window(app, "today-checkin")
-}
-
-#[tauri::command]
-async fn raise_today_checkin_window(app: tauri::AppHandle) -> Result<(), String> {
-    focus_existing_window(app, "today-checkin")
-}
-
-#[tauri::command]
-async fn open_checkin_editor_window(app: tauri::AppHandle) -> Result<(), String> {
-    focus_existing_window(app, "checkin-editor")
-}
-
-#[tauri::command]
-async fn close_today_checkin_window(app: tauri::AppHandle) -> Result<(), String> {
-    if let Some(w) = app.get_webview_window("today-checkin") {
-        w.hide().map_err(|e| e.to_string())?;
-    }
-    Ok(())
-}
-
-#[tauri::command]
-async fn close_checkin_editor_window(app: tauri::AppHandle) -> Result<(), String> {
-    if let Some(w) = app.get_webview_window("checkin-editor") {
-        w.hide().map_err(|e| e.to_string())?;
-    }
-    Ok(())
 }
 
 #[tauri::command]
@@ -537,10 +304,6 @@ pub fn run() {
     let listener_handle_for_exit = listener_handle.clone();
 
     let app = tauri::Builder::default()
-        .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_fs::init())
-        .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_persisted_scope::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_updater::Builder::new().build())
@@ -558,12 +321,6 @@ pub fn run() {
             if let Err(e) = build_input_counter_window_hidden(app.handle()) {
                 eprintln!("[setup] build_input_counter_window_hidden failed: {e}");
             }
-            if let Err(e) = build_today_checkin_window(app.handle()) {
-                eprintln!("[setup] build_today_checkin_window failed: {e}");
-            }
-            if let Err(e) = build_checkin_editor_window_hidden(app.handle()) {
-                eprintln!("[setup] build_checkin_editor_window_hidden failed: {e}");
-            }
             install_main_window_exit_on_close(app.handle().clone());
             // Focus restorer: 主窗口拖/resize 末尾把 key 还回 settings (若可见)。
             // 配合 build_settings_window_hidden 一起完成 settings 窗口的 lifecycle 闭环。
@@ -571,13 +328,7 @@ pub fn run() {
                 window_helpers::install_main_panel_hit_test(&window);
                 window_helpers::install_focus_restorer(&window, app.handle().clone());
             }
-            for label in [
-                "main",
-                "settings",
-                "input-counter",
-                "today-checkin",
-                "checkin-editor",
-            ] {
+            for label in ["main", "settings", "input-counter"] {
                 window_layout::install_tracking(app.handle().clone(), label);
             }
             // 1Hz 前台 App 推送：用 AtomicBool 让 App 退出时线程能跳出循环
@@ -710,18 +461,12 @@ pub fn run() {
             reassert_window_always_on_top,
             set_input_counter_window_pinned,
             get_active_app,
-            pomodoro_video_screen_rect,
             open_settings_window,
             close_settings_window,
             show_input_counter_window,
             hide_input_counter_window,
             resize_input_counter_window,
             focus_app_window,
-            open_today_checkin_window,
-            raise_today_checkin_window,
-            open_checkin_editor_window,
-            close_today_checkin_window,
-            close_checkin_editor_window,
             resize_scaled_window,
             accessibility::accessibility_status,
             accessibility::open_accessibility_settings,
@@ -729,13 +474,6 @@ pub fn run() {
             accessibility::key_counter_health,
             accessibility::restart_key_counter_listener,
             accessibility::request_accessibility_permission,
-            video_editor::prepare_video_editor_temp_output_path,
-            video_editor::export_video_editor_generated_output,
-            video_editor::probe_video_for_editing,
-            video_editor::video_editor_runtime_status,
-            video_editor::process_background_removed_video,
-            video_files::validate_custom_video_path,
-            video_files::prepare_custom_alpha_video_path,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application");

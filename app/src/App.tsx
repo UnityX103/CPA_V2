@@ -6,7 +6,6 @@ import { useStateSync } from './domain/stateSync';
 import { useActiveAppListener } from './domain/activeApp';
 import { useBindingKeyListener, useBindingKeyStore } from './domain/bindingKey';
 import { useBridgeHost } from './domain/bridge/host';
-import { openTodayCheckinWindow, raiseTodayCheckinWindow, useCheckinWindowController } from './domain/checkinWindow';
 import { useInputCounterWindowController } from './domain/inputCounterWindow';
 import { useRemotePlayerWindowController } from './domain/remotePlayerWindows';
 import { MAIN_WINDOW_BASE_SIZE, useScaledWindowSize } from './domain/scaledWindow';
@@ -14,8 +13,6 @@ import { useAppUpdateStore } from './domain/appUpdate';
 import { MAX_SCALE, MIN_SCALE, useSettingsStore } from './domain/settings';
 import { loadPersistedSettings } from './domain/settingsPersistence';
 import { readAutostartEnabled } from './domain/autostart';
-import { useCheckinStore } from './domain/checkin';
-import { loadPersistedCheckin } from './domain/checkinPersistence';
 import { usePomodoroStore } from './domain/pomodoro';
 import { useNetworkStore } from './domain/network';
 import { useCloudAccountSync } from './domain/cloudAccountSync';
@@ -58,8 +55,6 @@ function buildStartupSettingsSnapshot(
             ? committedUiScale
             : persistedScale,
         autostartEnabled: confirmedAutostartEnabled,
-        checkinEnabled: settings?.checkinEnabled ?? initialSettings.checkinEnabled,
-        planPanelEnabled: settings?.planPanelEnabled ?? initialSettings.planPanelEnabled,
     };
 
     return { snapshot, shouldApplyScale: !scaleChanged };
@@ -70,23 +65,12 @@ function getStartupSettingsState() {
         uiScale,
         committedUiScale,
         autostartEnabled,
-        checkinEnabled,
-        planPanelEnabled,
     } = useSettingsStore.getState();
     return {
         uiScale,
         committedUiScale,
         autostartEnabled,
-        checkinEnabled,
-        planPanelEnabled,
     };
-}
-
-function todayLocalDate(): string {
-    const now = new Date();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    return `${now.getFullYear()}-${month}-${day}`;
 }
 
 function userPreferenceStores(): UserPreferencesStores {
@@ -96,7 +80,6 @@ function userPreferenceStores(): UserPreferencesStores {
         appUpdate: useAppUpdateStore,
         network: useNetworkStore,
         bindingKey: useBindingKeyStore,
-        checkin: useCheckinStore,
     };
 }
 
@@ -164,7 +147,6 @@ export default function App() {
     useRemotePlayerWindowController();
     const uiScale = useSettingsStore((s) => s.uiScale);
     const [localHydrated, setLocalHydrated] = useState(false);
-    useCheckinWindowController(localHydrated);
     useCloudAccountSync({ enabled: localHydrated });
     useScaledWindowSize({
         label: 'main',
@@ -213,17 +195,15 @@ export default function App() {
                 stores.appUpdate.subscribe(scheduleSave),
                 stores.network.subscribe(scheduleSave),
                 stores.bindingKey.subscribe(scheduleSave),
-                stores.checkin.subscribe(scheduleSave),
             );
         }
 
         async function hydrateAndSubscribe() {
             const stores = userPreferenceStores();
             try {
-                const [preferences, legacySettings, legacyCheckin] = await Promise.all([
+                const [preferences, legacySettings] = await Promise.all([
                     loadPersistedUserPreferences(),
                     loadPersistedSettings(),
-                    loadPersistedCheckin(),
                     useAppUpdateStore.getState().hydrate(),
                 ]);
                 if (cancelled) return;
@@ -290,23 +270,9 @@ export default function App() {
                             ? { uiScale: snapshot.uiScale, committedUiScale: snapshot.uiScale }
                             : {}),
                         autostartEnabled: snapshot.autostartEnabled,
-                        checkinEnabled: snapshot.checkinEnabled,
-                        planPanelEnabled: snapshot.planPanelEnabled,
                     });
-                    if (legacyCheckin) {
-                        useCheckinStore.getState().hydrateCheckin({
-                            planTemplate: legacyCheckin.planTemplate,
-                            dailyRecords: legacyCheckin.dailyRecords,
-                        });
-                    }
                 }
 
-                const beforeRollForward = useCheckinStore.getState().planTemplate;
-                useCheckinStore.getState().rollForwardToDate(todayLocalDate());
-                const afterRollForward = useCheckinStore.getState();
-                if (afterRollForward.planTemplate !== beforeRollForward) {
-                    await saveLocalSnapshot(stores);
-                }
                 const savedSnapshot = await saveLocalSnapshot(stores);
                 const network = useNetworkStore.getState();
                 if (network.accountStatus === 'loggedIn' && !network.cloudData) {
@@ -315,12 +281,9 @@ export default function App() {
                 subscribeLocalPreferences(stores);
                 appUpdateCleanup = useAppUpdateStore.getState().startAutomaticChecks();
                 setLocalHydrated(true);
-                void openTodayCheckinWindow().catch((error) => {
-                    console.warn('[checkin] open persistent panel on startup failed', error);
-                });
             } catch (error) {
                 if (!cancelled) {
-                    useCheckinStore.getState().setLastError(String(error));
+                    console.warn('[startup] local preference hydration failed', error);
                     setLocalHydrated(true);
                 }
             }
@@ -343,15 +306,6 @@ export default function App() {
             if (event.fromPhase !== 'focus') return;
             if (event.toPhase === 'break' && event.triggeredBy === 'timer') {
                 usePomodoroStore.getState().setPinnedFromFocusEnd();
-            }
-
-            if (!useSettingsStore.getState().checkinEnabled) return;
-
-            useCheckinStore.getState().applyPomodoroFocusCompletion(todayLocalDate(), event.id);
-            if (event.toPhase === 'break' && event.triggeredBy === 'timer') {
-                void raiseTodayCheckinWindow().catch((error) => {
-                    console.warn('[checkin] raise panel on focus end failed', error);
-                });
             }
         });
     }, []);

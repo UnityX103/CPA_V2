@@ -7,13 +7,6 @@ import { useNetworkStore, type RemotePlayer } from '../network';
 import { useBindingKeyStore, type BindingKeyEntry } from '../bindingKey';
 import { useActiveAppStore, type ActiveAppInfo } from '../activeApp';
 import { useAppUpdateStore, type AppUpdateSnapshot } from '../appUpdate';
-import {
-    clonePlanTemplate,
-    useCheckinStore,
-    type CheckinPlanTemplate,
-    type CheckinState,
-    type DailyCheckinRecord,
-} from '../checkin';
 import { REMOTE_PLAYER_WINDOW_LABELS } from '../remotePlayerWindowLabels';
 import {
     BRIDGE_VERSION,
@@ -84,29 +77,6 @@ function appUpdateSnapshot(s: AppUpdateSnapshot): AppUpdateSnapshot {
     };
 }
 
-function cloneCheckinPlanTemplate(template: CheckinPlanTemplate): CheckinPlanTemplate {
-    return clonePlanTemplate(template);
-}
-
-function cloneDailyCheckinRecord(record: DailyCheckinRecord): DailyCheckinRecord {
-    return {
-        date: record.date,
-        countsByItemId: { ...record.countsByItemId },
-        processedPomodoroEndEventIds: [...record.processedPomodoroEndEventIds],
-    };
-}
-
-function cloneDailyCheckinRecords(
-    records: Record<string, DailyCheckinRecord>,
-): Record<string, DailyCheckinRecord> {
-    return Object.fromEntries(
-        Object.entries(records).map(([date, record]) => [
-            date,
-            cloneDailyCheckinRecord(record),
-        ]),
-    );
-}
-
 export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
     const s = useSettingsStore.getState();
     const p = usePomodoroStore.getState();
@@ -114,15 +84,12 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
     const b = useBindingKeyStore.getState();
     const a = useActiveAppStore.getState();
     const u = useAppUpdateStore.getState();
-    const c = useCheckinStore.getState();
     return {
         v: BRIDGE_VERSION,
         settings: {
             uiScale: s.uiScale,
             committedUiScale: s.committedUiScale,
             autostartEnabled: s.autostartEnabled,
-            checkinEnabled: s.checkinEnabled,
-            planPanelEnabled: s.planPanelEnabled,
             dangerousChange: cloneDangerousChange(s.dangerousChange),
         },
         pomodoro: {
@@ -132,7 +99,6 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
             autoStartBreak: p.autoStartBreak,
             autoPinAfterFocus: p.autoPinAfterFocus,
             endActionMode: p.endActionMode,
-            endActionVideo: { ...p.endActionVideo },
         },
         network: {
             autoConnect: n.autoConnect,
@@ -159,11 +125,6 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
             syncedKeyId: b.syncedKeyId,
         },
         appUpdate: appUpdateSnapshot(u),
-        checkin: {
-            planTemplate: cloneCheckinPlanTemplate(c.planTemplate),
-            dailyRecords: cloneDailyCheckinRecords(c.dailyRecords),
-            lastError: c.lastError,
-        },
     };
 }
 
@@ -179,8 +140,6 @@ export async function applyDispatch(payload: DispatchPayload): Promise<void> {
                 case 'setUiScale': s.setUiScale(...payload.args); return;
                 case 'previewDangerousUiScale': s.previewDangerousUiScale(...payload.args); return;
                 case 'setAutostartEnabled': await s.setAutostartEnabled(...payload.args); return;
-                case 'setCheckinEnabled': s.setCheckinEnabled(...payload.args); return;
-                case 'setPlanPanelEnabled': s.setPlanPanelEnabled(...payload.args); return;
                 case 'applyDangerousChange': s.applyDangerousChange(...payload.args); return;
                 case 'revertDangerousChange': s.revertDangerousChange(...payload.args); return;
             }
@@ -192,9 +151,6 @@ export async function applyDispatch(payload: DispatchPayload): Promise<void> {
             }
             if (payload.action === 'setAutoPinAfterFocus') {
                 usePomodoroStore.getState().setAutoPinAfterFocus(...payload.args);
-            }
-            if (payload.action === 'applyEndActionSettings') {
-                await usePomodoroStore.getState().applyEndActionSettings(...payload.args);
             }
             return;
         }
@@ -234,14 +190,6 @@ export async function applyDispatch(payload: DispatchPayload): Promise<void> {
             }
             return;
         }
-        case 'checkin': {
-            const c = useCheckinStore.getState();
-            switch (payload.action) {
-                case 'setPlanTemplate': c.setPlanTemplate(...payload.args); return;
-                case 'incrementItem': c.incrementItem(...payload.args); return;
-            }
-            return;
-        }
     }
 }
 
@@ -275,8 +223,6 @@ export async function handleDispatchEvent(payload: DispatchEventPayload): Promis
 
 export const MIRROR_WINDOW_LABELS = [
     'settings',
-    'today-checkin',
-    'checkin-editor',
     'input-counter',
     ...REMOTE_PLAYER_WINDOW_LABELS,
 ] as const;
@@ -298,16 +244,12 @@ export function settingsSig(s: {
     uiScale: number;
     committedUiScale: number;
     autostartEnabled: boolean;
-    checkinEnabled: boolean;
-    planPanelEnabled: boolean;
     dangerousChange: unknown;
 }): string {
     return JSON.stringify([
         s.uiScale,
         s.committedUiScale,
         s.autostartEnabled,
-        s.checkinEnabled,
-        s.planPanelEnabled,
         s.dangerousChange,
     ]);
 }
@@ -319,7 +261,6 @@ export function pomoSig(s: {
     autoStartBreak: boolean;
     autoPinAfterFocus: boolean;
     endActionMode: string;
-    endActionVideo: { sourceKind: string; builtinVideoId: string; customVideoPath: string };
 }): string {
     return JSON.stringify([
         s.focusDurationSeconds,
@@ -328,9 +269,6 @@ export function pomoSig(s: {
         s.autoStartBreak,
         s.autoPinAfterFocus,
         s.endActionMode,
-        s.endActionVideo.sourceKind,
-        s.endActionVideo.builtinVideoId,
-        s.endActionVideo.customVideoPath,
     ]);
 }
 
@@ -396,14 +334,6 @@ export function appUpdateSig(s: AppUpdateSnapshot): string {
     ]);
 }
 
-export function checkinSig(s: Pick<CheckinState, 'planTemplate' | 'dailyRecords' | 'lastError'>): string {
-    return JSON.stringify([
-        s.planTemplate,
-        Object.keys(s.dailyRecords).sort().map((date) => [date, s.dailyRecords[date]]),
-        s.lastError,
-    ]);
-}
-
 export function activeAppSig(s: { current: ActiveAppInfo | null }): string {
     if (!s.current) return JSON.stringify(null);
     const { icon_data_url: _iconDataUrl, ...withoutIcon } = s.current;
@@ -443,7 +373,6 @@ export function useBridgeHost(): void {
         let prevNetwork = networkSig(useNetworkStore.getState());
         let prevBindingKey = bindingKeySig(useBindingKeyStore.getState());
         let prevAppUpdate = appUpdateSig(useAppUpdateStore.getState());
-        let prevCheckin = checkinSig(useCheckinStore.getState());
         let prevActiveApp = activeAppSig(useActiveAppStore.getState());
         let prevActiveAppIdentity = activeAppIdentitySig(useActiveAppStore.getState());
         const subs: Array<() => void> = [
@@ -475,12 +404,6 @@ export function useBridgeHost(): void {
                 const sig = appUpdateSig(s);
                 if (sig === prevAppUpdate) return;
                 prevAppUpdate = sig;
-                void sendSnapshot();
-            }),
-            useCheckinStore.subscribe((s) => {
-                const sig = checkinSig(s);
-                if (sig === prevCheckin) return;
-                prevCheckin = sig;
                 void sendSnapshot();
             }),
             useActiveAppStore.subscribe((s) => {

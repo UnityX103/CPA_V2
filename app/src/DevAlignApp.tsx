@@ -1,8 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { PomodoroPanel } from './ui/PomodoroPanel';
 import { PlayerCard } from './ui/PlayerCard';
-import { SettingsPanel } from './ui/SettingsPanel';
-import { useSettingsStore, type SettingsTab } from './domain/settings';
 import type { RemotePlayer } from './domain/network';
 import './styles/global.css';
 import './DevAlignApp.css';
@@ -10,9 +8,7 @@ import './DevAlignApp.css';
 /* DevAlign：本地仅用，把 Pencil 设计稿 PNG 与活组件并排（或叠加）展示。
  * 启动：npm run dev → http://localhost:1420/?window=devalign
  *
- * 注意：tab 子面板（gs1Tv/8Le5R/Pdj9C/v2ZgA）在设计稿里是 572 宽的独立画布；
- * 实际嵌入 vnYnS 后会 reflow 到 349 宽。所以这里只对齐 vnYnS / YRqeB / drqFB 这种
- * 标准实例尺寸的节点；想看子 tab 就在 vnYnS 上切 activeTab。
+ * 这里只对齐 YRqeB / drqFB 这类标准实例尺寸的节点。
  */
 
 interface Target {
@@ -43,15 +39,6 @@ const MOCK_PLAYER: RemotePlayer = {
 
 const TARGETS: Target[] = [
     {
-        id: 'vnYnS',
-        label: '设置面板 vnYnS (460×394→440)',
-        image: 'dev-align/vnYnS.png',
-        width: 460,
-        height: 394,
-        render: () => <SettingsPanel />,
-        note: '设计稿 394；活组件已扩到 440 (WSnlp 收起)，所以下边会比设计稿多 46px。',
-    },
-    {
         id: 'YRqeB',
         label: '番茄面板 YRqeB (233×155)',
         image: 'dev-align/YRqeB.png',
@@ -71,12 +58,6 @@ const TARGETS: Target[] = [
 
 type Mode = 'side' | 'overlay';
 
-const TABS: Array<{ id: SettingsTab; label: string }> = [
-    { id: 'pomodoro', label: '番茄钟' },
-    { id: 'online', label: '联机' },
-    { id: 'global', label: '全局' },
-];
-
 function initialTargetId(): string {
     const target = new URLSearchParams(window.location.search).get('target');
     return TARGETS.some((item) => item.id === target) ? target! : TARGETS[0].id;
@@ -92,11 +73,8 @@ export default function DevAlignApp() {
     const [opacity, setOpacity] = useState(50);
     const [showGrid, setShowGrid] = useState(false);
     const [bg, setBg] = useState<'checker' | 'white' | 'dark'>('checker');
-    const settingsActiveTab = useSettingsStore((s) => s.activeTab);
-    const setSettingsActiveTab = useSettingsStore((s) => s.setActiveTab);
 
     const target = TARGETS.find((t) => t.id === targetId) ?? TARGETS[0];
-    const isSettings = target.id === 'vnYnS';
 
     return (
         <div className="dev-align">
@@ -112,20 +90,6 @@ export default function DevAlignApp() {
                             ))}
                         </select>
                     </label>
-
-                    {isSettings && (
-                        <label className="dev-control">
-                            <span>Tab</span>
-                            <select
-                                value={settingsActiveTab}
-                                onChange={(e) => setSettingsActiveTab(e.currentTarget.value as SettingsTab)}
-                            >
-                                {TABS.map((t) => (
-                                    <option key={t.id} value={t.id}>{t.label}</option>
-                                ))}
-                            </select>
-                        </label>
-                    )}
 
                     <div className="dev-control dev-mode">
                         <button

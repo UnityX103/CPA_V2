@@ -1,18 +1,10 @@
 import { create, type StoreApi, type UseBoundStore } from 'zustand';
-import { dispatch, dispatchConfirmed } from './bridge/dispatch';
+import { dispatch } from './bridge/dispatch';
 import { BRIDGE_VERSION } from './bridge/protocol';
-import { DEFAULT_BUILTIN_POMODORO_VIDEO_ID } from './pomodoroVideos';
 
 export type PomodoroPhase = 'focus' | 'break' | 'completed';
-export type PomodoroEndActionMode = 'topWindow' | 'playVideo';
-export type PomodoroEndActionSourceKind = 'builtin' | 'custom';
+export type PomodoroEndActionMode = 'topWindow';
 export type PomodoroPinSource = 'manual' | 'focusEndAuto' | null;
-
-export interface PomodoroEndActionVideo {
-    sourceKind: PomodoroEndActionSourceKind;
-    builtinVideoId: string;
-    customVideoPath: string;
-}
 
 export interface PomodoroEndEvent {
     id: number;
@@ -35,7 +27,6 @@ export interface PomodoroState {
     autoPinAfterFocus: boolean;
     consecutiveCompletedFocus: number;
     endActionMode: PomodoroEndActionMode;
-    endActionVideo: PomodoroEndActionVideo;
     lastEndEvent: PomodoroEndEvent | null;
 }
 
@@ -55,22 +46,13 @@ export interface PomodoroActions {
         resetProgress: boolean,
         autoStartBreak: boolean,
     ) => void;
-    applyEndActionSettings: (
-        mode: PomodoroEndActionMode,
-        video: PomodoroEndActionVideo,
-    ) => Promise<void> | void;
     tick: (deltaSeconds: number) => void;
 }
 
 const DEFAULT_FOCUS = 25 * 60;
 const DEFAULT_BREAK = 5 * 60;
 const DEFAULT_ROUNDS = 4;
-const DEFAULT_END_ACTION_MODE: PomodoroEndActionMode = 'playVideo';
-const DEFAULT_END_ACTION_VIDEO: PomodoroEndActionVideo = {
-    sourceKind: 'builtin',
-    builtinVideoId: DEFAULT_BUILTIN_POMODORO_VIDEO_ID,
-    customVideoPath: '',
-};
+const DEFAULT_END_ACTION_MODE: PomodoroEndActionMode = 'topWindow';
 
 export type PomodoroStore = UseBoundStore<StoreApi<PomodoroState & PomodoroActions>>;
 
@@ -90,7 +72,6 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
             autoPinAfterFocus: true,
             consecutiveCompletedFocus: 0,
             endActionMode: DEFAULT_END_ACTION_MODE,
-            endActionVideo: DEFAULT_END_ACTION_VIDEO,
             lastEndEvent: null,
             start: () => {},
             pause: () => {},
@@ -114,14 +95,6 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
                     action: 'applySettings',
                     args: [focusSeconds, breakSeconds, totalRounds, resetProgress, autoStartBreak],
                 });
-            },
-            applyEndActionSettings: (mode, video) => {
-                return dispatchConfirmed({
-                    v: BRIDGE_VERSION,
-                    store: 'pomodoro',
-                    action: 'applyEndActionSettings',
-                    args: [mode, video],
-                }, { replyTo: 'settings' });
             },
             tick: () => {},
         }));
@@ -159,6 +132,7 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
                 };
             }
             if (state.currentPhase === 'break') {
+                accumulator = 0;
                 const nextRound = state.currentRound + 1;
                 if (nextRound > state.totalRounds) {
                     return {
@@ -168,7 +142,6 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
                         lastEndEvent: makeEndEvent(state, 'completed', triggeredBy),
                     };
                 }
-                accumulator = 0;
                 return {
                     currentRound: nextRound,
                     currentPhase: 'focus',
@@ -194,7 +167,6 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
             autoPinAfterFocus: true,
             consecutiveCompletedFocus: 0,
             endActionMode: DEFAULT_END_ACTION_MODE,
-            endActionVideo: DEFAULT_END_ACTION_VIDEO,
             lastEndEvent: null,
 
             start: () => {
@@ -274,12 +246,6 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
                         lastEndEvent: null,
                     });
                 }
-            },
-            applyEndActionSettings: (mode, video) => {
-                set({
-                    endActionMode: mode,
-                    endActionVideo: video,
-                });
             },
             tick: (deltaSeconds) => {
                 const state = get();

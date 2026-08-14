@@ -1,5 +1,4 @@
 import { load } from '@tauri-apps/plugin-store';
-import { DEFAULT_CHECKIN_ENABLED, DEFAULT_PLAN_PANEL_ENABLED } from './settingsDefaults';
 
 const STORE_PATH = 'settings.json';
 const STORE_KEY = 'settings';
@@ -7,16 +6,12 @@ const STORE_KEY = 'settings';
 export interface PersistedSettings {
     uiScale: number;
     autostartEnabled: boolean;
-    checkinEnabled: boolean;
-    planPanelEnabled: boolean;
 }
 
 interface PersistedSettingsV1 {
     v: 1;
     uiScale: number;
     autostartEnabled?: boolean;
-    checkinEnabled?: boolean;
-    planPanelEnabled?: boolean;
 }
 
 const obsoleteActiveTitleKey = 'showActiveApp' + 'WindowTitle';
@@ -39,14 +34,6 @@ function isPersistedSettingsV1(value: unknown): value is PersistedSettingsV1 {
             || typeof candidate.autostartEnabled === 'boolean'
         )
         && (
-            candidate.checkinEnabled === undefined
-            || typeof candidate.checkinEnabled === 'boolean'
-        )
-        && (
-            candidate.planPanelEnabled === undefined
-            || typeof candidate.planPanelEnabled === 'boolean'
-        )
-        && (
             obsoleteAutoPinValue === undefined
             || typeof obsoleteAutoPinValue === 'boolean'
         );
@@ -64,8 +51,6 @@ export async function loadPersistedSettings(): Promise<PersistedSettings | null>
         return {
             uiScale: value.uiScale,
             autostartEnabled: value.autostartEnabled ?? false,
-            checkinEnabled: value.checkinEnabled ?? DEFAULT_CHECKIN_ENABLED,
-            planPanelEnabled: value.planPanelEnabled ?? DEFAULT_PLAN_PANEL_ENABLED,
         };
     } catch (err) {
         console.warn('[settingsPersistence] load failed', err);
@@ -80,8 +65,6 @@ export async function savePersistedSettings(settings: PersistedSettings): Promis
             v: 1,
             uiScale: settings.uiScale,
             autostartEnabled: settings.autostartEnabled,
-            checkinEnabled: settings.checkinEnabled,
-            planPanelEnabled: settings.planPanelEnabled,
         } satisfies PersistedSettingsV1);
         await store.save();
     } catch (err) {

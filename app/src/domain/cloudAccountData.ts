@@ -1,5 +1,4 @@
 import type { StoreApi, UseBoundStore } from 'zustand';
-import { clonePlanTemplate, type CheckinState, type DailyCheckinRecord } from './checkin';
 import type { PomodoroActions, PomodoroState } from './pomodoro';
 import type { PersistedSettingsSnapshot, SettingsState } from './settings';
 import type { AppUpdateSnapshot } from './appUpdate';
@@ -29,16 +28,12 @@ type BindingKeyStore = UseBoundStore<StoreApi<{
     syncedKeyId: string | null;
     capturingId: string | null;
 }>>;
-type CheckinStore = UseBoundStore<StoreApi<CheckinState & {
-    hydrateCheckin: (snapshot: Pick<CheckinState, 'planTemplate' | 'dailyRecords'>) => void;
-}>>;
 export interface CloudStores {
     pomodoro: PomodoroStore;
     settings: SettingsStore;
     appUpdate: AppUpdateStore;
     network: NetworkStore;
     bindingKey: BindingKeyStore;
-    checkin: CheckinStore;
 }
 
 export function buildCloudAccountData(stores: CloudStores): CloudAccountData {
@@ -54,70 +49,25 @@ export function hydrateCloudAccountData({ stores, data }: {
     hydrateUserPreferencesSnapshot({ stores, snapshot: normalized });
 }
 
-export function mergeCloudAccountDataConflict({ server, local }: {
+export function mergeCloudAccountDataConflict({ server }: {
     server: CloudAccountData;
     local: CloudAccountData;
 }): CloudAccountData {
     const normalizedServer = normalizeUserPreferencesSnapshot(server) ?? server;
-    const normalizedLocal = normalizeUserPreferencesSnapshot(local) ?? local;
     return {
         ...normalizedServer,
         updatedAt: server.updatedAt,
-        pomodoro: {
-            ...normalizedServer.pomodoro,
-            endActionVideo: { ...normalizedServer.pomodoro.endActionVideo },
-        },
+        pomodoro: { ...normalizedServer.pomodoro },
         settings: { ...normalizedServer.settings },
         appUpdate: { ...normalizedServer.appUpdate },
         network: { ...normalizedServer.network },
         bindingKey: cloneBindingKey(normalizedServer.bindingKey),
-        checkin: {
-            planTemplate: clonePlanTemplate(normalizedServer.checkin.planTemplate),
-            dailyRecords: mergeDailyRecords(
-                normalizedServer.checkin.dailyRecords,
-                normalizedLocal.checkin.dailyRecords,
-            ),
-        },
     };
 }
 
 export function cloudAccountDataKey(data: CloudAccountData): string {
     const { updatedAt: _updatedAt, ...payload } = data;
     return JSON.stringify(payload);
-}
-
-function mergeDailyRecords(
-    server: Record<string, DailyCheckinRecord>,
-    local: Record<string, DailyCheckinRecord>,
-): Record<string, DailyCheckinRecord> {
-    const dates = new Set([...Object.keys(server), ...Object.keys(local)]);
-    const result: Record<string, DailyCheckinRecord> = {};
-    for (const date of dates) {
-        const a = server[date];
-        const b = local[date];
-        if (!a) {
-            result[date] = cloneDailyRecord(b);
-            continue;
-        }
-        if (!b) {
-            result[date] = cloneDailyRecord(a);
-            continue;
-        }
-        const ids = new Set([...Object.keys(a.countsByItemId), ...Object.keys(b.countsByItemId)]);
-        const countsByItemId: Record<string, number> = {};
-        for (const id of ids) {
-            countsByItemId[id] = Math.max(a.countsByItemId[id] ?? 0, b.countsByItemId[id] ?? 0);
-        }
-        result[date] = {
-            date,
-            countsByItemId,
-            processedPomodoroEndEventIds: [
-                ...a.processedPomodoroEndEventIds,
-                ...b.processedPomodoroEndEventIds.filter((id) => !a.processedPomodoroEndEventIds.includes(id)),
-            ],
-        };
-    }
-    return result;
 }
 
 function cloneBindingKey(bindingKey: CloudAccountData['bindingKey']): CloudAccountData['bindingKey'] {
@@ -132,13 +82,5 @@ function cloneBindingKeyEntry(entry: PersistedBindingKeyEntry): PersistedBinding
     return {
         ...entry,
         input: entry.input ? { ...entry.input } : null,
-    };
-}
-
-function cloneDailyRecord(record: DailyCheckinRecord): DailyCheckinRecord {
-    return {
-        date: record.date,
-        countsByItemId: { ...record.countsByItemId },
-        processedPomodoroEndEventIds: [...record.processedPomodoroEndEventIds],
     };
 }

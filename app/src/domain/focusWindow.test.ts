@@ -20,12 +20,4 @@ describe('focusAppWindow', () => {
             label: 'main',
         });
     });
-
-    it('supports the check-in editor window', async () => {
-        await focusAppWindow('checkin-editor');
-
-        expect(invokeMock).toHaveBeenCalledWith('focus_app_window', {
-            label: 'checkin-editor',
-        });
-    });
 });
