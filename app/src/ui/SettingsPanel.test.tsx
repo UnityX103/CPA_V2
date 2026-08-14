@@ -1,7 +1,8 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { usePomodoroStore } from '../domain/pomodoro';
 import { useSettingsStore } from '../domain/settings';
+import { usePresenceStore } from '../domain/presence';
 import { SettingsPanel } from './SettingsPanel';
 
 const invoke = vi.hoisted(() => vi.fn());
@@ -21,6 +22,24 @@ beforeEach(() => {
         autoStartBreak: false,
         autoPinAfterFocus: true,
         endActionMode: 'topWindow',
+    });
+    usePresenceStore.setState({
+        enabled: false,
+        intervalSeconds: 60,
+        presentThresholdSeconds: 60,
+        platform: 'macos',
+        availability: 'disabled',
+        latestObservation: 'unknown',
+        lastSuccessfulAt: null,
+        lastError: null,
+        inFlight: false,
+        generation: 0,
+        candidateDirection: null,
+        candidateFirstAt: null,
+        candidateLastAt: null,
+        candidateCount: 0,
+        observedPomodoroEpoch: 0,
+        notice: null,
     });
 });
 
@@ -42,5 +61,48 @@ describe('SettingsPanel', () => {
 
         expect(screen.getByText('界面缩放')).toBeTruthy();
         expect(screen.getByText('开机自启动')).toBeTruthy();
+    });
+
+    it('renders the local camera automation controls', () => {
+        render(<SettingsPanel />);
+
+        expect(screen.getByRole('button', { name: '摄像头自动控制' }).getAttribute('aria-pressed')).toBe('false');
+        expect(screen.getByText('检测间隔')).toBeTruthy();
+        expect(screen.getByText('在场确认时长')).toBeTruthy();
+        expect(screen.getByText('摄像头状态')).toBeTruthy();
+        expect(screen.getByText('未启用')).toBeTruthy();
+        expect(screen.getByText('最近观测')).toBeTruthy();
+    });
+
+    it('applies camera automation settings through the existing apply flow', async () => {
+        render(<SettingsPanel />);
+
+        fireEvent.click(screen.getByRole('button', { name: '摄像头自动控制' }));
+        const inputs = screen.getAllByRole('spinbutton');
+        fireEvent.change(inputs[2], { target: { value: '30' } });
+        fireEvent.change(inputs[3], { target: { value: '120' } });
+        fireEvent.click(screen.getByRole('button', { name: '应用' }));
+
+        await vi.waitFor(() => {
+            expect(usePresenceStore.getState()).toEqual(expect.objectContaining({
+                enabled: true,
+                intervalSeconds: 30,
+                presentThresholdSeconds: 120,
+            }));
+        });
+    });
+
+    it('requests macOS camera access immediately without dirtying settings', async () => {
+        usePresenceStore.setState({ enabled: true, availability: 'permissionRequired' });
+        invoke.mockResolvedValue({ platform: 'macos', availability: 'ready' });
+        render(<SettingsPanel />);
+
+        expect(screen.queryByRole('button', { name: '应用' })).toBeNull();
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: '授权' }));
+        });
+
+        expect(invoke).toHaveBeenCalledWith('request_camera_presence_access');
+        expect(screen.queryByRole('button', { name: '应用' })).toBeNull();
     });
 });

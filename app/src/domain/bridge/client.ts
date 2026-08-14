@@ -13,6 +13,7 @@ import {
     EVT_STATE_REQUEST,
     type BridgeSnapshot,
 } from './protocol';
+import { usePresenceStore } from '../presence';
 
 const INITIAL_SNAPSHOT_RETRY_MS = 1000;
 
@@ -84,6 +85,16 @@ export function applySnapshotToMirrors(snap: BridgeSnapshot): void {
         autoStartBreak: snap.pomodoro.autoStartBreak,
         autoPinAfterFocus: snap.pomodoro.autoPinAfterFocus,
         endActionMode: snap.pomodoro.endActionMode,
+    });
+    usePresenceStore.setState({
+        enabled: snap.presence.enabled,
+        intervalSeconds: snap.presence.intervalSeconds,
+        presentThresholdSeconds: snap.presence.presentThresholdSeconds,
+        platform: snap.presence.platform,
+        availability: snap.presence.availability,
+        latestObservation: snap.presence.latestObservation,
+        lastSuccessfulAt: snap.presence.lastSuccessfulAt,
+        lastError: snap.presence.lastError,
     });
     useNetworkStore.setState({
         autoConnect: snap.network.autoConnect,

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { usePomodoroStore } from '../pomodoro';
 import { useSettingsStore } from '../settings';
+import { usePresenceStore } from '../presence';
 import { applySnapshotToMirrors } from './client';
 import { BRIDGE_VERSION, type BridgeSnapshot } from './protocol';
 
@@ -15,6 +16,16 @@ function snapshot(): BridgeSnapshot {
             autoStartBreak: true,
             autoPinAfterFocus: false,
             endActionMode: 'topWindow',
+        },
+        presence: {
+            enabled: true,
+            intervalSeconds: 30,
+            presentThresholdSeconds: 90,
+            platform: 'macos',
+            availability: 'ready',
+            latestObservation: 'present',
+            lastSuccessfulAt: 123,
+            lastError: null,
         },
         network: {
             autoConnect: false,
@@ -49,6 +60,7 @@ function snapshot(): BridgeSnapshot {
 
 beforeEach(() => {
     useSettingsStore.setState({ uiScale: 1, committedUiScale: 1, autostartEnabled: false, dangerousChange: null });
+    usePresenceStore.setState({ enabled: false, availability: 'disabled', latestObservation: 'unknown' });
 });
 
 describe('bridge client', () => {
@@ -63,6 +75,13 @@ describe('bridge client', () => {
             focusDurationSeconds: 900,
             autoPinAfterFocus: false,
             endActionMode: 'topWindow',
+        }));
+        expect(usePresenceStore.getState()).toEqual(expect.objectContaining({
+            enabled: true,
+            intervalSeconds: 30,
+            presentThresholdSeconds: 90,
+            availability: 'ready',
+            latestObservation: 'present',
         }));
     });
 

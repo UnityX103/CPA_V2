@@ -22,6 +22,15 @@ import {
 import { useAppUpdateStore, type AppUpdateStatus } from '../domain/appUpdate';
 import { InputBindingBadge } from './InputBindingBadge';
 import { shouldStartWindowDrag } from './windowDrag';
+import {
+    usePresenceStore,
+    type PresenceAvailability,
+    type PresenceObservation,
+} from '../domain/presence';
+import {
+    MAX_PRESENCE_SECONDS,
+    MIN_PRESENCE_SECONDS,
+} from '../domain/presencePersistence';
 import './SettingsPanel.css';
 
 const TABS: Array<{ id: SettingsTab; label: string }> = [
@@ -145,15 +154,22 @@ function PomodoroTab({ onApplyStateChange }: {
     onApplyStateChange: (state: OrdinaryApplyState) => void;
 }) {
     const pomo = usePomodoroStore();
+    const presence = usePresenceStore();
     const [focusMin, setFocusMin] = useState(Math.round(pomo.focusDurationSeconds / 60));
     const [breakMin, setBreakMin] = useState(Math.round(pomo.breakDurationSeconds / 60));
     const [autoStartBreak, setAutoStartBreak] = useState(pomo.autoStartBreak);
     const [autoPinAfterFocus, setAutoPinAfterFocus] = useState(pomo.autoPinAfterFocus);
+    const [presenceEnabled, setPresenceEnabled] = useState(presence.enabled);
+    const [presenceIntervalSeconds, setPresenceIntervalSeconds] = useState(presence.intervalSeconds);
+    const [presenceThresholdSeconds, setPresenceThresholdSeconds] = useState(presence.presentThresholdSeconds);
     const committedRef = useRef({
         focusDurationSeconds: pomo.focusDurationSeconds,
         breakDurationSeconds: pomo.breakDurationSeconds,
         autoStartBreak: pomo.autoStartBreak,
         autoPinAfterFocus: pomo.autoPinAfterFocus,
+        presenceEnabled: presence.enabled,
+        presenceIntervalSeconds: presence.intervalSeconds,
+        presenceThresholdSeconds: presence.presentThresholdSeconds,
     });
 
     useEffect(() => {
@@ -163,11 +179,20 @@ function PomodoroTab({ onApplyStateChange }: {
             breakMin * 60 !== previous.breakDurationSeconds ||
             autoStartBreak !== previous.autoStartBreak ||
             autoPinAfterFocus !== previous.autoPinAfterFocus;
+        const presenceDraftDirty =
+            presenceEnabled !== previous.presenceEnabled
+            || presenceIntervalSeconds !== previous.presenceIntervalSeconds
+            || presenceThresholdSeconds !== previous.presenceThresholdSeconds;
         if (!durationDraftDirty) {
             setFocusMin(Math.round(pomo.focusDurationSeconds / 60));
             setBreakMin(Math.round(pomo.breakDurationSeconds / 60));
             setAutoStartBreak(pomo.autoStartBreak);
             setAutoPinAfterFocus(pomo.autoPinAfterFocus);
+        }
+        if (!presenceDraftDirty) {
+            setPresenceEnabled(presence.enabled);
+            setPresenceIntervalSeconds(presence.intervalSeconds);
+            setPresenceThresholdSeconds(presence.presentThresholdSeconds);
         }
 
         committedRef.current = {
@@ -175,23 +200,35 @@ function PomodoroTab({ onApplyStateChange }: {
             breakDurationSeconds: pomo.breakDurationSeconds,
             autoStartBreak: pomo.autoStartBreak,
             autoPinAfterFocus: pomo.autoPinAfterFocus,
+            presenceEnabled: presence.enabled,
+            presenceIntervalSeconds: presence.intervalSeconds,
+            presenceThresholdSeconds: presence.presentThresholdSeconds,
         };
     }, [
         pomo.focusDurationSeconds,
         pomo.breakDurationSeconds,
         pomo.autoStartBreak,
         pomo.autoPinAfterFocus,
+        presence.enabled,
+        presence.intervalSeconds,
+        presence.presentThresholdSeconds,
         focusMin,
         breakMin,
         autoStartBreak,
         autoPinAfterFocus,
+        presenceEnabled,
+        presenceIntervalSeconds,
+        presenceThresholdSeconds,
     ]);
 
     const dirty =
         focusMin * 60 !== pomo.focusDurationSeconds ||
         breakMin * 60 !== pomo.breakDurationSeconds ||
         autoStartBreak !== pomo.autoStartBreak ||
-        autoPinAfterFocus !== pomo.autoPinAfterFocus;
+        autoPinAfterFocus !== pomo.autoPinAfterFocus ||
+        presenceEnabled !== presence.enabled ||
+        presenceIntervalSeconds !== presence.intervalSeconds ||
+        presenceThresholdSeconds !== presence.presentThresholdSeconds;
     const canApply = dirty;
 
     const apply = useCallback(() => {
@@ -203,6 +240,10 @@ function PomodoroTab({ onApplyStateChange }: {
             breakSeconds !== pomo.breakDurationSeconds ||
             autoStartBreak !== pomo.autoStartBreak;
         const autoPinAfterFocusChanged = autoPinAfterFocus !== pomo.autoPinAfterFocus;
+        const presenceChanged =
+            presenceEnabled !== presence.enabled
+            || presenceIntervalSeconds !== presence.intervalSeconds
+            || presenceThresholdSeconds !== presence.presentThresholdSeconds;
 
         if (durationChanged) {
             pomo.applySettings(focusSeconds, breakSeconds, pomo.totalRounds, true, autoStartBreak);
@@ -210,7 +251,27 @@ function PomodoroTab({ onApplyStateChange }: {
         if (autoPinAfterFocusChanged) {
             pomo.setAutoPinAfterFocus(autoPinAfterFocus);
         }
-    }, [canApply, focusMin, breakMin, autoStartBreak, autoPinAfterFocus, pomo]);
+        if (presenceChanged) {
+            void Promise.resolve(presence.applySettings({
+                enabled: presenceEnabled,
+                intervalSeconds: presenceIntervalSeconds,
+                presentThresholdSeconds: presenceThresholdSeconds,
+            })).catch((error) => {
+                console.warn('[settings] failed to apply presence settings', error);
+            });
+        }
+    }, [
+        canApply,
+        focusMin,
+        breakMin,
+        autoStartBreak,
+        autoPinAfterFocus,
+        pomo,
+        presence,
+        presenceEnabled,
+        presenceIntervalSeconds,
+        presenceThresholdSeconds,
+    ]);
 
     useEffect(() => {
         onApplyStateChange({
@@ -247,6 +308,47 @@ function PomodoroTab({ onApplyStateChange }: {
                             <span className="pomo-row-value pomo-row-value-link">柔和铃声</span>
                         </div>
 
+                        <div className="card pomo-row">
+                            <span className="pomo-row-label">摄像头自动控制</span>
+                            <Toggle
+                                checked={presenceEnabled}
+                                onChange={setPresenceEnabled}
+                                ariaLabel="摄像头自动控制"
+                            />
+                        </div>
+
+                        <div className="card card-grid presence-number-grid">
+                            <div className="card">
+                                <span className="card-label">检测间隔</span>
+                                <NumberSuffix
+                                    value={presenceIntervalSeconds}
+                                    onChange={setPresenceIntervalSeconds}
+                                    min={MIN_PRESENCE_SECONDS}
+                                    max={MAX_PRESENCE_SECONDS}
+                                    suffix="秒"
+                                />
+                            </div>
+                            <div className="card">
+                                <span className="card-label">在场确认时长</span>
+                                <NumberSuffix
+                                    value={presenceThresholdSeconds}
+                                    onChange={setPresenceThresholdSeconds}
+                                    min={MIN_PRESENCE_SECONDS}
+                                    max={MAX_PRESENCE_SECONDS}
+                                    suffix="秒"
+                                />
+                            </div>
+                        </div>
+
+                        <PresenceStatusRows
+                            enabled={presence.enabled}
+                            availability={presence.availability}
+                            observation={presence.latestObservation}
+                            onRequestAccess={() => { void presence.requestAccess(); }}
+                            onRetry={() => { void presence.retry(); }}
+                            onOpenPrivacySettings={() => { void presence.openPrivacySettings(); }}
+                        />
+
                         {/* pomoAutoStartBreak fnZ59: 结束提示音下方 → Toggle */}
                         <div className="card pomo-row">
                             <span className="pomo-row-label">自动开始休息</span>
@@ -260,6 +362,81 @@ function PomodoroTab({ onApplyStateChange }: {
 
                     </div>
                 </div>
+            </div>
+        </>
+    );
+}
+
+function presenceAvailabilityText(enabled: boolean, availability: PresenceAvailability): string {
+    if (!enabled || availability === 'disabled') return '未启用';
+    switch (availability) {
+        case 'permissionRequired': return '需要授权';
+        case 'checking': return '检测中';
+        case 'ready': return '可用';
+        case 'permissionDenied': return '权限被拒绝';
+        case 'noDevice': return '未找到摄像头';
+        case 'busy': return '摄像头被占用';
+        case 'error': return '检测失败';
+        default: return '检测失败';
+    }
+}
+
+function presenceObservationText(observation: PresenceObservation): string {
+    if (observation === 'present') return '在场';
+    if (observation === 'absent') return '离场';
+    return '未知';
+}
+
+function PresenceStatusRows({
+    enabled,
+    availability,
+    observation,
+    onRequestAccess,
+    onRetry,
+    onOpenPrivacySettings,
+}: {
+    enabled: boolean;
+    availability: PresenceAvailability;
+    observation: PresenceObservation;
+    onRequestAccess: () => void;
+    onRetry: () => void;
+    onOpenPrivacySettings: () => void;
+}) {
+    const showRequestAccess = enabled && availability === 'permissionRequired';
+    const showOpenSettings = enabled && availability === 'permissionDenied';
+    const showRetry = enabled && (
+        availability === 'permissionDenied'
+        || availability === 'noDevice'
+        || availability === 'busy'
+        || availability === 'error'
+    );
+
+    return (
+        <>
+            <div className="card pomo-row">
+                <span className="pomo-row-label">摄像头状态</span>
+                <span className="presence-status-right">
+                    <span className="pomo-row-value">{presenceAvailabilityText(enabled, availability)}</span>
+                    {showRequestAccess && (
+                        <button type="button" className="btn presence-inline-action" onClick={onRequestAccess}>
+                            授权
+                        </button>
+                    )}
+                    {showOpenSettings && (
+                        <button type="button" className="btn presence-inline-action" onClick={onOpenPrivacySettings}>
+                            打开系统设置
+                        </button>
+                    )}
+                    {showRetry && (
+                        <button type="button" className="btn presence-inline-action" onClick={onRetry}>
+                            重试
+                        </button>
+                    )}
+                </span>
+            </div>
+            <div className="card pomo-row">
+                <span className="pomo-row-label">最近观测</span>
+                <span className="pomo-row-value">{presenceObservationText(observation)}</span>
             </div>
         </>
     );

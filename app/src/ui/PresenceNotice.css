@@ -1,0 +1,19 @@
+.presence-notice {
+    position: fixed;
+    left: 50%;
+    bottom: 10px;
+    z-index: 95;
+    max-width: calc(100vw - 20px);
+    transform: translateX(-50%);
+    padding: 8px 10px;
+    border: 1px solid var(--panel-stroke);
+    border-radius: 8px;
+    background: var(--panel-bg-strong);
+    box-shadow: 0 6px 18px rgba(64, 44, 28, 0.16);
+    color: var(--text-brand-dark);
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.35;
+    text-align: center;
+    overflow-wrap: anywhere;
+}

@@ -761,6 +761,31 @@
     gap: var(--settings-card-gap); /* 10 */
 }
 
+.presence-number-grid {
+    margin-top: 0;
+}
+
+.presence-status-right {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.presence-inline-action {
+    min-height: 28px;
+    padding: 6px 9px;
+    border: 1px solid var(--panel-stroke);
+    border-radius: var(--btn-radius);
+    background: var(--panel-bg-strong);
+    color: var(--text-brand-dark);
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+}
+
 /* row variant of .card: alignItems center, justifyContent space_between, padding [14,16] */
 .pomo-row {
     flex-direction: row;

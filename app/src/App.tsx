@@ -27,6 +27,9 @@ import {
     savePersistedUserPreferences,
 } from './domain/userPreferencesPersistence';
 import type { CloudAccountData } from './domain/cloudAccountData';
+import { usePresenceMonitor, usePresenceStore } from './domain/presence';
+import { loadPresencePreferences } from './domain/presencePersistence';
+import { PresenceNotice } from './ui/PresenceNotice';
 
 const STARTUP_ACCOUNT_RESTORE_TIMEOUT_MS = 2500;
 
@@ -139,14 +142,15 @@ async function waitForAccountRestoreAttempt(
 }
 
 export default function App() {
+    const [localHydrated, setLocalHydrated] = useState(false);
     useStateSync();
     useActiveAppListener();
     useBindingKeyListener();
     useBridgeHost();
+    usePresenceMonitor({ enabled: localHydrated });
     useInputCounterWindowController();
     useRemotePlayerWindowController();
     const uiScale = useSettingsStore((s) => s.uiScale);
-    const [localHydrated, setLocalHydrated] = useState(false);
     useCloudAccountSync({ enabled: localHydrated });
     useScaledWindowSize({
         label: 'main',
@@ -201,12 +205,14 @@ export default function App() {
         async function hydrateAndSubscribe() {
             const stores = userPreferenceStores();
             try {
-                const [preferences, legacySettings] = await Promise.all([
+                const [preferences, legacySettings, , presencePreferences] = await Promise.all([
                     loadPersistedUserPreferences(),
                     loadPersistedSettings(),
                     useAppUpdateStore.getState().hydrate(),
+                    loadPresencePreferences(),
                 ]);
                 if (cancelled) return;
+                usePresenceStore.getState().hydrate(presencePreferences);
 
                 const initialSettings = getStartupSettingsState();
                 const fallbackAutostartEnabled = preferences?.settings.autostartEnabled
@@ -315,6 +321,7 @@ export default function App() {
             <div className="app-root">
                 <PomodoroPanel />
                 <PomodoroEndActionLayer />
+                <PresenceNotice />
                 <AppUpdateReadyNotice />
             </div>
         </div>

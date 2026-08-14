@@ -24,9 +24,13 @@ base64 = "0.22"
 tauri-plugin-autostart = "2.5.1"
 
 [target.'cfg(target_os = "macos")'.dependencies]
+nokhwa = { version = "0.10.11", default-features = false, features = ["input-avfoundation"] }
 objc2 = "0.6"
 objc2-foundation = { version = "0.3", features = ["NSString", "NSURL", "NSRunLoop", "NSNotification", "NSOperation", "NSDictionary"] }
+objc2-av-foundation = { version = "0.3.2", features = ["AVCaptureDevice", "AVMediaFormat", "block2"] }
+objc2-core-foundation = { version = "0.3.2", features = ["CFData"] }
 objc2-core-graphics = "0.3"
+objc2-vision = { version = "0.3.2", features = ["VNDetectFaceRectanglesRequest", "VNObservation", "VNRequest", "VNRequestHandler", "objc2-core-graphics"] }
 block2 = "0.6"
 dispatch2 = "0.3"
 objc2-app-kit = { version = "0.3", features = ["NSApplication", "NSWorkspace", "NSRunningApplication", "NSView", "NSWindow", "NSResponder", "NSEvent", "NSImage", "NSBitmapImageRep", "NSImageRep", "NSGraphicsContext", "objc2-core-graphics"] }
@@ -34,9 +38,17 @@ core-graphics = "0.25"
 core-foundation = "0.10"
 
 [target.'cfg(target_os = "windows")'.dependencies]
+nokhwa = { version = "0.10.11", default-features = false, features = ["input-msmf"] }
 windows = { version = "0.58", features = [
+    "Foundation",
+    "Foundation_Collections",
+    "Graphics_Imaging",
+    "Media_FaceAnalysis",
+    "Security_Cryptography",
+    "Storage_Streams",
     "Win32_Foundation",
     "Win32_System_Threading",
+    "Win32_System_WinRT",
     "Win32_UI_WindowsAndMessaging",
     "Win32_UI_Controls",
     "Win32_UI_Shell",

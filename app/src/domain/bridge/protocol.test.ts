@@ -19,6 +19,16 @@ describe('bridge protocol', () => {
                 autoPinAfterFocus: true,
                 endActionMode: 'topWindow',
             },
+            presence: {
+                enabled: true,
+                intervalSeconds: 60,
+                presentThresholdSeconds: 90,
+                platform: 'macos',
+                availability: 'ready',
+                latestObservation: 'present',
+                lastSuccessfulAt: 123,
+                lastError: null,
+            },
             network: {
                 autoConnect: false,
                 playerName: '我',
@@ -56,9 +66,13 @@ describe('bridge protocol', () => {
         const payloads: DispatchPayload[] = [
             { v: BRIDGE_VERSION, store: 'settings', action: 'setAutostartEnabled', args: [true] },
             { v: BRIDGE_VERSION, store: 'pomodoro', action: 'applySettings', args: [900, 180, 4, true, false] },
+            { v: BRIDGE_VERSION, store: 'presence', action: 'applySettings', args: [{ enabled: true, intervalSeconds: 60, presentThresholdSeconds: 60 }] },
+            { v: BRIDGE_VERSION, store: 'presence', action: 'requestAccess', args: [] },
+            { v: BRIDGE_VERSION, store: 'presence', action: 'retry', args: [] },
+            { v: BRIDGE_VERSION, store: 'presence', action: 'openPrivacySettings', args: [] },
             { v: BRIDGE_VERSION, store: 'network', action: 'leaveRoom', args: [] },
         ];
 
-        expect(payloads).toHaveLength(3);
+        expect(payloads).toHaveLength(7);
     });
 });

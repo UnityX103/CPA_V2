@@ -4,6 +4,8 @@
 **Status**: Approved by user default policy
 **Scope**: Persist every user-owned CPA_V2 setting locally first, then synchronize the same durable settings to account cloud data when logged in.
 
+> **2026-08-14 privacy amendment**: Camera presence automation settings are device-local and are not part of `UserPreferencesSnapshot` or account cloud data. Camera availability, permission, and enablement are device-specific; syncing an enabled camera setting to another device could activate camera sampling without an explicit decision on that device. The detailed boundary is defined by `2026-08-14-camera-presence-automation-design.md`, which takes precedence for this feature.
+
 ## Goal
 
 CPA_V2 should keep all user-owned settings after app restart even when the user never logs in. When the user is logged in, the same durable settings should sync through the existing account cloud snapshot so another device can restore them. Local persistence is the first write target and offline source of truth; cloud sync is an optional replication layer.
@@ -39,6 +41,9 @@ Do not persist or cloud-sync these volatile or unsafe values:
 - Binding-key press counts, capture-in-progress id, permission state, listener health, listener diagnostics, and listener errors.
 - App update status, current/available versions, release notes, last checked time, download/install state, and restart-ready state.
 - Active app information and icons.
+- Camera presence observations, availability, permission state, errors, candidate evidence, and automation ownership.
+
+Camera presence configuration (`enabled`, sampling interval, and presence threshold) is persisted in a separate device-local store and is intentionally excluded from account cloud sync.
 
 ## Approaches Considered
 

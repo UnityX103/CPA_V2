@@ -336,16 +336,16 @@ pub fn open_accessibility_settings(app: AppHandle) -> Result<(), String> {
 
     #[cfg(target_os = "macos")]
     {
-        let app_for_yield = app.clone();
-        app.run_on_main_thread(move || {
-            set_permission_windows_always_on_top(&app_for_yield, false);
-            macos::deactivate_app();
+        let snapshot = yield_permission_windows(&app)?;
+        if let Err(e) = app.run_on_main_thread(move || {
             if let Err(e) = macos::open_settings() {
                 eprintln!("[accessibility] open settings failed: {e}");
             }
-        })
-        .map_err(|e| e.to_string())?;
-        restore_permission_windows_when_done(app);
+        }) {
+            let _ = restore_permission_windows(&app, snapshot);
+            return Err(e.to_string());
+        }
+        restore_permission_windows_when_done(app, snapshot);
         return Ok(());
     }
     #[cfg(target_os = "windows")]
@@ -382,23 +382,90 @@ use std::time::Duration;
 const PERMISSION_UI_WINDOW_LABELS: &[&str] = &["main", "settings"];
 
 #[cfg(target_os = "macos")]
-fn set_permission_window_always_on_top(app: &AppHandle, label: &str, on_top: bool) {
-    if let Some(window) = app.get_webview_window(label) {
-        if let Err(e) = window.set_always_on_top(on_top) {
-            eprintln!("[accessibility] set_always_on_top({on_top}) for {label} failed: {e}");
+#[derive(Clone, Debug)]
+struct PermissionWindowState {
+    label: &'static str,
+    always_on_top: bool,
+}
+
+#[cfg(target_os = "macos")]
+#[derive(Clone, Debug)]
+pub(crate) struct PermissionWindowSnapshot {
+    main_pin_generation: u64,
+    windows: Vec<PermissionWindowState>,
+}
+
+#[cfg(target_os = "macos")]
+fn should_restore_main(snapshot_generation: u64, current_generation: u64) -> bool {
+    snapshot_generation == current_generation
+}
+
+#[cfg(target_os = "macos")]
+pub(crate) fn yield_permission_windows(
+    app: &AppHandle,
+) -> Result<PermissionWindowSnapshot, String> {
+    let app_for_yield = app.clone();
+    let (tx, rx) = std::sync::mpsc::channel();
+    app.run_on_main_thread(move || {
+        let snapshot = PermissionWindowSnapshot {
+            main_pin_generation: main_pin_generation(),
+            windows: PERMISSION_UI_WINDOW_LABELS
+                .iter()
+                .filter_map(|&label| {
+                    app_for_yield.get_webview_window(label).map(|window| {
+                        let always_on_top = window.is_always_on_top().unwrap_or(false);
+                        if let Err(e) = window.set_always_on_top(false) {
+                            eprintln!(
+                                "[accessibility] set_always_on_top(false) for {label} failed: {e}"
+                            );
+                        }
+                        PermissionWindowState {
+                            label,
+                            always_on_top,
+                        }
+                    })
+                })
+                .collect(),
+        };
+        macos::deactivate_app();
+        let _ = tx.send(snapshot);
+    })
+    .map_err(|e| e.to_string())?;
+    rx.recv()
+        .map_err(|e| format!("permission window yield did not complete: {e}"))
+}
+
+#[cfg(target_os = "macos")]
+pub(crate) fn restore_permission_windows(
+    app: &AppHandle,
+    snapshot: PermissionWindowSnapshot,
+) -> Result<(), String> {
+    let app_for_restore = app.clone();
+    let (tx, rx) = std::sync::mpsc::channel();
+    app.run_on_main_thread(move || {
+        let restore_main = should_restore_main(snapshot.main_pin_generation, main_pin_generation());
+        for state in snapshot.windows {
+            if state.label == "main" && !restore_main {
+                continue;
+            }
+            if let Some(window) = app_for_restore.get_webview_window(state.label) {
+                if let Err(e) = window.set_always_on_top(state.always_on_top) {
+                    eprintln!(
+                        "[accessibility] restore always_on_top({}) for {} failed: {e}",
+                        state.always_on_top, state.label
+                    );
+                }
+            }
         }
-    }
+        let _ = tx.send(());
+    })
+    .map_err(|e| e.to_string())?;
+    rx.recv()
+        .map_err(|e| format!("permission window restore did not complete: {e}"))
 }
 
 #[cfg(target_os = "macos")]
-fn set_permission_windows_always_on_top(app: &AppHandle, on_top: bool) {
-    for label in PERMISSION_UI_WINDOW_LABELS {
-        set_permission_window_always_on_top(app, label, on_top);
-    }
-}
-
-#[cfg(target_os = "macos")]
-fn restore_permission_windows_when_done(app: AppHandle) {
+fn restore_permission_windows_when_done(app: AppHandle, snapshot: PermissionWindowSnapshot) {
     tauri::async_runtime::spawn(async move {
         let deadline = std::time::Instant::now() + Duration::from_secs(30);
         loop {
@@ -412,7 +479,9 @@ fn restore_permission_windows_when_done(app: AppHandle) {
             }
             tokio::time::sleep(Duration::from_millis(200)).await;
         }
-        set_permission_windows_always_on_top(&app, true);
+        if let Err(e) = restore_permission_windows(&app, snapshot) {
+            eprintln!("[accessibility] restore permission windows failed: {e}");
+        }
         PROMPT_IN_FLIGHT.store(false, Ordering::Release);
     });
 }
@@ -472,23 +541,6 @@ fn main_pin_generation() -> u64 {
     MAIN_PIN_GENERATION.load(Ordering::Acquire)
 }
 
-#[cfg(target_os = "macos")]
-fn snapshot_main_pin_state(app: &AppHandle) -> (u64, bool) {
-    loop {
-        let before = main_pin_generation();
-        let was_main_on_top = if let Some(main) = app.get_webview_window("main") {
-            main.is_always_on_top().unwrap_or(false)
-        } else {
-            false
-        };
-        let after = main_pin_generation();
-        if before == after {
-            return (before, was_main_on_top);
-        }
-        std::hint::spin_loop();
-    }
-}
-
 #[tauri::command]
 pub async fn request_accessibility_permission(app: AppHandle) -> Result<(), String> {
     #[cfg(not(target_os = "macos"))]
@@ -507,20 +559,17 @@ pub async fn request_accessibility_permission(app: AppHandle) -> Result<(), Stri
         // main/settings set_always_on_top(false) → deactivate → prompt，
         // 避免权限弹窗或系统设置被当前置顶窗口挡住，同时不覆盖用户在等待期间
         // 对 HApJ0 置顶状态的后续切换。
-        let (pin_generation, was_main_on_top) = snapshot_main_pin_state(&app);
-        let app_for_yield = app.clone();
-        if let Err(e) = app.run_on_main_thread(move || {
-            if main_pin_generation() == pin_generation {
-                if let Some(main) = app_for_yield.get_webview_window("main") {
-                    if let Err(e) = main.set_always_on_top(false) {
-                        eprintln!("[accessibility] set_always_on_top(false) 失败：{e}");
-                    }
-                }
+        let snapshot = match yield_permission_windows(&app) {
+            Ok(snapshot) => snapshot,
+            Err(e) => {
+                PROMPT_IN_FLIGHT.store(false, Ordering::Release);
+                return Err(e);
             }
-            set_permission_window_always_on_top(&app_for_yield, "settings", false);
-            macos::deactivate_app();
+        };
+        if let Err(e) = app.run_on_main_thread(move || {
             macos::prompt();
         }) {
+            let _ = restore_permission_windows(&app, snapshot);
             PROMPT_IN_FLIGHT.store(false, Ordering::Release);
             return Err(e.to_string());
         }
@@ -540,23 +589,10 @@ pub async fn request_accessibility_permission(app: AppHandle) -> Result<(), Stri
                 }
                 tokio::time::sleep(Duration::from_millis(200)).await;
             }
-            let restore_app_for_main = restore_app.clone();
-            if let Err(e) = restore_app.run_on_main_thread(move || {
-                if main_pin_generation() == pin_generation {
-                    if let Some(main) = restore_app_for_main.get_webview_window("main") {
-                        if let Err(e) = main.set_always_on_top(was_main_on_top) {
-                            eprintln!(
-                                "[accessibility] set_always_on_top({was_main_on_top}) 恢复失败：{e}"
-                            );
-                        }
-                    }
-                }
-                set_permission_window_always_on_top(&restore_app_for_main, "settings", true);
-                PROMPT_IN_FLIGHT.store(false, Ordering::Release);
-            }) {
-                eprintln!("[accessibility] restore enqueue failed: {e}");
-                PROMPT_IN_FLIGHT.store(false, Ordering::Release);
+            if let Err(e) = restore_permission_windows(&restore_app, snapshot) {
+                eprintln!("[accessibility] restore permission windows failed: {e}");
             }
+            PROMPT_IN_FLIGHT.store(false, Ordering::Release);
         });
 
         Ok(())
@@ -565,12 +601,18 @@ pub async fn request_accessibility_permission(app: AppHandle) -> Result<(), Stri
 
 #[cfg(all(test, target_os = "macos"))]
 mod tests {
-    use super::PERMISSION_UI_WINDOW_LABELS;
+    use super::{should_restore_main, PERMISSION_UI_WINDOW_LABELS};
 
     #[test]
     fn permission_ui_yield_covers_settings_window() {
         assert!(PERMISSION_UI_WINDOW_LABELS.contains(&"main"));
         assert!(PERMISSION_UI_WINDOW_LABELS.contains(&"settings"));
+    }
+
+    #[test]
+    fn permission_restore_does_not_overwrite_a_newer_main_pin_choice() {
+        assert!(should_restore_main(7, 7));
+        assert!(!should_restore_main(7, 8));
     }
 
     #[test]

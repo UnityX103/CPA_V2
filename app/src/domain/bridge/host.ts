@@ -8,6 +8,7 @@ import { useBindingKeyStore, type BindingKeyEntry } from '../bindingKey';
 import { useActiveAppStore, type ActiveAppInfo } from '../activeApp';
 import { useAppUpdateStore, type AppUpdateSnapshot } from '../appUpdate';
 import { REMOTE_PLAYER_WINDOW_LABELS } from '../remotePlayerWindowLabels';
+import { usePresenceStore } from '../presence';
 import {
     BRIDGE_VERSION,
     EVT_DISPATCH,
@@ -84,6 +85,7 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
     const b = useBindingKeyStore.getState();
     const a = useActiveAppStore.getState();
     const u = useAppUpdateStore.getState();
+    const presence = usePresenceStore.getState();
     return {
         v: BRIDGE_VERSION,
         settings: {
@@ -99,6 +101,16 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
             autoStartBreak: p.autoStartBreak,
             autoPinAfterFocus: p.autoPinAfterFocus,
             endActionMode: p.endActionMode,
+        },
+        presence: {
+            enabled: presence.enabled,
+            intervalSeconds: presence.intervalSeconds,
+            presentThresholdSeconds: presence.presentThresholdSeconds,
+            platform: presence.platform,
+            availability: presence.availability,
+            latestObservation: presence.latestObservation,
+            lastSuccessfulAt: presence.lastSuccessfulAt,
+            lastError: presence.lastError,
         },
         network: {
             autoConnect: n.autoConnect,
@@ -151,6 +163,16 @@ export async function applyDispatch(payload: DispatchPayload): Promise<void> {
             }
             if (payload.action === 'setAutoPinAfterFocus') {
                 usePomodoroStore.getState().setAutoPinAfterFocus(...payload.args);
+            }
+            return;
+        }
+        case 'presence': {
+            const presence = usePresenceStore.getState();
+            switch (payload.action) {
+                case 'applySettings': await presence.applySettings(...payload.args); return;
+                case 'requestAccess': await presence.requestAccess(); return;
+                case 'retry': await presence.retry(); return;
+                case 'openPrivacySettings': await presence.openPrivacySettings(); return;
             }
             return;
         }
@@ -272,6 +294,28 @@ export function pomoSig(s: {
     ]);
 }
 
+export function presenceSig(s: {
+    enabled: boolean;
+    intervalSeconds: number;
+    presentThresholdSeconds: number;
+    platform: string;
+    availability: string;
+    latestObservation: string;
+    lastSuccessfulAt: number | null;
+    lastError: string | null;
+}): string {
+    return JSON.stringify([
+        s.enabled,
+        s.intervalSeconds,
+        s.presentThresholdSeconds,
+        s.platform,
+        s.availability,
+        s.latestObservation,
+        s.lastSuccessfulAt,
+        s.lastError,
+    ]);
+}
+
 export function networkSig(s: {
     autoConnect: boolean;
     playerName: string;
@@ -370,6 +414,7 @@ export function useBridgeHost(): void {
 
         let prevSettings = settingsSig(useSettingsStore.getState());
         let prevPomo = pomoSig(usePomodoroStore.getState());
+        let prevPresence = presenceSig(usePresenceStore.getState());
         let prevNetwork = networkSig(useNetworkStore.getState());
         let prevBindingKey = bindingKeySig(useBindingKeyStore.getState());
         let prevAppUpdate = appUpdateSig(useAppUpdateStore.getState());
@@ -386,6 +431,12 @@ export function useBridgeHost(): void {
                 const sig = pomoSig(s);
                 if (sig === prevPomo) return;
                 prevPomo = sig;
+                void sendSnapshot();
+            }),
+            usePresenceStore.subscribe((s) => {
+                const sig = presenceSig(s);
+                if (sig === prevPresence) return;
+                prevPresence = sig;
                 void sendSnapshot();
             }),
             useNetworkStore.subscribe((s) => {

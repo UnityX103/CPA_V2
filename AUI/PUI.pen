@@ -8,7 +8,7 @@
       "y": 337,
       "name": "Pomodoro Settings Panel",
       "reusable": true,
-      "width": "fill_container(572)",
+      "width": 572,
       "fill": "#FFFFFF00",
       "layout": "vertical",
       "gap": 16,
@@ -151,6 +151,210 @@
             },
             {
               "type": "frame",
+              "id": "jUmlc",
+              "name": "pomoPresenceToggle",
+              "width": 572,
+              "height": 52,
+              "fill": "#F6F7F8",
+              "cornerRadius": 16,
+              "stroke": "#00FF00",
+              "padding": [
+                14,
+                16
+              ],
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "bpSKR",
+                  "name": "pomoPresenceToggleLabel",
+                  "fill": "#1A1A1A",
+                  "content": "摄像头自动控制",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 14,
+                  "fontWeight": "500"
+                },
+                {
+                  "id": "ley1X",
+                  "type": "ref",
+                  "ref": "NGo9f",
+                  "name": "pomoPresenceToggleControl",
+                  "fill": "#6366F1",
+                  "justifyContent": "end",
+                  "enabled": true,
+                  "opacity": 1
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "x3II3",
+              "name": "pomoPresenceGrid",
+              "width": 572,
+              "height": 98,
+              "gap": 12,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "l0RT8",
+                  "name": "pomoPresenceInterval",
+                  "width": 280,
+                  "height": 98,
+                  "fill": "#F6F7F8",
+                  "cornerRadius": 16,
+                  "layout": "vertical",
+                  "gap": 10,
+                  "padding": 16,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "lEBoC",
+                      "name": "pomoPresenceIntervalLabel",
+                      "fill": "#9CA3AF",
+                      "content": "检测间隔",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "id": "T2uA4",
+                      "type": "ref",
+                      "ref": "0cT2B",
+                      "name": "pomoPresenceIntervalInput",
+                      "width": "fill_container",
+                      "enabled": true,
+                      "opacity": 1,
+                      "descendants": {
+                        "OQv34": {
+                          "content": "30"
+                        },
+                        "zpqfK": {
+                          "content": "秒"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "z133k4",
+                  "name": "pomoPresenceThreshold",
+                  "width": 280,
+                  "height": 98,
+                  "fill": "#F6F7F8",
+                  "cornerRadius": 16,
+                  "layout": "vertical",
+                  "gap": 10,
+                  "padding": 16,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "q0416",
+                      "name": "pomoPresenceThresholdLabel",
+                      "fill": "#9CA3AF",
+                      "content": "在场确认时长",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "id": "XkQPa",
+                      "type": "ref",
+                      "ref": "0cT2B",
+                      "name": "pomoPresenceThresholdInput",
+                      "width": "fill_container",
+                      "enabled": true,
+                      "opacity": 1,
+                      "descendants": {
+                        "OQv34": {
+                          "content": "30"
+                        },
+                        "zpqfK": {
+                          "content": "秒"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "jTQXM",
+              "name": "pomoPresenceStatus",
+              "width": 572,
+              "height": 52,
+              "fill": "#F6F7F8",
+              "cornerRadius": 16,
+              "padding": [
+                14,
+                16
+              ],
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "cvara",
+                  "name": "pomoPresenceStatusLabel",
+                  "fill": "#1A1A1A",
+                  "content": "摄像头状态",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 14,
+                  "fontWeight": "500"
+                },
+                {
+                  "type": "text",
+                  "id": "SDrl2",
+                  "name": "pomoPresenceStatusValue",
+                  "fill": "#6366F1",
+                  "content": "可用",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 12,
+                  "fontWeight": "700"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "nVTsG",
+              "name": "pomoPresenceObservation",
+              "width": 572,
+              "height": 52,
+              "fill": "#F6F7F8",
+              "cornerRadius": 16,
+              "padding": [
+                14,
+                16
+              ],
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "x0C8f",
+                  "name": "pomoPresenceObservationLabel",
+                  "fill": "#1A1A1A",
+                  "content": "最近观测",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 14,
+                  "fontWeight": "500"
+                },
+                {
+                  "type": "text",
+                  "id": "jVl13",
+                  "name": "pomoPresenceObservationValue",
+                  "fill": "#6B7280",
+                  "content": "在场",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 12,
+                  "fontWeight": "700"
+                }
+              ]
+            },
+            {
+              "type": "frame",
               "id": "fnZ59",
               "name": "pomoAutoStartBreak",
               "width": "fill_container",
@@ -246,7 +450,7 @@
               "y": 0,
               "name": "pomoVideoPath",
               "enabled": false,
-              "width": "fill_container(0)",
+              "width": 572,
               "fill": "#F6F7F8",
               "cornerRadius": 16,
               "padding": [
@@ -286,70 +490,6 @@
                       "content": "未选择"
                     }
                   }
-                }
-              ]
-            },
-            {
-              "type": "frame",
-              "id": "Jvg0I",
-              "name": "pomoVideoCustom",
-              "width": "fill_container",
-              "fill": "#F6F7F8",
-              "cornerRadius": 16,
-              "padding": [
-                14,
-                16
-              ],
-              "justifyContent": "space_between",
-              "alignItems": "center",
-              "children": [
-                {
-                  "type": "frame",
-                  "id": "n3DQc",
-                  "name": "pomoVideoPathLeft",
-                  "gap": 10,
-                  "alignItems": "center",
-                  "children": [
-                    {
-                      "type": "text",
-                      "id": "odFzx",
-                      "name": "pomoVideoPathLabel",
-                      "fill": "#1A1A1A",
-                      "content": "自定义视频文件",
-                      "fontFamily": "MaokenAssortedSans",
-                      "fontSize": 14,
-                      "fontWeight": "500"
-                    }
-                  ]
-                },
-                {
-                  "type": "frame",
-                  "id": "Tv9l8",
-                  "name": "pomoVideoPathRight",
-                  "gap": 8,
-                  "alignItems": "center",
-                  "children": [
-                    {
-                      "type": "text",
-                      "id": "hRsIx",
-                      "name": "pomoVideoPathState",
-                      "fill": "#9CA3AF",
-                      "content": "未选择",
-                      "fontFamily": "MaokenAssortedSans",
-                      "fontSize": 12,
-                      "fontWeight": "700"
-                    },
-                    {
-                      "type": "icon",
-                      "id": "YQwLD",
-                      "name": "pomoVideoPathIcon",
-                      "width": 16,
-                      "height": 16,
-                      "icon": "folder",
-                      "library": "lucide",
-                      "fill": "#6B7280"
-                    }
-                  ]
                 }
               ]
             }
@@ -4341,35 +4481,6 @@
       "name": "Online Settings Panel / busy",
       "x": 3612,
       "y": 777
-    },
-    {
-      "id": "eMsXC",
-      "type": "ref",
-      "ref": "gs1Tv",
-      "name": "Pomodoro Settings Panel / Video Mode",
-      "x": 2354,
-      "y": 286,
-      "descendants": {
-        "Tp1bH/d5bpi": {
-          "content": "播放视频"
-        },
-        "WSnlp": {
-          "enabled": true
-        },
-        "dELwq/d5bpi": {
-          "content": "funny_cat.mp4"
-        }
-      }
-    },
-    {
-      "type": "note",
-      "id": "Qx6mh",
-      "x": 2965,
-      "y": 537,
-      "name": "pomoVideoCustomConditionNote",
-      "width": 320,
-      "height": 120,
-      "content": "状态说明\n\n本行（自定义视频文件）仅在「视频文件」下拉框选中「自定义」时才显示；选择配置表里其他视频时，此行隐藏。"
     },
     {
       "type": "frame",

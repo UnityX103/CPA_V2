@@ -130,29 +130,33 @@ describe('main window pin configuration', () => {
         expect(settingsBuilder.body).not.toMatch(/WebviewWindowBuilder::new\(app,\s*"settings"[\s\S]*?\.always_on_top\(\s*true\s*\)/);
     });
 
-    it('restores the accessibility prompt yield to the previous pin state, not always true', () => {
+    it('restores permission-window pin states without overwriting a newer main choice', () => {
         const source = accessibilityRs();
-        const snapshot = rustFunction(source, 'snapshot_main_pin_state');
+        const yieldWindows = rustFunction(source, 'yield_permission_windows');
+        const restoreWindows = rustFunction(source, 'restore_permission_windows');
         const request = rustFunction(source, 'request_accessibility_permission');
-        expect(snapshot, 'snapshot_main_pin_state should exist').not.toBeNull();
+        expect(yieldWindows, 'yield_permission_windows should exist').not.toBeNull();
+        expect(restoreWindows, 'restore_permission_windows should exist').not.toBeNull();
         expect(request, 'request_accessibility_permission should exist').not.toBeNull();
-        if (!snapshot || !request) {
+        if (!yieldWindows || !restoreWindows || !request) {
             return;
         }
 
-        expect(snapshot.body).toMatch(/let\s+before\s*=\s*main_pin_generation\(\)\s*;/);
-        expect(snapshot.body).toMatch(/get_webview_window\("main"\)[\s\S]*?is_always_on_top\(\)/);
-        expect(snapshot.body).toMatch(/let\s+after\s*=\s*main_pin_generation\(\)\s*;/);
-        expect(snapshot.body).toMatch(/if\s+before\s*==\s*after[\s\S]*return\s*\(\s*before\s*,\s*was_main_on_top\s*\)/);
-        expect(request.body).toMatch(/let\s*\(\s*pin_generation\s*,\s*was_main_on_top\s*\)\s*=\s*snapshot_main_pin_state\(\s*&app\s*\)\s*;/);
+        expect(source).toMatch(/PERMISSION_UI_WINDOW_LABELS[^=]*=\s*&\["main",\s*"settings"\]/);
+        expect(yieldWindows.body).toMatch(/is_always_on_top\(\)/);
+        expect(yieldWindows.body).toMatch(/\.set_always_on_top\(false\)/);
+        expect(yieldWindows.body).toMatch(/macos::deactivate_app\(\)/);
+        expect(restoreWindows.body).toMatch(/should_restore_main\([\s\S]*main_pin_generation\(\)/);
+        expect(restoreWindows.body).toMatch(/state\.label\s*==\s*"main"\s*&&\s*!restore_main/);
+        expect(restoreWindows.body).toMatch(/\.set_always_on_top\(state\.always_on_top\)/);
+        expect(restoreWindows.body).not.toMatch(/\.set_always_on_top\(\s*(?:true|false)\s*\)/);
+        expect(request.body).toMatch(/yield_permission_windows\(\s*&app\s*\)/);
         const restoreBlock = blockAfter(request.body, 'tauri::async_runtime::spawn(async move');
         expect(restoreBlock, 'accessibility prompt should restore state from its async restore task').not.toBeNull();
         if (!restoreBlock) {
             return;
         }
 
-        expect(restoreBlock).toMatch(/main_pin_generation\(\)\s*==\s*pin_generation/);
-        expect(restoreBlock).toMatch(/\.set_always_on_top\(\s*was_main_on_top\s*\)/);
-        expect(restoreBlock).not.toMatch(/\.\s*set_always_on_top\(\s*(?:true|false)\s*\)/);
+        expect(restoreBlock).toMatch(/restore_permission_windows\(\s*&restore_app,\s*snapshot\s*\)/);
     });
 });

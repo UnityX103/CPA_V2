@@ -1,9 +1,10 @@
 mod accessibility;
 mod active_app;
 mod key_counter;
+mod presence_detection;
 mod scaled_window;
-mod window_layout;
 mod window_helpers;
+mod window_layout;
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -290,6 +291,11 @@ fn resize_scaled_window(
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    if presence_detection::run_sample_helper_if_requested() {
+        return;
+    }
+    presence_detection::prepare_for_run();
+
     let active_app_stop = Arc::new(AtomicBool::new(false));
     let active_app_stop_for_setup = active_app_stop.clone();
     let active_app_stop_for_exit = active_app_stop.clone();
@@ -474,12 +480,17 @@ pub fn run() {
             accessibility::key_counter_health,
             accessibility::restart_key_counter_listener,
             accessibility::request_accessibility_permission,
+            presence_detection::camera_presence_status,
+            presence_detection::request_camera_presence_access,
+            presence_detection::open_camera_privacy_settings,
+            presence_detection::sample_camera_presence,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application");
 
     app.run(move |_handle, event| {
         if matches!(event, RunEvent::ExitRequested { .. } | RunEvent::Exit) {
+            presence_detection::stop_for_exit();
             active_app_stop_for_exit.store(true, Ordering::Relaxed);
             accessibility_stop_for_exit.store(true, Ordering::Relaxed);
             listener_handle_for_exit.stop();

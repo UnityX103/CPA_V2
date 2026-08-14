@@ -1,8 +1,16 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { usePomodoroStore } from '../pomodoro';
+import { usePresenceStore } from '../presence';
 import { useSettingsStore } from '../settings';
 import { BRIDGE_VERSION } from './protocol';
-import { MIRROR_WINDOW_LABELS, applyDispatch, buildSnapshot, pomoSig, settingsSig } from './host';
+import {
+    MIRROR_WINDOW_LABELS,
+    applyDispatch,
+    buildSnapshot,
+    pomoSig,
+    presenceSig,
+    settingsSig,
+} from './host';
 
 beforeEach(() => {
     useSettingsStore.setState({
@@ -19,6 +27,16 @@ beforeEach(() => {
         autoPinAfterFocus: true,
         endActionMode: 'topWindow',
     });
+    usePresenceStore.setState({
+        enabled: false,
+        intervalSeconds: 60,
+        presentThresholdSeconds: 60,
+        platform: 'macos',
+        availability: 'disabled',
+        latestObservation: 'unknown',
+        lastSuccessfulAt: null,
+        lastError: null,
+    });
 });
 
 describe('bridge host', () => {
@@ -26,6 +44,11 @@ describe('bridge host', () => {
         const snapshot = buildSnapshot();
 
         expect(snapshot.pomodoro).toEqual(expect.objectContaining({ endActionMode: 'topWindow' }));
+        expect(snapshot.presence).toEqual(expect.objectContaining({
+            enabled: false,
+            intervalSeconds: 60,
+            availability: 'disabled',
+        }));
     });
 
     it('mirrors only retained fixed windows', () => {
@@ -49,11 +72,33 @@ describe('bridge host', () => {
         }));
     });
 
+    it('routes presence settings to the authoritative store', async () => {
+        const applySettings = vi.fn();
+        usePresenceStore.setState({ applySettings });
+
+        await applyDispatch({
+            v: BRIDGE_VERSION,
+            store: 'presence',
+            action: 'applySettings',
+            args: [{ enabled: true, intervalSeconds: 30, presentThresholdSeconds: 90 }],
+        });
+
+        expect(applySettings).toHaveBeenCalledWith({
+            enabled: true,
+            intervalSeconds: 30,
+            presentThresholdSeconds: 90,
+        });
+    });
+
     it('signatures ignore transient state and include retained preferences', () => {
         const settings = useSettingsStore.getState();
         const pomodoro = usePomodoroStore.getState();
 
         expect(settingsSig(settings)).not.toBe(settingsSig({ ...settings, autostartEnabled: true }));
         expect(pomoSig(pomodoro)).not.toBe(pomoSig({ ...pomodoro, autoPinAfterFocus: false }));
+        expect(presenceSig(usePresenceStore.getState())).not.toBe(presenceSig({
+            ...usePresenceStore.getState(),
+            availability: 'ready',
+        }));
     });
 });

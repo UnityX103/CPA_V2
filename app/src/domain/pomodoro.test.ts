@@ -145,6 +145,107 @@ describe('PomodoroTimerSystem.skip', () => {
     });
 });
 
+describe('Pomodoro presence automation', () => {
+    it('advances a running or paused break into a running focus', () => {
+        for (const isRunning of [true, false]) {
+            const store = freshStore();
+            store.getState().applySettings(60, 30, 2, true, false);
+            store.setState({ currentPhase: 'break', isRunning, remainingSeconds: 20 });
+
+            store.getState().startFocusFromPresence();
+
+            expect(store.getState()).toMatchObject({
+                currentPhase: 'focus',
+                currentRound: 2,
+                remainingSeconds: 60,
+                isRunning: true,
+            });
+            expect(store.getState().lastEndEvent).toMatchObject({
+                fromPhase: 'break',
+                toPhase: 'focus',
+                triggeredBy: 'presence',
+            });
+        }
+    });
+
+    it('completes the final break instead of starting a new set', () => {
+        const store = freshStore();
+        store.getState().applySettings(60, 30, 1, true, false);
+        store.setState({ currentPhase: 'break', isRunning: true, remainingSeconds: 20 });
+
+        store.getState().startFocusFromPresence();
+
+        expect(store.getState()).toMatchObject({
+            currentPhase: 'completed',
+            currentRound: 1,
+            remainingSeconds: 0,
+            isRunning: false,
+        });
+    });
+
+    it('starts only a focus produced by a natural break completion', () => {
+        const store = freshStore();
+        store.getState().applySettings(60, 1, 2, true, false);
+        store.setState({ currentPhase: 'break', isRunning: true, remainingSeconds: 1 });
+        store.getState().tick(1);
+
+        expect(store.getState().presenceAutoStartEligible).toBe(true);
+        store.getState().startFocusFromPresence();
+        expect(store.getState().isRunning).toBe(true);
+
+        store.getState().reset();
+        store.getState().startFocusFromPresence();
+        expect(store.getState().isRunning).toBe(false);
+
+        store.setState({ presenceAutoStartEligible: true });
+        store.getState().pause();
+        store.getState().startFocusFromPresence();
+        expect(store.getState().isRunning).toBe(false);
+    });
+
+    it('pauses and resumes the same focus without creating a completion event', () => {
+        const store = freshStore();
+        store.getState().applySettings(60, 30, 4, true, false);
+        store.getState().start();
+        store.getState().tick(7);
+        const before = store.getState();
+
+        store.getState().pauseFocusFromPresence();
+
+        expect(store.getState()).toMatchObject({
+            currentPhase: 'focus',
+            currentRound: before.currentRound,
+            remainingSeconds: before.remainingSeconds,
+            isRunning: false,
+            presenceOwnedPause: true,
+            lastEndEvent: before.lastEndEvent,
+        });
+
+        store.getState().resumeFocusFromPresence();
+        expect(store.getState()).toMatchObject({
+            currentPhase: 'focus',
+            remainingSeconds: before.remainingSeconds,
+            isRunning: true,
+            presenceOwnedPause: false,
+        });
+    });
+
+    it('manual actions take ownership and prevent presence resume', () => {
+        const store = freshStore();
+        store.getState().start();
+        store.getState().pauseFocusFromPresence();
+        expect(store.getState().presenceOwnedPause).toBe(true);
+
+        store.getState().pause();
+        store.getState().resumeFocusFromPresence();
+        expect(store.getState().isRunning).toBe(false);
+
+        store.getState().start();
+        expect(store.getState().presenceOwnedPause).toBe(false);
+        expect(store.getState().isRunning).toBe(true);
+    });
+});
+
 describe('Pomodoro pin state', () => {
     it('setPinned sets an explicit pin state without toggling', () => {
         const store = freshStore();
