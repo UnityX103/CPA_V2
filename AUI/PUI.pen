@@ -4,8 +4,8 @@
     {
       "type": "frame",
       "id": "gs1Tv",
-      "x": 1741,
-      "y": 337,
+      "x": 2367,
+      "y": 61,
       "name": "Pomodoro Settings Panel",
       "reusable": true,
       "width": 572,
@@ -204,7 +204,7 @@
               "children": [
                 {
                   "type": "frame",
-                  "id": "GzvsT",
+                  "id": "uPInD",
                   "name": "pomoPresenceAuthorizationTop",
                   "width": "fill_container",
                   "height": 30,
@@ -213,14 +213,14 @@
                   "children": [
                     {
                       "type": "frame",
-                      "id": "ErsE8",
+                      "id": "wEA6Z",
                       "name": "pomoPresenceAuthorizationCopy",
                       "gap": 8,
                       "alignItems": "center",
                       "children": [
                         {
                           "type": "text",
-                          "id": "ZnW7n",
+                          "id": "QGplX",
                           "name": "pomoPresenceAuthorizationLabel",
                           "fill": "#8A6D00",
                           "content": "摄像头授权",
@@ -230,7 +230,7 @@
                         },
                         {
                           "type": "text",
-                          "id": "WcTmg",
+                          "id": "r5h11I",
                           "name": "pomoPresenceAuthorizationStatus",
                           "fill": "#8A6D00",
                           "content": "权限被拒绝",
@@ -242,14 +242,14 @@
                     },
                     {
                       "type": "frame",
-                      "id": "rT0W6",
+                      "id": "qHB6D",
                       "name": "pomoPresenceAuthorizationActions",
                       "gap": 6,
                       "alignItems": "center",
                       "children": [
                         {
                           "type": "frame",
-                          "id": "asGnU",
+                          "id": "ZDezk",
                           "name": "pomoPresenceRetryButton",
                           "cornerRadius": 8,
                           "stroke": "#8A6D00",
@@ -263,7 +263,7 @@
                           "children": [
                             {
                               "type": "text",
-                              "id": "TcGIL",
+                              "id": "bjPXK",
                               "name": "pomoPresenceRetryLabel",
                               "fill": "#8A6D00",
                               "content": "重试",
@@ -275,7 +275,7 @@
                         },
                         {
                           "type": "frame",
-                          "id": "Q5zkO",
+                          "id": "eImVx",
                           "name": "pomoPresenceSettingsButton",
                           "cornerRadius": 8,
                           "stroke": "#8A6D00",
@@ -289,7 +289,7 @@
                           "children": [
                             {
                               "type": "text",
-                              "id": "eQ94j",
+                              "id": "X7gZs",
                               "name": "pomoPresenceSettingsLabel",
                               "fill": "#8A6D00",
                               "content": "打开系统设置",
@@ -305,7 +305,7 @@
                 },
                 {
                   "type": "text",
-                  "id": "wpTN6",
+                  "id": "j7WzM",
                   "name": "pomoPresenceAuthorizationDetail",
                   "fill": "#8A6D00",
                   "content": "请在系统设置中允许摄像头访问",
@@ -592,7 +592,7 @@
       "type": "frame",
       "id": "8Le5R",
       "x": 1741,
-      "y": 777,
+      "y": 749,
       "name": "Online Settings Panel",
       "reusable": true,
       "width": "fill_container(572)",
@@ -4111,7 +4111,7 @@
       "type": "frame",
       "id": "vnYnS",
       "x": 1741,
-      "y": -282,
+      "y": -426,
       "name": "Unified Settings Panel",
       "reusable": true,
       "width": 460,
