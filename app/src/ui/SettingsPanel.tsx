@@ -24,13 +24,16 @@ import { InputBindingBadge } from './InputBindingBadge';
 import { shouldStartWindowDrag } from './windowDrag';
 import {
     usePresenceStore,
-    type PresenceAvailability,
     type PresenceObservation,
 } from '../domain/presence';
 import {
     MAX_PRESENCE_SECONDS,
     MIN_PRESENCE_SECONDS,
 } from '../domain/presencePersistence';
+import {
+    presenceAuthorizationView,
+    type PresenceAuthorizationAction,
+} from './presenceAuthorization';
 import './SettingsPanel.css';
 
 const TABS: Array<{ id: SettingsTab; label: string }> = [
@@ -317,6 +320,14 @@ function PomodoroTab({ onApplyStateChange }: {
                             />
                         </div>
 
+                        <PresenceAuthorizationControl
+                            enabled={presence.enabled}
+                            availability={presence.availability}
+                            onRequestAccess={() => { void presence.requestAccess(); }}
+                            onRetry={() => { void presence.retry(); }}
+                            onOpenPrivacySettings={() => { void presence.openPrivacySettings(); }}
+                        />
+
                         <div className="card card-grid presence-number-grid">
                             <div className="card">
                                 <span className="card-label">检测间隔</span>
@@ -340,14 +351,10 @@ function PomodoroTab({ onApplyStateChange }: {
                             </div>
                         </div>
 
-                        <PresenceStatusRows
-                            enabled={presence.enabled}
-                            availability={presence.availability}
-                            observation={presence.latestObservation}
-                            onRequestAccess={() => { void presence.requestAccess(); }}
-                            onRetry={() => { void presence.retry(); }}
-                            onOpenPrivacySettings={() => { void presence.openPrivacySettings(); }}
-                        />
+                        <div className="card pomo-row">
+                            <span className="pomo-row-label">最近观测</span>
+                            <span className="pomo-row-value">{presenceObservationText(presence.latestObservation)}</span>
+                        </div>
 
                         {/* pomoAutoStartBreak fnZ59: 结束提示音下方 → Toggle */}
                         <div className="card pomo-row">
@@ -367,78 +374,60 @@ function PomodoroTab({ onApplyStateChange }: {
     );
 }
 
-function presenceAvailabilityText(enabled: boolean, availability: PresenceAvailability): string {
-    if (!enabled || availability === 'disabled') return '未启用';
-    switch (availability) {
-        case 'permissionRequired': return '需要授权';
-        case 'checking': return '检测中';
-        case 'ready': return '可用';
-        case 'permissionDenied': return '权限被拒绝';
-        case 'noDevice': return '未找到摄像头';
-        case 'busy': return '摄像头被占用';
-        case 'error': return '检测失败';
-        default: return '检测失败';
-    }
-}
-
 function presenceObservationText(observation: PresenceObservation): string {
     if (observation === 'present') return '在场';
     if (observation === 'absent') return '离场';
     return '未知';
 }
 
-function PresenceStatusRows({
+function PresenceAuthorizationControl({
     enabled,
     availability,
-    observation,
     onRequestAccess,
     onRetry,
     onOpenPrivacySettings,
 }: {
     enabled: boolean;
-    availability: PresenceAvailability;
-    observation: PresenceObservation;
+    availability: ReturnType<typeof usePresenceStore.getState>['availability'];
     onRequestAccess: () => void;
     onRetry: () => void;
     onOpenPrivacySettings: () => void;
 }) {
-    const showRequestAccess = enabled && availability === 'permissionRequired';
-    const showOpenSettings = enabled && availability === 'permissionDenied';
-    const showRetry = enabled && (
-        availability === 'permissionDenied'
-        || availability === 'noDevice'
-        || availability === 'busy'
-        || availability === 'error'
-    );
+    const view = presenceAuthorizationView(enabled, availability);
+    const actionHandlers: Record<PresenceAuthorizationAction, () => void> = {
+        requestAccess: onRequestAccess,
+        retry: onRetry,
+        openSettings: onOpenPrivacySettings,
+    };
+    const actionLabels: Record<PresenceAuthorizationAction, string> = {
+        requestAccess: '申请权限',
+        retry: '重试',
+        openSettings: '打开系统设置',
+    };
 
     return (
-        <>
-            <div className="card pomo-row">
-                <span className="pomo-row-label">摄像头状态</span>
-                <span className="presence-status-right">
-                    <span className="pomo-row-value">{presenceAvailabilityText(enabled, availability)}</span>
-                    {showRequestAccess && (
-                        <button type="button" className="btn presence-inline-action" onClick={onRequestAccess}>
-                            授权
-                        </button>
-                    )}
-                    {showOpenSettings && (
-                        <button type="button" className="btn presence-inline-action" onClick={onOpenPrivacySettings}>
-                            打开系统设置
-                        </button>
-                    )}
-                    {showRetry && (
-                        <button type="button" className="btn presence-inline-action" onClick={onRetry}>
-                            重试
-                        </button>
-                    )}
-                </span>
+        <div
+            className={`presence-auth-control presence-auth-${view.tone}`}
+            role="group"
+            aria-label="摄像头授权状态"
+        >
+            <div className="presence-auth-copy" role="status" aria-live="polite">
+                <span className="presence-auth-label">摄像头授权</span>
+                <span className="presence-auth-status">{view.status}</span>
             </div>
-            <div className="card pomo-row">
-                <span className="pomo-row-label">最近观测</span>
-                <span className="pomo-row-value">{presenceObservationText(observation)}</span>
+            <div className="presence-auth-actions" aria-label="摄像头授权操作">
+                {view.actions.map((action) => (
+                    <button
+                        key={action}
+                        type="button"
+                        onClick={actionHandlers[action]}
+                    >
+                        {actionLabels[action]}
+                    </button>
+                ))}
             </div>
-        </>
+            <span className="presence-auth-detail">{view.detail}</span>
+        </div>
     );
 }
 

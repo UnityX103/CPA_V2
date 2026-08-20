@@ -189,6 +189,134 @@
             },
             {
               "type": "frame",
+              "id": "jTQXM",
+              "name": "pomoPresenceAuthorization",
+              "width": "fill_container",
+              "height": 78,
+              "fill": "#FFF4CC",
+              "cornerRadius": 16,
+              "layout": "vertical",
+              "gap": 5,
+              "padding": [
+                10,
+                12
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "GzvsT",
+                  "name": "pomoPresenceAuthorizationTop",
+                  "width": "fill_container",
+                  "height": 30,
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "ErsE8",
+                      "name": "pomoPresenceAuthorizationCopy",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "ZnW7n",
+                          "name": "pomoPresenceAuthorizationLabel",
+                          "fill": "#8A6D00",
+                          "content": "摄像头授权",
+                          "fontFamily": "MaokenAssortedSans",
+                          "fontSize": 11,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "WcTmg",
+                          "name": "pomoPresenceAuthorizationStatus",
+                          "fill": "#8A6D00",
+                          "content": "权限被拒绝",
+                          "fontFamily": "MaokenAssortedSans",
+                          "fontSize": 11,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "rT0W6",
+                      "name": "pomoPresenceAuthorizationActions",
+                      "gap": 6,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "asGnU",
+                          "name": "pomoPresenceRetryButton",
+                          "cornerRadius": 8,
+                          "stroke": "#8A6D00",
+                          "strokeWidth": 1,
+                          "padding": [
+                            5,
+                            9
+                          ],
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "TcGIL",
+                              "name": "pomoPresenceRetryLabel",
+                              "fill": "#8A6D00",
+                              "content": "重试",
+                              "fontFamily": "MaokenAssortedSans",
+                              "fontSize": 11,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "Q5zkO",
+                          "name": "pomoPresenceSettingsButton",
+                          "cornerRadius": 8,
+                          "stroke": "#8A6D00",
+                          "strokeWidth": 1,
+                          "padding": [
+                            5,
+                            9
+                          ],
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "eQ94j",
+                              "name": "pomoPresenceSettingsLabel",
+                              "fill": "#8A6D00",
+                              "content": "打开系统设置",
+                              "fontFamily": "MaokenAssortedSans",
+                              "fontSize": 11,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "wpTN6",
+                  "name": "pomoPresenceAuthorizationDetail",
+                  "fill": "#8A6D00",
+                  "content": "请在系统设置中允许摄像头访问",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 11,
+                  "fontWeight": "500"
+                }
+              ]
+            },
+            {
+              "type": "frame",
               "id": "x3II3",
               "name": "pomoPresenceGrid",
               "width": 572,
@@ -276,43 +404,6 @@
                       }
                     }
                   ]
-                }
-              ]
-            },
-            {
-              "type": "frame",
-              "id": "jTQXM",
-              "name": "pomoPresenceStatus",
-              "width": 572,
-              "height": 52,
-              "fill": "#F6F7F8",
-              "cornerRadius": 16,
-              "padding": [
-                14,
-                16
-              ],
-              "justifyContent": "space_between",
-              "alignItems": "center",
-              "children": [
-                {
-                  "type": "text",
-                  "id": "cvara",
-                  "name": "pomoPresenceStatusLabel",
-                  "fill": "#1A1A1A",
-                  "content": "摄像头状态",
-                  "fontFamily": "MaokenAssortedSans",
-                  "fontSize": 14,
-                  "fontWeight": "500"
-                },
-                {
-                  "type": "text",
-                  "id": "SDrl2",
-                  "name": "pomoPresenceStatusValue",
-                  "fill": "#6366F1",
-                  "content": "可用",
-                  "fontFamily": "MaokenAssortedSans",
-                  "fontSize": 12,
-                  "fontWeight": "700"
                 }
               ]
             },

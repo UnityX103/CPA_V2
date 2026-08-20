@@ -765,25 +765,84 @@
     margin-top: 0;
 }
 
-.presence-status-right {
+.presence-auth-control {
+    min-height: 78px;
+    padding: 10px 12px;
+    border: 1px solid transparent;
+    border-radius: var(--settings-card-radius);
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 140px;
+    align-items: center;
+    column-gap: 8px;
+    row-gap: 5px;
+    background: var(--online-reconnect-bg);
+    color: var(--online-reconnect-text);
+}
+
+.presence-auth-neutral {
+    background: var(--settings-card-bg);
+    color: var(--text-muted);
+}
+
+.presence-auth-ready {
+    border-color: var(--panel-stroke);
+    background: var(--panel-bg-strong);
+    color: var(--text-brand-dark);
+}
+
+.presence-auth-copy {
     display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 8px;
     min-width: 0;
+}
+
+.presence-auth-label,
+.presence-auth-status {
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.presence-auth-status {
+    min-width: 0;
+}
+
+.presence-auth-detail {
+    grid-column: 1 / -1;
+    min-width: 0;
+    font-size: 11px;
+    line-height: 1.35;
+}
+
+.presence-auth-actions {
+    min-width: 140px;
+    min-height: 30px;
+    display: flex;
     align-items: center;
     justify-content: flex-end;
     gap: 6px;
-    flex-wrap: wrap;
 }
 
-.presence-inline-action {
-    min-height: 28px;
-    padding: 6px 9px;
-    border: 1px solid var(--panel-stroke);
+.presence-auth-actions button {
+    min-height: 30px;
+    padding: 5px 9px;
+    border: 1px solid currentColor;
     border-radius: var(--btn-radius);
-    background: var(--panel-bg-strong);
-    color: var(--text-brand-dark);
+    background: transparent;
+    color: inherit;
+    font-family: var(--font-cn);
     font-size: 11px;
     font-weight: 700;
-    line-height: 1;
+    line-height: 1.2;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.presence-auth-actions button:hover {
+    opacity: 0.85;
 }
 
 /* row variant of .card: alignItems center, justifyContent space_between, padding [14,16] */

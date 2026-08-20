@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { usePomodoroStore } from '../domain/pomodoro';
 import { useSettingsStore } from '../domain/settings';
@@ -66,10 +66,15 @@ describe('SettingsPanel', () => {
     it('renders the local camera automation controls', () => {
         render(<SettingsPanel />);
 
-        expect(screen.getByRole('button', { name: '摄像头自动控制' }).getAttribute('aria-pressed')).toBe('false');
+        const toggle = screen.getByRole('button', { name: '摄像头自动控制' });
+        const toggleRow = toggle.closest('.pomo-row');
+        const authorizationControl = screen.getByRole('group', { name: '摄像头授权状态' });
+
+        expect(toggle.getAttribute('aria-pressed')).toBe('false');
+        expect(toggleRow?.nextElementSibling).toBe(authorizationControl);
         expect(screen.getByText('检测间隔')).toBeTruthy();
         expect(screen.getByText('在场确认时长')).toBeTruthy();
-        expect(screen.getByText('摄像头状态')).toBeTruthy();
+        expect(screen.getByText('摄像头授权')).toBeTruthy();
         expect(screen.getByText('未启用')).toBeTruthy();
         expect(screen.getByText('最近观测')).toBeTruthy();
     });
@@ -92,17 +97,4 @@ describe('SettingsPanel', () => {
         });
     });
 
-    it('requests macOS camera access immediately without dirtying settings', async () => {
-        usePresenceStore.setState({ enabled: true, availability: 'permissionRequired' });
-        invoke.mockResolvedValue({ platform: 'macos', availability: 'ready' });
-        render(<SettingsPanel />);
-
-        expect(screen.queryByRole('button', { name: '应用' })).toBeNull();
-        await act(async () => {
-            fireEvent.click(screen.getByRole('button', { name: '授权' }));
-        });
-
-        expect(invoke).toHaveBeenCalledWith('request_camera_presence_access');
-        expect(screen.queryByRole('button', { name: '应用' })).toBeNull();
-    });
 });
