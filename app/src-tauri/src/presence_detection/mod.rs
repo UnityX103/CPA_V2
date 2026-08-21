@@ -240,7 +240,8 @@ pub async fn request_camera_presence_access(
     let app_for_prompt = app.clone();
     let availability = tauri::async_runtime::spawn_blocking(move || {
         #[cfg(target_os = "macos")]
-        let window_snapshot = crate::accessibility::yield_permission_windows(&app_for_prompt)?;
+        let window_snapshot =
+            crate::accessibility::lower_permission_windows_for_camera_prompt(&app_for_prompt)?;
         let result = platform_impl::request_access();
         #[cfg(target_os = "macos")]
         crate::accessibility::restore_permission_windows(&app_for_prompt, window_snapshot)?;

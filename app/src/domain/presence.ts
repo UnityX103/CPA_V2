@@ -200,6 +200,8 @@ export function createPresenceStore(opts: { isSettingsWindow: boolean }): Presen
             set((state) => ({
                 availability: 'checking',
                 inFlight: true,
+                latestObservation: 'unknown',
+                lastSuccessfulAt: null,
                 lastError: null,
                 generation: state.generation + 1,
                 ...evidenceReset(),
@@ -224,6 +226,8 @@ export function createPresenceStore(opts: { isSettingsWindow: boolean }): Presen
             set((state) => ({
                 availability: 'checking',
                 inFlight: true,
+                latestObservation: 'unknown',
+                lastSuccessfulAt: null,
                 lastError: null,
                 generation: state.generation + 1,
                 ...evidenceReset(),

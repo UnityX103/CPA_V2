@@ -1170,6 +1170,7 @@
               "id": "S3Nbk",
               "name": "head",
               "width": "fill_container",
+              "height": 24,
               "justifyContent": "space_between",
               "alignItems": "center",
               "children": [
@@ -1220,8 +1221,8 @@
                   "x": 66,
                   "y": 3,
                   "name": "pp-settings-btn",
-                  "width": "fill_container(37)",
-                  "height": "fill_container(18)",
+                  "width": 37,
+                  "height": 18,
                   "fill": "#F0E0D0",
                   "cornerRadius": 17,
                   "padding": [
@@ -1250,6 +1251,7 @@
               "id": "DiaNW",
               "name": "contentRow",
               "width": "fill_container",
+              "height": 78,
               "gap": 22,
               "padding": [
                 0,
@@ -1263,13 +1265,15 @@
                   "ref": "nNt9z",
                   "x": 16,
                   "y": 0,
+                  "width": "fill_container",
+                  "height": "fill_container",
                   "descendants": {
                     "mo62i": {
                       "flipX": false,
                       "flipY": false,
-                      "width": 50,
+                      "width": 49.67948717948718,
                       "height": 18,
-                      "x": 14,
+                      "x": 13.91025641025641,
                       "y": 21,
                       "textGrowth": "fixed-width-height",
                       "fontSize": 17
@@ -1294,7 +1298,7 @@
                       "descendants": {
                         "oNDTH": {
                           "content": "开始",
-                          "x": 26.5,
+                          "x": 26.75,
                           "y": 7
                         }
                       }
@@ -1310,36 +1314,65 @@
                       "descendants": {
                         "zgOkx": {
                           "content": "跳过",
-                          "x": 26.5,
+                          "x": 26.75,
                           "y": 7
                         }
                       }
                     }
                   ]
-                },
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "uJiuO",
+              "layoutPosition": "absolute",
+              "x": 128,
+              "y": 2,
+              "name": "presenceStatus",
+              "width": 20,
+              "height": 20,
+              "fill": "#E7F5EA",
+              "cornerRadius": 10,
+              "stroke": "#CBE7D2",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
                 {
-                  "id": "HApJ0",
-                  "type": "ref",
-                  "ref": "cM79C",
-                  "name": "pp-pin-btn",
-                  "layoutPosition": "absolute",
-                  "x": 193,
-                  "y": 69,
-                  "fill": "#F5D7C3",
-                  "stroke": "#E7C6AF",
-                  "strokeWidth": 1,
-                  "strokeLinejoin": "miter",
-                  "strokeLinecap": "butt",
-                  "strokeAlignment": "inner",
-                  "descendants": {
-                    "3eDk5": {
-                      "fill": "#D15F3D"
-                    }
-                  }
+                  "type": "icon",
+                  "id": "K8G3ut",
+                  "name": "presenceStatusIcon",
+                  "width": 12,
+                  "height": 12,
+                  "icon": "user-round-check",
+                  "library": "lucide",
+                  "fill": "#3D8A58"
                 }
               ]
             }
           ]
+        },
+        {
+          "id": "HApJ0",
+          "type": "ref",
+          "ref": "cM79C",
+          "name": "pp-pin-btn",
+          "layoutPosition": "absolute",
+          "x": 205,
+          "y": 123,
+          "fill": "#F5D7C3",
+          "stroke": "#E7C6AF",
+          "strokeWidth": 1,
+          "strokeLinejoin": "miter",
+          "strokeLinecap": "butt",
+          "strokeAlignment": "inner",
+          "descendants": {
+            "3eDk5": {
+              "fill": "#D15F3D"
+            }
+          }
         }
       ]
     },
@@ -5534,6 +5567,148 @@
                   "fontFamily": "MaokenAssortedSans",
                   "fontSize": 13,
                   "fontWeight": "500"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "m0Hemo",
+      "x": 1014,
+      "y": -399,
+      "name": "Pomodoro-PresenceStates",
+      "clip": true,
+      "width": 526,
+      "fill": "#FAF6F1",
+      "cornerRadius": 16,
+      "stroke": "#EFDCCD",
+      "strokeWidth": 1,
+      "strokeAlignment": "inner",
+      "layout": "vertical",
+      "gap": 16,
+      "padding": 20,
+      "children": [
+        {
+          "type": "text",
+          "id": "AzHgp",
+          "name": "PresenceStatesTitle",
+          "fill": "#5B4636",
+          "content": "番茄钟 · 摄像头检测状态",
+          "fontFamily": "MaokenAssortedSans",
+          "fontSize": 14,
+          "fontWeight": "700"
+        },
+        {
+          "type": "frame",
+          "id": "otAB2",
+          "name": "PresenceStatesRow",
+          "width": "fill_container",
+          "gap": 20,
+          "children": [
+            {
+              "type": "frame",
+              "id": "u4oeTv",
+              "name": "PresentStateColumn",
+              "width": 233,
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "o6FRi",
+                  "name": "PresentStateLabel",
+                  "gap": 6,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "ZLJ8Q",
+                      "name": "PresentLabelIcon",
+                      "width": 13,
+                      "height": 13,
+                      "icon": "user-round-check",
+                      "library": "lucide",
+                      "fill": "#3D8A58"
+                    },
+                    {
+                      "type": "text",
+                      "id": "SJYZB",
+                      "name": "PresentLabelText",
+                      "fill": "#3D8A58",
+                      "content": "检测到人 · 在工位",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 12,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "id": "HWrih",
+                  "type": "ref",
+                  "ref": "YRqeB",
+                  "name": "Pomodoro-Present",
+                  "width": 233,
+                  "height": 155
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "aiCfM",
+              "name": "AwayStateColumn",
+              "width": 233,
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "QW8dJ",
+                  "name": "AwayStateLabel",
+                  "gap": 6,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "z4uilK",
+                      "name": "AwayLabelIcon",
+                      "width": 13,
+                      "height": 13,
+                      "icon": "user-round-x",
+                      "library": "lucide",
+                      "fill": "#C65D46"
+                    },
+                    {
+                      "type": "text",
+                      "id": "I1q4L0",
+                      "name": "AwayLabelText",
+                      "fill": "#C65D46",
+                      "content": "未检测到人 · 已离开",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 12,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "id": "ZU4zI",
+                  "type": "ref",
+                  "ref": "YRqeB",
+                  "name": "Pomodoro-Away",
+                  "width": 233,
+                  "height": 155,
+                  "descendants": {
+                    "uJiuO": {
+                      "fill": "#FBE8E2",
+                      "stroke": "#EEC8BD"
+                    },
+                    "K8G3ut": {
+                      "icon": "user-round-x",
+                      "fill": "#C65D46"
+                    }
+                  }
                 }
               ]
             }

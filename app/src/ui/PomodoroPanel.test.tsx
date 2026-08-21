@@ -58,6 +58,12 @@ function pinCalls() {
     return invokeMock.mock.calls.filter(([cmd]) => cmd === 'set_main_window_pinned');
 }
 
+function deferred<T>() {
+    let resolve!: (value: T) => void;
+    const promise = new Promise<T>((done) => { resolve = done; });
+    return { promise, resolve };
+}
+
 beforeEach(() => {
     cleanup();
     startDragging.mockReset();
@@ -167,6 +173,39 @@ describe('PomodoroPanel camera presence status', () => {
         render(<PomodoroPanel />);
 
         expect(screen.getByRole('status', { name: '检测到人，在工位' })).toBeTruthy();
+    });
+
+    it.each([
+        ['authorization request', 'request_camera_presence_access', 'requestAccess'],
+        ['camera retry', 'camera_presence_status', 'retry'],
+    ] as const)('hides the previous state immediately during %s', async (_label, command, action) => {
+        const capability = deferred<{
+            platform: 'macos';
+            availability: 'permissionDenied';
+        }>();
+        invokeMock.mockImplementation((invokedCommand: string) => invokedCommand === command
+            ? capability.promise
+            : Promise.resolve(undefined));
+        usePresenceStore.setState({
+            enabled: true,
+            availability: 'ready',
+            latestObservation: 'present',
+            lastSuccessfulAt: 1_000,
+        });
+
+        render(<PomodoroPanel />);
+        expect(screen.getByRole('status', { name: '检测到人，在工位' })).toBeTruthy();
+
+        let request!: Promise<void>;
+        act(() => {
+            request = Promise.resolve(usePresenceStore.getState()[action]());
+        });
+
+        expect(screen.queryByRole('status')).toBeNull();
+
+        capability.resolve({ platform: 'macos', availability: 'permissionDenied' });
+        await act(async () => { await request; });
+        expect(screen.queryByRole('status')).toBeNull();
     });
 
     it.each([

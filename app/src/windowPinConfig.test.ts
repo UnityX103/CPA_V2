@@ -132,20 +132,23 @@ describe('main window pin configuration', () => {
 
     it('restores permission-window pin states without overwriting a newer main choice', () => {
         const source = accessibilityRs();
+        const prepareWindows = rustFunction(source, 'prepare_permission_windows');
         const yieldWindows = rustFunction(source, 'yield_permission_windows');
         const restoreWindows = rustFunction(source, 'restore_permission_windows');
         const request = rustFunction(source, 'request_accessibility_permission');
+        expect(prepareWindows, 'prepare_permission_windows should exist').not.toBeNull();
         expect(yieldWindows, 'yield_permission_windows should exist').not.toBeNull();
         expect(restoreWindows, 'restore_permission_windows should exist').not.toBeNull();
         expect(request, 'request_accessibility_permission should exist').not.toBeNull();
-        if (!yieldWindows || !restoreWindows || !request) {
+        if (!prepareWindows || !yieldWindows || !restoreWindows || !request) {
             return;
         }
 
         expect(source).toMatch(/PERMISSION_UI_WINDOW_LABELS[^=]*=\s*&\["main",\s*"settings"\]/);
-        expect(yieldWindows.body).toMatch(/is_always_on_top\(\)/);
-        expect(yieldWindows.body).toMatch(/\.set_always_on_top\(false\)/);
-        expect(yieldWindows.body).toMatch(/macos::deactivate_app\(\)/);
+        expect(prepareWindows.body).toMatch(/is_always_on_top\(\)/);
+        expect(prepareWindows.body).toMatch(/\.set_always_on_top\(false\)/);
+        expect(prepareWindows.body).toMatch(/if deactivate_app[\s\S]*macos::deactivate_app\(\)/);
+        expect(yieldWindows.body).toMatch(/prepare_permission_windows\(app,\s*true\)/);
         expect(restoreWindows.body).toMatch(/should_restore_main\([\s\S]*main_pin_generation\(\)/);
         expect(restoreWindows.body).toMatch(/state\.label\s*==\s*"main"\s*&&\s*!restore_main/);
         expect(restoreWindows.body).toMatch(/\.set_always_on_top\(state\.always_on_top\)/);

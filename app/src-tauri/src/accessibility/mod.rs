@@ -401,8 +401,9 @@ fn should_restore_main(snapshot_generation: u64, current_generation: u64) -> boo
 }
 
 #[cfg(target_os = "macos")]
-pub(crate) fn yield_permission_windows(
+fn prepare_permission_windows(
     app: &AppHandle,
+    deactivate_app: bool,
 ) -> Result<PermissionWindowSnapshot, String> {
     let app_for_yield = app.clone();
     let (tx, rx) = std::sync::mpsc::channel();
@@ -427,12 +428,28 @@ pub(crate) fn yield_permission_windows(
                 })
                 .collect(),
         };
-        macos::deactivate_app();
+        if deactivate_app {
+            macos::deactivate_app();
+        }
         let _ = tx.send(snapshot);
     })
     .map_err(|e| e.to_string())?;
     rx.recv()
         .map_err(|e| format!("permission window yield did not complete: {e}"))
+}
+
+#[cfg(target_os = "macos")]
+pub(crate) fn yield_permission_windows(
+    app: &AppHandle,
+) -> Result<PermissionWindowSnapshot, String> {
+    prepare_permission_windows(app, true)
+}
+
+#[cfg(target_os = "macos")]
+pub(crate) fn lower_permission_windows_for_camera_prompt(
+    app: &AppHandle,
+) -> Result<PermissionWindowSnapshot, String> {
+    prepare_permission_windows(app, false)
 }
 
 #[cfg(target_os = "macos")]
