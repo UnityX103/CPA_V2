@@ -100,9 +100,9 @@
 |---|---:|---:|---|
 | 摄像头自动控制 | 关闭 | 开 / 关 | 设备本地 |
 | 检测间隔 | 60 秒 | 30-600 秒，整数 | 设备本地 |
-| 在场确认时长 | 60 秒 | 30-600 秒，整数 | 设备本地 |
+| 切换状态确认时长 | 60 秒 | 30-600 秒，整数 | 设备本地 |
 
-离场确认时长不新增设置，始终读取触发时刻的 `breakDurationSeconds`。即使休息时长为 0，仍必须满足下述「至少两次成功同向观测」，不能由一次观测立即触发。
+进入专注、离开专注和返回后继续专注共用「切换状态确认时长」。无论阈值为何，仍必须满足下述「至少两次成功同向观测」，不能由一次观测立即触发。
 
 ### 连续证据与防误判
 
@@ -165,12 +165,12 @@
 
 资格状态：`currentPhase === 'focus' && isRunning === true`。
 
-持续 `absent` 且达到 `breakDurationSeconds` 后：
+持续 `absent` 且达到切换状态确认时长后：
 
 - 保持 `currentPhase`、`currentRound` 和触发时刻的 `remainingSeconds`，只把 `isRunning` 设为 false。
 - 标记为 Presence-Owned Pause，不生成 focus 完成事件，不增加连续专注或打卡计数。
 - 主窗口显示一次「检测到离开，已暂停专注」。
-- 之后持续 `present` 达到在场确认时长时，自动继续同一 focus，并显示一次「检测到返回，已继续专注」。
+- 之后持续 `present` 达到切换状态确认时长时，自动继续同一 focus，并显示一次「检测到返回，已继续专注」。
 - `unknown` 时维持暂停，不自动继续。
 - 一次离场自动动作最多触发一次；手动动作立即取消旧离场证据和自动恢复资格。
 - 不得通过伪造 `focus -> break` 完成事件复用提示 UI，否则会污染连续专注次数和打卡计数。
@@ -184,14 +184,14 @@
 
 ## D-01：已确认决策
 
-**决定**：运行中的 focus 持续离场达到休息时长后，保留进度并自动暂停；确认用户返回后自动继续同一 focus。
+**决定**：运行中的 focus 持续离场达到切换状态确认时长后，保留进度并自动暂停；确认用户返回后自动继续同一 focus。
 
 ### 选定方案：保留进度并自动暂停/继续
 
 - 保持 `currentPhase`、`currentRound` 和 `remainingSeconds`，只把 `isRunning` 设为 false。
 - 标记为 Presence-Owned Pause，不生成 focus 完成事件，不增加连续专注或打卡计数。
 - 主窗口显示一次「检测到离开，已暂停专注」。
-- 之后持续 `present` 达到在场确认时长时，自动继续同一 focus，并显示一次「检测到返回，已继续专注」。
+- 之后持续 `present` 达到切换状态确认时长时，自动继续同一 focus，并显示一次「检测到返回，已继续专注」。
 - `unknown` 时维持暂停，不自动继续。
 
 理由：符合任务对「自动暂停/继续状态机」的要求；不会因误判丢失当前专注；不会制造虚假的 focus 完成记录；用户可通过任意手动操作接管。
@@ -337,7 +337,7 @@ sample_camera_presence(): PresenceSample
 
 - 「摄像头自动控制」开关，默认关。
 - 「检测间隔」数值控件，单位秒，30-600。
-- 「在场确认时长」数值控件，单位秒，30-600。
+- 「切换状态确认时长」数值控件，单位秒，30-600。
 - 「摄像头状态」值：未启用、需要授权、检测中、可用、权限被拒绝、未找到摄像头、摄像头被占用、检测失败。
 - 按状态提供「授权」「打开系统设置」「重试」，不显示无效动作。
 - 最近观测只显示「在场 / 离场 / 未知」，不显示画面或人脸数量。
@@ -370,7 +370,7 @@ sample_camera_presence(): PresenceSample
 | 系统睡眠后恢复 | 旧证据失效，至少两次新的成功观测后才能动作 |
 | 用户戴口罩、背对或暗光 | 可能得到 absent；连续次数与时长共同防抖，不引入身份或人体检测猜测 |
 | 检测到照片或屏幕中的脸 | v1 可能视为 present；活体检测不在范围内 |
-| breakDurationSeconds = 0 | 仍需至少两次连续 absent；不能单样本触发 |
+| breakDurationSeconds = 0 | 离场仍按切换状态确认时长判断，且至少需要两次连续 absent |
 | completed | 不自动开始新番茄钟 |
 | 初始 focus 停止态 | 不因在场自动开始 |
 | 手动暂停 focus | 永不由摄像头恢复 |
@@ -428,7 +428,7 @@ sample_camera_presence(): PresenceSample
 7. **AC-07 手动优先**：手动暂停 focus 后连续 present 超过阈值，计时器仍保持暂停。
 8. **AC-08 睡眠恢复**：在候选证据积累中让系统睡眠超过 2 个检测间隔，恢复后的第一次观测不触发动作。
 9. **AC-09 数据边界**：本地 store、云账号 payload、房间 WebSocket payload和日志中均不存在图片、人脸框或在场状态；云账号切换不会改变本机摄像头开关。
-10. **AC-10 在场检测暂停与恢复**：focus 运行中连续 absent 达到休息时长后，phase/round/remaining 保持、isRunning=false、无 focus completion；连续 present 达到阈值后恢复同一 remaining，手动暂停则不恢复。
+10. **AC-10 在场检测暂停与恢复**：focus 运行中连续 absent 达到切换状态确认时长后，phase/round/remaining 保持、isRunning=false、无 focus completion；连续 present 达到同一阈值后恢复同一 remaining，手动暂停则不恢复。
 11. **AC-11 双平台**：macOS x86_64、macOS ARM64 和 Windows x86_64 的发布构建均包含非 stub 摄像头实现，并通过正常/拒绝/占用三条人工路径。
 12. **AC-12 退出清理**：退出应用后 2 秒内摄像头指示灯熄灭，进程不因摄像头任务或线程滞留。
 
@@ -442,7 +442,7 @@ sample_camera_presence(): PresenceSample
 
 ### 用户确认决策
 
-- focus 持续离场达到休息时长后，保留当前进度并进入 Presence-Owned Pause；确认返回后自动继续同一 focus。
+- focus 持续离场达到切换状态确认时长后，保留当前进度并进入 Presence-Owned Pause；确认返回后自动继续同一 focus。
 
 ### 实施基线
 

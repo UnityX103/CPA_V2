@@ -63,6 +63,8 @@ function snapshot(): BridgeSnapshot {
             releaseNotes: null,
             lastCheckedAt: null,
             errorMessage: null,
+            downloadedBytes: 0,
+            downloadTotalBytes: null,
         },
     };
 }

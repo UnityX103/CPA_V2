@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { DownloadEvent } from '@tauri-apps/plugin-updater';
 import {
     APP_UPDATE_CHECK_INTERVAL_MS,
     APP_UPDATE_STARTUP_DELAY_MS,
@@ -185,11 +186,18 @@ describe('app update store', () => {
         expect(store.getState().status).toBe('disabled');
     });
 
-    it('keeps downloading status during download callback events', async () => {
+    it('reports download progress and switches to installing when the download finishes', async () => {
         let store: ReturnType<typeof createAppUpdateStore>;
-        const downloadAndInstall = vi.fn(async (onEvent?: () => void) => {
-            onEvent?.();
-            expect(store.getState().status).toBe('downloading');
+        const downloadAndInstall = vi.fn(async (onEvent?: (event: DownloadEvent) => void) => {
+            onEvent?.({ event: 'Started', data: { contentLength: 100 } });
+            onEvent?.({ event: 'Progress', data: { chunkLength: 25 } });
+            expect(store.getState()).toMatchObject({
+                status: 'downloading',
+                downloadedBytes: 25,
+                downloadTotalBytes: 100,
+            });
+            onEvent?.({ event: 'Finished' });
+            expect(store.getState().status).toBe('installing');
         });
         store = createAppUpdateStore(deps({
             checkForUpdate: vi.fn(async () => ({

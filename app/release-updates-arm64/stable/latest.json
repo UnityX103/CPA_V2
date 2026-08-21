@@ -1,0 +1,11 @@
+{
+  "version": "0.1.11",
+  "notes": "优化摄像头在场检测：默认检测间隔 10 秒，配置实时生效，并修复状态图标闪烁和消失。",
+  "pub_date": "2026-08-21T04:47:45.037Z",
+  "platforms": {
+    "darwin-aarch64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRbDFsOC9YMmlCMWxZQmZVRWdaMmIybXAxWUxzTTdFc0tBdURSN2tMOUZqMUFCREduK0FhOFdTaHcvalBJZmQzbHRhbVRqcVhQa1I5ZG93bEUwQ1dRSXJOMHNyNEI0RHdnPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg3Mjg3NjY1CWZpbGU65qGM5a6g55Wq6IyE6ZKfLmFwcC50YXIuZ3oKMldXbHFnNG1WNm1kcEZlR29ab3pNdHp5dFVVUUZWTzU3MFdWK1d1NmRSVDIrSlVReDdsaWZFcUZrcWxNM0JkRzJJR20yQVpHTGtScXQ1NmF1ZEpFQ1E9PQo=",
+      "url": "https://github.com/UnityX103/CPA_V2/releases/download/v0.1.11/app-aarch64.tar.gz"
+    }
+  }
+}

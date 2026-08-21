@@ -20,6 +20,8 @@ describe('AppUpdateReadyNotice', () => {
             releaseNotes: null,
             lastCheckedAt: null,
             errorMessage: null,
+            downloadedBytes: 0,
+            downloadTotalBytes: null,
             restartForUpdate: initial.restartForUpdate,
         });
     });

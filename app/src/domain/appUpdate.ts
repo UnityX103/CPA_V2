@@ -1,5 +1,5 @@
 import { create, type StoreApi, type UseBoundStore } from 'zustand';
-import { check, type Update } from '@tauri-apps/plugin-updater';
+import { check, type DownloadEvent, type Update } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
 import { getVersion } from '@tauri-apps/api/app';
 import {
@@ -12,6 +12,7 @@ import { BRIDGE_VERSION, type DispatchPayload } from './bridge/protocol';
 
 export const APP_UPDATE_STARTUP_DELAY_MS = 30_000;
 export const APP_UPDATE_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
+export const APP_UPDATE_REQUEST_TIMEOUT_MS = 30 * 60 * 1000;
 
 export type AppUpdateStatus =
     | 'idle'
@@ -31,6 +32,8 @@ export interface AppUpdateSnapshot {
     releaseNotes: string | null;
     lastCheckedAt: number | null;
     errorMessage: string | null;
+    downloadedBytes: number;
+    downloadTotalBytes: number | null;
 }
 
 type UpdaterUpdate = Pick<Update, 'version' | 'currentVersion' | 'body' | 'date' | 'downloadAndInstall'>;
@@ -71,7 +74,7 @@ function errorToMessage(err: unknown): string {
 
 function createDefaultDeps(): AppUpdateDeps {
     return {
-        checkForUpdate: () => check(),
+        checkForUpdate: () => check({ timeout: APP_UPDATE_REQUEST_TIMEOUT_MS }),
         relaunchApp: () => relaunch(),
         getVersion,
         loadSettings: loadPersistedAppUpdateSettings,
@@ -108,6 +111,8 @@ export function createAppUpdateStore(deps: AppUpdateDeps): AppUpdateStore {
         releaseNotes: null,
         lastCheckedAt: null,
         errorMessage: null,
+        downloadedBytes: 0,
+        downloadTotalBytes: null,
         hydrate: async () => {
             const [settings, currentVersion] = await Promise.all([
                 deps.loadSettings(),
@@ -126,6 +131,8 @@ export function createAppUpdateStore(deps: AppUpdateDeps): AppUpdateStore {
                 autoUpdateEnabled: enabled,
                 status: status === 'readyToRestart' ? status : enabled ? 'idle' : 'disabled',
                 errorMessage: null,
+                downloadedBytes: status === 'readyToRestart' ? get().downloadedBytes : 0,
+                downloadTotalBytes: status === 'readyToRestart' ? get().downloadTotalBytes : null,
             });
             await deps.saveSettings({ autoUpdateEnabled: enabled });
         },
@@ -138,7 +145,12 @@ export function createAppUpdateStore(deps: AppUpdateDeps): AppUpdateStore {
             }
             inFlight = (async () => {
                 try {
-                    set({ status: 'checking', errorMessage: null });
+                    set({
+                        status: 'checking',
+                        errorMessage: null,
+                        downloadedBytes: 0,
+                        downloadTotalBytes: null,
+                    });
                     const update = await deps.checkForUpdate();
                     const stateAfterCheck = get();
                     if (stateAfterCheck.status === 'readyToRestart') return;
@@ -154,6 +166,8 @@ export function createAppUpdateStore(deps: AppUpdateDeps): AppUpdateStore {
                             availableVersion: null,
                             releaseNotes: null,
                             errorMessage: null,
+                            downloadedBytes: 0,
+                            downloadTotalBytes: null,
                         });
                         return;
                     }
@@ -163,8 +177,39 @@ export function createAppUpdateStore(deps: AppUpdateDeps): AppUpdateStore {
                         availableVersion: update.version,
                         releaseNotes: update.body ?? null,
                         lastCheckedAt: checkedAt,
+                        downloadedBytes: 0,
+                        downloadTotalBytes: null,
                     });
-                    await update.downloadAndInstall(() => {});
+                    let receivedBytes = 0;
+                    let reportedBytes = 0;
+                    await update.downloadAndInstall((event: DownloadEvent) => {
+                        const state = get();
+                        if (!state.autoUpdateEnabled || state.status === 'disabled') return;
+                        if (event.event === 'Started') {
+                            receivedBytes = 0;
+                            reportedBytes = 0;
+                            set({
+                                status: 'downloading',
+                                downloadedBytes: 0,
+                                downloadTotalBytes: event.data.contentLength ?? null,
+                            });
+                            return;
+                        }
+                        if (event.event === 'Progress') {
+                            receivedBytes += event.data.chunkLength;
+                            const totalBytes = get().downloadTotalBytes;
+                            const crossedReportBoundary = totalBytes && totalBytes > 0
+                                ? Math.floor((receivedBytes / totalBytes) * 100)
+                                    > Math.floor((reportedBytes / totalBytes) * 100)
+                                : receivedBytes - reportedBytes >= 256 * 1024;
+                            if (crossedReportBoundary) {
+                                reportedBytes = receivedBytes;
+                                set({ downloadedBytes: receivedBytes });
+                            }
+                            return;
+                        }
+                        set({ status: 'installing', downloadedBytes: receivedBytes });
+                    }, { timeout: APP_UPDATE_REQUEST_TIMEOUT_MS });
                     set({ status: 'readyToRestart', errorMessage: null });
                 } catch (err) {
                     const stateAfterError = get();

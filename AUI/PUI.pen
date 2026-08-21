@@ -4,8 +4,8 @@
     {
       "type": "frame",
       "id": "gs1Tv",
-      "x": 2367,
-      "y": 61,
+      "x": 2387,
+      "y": -54,
       "name": "Pomodoro Settings Panel",
       "reusable": true,
       "width": 572,

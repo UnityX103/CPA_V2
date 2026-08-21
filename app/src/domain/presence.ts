@@ -339,9 +339,7 @@ export function applyPresenceSample(
         ? current.candidateFirstAt
         : nowMs;
     const candidateCount = sameDirection ? current.candidateCount + 1 : 1;
-    const thresholdSeconds = sample.observation === 'present'
-        ? current.presentThresholdSeconds
-        : pomo.breakDurationSeconds;
+    const thresholdSeconds = current.presentThresholdSeconds;
     const thresholdMet = candidateCount >= 2
         && nowMs - candidateFirstAt >= thresholdSeconds * 1000;
 

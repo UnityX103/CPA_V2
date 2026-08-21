@@ -172,6 +172,22 @@ describe('presence evidence and pomodoro integration', () => {
         expect(pomodoro.getState().isRunning).toBe(false);
     });
 
+    it('uses the configured confirmation threshold when leaving focus', () => {
+        const { presence, pomodoro } = freshStores();
+        presence.setState({ enabled: true, intervalSeconds: 30, presentThresholdSeconds: 30 });
+        pomodoro.getState().applySettings(120, 120, 4, true, false);
+        pomodoro.getState().start();
+
+        applyPresenceSample(presence, pomodoro, sample('absent'), 0);
+        applyPresenceSample(presence, pomodoro, sample('absent'), 30_000);
+
+        expect(pomodoro.getState()).toMatchObject({
+            currentPhase: 'focus',
+            isRunning: false,
+            presenceOwnedPause: true,
+        });
+    });
+
     it('never changes completed or initial stopped focus states', () => {
         const { presence, pomodoro } = freshStores();
         presence.setState({ enabled: true, intervalSeconds: 30, presentThresholdSeconds: 30 });
@@ -186,15 +202,17 @@ describe('presence evidence and pomodoro integration', () => {
         expect(pomodoro.getState()).toMatchObject({ currentPhase: 'completed', isRunning: false });
     });
 
-    it('still requires two absent observations when the break duration is zero', () => {
+    it('does not use a zero break duration as the absence threshold', () => {
         const { presence, pomodoro } = freshStores();
-        presence.setState({ enabled: true, intervalSeconds: 30 });
+        presence.setState({ enabled: true, intervalSeconds: 5, presentThresholdSeconds: 5 });
         pomodoro.getState().applySettings(60, 0, 4, true, false);
         pomodoro.getState().start();
 
         applyPresenceSample(presence, pomodoro, sample('absent'), 0);
         expect(pomodoro.getState().isRunning).toBe(true);
         applyPresenceSample(presence, pomodoro, sample('absent'), 1);
+        expect(pomodoro.getState().isRunning).toBe(true);
+        applyPresenceSample(presence, pomodoro, sample('absent'), 5_000);
         expect(pomodoro.getState().isRunning).toBe(false);
     });
 });
@@ -261,7 +279,12 @@ describe('presence monitor scheduling', () => {
 
     it('uses the configured detection interval for sampling and automation', async () => {
         const { presence, pomodoro } = freshStores();
-        presence.setState({ enabled: true, generation: 1, intervalSeconds: 30 });
+        presence.setState({
+            enabled: true,
+            generation: 1,
+            intervalSeconds: 30,
+            presentThresholdSeconds: 30,
+        });
         pomodoro.setState({
             currentPhase: 'focus',
             isRunning: true,

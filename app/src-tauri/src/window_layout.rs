@@ -21,10 +21,7 @@ struct WindowLayoutSnapshot {
 }
 
 pub fn is_supported_window_label(label: &str) -> bool {
-    matches!(
-        label,
-        "main" | "settings" | "input-counter"
-    )
+    matches!(label, "main" | "settings" | "input-counter")
 }
 
 pub fn normalize_layout(
@@ -68,10 +65,7 @@ fn read_snapshot(app: &tauri::AppHandle) -> WindowLayoutSnapshot {
     serde_json::from_str(&raw).unwrap_or_else(|_| empty_snapshot())
 }
 
-fn write_snapshot(
-    app: &tauri::AppHandle,
-    snapshot: &WindowLayoutSnapshot,
-) -> Result<(), String> {
+fn write_snapshot(app: &tauri::AppHandle, snapshot: &WindowLayoutSnapshot) -> Result<(), String> {
     let path = store_path(app)?;
     let raw = serde_json::to_string_pretty(snapshot).map_err(|e| e.to_string())?;
     fs::write(path, raw).map_err(|e| e.to_string())

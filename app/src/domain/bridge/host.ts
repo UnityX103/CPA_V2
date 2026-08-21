@@ -76,6 +76,8 @@ function appUpdateSnapshot(s: AppUpdateSnapshot): AppUpdateSnapshot {
         releaseNotes: s.releaseNotes,
         lastCheckedAt: s.lastCheckedAt,
         errorMessage: s.errorMessage,
+        downloadedBytes: s.downloadedBytes,
+        downloadTotalBytes: s.downloadTotalBytes,
     };
 }
 
@@ -395,6 +397,8 @@ export function appUpdateSig(s: AppUpdateSnapshot): string {
         s.releaseNotes,
         s.lastCheckedAt,
         s.errorMessage,
+        s.downloadedBytes,
+        s.downloadTotalBytes,
     ]);
 }
 

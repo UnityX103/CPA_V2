@@ -1215,6 +1215,8 @@ function AppUpdateSettingsRow() {
     const currentVersion = useAppUpdateStore((s) => s.currentVersion);
     const availableVersion = useAppUpdateStore((s) => s.availableVersion);
     const errorMessage = useAppUpdateStore((s) => s.errorMessage);
+    const downloadedBytes = useAppUpdateStore((s) => s.downloadedBytes);
+    const downloadTotalBytes = useAppUpdateStore((s) => s.downloadTotalBytes);
     const setAutoUpdateEnabled = useAppUpdateStore((s) => s.setAutoUpdateEnabled);
     const checkNow = useAppUpdateStore((s) => s.checkNow);
     const restartForUpdate = useAppUpdateStore((s) => s.restartForUpdate);
@@ -1232,7 +1234,14 @@ function AppUpdateSettingsRow() {
             </div>
             <div className="app-update-footer">
                 <span className="status-text app-update-status">
-                    {appUpdateStatusText(status, currentVersion, availableVersion, errorMessage)}
+                    {appUpdateStatusText(
+                        status,
+                        currentVersion,
+                        availableVersion,
+                        errorMessage,
+                        downloadedBytes,
+                        downloadTotalBytes,
+                    )}
                 </span>
                 {status === 'readyToRestart' ? (
                     <button
@@ -1262,16 +1271,27 @@ function appUpdateStatusText(
     currentVersion: string | null,
     availableVersion: string | null,
     errorMessage: string | null,
+    downloadedBytes: number,
+    downloadTotalBytes: number | null,
 ): string {
     const current = currentVersion ?? '未知版本';
     const available = availableVersion ?? '新版本';
     if (status === 'disabled') return '自动更新已关闭';
     if (status === 'checking') return `当前版本 ${current} · 正在检查`;
     if (status === 'upToDate') return `当前版本 ${current} · 已是最新`;
-    if (status === 'downloading') return `发现版本 ${available} · 正在下载`;
+    if (status === 'downloading') {
+        if (downloadTotalBytes && downloadTotalBytes > 0) {
+            const percent = Math.min(100, Math.floor((downloadedBytes / downloadTotalBytes) * 100));
+            return `发现版本 ${available} · 正在下载 ${percent}%`;
+        }
+        if (downloadedBytes > 0) {
+            return `发现版本 ${available} · 已下载 ${(downloadedBytes / 1024 / 1024).toFixed(1)} MB`;
+        }
+        return `发现版本 ${available} · 正在下载`;
+    }
     if (status === 'installing') return `发现版本 ${available} · 正在安装`;
     if (status === 'readyToRestart') return `新版本 ${available} 已安装 · 重启后生效`;
-    if (status === 'error') return `更新检查失败：${errorMessage ?? '请稍后再试'}`;
+    if (status === 'error') return `更新失败：${errorMessage ?? '请稍后再试'}`;
     return `当前版本 ${current} · 等待检查`;
 }
 

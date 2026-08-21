@@ -150,7 +150,10 @@ pub fn origin_for_resize(
         if default_center {
             centered_origin(monitor, size)
         } else {
-            (monitor.x + WINDOW_EDGE_MARGIN, monitor.y + WINDOW_EDGE_MARGIN)
+            (
+                monitor.x + WINDOW_EDGE_MARGIN,
+                monitor.y + WINDOW_EDGE_MARGIN,
+            )
         }
     });
     clamp_origin_to_monitor(origin, monitor, size, WINDOW_EDGE_MARGIN)
