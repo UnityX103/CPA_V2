@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useCloudAccountSync } from './cloudAccountSync';
 import { useNetworkStore } from './network';
 import { useSettingsStore } from './settings';
+import { usePomodoroStore } from './pomodoro';
 
 const saveLocal = vi.hoisted(() => vi.fn());
 
@@ -20,6 +21,12 @@ beforeEach(() => {
         cloudData: null,
         cloudDataUpdatedAt: null,
         saveUserData: vi.fn(),
+    });
+    usePomodoroStore.setState({
+        endSounds: {
+            focus: { sourceKind: 'builtin', builtinSoundId: 'clear-success', customSoundPath: '' },
+            break: { sourceKind: 'builtin', builtinSoundId: 'triple-ping', customSoundPath: '' },
+        },
     });
 });
 
@@ -41,6 +48,29 @@ describe('cloud account sync', () => {
         expect(saveLocal).toHaveBeenCalled();
         expect(saveRemote).toHaveBeenCalledWith(expect.objectContaining({
             settings: { uiScale: 1, autostartEnabled: true },
+        }), null);
+    });
+
+    it('persists and uploads end-sound changes', () => {
+        const saveRemote = useNetworkStore.getState().saveUserData as ReturnType<typeof vi.fn>;
+        renderHook(() => useCloudAccountSync());
+
+        act(() => {
+            usePomodoroStore.getState().applyEndSoundSettings({
+                focus: { sourceKind: 'off', builtinSoundId: 'clear-success', customSoundPath: '' },
+                break: { sourceKind: 'custom', builtinSoundId: 'triple-ping', customSoundPath: '/tmp/rest.mp3' },
+            });
+            vi.advanceTimersByTime(1000);
+        });
+
+        expect(saveLocal).toHaveBeenCalled();
+        expect(saveRemote).toHaveBeenCalledWith(expect.objectContaining({
+            pomodoro: expect.objectContaining({
+                endSounds: {
+                    focus: { sourceKind: 'off', builtinSoundId: 'clear-success', customSoundPath: '' },
+                    break: { sourceKind: 'custom', builtinSoundId: 'triple-ping', customSoundPath: '/tmp/rest.mp3' },
+                },
+            }),
         }), null);
     });
 });

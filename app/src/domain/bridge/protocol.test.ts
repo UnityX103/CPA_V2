@@ -18,6 +18,15 @@ describe('bridge protocol', () => {
                 autoStartBreak: false,
                 autoPinAfterFocus: true,
                 endActionMode: 'topWindow',
+                endActionVideo: {
+                    sourceKind: 'builtin',
+                    builtinVideoId: 'qianqian',
+                    customVideoPath: '',
+                },
+                endSounds: {
+                    focus: { sourceKind: 'builtin', builtinSoundId: 'clear-success', customSoundPath: '' },
+                    break: { sourceKind: 'builtin', builtinSoundId: 'triple-ping', customSoundPath: '' },
+                },
             },
             presence: {
                 enabled: true,
@@ -60,12 +69,20 @@ describe('bridge protocol', () => {
         };
 
         expect(snapshot.pomodoro.endActionMode).toBe('topWindow');
+        expect(snapshot.pomodoro.endActionVideo.builtinVideoId).toBe('qianqian');
     });
 
     it('keeps retained dispatch actions typed', () => {
         const payloads: DispatchPayload[] = [
             { v: BRIDGE_VERSION, store: 'settings', action: 'setAutostartEnabled', args: [true] },
             { v: BRIDGE_VERSION, store: 'pomodoro', action: 'applySettings', args: [900, 180, 4, true, false] },
+            { v: BRIDGE_VERSION, store: 'pomodoro', action: 'applyEndActionSettings', args: ['playVideo', {
+                sourceKind: 'builtin', builtinVideoId: 'qianqian', customVideoPath: '',
+            }] },
+            { v: BRIDGE_VERSION, store: 'pomodoro', action: 'applyEndSoundSettings', args: [{
+                focus: { sourceKind: 'builtin', builtinSoundId: 'clear-success', customSoundPath: '' },
+                break: { sourceKind: 'builtin', builtinSoundId: 'triple-ping', customSoundPath: '' },
+            }] },
             { v: BRIDGE_VERSION, store: 'presence', action: 'applySettings', args: [{ enabled: true, intervalSeconds: 60, presentThresholdSeconds: 60 }] },
             { v: BRIDGE_VERSION, store: 'presence', action: 'requestAccess', args: [] },
             { v: BRIDGE_VERSION, store: 'presence', action: 'retry', args: [] },
@@ -73,6 +90,6 @@ describe('bridge protocol', () => {
             { v: BRIDGE_VERSION, store: 'network', action: 'leaveRoom', args: [] },
         ];
 
-        expect(payloads).toHaveLength(7);
+        expect(payloads).toHaveLength(9);
     });
 });

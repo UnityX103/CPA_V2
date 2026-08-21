@@ -99,7 +99,10 @@ export function useCloudAccountSync(opts: { enabled?: boolean } = {}) {
                 s.breakDurationSeconds !== p.breakDurationSeconds ||
                 s.totalRounds !== p.totalRounds ||
                 s.autoStartBreak !== p.autoStartBreak ||
-                s.autoPinAfterFocus !== p.autoPinAfterFocus
+                s.autoPinAfterFocus !== p.autoPinAfterFocus ||
+                s.endActionMode !== p.endActionMode ||
+                s.endActionVideo !== p.endActionVideo ||
+                s.endSounds !== p.endSounds
             ) {
                 saveLocalNow();
                 scheduleSave();

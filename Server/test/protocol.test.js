@@ -456,7 +456,24 @@ test('parseClientMessage accepts user_data_save with baseUpdatedAt', () =>
                 totalRounds: 4,
                 autoStartBreak: false,
                 autoPinAfterFocus: true,
-                endActionMode: 'topWindow'
+                endActionMode: 'playVideo',
+                endActionVideo: {
+                    sourceKind: 'builtin',
+                    builtinVideoId: 'qianqian',
+                    customVideoPath: ''
+                },
+                endSounds: {
+                    focus: {
+                        sourceKind: 'builtin',
+                        builtinSoundId: 'clear-success',
+                        customSoundPath: ''
+                    },
+                    break: {
+                        sourceKind: 'builtin',
+                        builtinSoundId: 'triple-ping',
+                        customSoundPath: ''
+                    }
+                }
             },
             settings: {
                 uiScale: 1,
@@ -470,4 +487,5 @@ test('parseClientMessage accepts user_data_save with baseUpdatedAt', () =>
     assert.equal(message.type, 'user_data_save');
     assert.equal(message.baseUpdatedAt, 1779360000000);
     assert.equal(message.data.schemaVersion, 1);
+    assert.equal(message.data.pomodoro.endSounds.focus.builtinSoundId, 'clear-success');
 });

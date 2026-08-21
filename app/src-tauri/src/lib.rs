@@ -3,9 +3,12 @@ mod active_app;
 mod key_counter;
 mod presence_detection;
 mod scaled_window;
+mod sound_files;
+mod video_files;
 mod window_helpers;
 mod window_layout;
 
+use serde::Serialize;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
@@ -70,6 +73,143 @@ fn set_input_counter_window_pinned(app: tauri::AppHandle, on_top: bool) -> Resul
 #[tauri::command]
 fn get_active_app() -> Option<active_app::ActiveAppInfo> {
     active_app::current_active_app()
+}
+
+#[derive(Debug, Serialize, Clone, Copy)]
+#[serde(rename_all = "camelCase")]
+struct VideoScreenRect {
+    x: f64,
+    y: f64,
+    width: f64,
+    height: f64,
+}
+
+#[derive(Debug, Clone, Copy)]
+struct MatchRect {
+    x: f64,
+    y: f64,
+    width: f64,
+    height: f64,
+}
+
+impl MatchRect {
+    fn from_video_rect(rect: VideoScreenRect) -> Self {
+        Self {
+            x: rect.x,
+            y: rect.y,
+            width: rect.width,
+            height: rect.height,
+        }
+    }
+
+    fn center(&self) -> (f64, f64) {
+        (self.x + self.width / 2.0, self.y + self.height / 2.0)
+    }
+}
+
+fn overlap_area(a: MatchRect, b: MatchRect) -> f64 {
+    let left = a.x.max(b.x);
+    let top = a.y.max(b.y);
+    let right = (a.x + a.width).min(b.x + b.width);
+    let bottom = (a.y + a.height).min(b.y + b.height);
+    let width = (right - left).max(0.0);
+    let height = (bottom - top).max(0.0);
+    width * height
+}
+
+fn contains_point(rect: MatchRect, point: (f64, f64)) -> bool {
+    point.0 >= rect.x
+        && point.0 <= rect.x + rect.width
+        && point.1 >= rect.y
+        && point.1 <= rect.y + rect.height
+}
+
+fn monitor_video_rect(monitor: &tauri::Monitor) -> VideoScreenRect {
+    let position = monitor.position();
+    let size = monitor.size();
+    let scale = monitor.scale_factor();
+    VideoScreenRect {
+        x: position.x as f64 / scale,
+        y: position.y as f64 / scale,
+        width: size.width as f64 / scale,
+        height: size.height as f64 / scale,
+    }
+}
+
+fn monitor_physical_rect(monitor: &tauri::Monitor) -> MatchRect {
+    let position = monitor.position();
+    let size = monitor.size();
+    MatchRect {
+        x: position.x as f64,
+        y: position.y as f64,
+        width: size.width as f64,
+        height: size.height as f64,
+    }
+}
+
+fn best_monitor_rect_for_bounds(
+    bounds: active_app::AppWindowBounds,
+    monitors: &[tauri::Monitor],
+) -> Option<VideoScreenRect> {
+    let target = MatchRect {
+        x: bounds.x,
+        y: bounds.y,
+        width: bounds.width,
+        height: bounds.height,
+    };
+    let target_center = target.center();
+
+    monitors
+        .iter()
+        .map(|monitor| {
+            let physical = monitor_physical_rect(monitor);
+            let logical = MatchRect::from_video_rect(monitor_video_rect(monitor));
+            let physical_score = overlap_area(target, physical)
+                + if contains_point(physical, target_center) {
+                    1.0
+                } else {
+                    0.0
+                };
+            let logical_score = overlap_area(target, logical)
+                + if contains_point(logical, target_center) {
+                    1.0
+                } else {
+                    0.0
+                };
+            (
+                physical_score.max(logical_score),
+                monitor_video_rect(monitor),
+            )
+        })
+        .max_by(|(a, _), (b, _)| a.total_cmp(b))
+        .filter(|(score, _)| *score > 0.0)
+        .map(|(_, rect)| rect)
+}
+
+fn fallback_video_screen_rect(app: &tauri::AppHandle) -> Result<VideoScreenRect, String> {
+    if let Some(main) = app.get_webview_window("main") {
+        if let Some(monitor) = main.current_monitor().map_err(|error| error.to_string())? {
+            return Ok(monitor_video_rect(&monitor));
+        }
+    }
+    let monitor = app
+        .primary_monitor()
+        .map_err(|error| error.to_string())?
+        .ok_or_else(|| "no monitor available".to_string())?;
+    Ok(monitor_video_rect(&monitor))
+}
+
+#[tauri::command]
+fn pomodoro_video_screen_rect(app: tauri::AppHandle) -> Result<VideoScreenRect, String> {
+    let monitors = app
+        .available_monitors()
+        .map_err(|error| error.to_string())?;
+    if let Some(bounds) = active_app::current_active_app_window_bounds() {
+        if let Some(rect) = best_monitor_rect_for_bounds(bounds, &monitors) {
+            return Ok(rect);
+        }
+    }
+    fallback_video_screen_rect(&app)
 }
 
 const MAIN_W: f64 = window_helpers::MAIN_PANEL_BASE_WIDTH;
@@ -310,6 +450,9 @@ pub fn run() {
     let listener_handle_for_exit = listener_handle.clone();
 
     let app = tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_persisted_scope::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_updater::Builder::new().build())
@@ -467,6 +610,7 @@ pub fn run() {
             reassert_window_always_on_top,
             set_input_counter_window_pinned,
             get_active_app,
+            pomodoro_video_screen_rect,
             open_settings_window,
             close_settings_window,
             show_input_counter_window,
@@ -485,6 +629,10 @@ pub fn run() {
             presence_detection::open_camera_privacy_settings,
             presence_detection::stop_camera_presence_stream,
             presence_detection::sample_camera_presence,
+            sound_files::validate_custom_sound_path,
+            sound_files::prepare_custom_sound_path,
+            video_files::validate_custom_video_path,
+            video_files::prepare_custom_alpha_video_path,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application");

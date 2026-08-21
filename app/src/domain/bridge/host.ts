@@ -9,6 +9,7 @@ import { useActiveAppStore, type ActiveAppInfo } from '../activeApp';
 import { useAppUpdateStore, type AppUpdateSnapshot } from '../appUpdate';
 import { REMOTE_PLAYER_WINDOW_LABELS } from '../remotePlayerWindowLabels';
 import { usePresenceStore } from '../presence';
+import { clonePomodoroEndSounds, type PomodoroEndSounds } from '../pomodoroSounds';
 import {
     BRIDGE_VERSION,
     EVT_DISPATCH,
@@ -101,6 +102,8 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
             autoStartBreak: p.autoStartBreak,
             autoPinAfterFocus: p.autoPinAfterFocus,
             endActionMode: p.endActionMode,
+            endActionVideo: { ...p.endActionVideo },
+            endSounds: clonePomodoroEndSounds(p.endSounds),
         },
         presence: {
             enabled: presence.enabled,
@@ -163,6 +166,12 @@ export async function applyDispatch(payload: DispatchPayload): Promise<void> {
             }
             if (payload.action === 'setAutoPinAfterFocus') {
                 usePomodoroStore.getState().setAutoPinAfterFocus(...payload.args);
+            }
+            if (payload.action === 'applyEndActionSettings') {
+                await usePomodoroStore.getState().applyEndActionSettings(...payload.args);
+            }
+            if (payload.action === 'applyEndSoundSettings') {
+                await usePomodoroStore.getState().applyEndSoundSettings(...payload.args);
             }
             return;
         }
@@ -283,6 +292,8 @@ export function pomoSig(s: {
     autoStartBreak: boolean;
     autoPinAfterFocus: boolean;
     endActionMode: string;
+    endActionVideo: { sourceKind: string; builtinVideoId: string; customVideoPath: string };
+    endSounds: PomodoroEndSounds;
 }): string {
     return JSON.stringify([
         s.focusDurationSeconds,
@@ -291,6 +302,15 @@ export function pomoSig(s: {
         s.autoStartBreak,
         s.autoPinAfterFocus,
         s.endActionMode,
+        s.endActionVideo.sourceKind,
+        s.endActionVideo.builtinVideoId,
+        s.endActionVideo.customVideoPath,
+        s.endSounds.focus.sourceKind,
+        s.endSounds.focus.builtinSoundId,
+        s.endSounds.focus.customSoundPath,
+        s.endSounds.break.sourceKind,
+        s.endSounds.break.builtinSoundId,
+        s.endSounds.break.customSoundPath,
     ]);
 }
 

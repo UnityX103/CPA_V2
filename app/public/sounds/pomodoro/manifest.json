@@ -1,0 +1,63 @@
+{
+  "acquiredAt": "2026-08-21",
+  "license": "CC0-1.0",
+  "notes": "Bundled files are Freesound-generated MP3 previews of the cited CC0 uploads. Source and license research is retained in docs/research/2026-08-21-pomodoro-end-sounds.md.",
+  "sounds": [
+    {
+      "id": "clear-success",
+      "file": "focus-clear-success.mp3",
+      "author": "Rob_Marion",
+      "sourceSoundId": 541985,
+      "sourceFile": "GASP_Chimes_Success_4.wav",
+      "sha256": "0123af25298a2a8e000a3af9128e821733e542e07ec7b509265284eb0cdb4fd9"
+    },
+    {
+      "id": "light-success",
+      "file": "focus-light-success.mp3",
+      "author": "oysterqueen",
+      "sourceSoundId": 582988,
+      "sourceFile": "Success.mp3",
+      "sha256": "b8d1b203c5e209edff91b440a937f05d7356ed5bddd529cacdfd2b9fd49ad440"
+    },
+    {
+      "id": "glockenspiel-reward",
+      "file": "focus-glockenspiel-reward.mp3",
+      "author": "FunWithSound",
+      "sourceSoundId": 456965,
+      "sourceFile": "Short Success Sound Glockenspiel Treasure Video Game.mp3",
+      "sha256": "6476e89d3070a368b6c49f8bb5bdb610160a36d57899b873d4f6221033a57f91"
+    },
+    {
+      "id": "high-bell-approval",
+      "file": "focus-high-bell-approval.mp3",
+      "author": "GabFitzgerald",
+      "sourceSoundId": 625174,
+      "sourceFile": "[UI Sound] Approval - High Pitched Bell Synth",
+      "sha256": "277db787f671b18ab71e19a00bfd9bbd65d6da855da824cc081d124d2921d84e"
+    },
+    {
+      "id": "triple-ping",
+      "file": "break-triple-ping.mp3",
+      "author": "PiesHelpfulOven",
+      "sourceSoundId": 842513,
+      "sourceFile": "Triple_Ping_Notification_Sound_Mobile_Optimized",
+      "sha256": "b0a93f5b744347afe1aaabe014604ee12bd05d5ff415168985dea241622f46e3"
+    },
+    {
+      "id": "mid-bass-notice",
+      "file": "break-mid-bass-notice.mp3",
+      "author": "Wax_vibe",
+      "sourceSoundId": 554554,
+      "sourceFile": "Notification_2.wav",
+      "sha256": "5310936fed7d9ae1db87a9a038788ae11c1ac824293e862a470957a985b62631"
+    },
+    {
+      "id": "vintage-alarm",
+      "file": "break-vintage-alarm.mp3",
+      "author": "Joao_Janz",
+      "sourceSoundId": 478294,
+      "sourceFile": "Alarm 3_1.wav",
+      "sha256": "0ad12d6096a61820011923f1b8c94da5ca6d49316633f50c8f31fecb8f24ae95"
+    }
+  ]
+}

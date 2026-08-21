@@ -6,10 +6,17 @@ import type {
 import type { NetworkStateShape } from './network';
 import type {
     PomodoroEndActionMode,
+    PomodoroEndActionVideo,
     PomodoroState,
 } from './pomodoro';
 import type { PersistedSettingsSnapshot, SettingsState } from './settings';
 import type { AppUpdateSnapshot } from './appUpdate';
+import {
+    clonePomodoroEndSounds,
+    DEFAULT_POMODORO_END_SOUNDS,
+    normalizePomodoroSoundSelection,
+    type PomodoroEndSounds,
+} from './pomodoroSounds';
 
 export interface PersistedBindingKeyEntry {
     id: string;
@@ -28,6 +35,8 @@ export interface UserPreferencesSnapshot {
         autoStartBreak: boolean;
         autoPinAfterFocus: boolean;
         endActionMode: PomodoroEndActionMode;
+        endActionVideo: PomodoroEndActionVideo;
+        endSounds: PomodoroEndSounds;
     };
     settings: {
         uiScale: number;
@@ -58,6 +67,11 @@ interface PomodoroStoreShape extends PomodoroState {
         autoStartBreak: boolean,
     ) => void;
     setAutoPinAfterFocus: (enabled: boolean) => void;
+    applyEndActionSettings: (
+        mode: PomodoroEndActionMode,
+        video: PomodoroEndActionVideo,
+    ) => Promise<void> | void;
+    applyEndSoundSettings: (sounds: PomodoroEndSounds) => Promise<void> | void;
 }
 
 interface SettingsStoreShape extends SettingsState {
@@ -84,7 +98,12 @@ export interface UserPreferencesStores {
 const DEFAULT_FOCUS_SECONDS = 25 * 60;
 const DEFAULT_BREAK_SECONDS = 5 * 60;
 const DEFAULT_TOTAL_ROUNDS = 4;
-const DEFAULT_END_ACTION_MODE: PomodoroEndActionMode = 'topWindow';
+const DEFAULT_END_ACTION_MODE: PomodoroEndActionMode = 'playVideo';
+const DEFAULT_END_ACTION_VIDEO: PomodoroEndActionVideo = {
+    sourceKind: 'builtin',
+    builtinVideoId: 'qianqian',
+    customVideoPath: '',
+};
 
 export function defaultUserPreferencesSnapshot(): UserPreferencesSnapshot {
     return {
@@ -96,6 +115,8 @@ export function defaultUserPreferencesSnapshot(): UserPreferencesSnapshot {
             autoStartBreak: false,
             autoPinAfterFocus: true,
             endActionMode: DEFAULT_END_ACTION_MODE,
+            endActionVideo: { ...DEFAULT_END_ACTION_VIDEO },
+            endSounds: clonePomodoroEndSounds(DEFAULT_POMODORO_END_SOUNDS),
         },
         settings: {
             uiScale: 1,
@@ -132,6 +153,8 @@ export function buildUserPreferencesSnapshot(stores: UserPreferencesStores): Use
             autoStartBreak: pomodoro.autoStartBreak,
             autoPinAfterFocus: pomodoro.autoPinAfterFocus,
             endActionMode: pomodoro.endActionMode,
+            endActionVideo: { ...pomodoro.endActionVideo },
+            endSounds: clonePomodoroEndSounds(pomodoro.endSounds),
         },
         settings: {
             uiScale: settings.committedUiScale,
@@ -164,6 +187,13 @@ export function hydrateUserPreferencesSnapshot({ stores, snapshot }: {
         snapshot.pomodoro.autoStartBreak,
     );
     stores.pomodoro.getState().setAutoPinAfterFocus(snapshot.pomodoro.autoPinAfterFocus);
+    void stores.pomodoro.getState().applyEndActionSettings(
+        snapshot.pomodoro.endActionMode,
+        { ...snapshot.pomodoro.endActionVideo },
+    );
+    void stores.pomodoro.getState().applyEndSoundSettings(
+        clonePomodoroEndSounds(snapshot.pomodoro.endSounds),
+    );
     stores.settings.getState().hydrateSettings(snapshot.settings);
     stores.appUpdate.setState((state) => ({
         autoUpdateEnabled: snapshot.appUpdate.autoUpdateEnabled,
@@ -225,6 +255,8 @@ function normalizePomodoro(
     fallback: UserPreferencesSnapshot['pomodoro'],
 ): UserPreferencesSnapshot['pomodoro'] {
     if (!isObject(value)) return fallback;
+    const endActionVideo = normalizeEndActionVideo(value.endActionVideo, fallback.endActionVideo);
+    const endSounds = normalizeEndSounds(value.endSounds, fallback.endSounds);
     return {
         focusDurationSeconds: normalizePositiveInteger(value.focusDurationSeconds, fallback.focusDurationSeconds),
         breakDurationSeconds: normalizeNonNegativeInteger(value.breakDurationSeconds, fallback.breakDurationSeconds),
@@ -233,7 +265,38 @@ function normalizePomodoro(
         autoPinAfterFocus: typeof value.autoPinAfterFocus === 'boolean'
             ? value.autoPinAfterFocus
             : fallback.autoPinAfterFocus,
-        endActionMode: 'topWindow',
+        endActionMode: value.endActionMode === 'topWindow' || value.endActionMode === 'playVideo'
+            ? value.endActionMode
+            : fallback.endActionMode,
+        endActionVideo,
+        endSounds,
+    };
+}
+
+function normalizeEndSounds(
+    value: unknown,
+    fallback: PomodoroEndSounds,
+): PomodoroEndSounds {
+    if (!isObject(value)) return clonePomodoroEndSounds(fallback);
+    return {
+        focus: normalizePomodoroSoundSelection(value.focus, fallback.focus, 'focus'),
+        break: normalizePomodoroSoundSelection(value.break, fallback.break, 'break'),
+    };
+}
+
+function normalizeEndActionVideo(
+    value: unknown,
+    fallback: PomodoroEndActionVideo,
+): PomodoroEndActionVideo {
+    if (!isObject(value)) return { ...fallback };
+    return {
+        sourceKind: value.sourceKind === 'custom' ? 'custom' : 'builtin',
+        builtinVideoId: typeof value.builtinVideoId === 'string' && value.builtinVideoId
+            ? value.builtinVideoId
+            : fallback.builtinVideoId,
+        customVideoPath: typeof value.customVideoPath === 'string'
+            ? value.customVideoPath
+            : fallback.customVideoPath,
     };
 }
 

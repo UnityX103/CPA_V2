@@ -244,6 +244,104 @@
 
 .card-break .card-label { color: var(--break-label-color); }
 
+.pomodoro-sound-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--settings-card-gap-tight);
+}
+
+.pomodoro-sound-card {
+    gap: 10px;
+}
+
+.pomodoro-sound-card-break {
+    background: var(--break-card-bg);
+}
+
+.pomodoro-sound-card-break .card-label {
+    color: var(--break-label-color);
+}
+
+.pomodoro-sound-select-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 40px;
+    gap: 8px;
+    align-items: stretch;
+}
+
+.pomodoro-sound-select {
+    min-width: 0;
+    height: 42px;
+    padding-top: 0;
+    padding-bottom: 0;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.pomodoro-sound-preview {
+    width: 40px;
+    height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--input-stroke);
+    border-radius: var(--input-radius);
+    background: var(--input-bg);
+    color: var(--text-link);
+}
+
+.pomodoro-sound-card-break .pomodoro-sound-select,
+.pomodoro-sound-card-break .pomodoro-sound-preview,
+.pomodoro-sound-card-break .pomodoro-sound-file {
+    border-color: var(--break-card-stroke);
+}
+
+.pomodoro-sound-card-break .pomodoro-sound-preview,
+.pomodoro-sound-card-break .pomodoro-sound-file {
+    color: var(--break-suffix-color);
+}
+
+.pomodoro-sound-preview:disabled {
+    cursor: default;
+    color: var(--text-subtle);
+    opacity: 0.6;
+}
+
+.pomodoro-sound-file {
+    width: 100%;
+    min-width: 0;
+    height: 42px;
+    padding: 0 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    border: 1px solid var(--input-stroke);
+    border-radius: var(--input-radius);
+    background: var(--input-bg);
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+    text-align: left;
+}
+
+.pomodoro-sound-file span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pomodoro-sound-file svg {
+    flex-shrink: 0;
+}
+
+@media (max-width: 520px) {
+    .pomodoro-sound-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* TextSuffix Input 0cT2B 内的 break 变体：黄色 stroke + 黄色 suffix */
 .input-suffix-warning {
     border-color: var(--break-card-stroke);

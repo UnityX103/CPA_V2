@@ -14,6 +14,7 @@ import {
     type BridgeSnapshot,
 } from './protocol';
 import { usePresenceStore } from '../presence';
+import { clonePomodoroEndSounds } from '../pomodoroSounds';
 
 const INITIAL_SNAPSHOT_RETRY_MS = 1000;
 
@@ -85,6 +86,8 @@ export function applySnapshotToMirrors(snap: BridgeSnapshot): void {
         autoStartBreak: snap.pomodoro.autoStartBreak,
         autoPinAfterFocus: snap.pomodoro.autoPinAfterFocus,
         endActionMode: snap.pomodoro.endActionMode,
+        endActionVideo: { ...snap.pomodoro.endActionVideo },
+        endSounds: clonePomodoroEndSounds(snap.pomodoro.endSounds),
     });
     usePresenceStore.setState({
         enabled: snap.presence.enabled,

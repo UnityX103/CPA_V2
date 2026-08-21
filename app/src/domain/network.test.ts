@@ -64,6 +64,15 @@ function makeCloudSnapshot(): CloudAccountData {
             autoStartBreak: false,
             autoPinAfterFocus: true,
             endActionMode: 'topWindow',
+            endActionVideo: {
+                sourceKind: 'builtin',
+                builtinVideoId: 'qianqian',
+                customVideoPath: '',
+            },
+            endSounds: {
+                focus: { sourceKind: 'builtin', builtinSoundId: 'clear-success', customSoundPath: '' },
+                break: { sourceKind: 'builtin', builtinSoundId: 'triple-ping', customSoundPath: '' },
+            },
         },
         settings: {
             uiScale: 1,

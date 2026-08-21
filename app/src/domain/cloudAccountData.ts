@@ -11,6 +11,7 @@ import {
     type PersistedBindingKeyEntry,
     type UserPreferencesSnapshot,
 } from './userPreferences';
+import { clonePomodoroEndSounds } from './pomodoroSounds';
 
 export interface CloudAccountData extends UserPreferencesSnapshot {
     updatedAt?: number;
@@ -57,7 +58,11 @@ export function mergeCloudAccountDataConflict({ server }: {
     return {
         ...normalizedServer,
         updatedAt: server.updatedAt,
-        pomodoro: { ...normalizedServer.pomodoro },
+        pomodoro: {
+            ...normalizedServer.pomodoro,
+            endActionVideo: { ...normalizedServer.pomodoro.endActionVideo },
+            endSounds: clonePomodoroEndSounds(normalizedServer.pomodoro.endSounds),
+        },
         settings: { ...normalizedServer.settings },
         appUpdate: { ...normalizedServer.appUpdate },
         network: { ...normalizedServer.network },

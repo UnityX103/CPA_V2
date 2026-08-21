@@ -5,6 +5,7 @@
   "windows": [
     "main",
     "settings",
+    "pomodoro-video-player",
     "input-counter",
     "remote-player-0",
     "remote-player-1",
@@ -25,6 +26,8 @@
     "autostart:allow-enable",
     "autostart:allow-disable",
     "autostart:allow-is-enabled",
+    "dialog:allow-open",
+    "dialog:allow-message",
     "store:allow-load",
     "store:allow-get",
     "store:allow-set",

@@ -33,7 +33,24 @@ function validSnapshot(overrides = {})
             totalRounds: 4,
             autoStartBreak: false,
             autoPinAfterFocus: true,
-            endActionMode: 'topWindow'
+            endActionMode: 'playVideo',
+            endActionVideo: {
+                sourceKind: 'builtin',
+                builtinVideoId: 'qianqian',
+                customVideoPath: ''
+            },
+            endSounds: {
+                focus: {
+                    sourceKind: 'builtin',
+                    builtinSoundId: 'clear-success',
+                    customSoundPath: ''
+                },
+                break: {
+                    sourceKind: 'custom',
+                    builtinSoundId: 'triple-ping',
+                    customSoundPath: 'C:\\Sounds\\rest.mp3'
+                }
+            }
         },
         settings: {
             uiScale: 1,
@@ -106,6 +123,23 @@ test('UserDataStore saves, normalizes, and reloads a snapshot', async (t) =>
 
     const raw = JSON.parse(await readFile(path, 'utf8'));
     assert.equal(raw.users['user-1'].pomodoro.focusDurationSeconds, 1500);
+    assert.deepEqual(loaded.pomodoro.endActionVideo, {
+        sourceKind: 'builtin',
+        builtinVideoId: 'qianqian',
+        customVideoPath: ''
+    });
+    assert.deepEqual(loaded.pomodoro.endSounds, {
+        focus: {
+            sourceKind: 'builtin',
+            builtinSoundId: 'clear-success',
+            customSoundPath: ''
+        },
+        break: {
+            sourceKind: 'custom',
+            builtinSoundId: 'triple-ping',
+            customSoundPath: 'C:\\Sounds\\rest.mp3'
+        }
+    });
 });
 
 test('UserDataStore accepts old v1 snapshots without newer preference sections', async (t) =>
@@ -115,6 +149,7 @@ test('UserDataStore accepts old v1 snapshots without newer preference sections',
     delete oldSnapshot.appUpdate;
     delete oldSnapshot.network;
     delete oldSnapshot.bindingKey;
+    delete oldSnapshot.pomodoro.endSounds;
 
     const saved = await store.saveUserData({
         userId: 'user-1',
@@ -125,6 +160,10 @@ test('UserDataStore accepts old v1 snapshots without newer preference sections',
     assert.deepEqual(saved.appUpdate, { autoUpdateEnabled: true });
     assert.deepEqual(saved.network, { autoConnect: false, playerName: '我' });
     assert.deepEqual(saved.bindingKey, { panelEnabled: true, entries: [], syncedKeyId: null });
+    assert.deepEqual(saved.pomodoro.endSounds, {
+        focus: { sourceKind: 'builtin', builtinSoundId: 'clear-success', customSoundPath: '' },
+        break: { sourceKind: 'builtin', builtinSoundId: 'triple-ping', customSoundPath: '' }
+    });
 });
 
 test('UserDataStore drops invalid binding entries and clears missing syncedKeyId', async (t) =>

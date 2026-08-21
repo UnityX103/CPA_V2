@@ -5,11 +5,14 @@ import SettingsApp from "./SettingsApp";
 import DevAlignApp from "./DevAlignApp";
 import InputCounterApp from "./InputCounterApp";
 import RemotePlayerCardApp from "./RemotePlayerCardApp";
+import VideoPlayerApp from "./VideoPlayerApp";
 import "./styles/global.css";
 
 const which = new URLSearchParams(window.location.search).get("window");
 const Root = which === "settings"
     ? SettingsApp
+    : which === "video-player"
+        ? VideoPlayerApp
     : which === "devalign"
         ? DevAlignApp
         : which === "input-counter"

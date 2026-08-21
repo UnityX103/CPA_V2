@@ -1,10 +1,23 @@
 import { create, type StoreApi, type UseBoundStore } from 'zustand';
-import { dispatch } from './bridge/dispatch';
+import { dispatch, dispatchConfirmed } from './bridge/dispatch';
 import { BRIDGE_VERSION } from './bridge/protocol';
+import { DEFAULT_BUILTIN_POMODORO_VIDEO_ID } from './pomodoroVideos';
+import {
+    clonePomodoroEndSounds,
+    DEFAULT_POMODORO_END_SOUNDS,
+    type PomodoroEndSounds,
+} from './pomodoroSounds';
 
 export type PomodoroPhase = 'focus' | 'break' | 'completed';
-export type PomodoroEndActionMode = 'topWindow';
+export type PomodoroEndActionMode = 'topWindow' | 'playVideo';
+export type PomodoroEndActionSourceKind = 'builtin' | 'custom';
 export type PomodoroPinSource = 'manual' | 'focusEndAuto' | null;
+
+export interface PomodoroEndActionVideo {
+    sourceKind: PomodoroEndActionSourceKind;
+    builtinVideoId: string;
+    customVideoPath: string;
+}
 
 export interface PomodoroEndEvent {
     id: number;
@@ -27,6 +40,8 @@ export interface PomodoroState {
     autoPinAfterFocus: boolean;
     consecutiveCompletedFocus: number;
     endActionMode: PomodoroEndActionMode;
+    endActionVideo: PomodoroEndActionVideo;
+    endSounds: PomodoroEndSounds;
     lastEndEvent: PomodoroEndEvent | null;
     presenceOwnedPause: boolean;
     presenceAutoStartEligible: boolean;
@@ -53,13 +68,23 @@ export interface PomodoroActions {
         resetProgress: boolean,
         autoStartBreak: boolean,
     ) => void;
+    applyEndActionSettings: (
+        mode: PomodoroEndActionMode,
+        video: PomodoroEndActionVideo,
+    ) => Promise<void> | void;
+    applyEndSoundSettings: (sounds: PomodoroEndSounds) => Promise<void> | void;
     tick: (deltaSeconds: number) => void;
 }
 
 const DEFAULT_FOCUS = 25 * 60;
 const DEFAULT_BREAK = 5 * 60;
 const DEFAULT_ROUNDS = 4;
-const DEFAULT_END_ACTION_MODE: PomodoroEndActionMode = 'topWindow';
+const DEFAULT_END_ACTION_MODE: PomodoroEndActionMode = 'playVideo';
+const DEFAULT_END_ACTION_VIDEO: PomodoroEndActionVideo = {
+    sourceKind: 'builtin',
+    builtinVideoId: DEFAULT_BUILTIN_POMODORO_VIDEO_ID,
+    customVideoPath: '',
+};
 
 export type PomodoroStore = UseBoundStore<StoreApi<PomodoroState & PomodoroActions>>;
 
@@ -79,6 +104,8 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
             autoPinAfterFocus: true,
             consecutiveCompletedFocus: 0,
             endActionMode: DEFAULT_END_ACTION_MODE,
+            endActionVideo: { ...DEFAULT_END_ACTION_VIDEO },
+            endSounds: clonePomodoroEndSounds(DEFAULT_POMODORO_END_SOUNDS),
             lastEndEvent: null,
             presenceOwnedPause: false,
             presenceAutoStartEligible: false,
@@ -109,6 +136,22 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
                     action: 'applySettings',
                     args: [focusSeconds, breakSeconds, totalRounds, resetProgress, autoStartBreak],
                 });
+            },
+            applyEndActionSettings: (mode, video) => {
+                return dispatchConfirmed({
+                    v: BRIDGE_VERSION,
+                    store: 'pomodoro',
+                    action: 'applyEndActionSettings',
+                    args: [mode, { ...video }],
+                }, { replyTo: 'settings' });
+            },
+            applyEndSoundSettings: (sounds) => {
+                return dispatchConfirmed({
+                    v: BRIDGE_VERSION,
+                    store: 'pomodoro',
+                    action: 'applyEndSoundSettings',
+                    args: [clonePomodoroEndSounds(sounds)],
+                }, { replyTo: 'settings' });
             },
             tick: () => {},
         }));
@@ -190,6 +233,8 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
             autoPinAfterFocus: true,
             consecutiveCompletedFocus: 0,
             endActionMode: DEFAULT_END_ACTION_MODE,
+            endActionVideo: { ...DEFAULT_END_ACTION_VIDEO },
+            endSounds: clonePomodoroEndSounds(DEFAULT_POMODORO_END_SOUNDS),
             lastEndEvent: null,
             presenceOwnedPause: false,
             presenceAutoStartEligible: false,
@@ -348,6 +393,15 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
                         lastEndEvent: null,
                     });
                 }
+            },
+            applyEndActionSettings: (endActionMode, endActionVideo) => {
+                set({
+                    endActionMode,
+                    endActionVideo: { ...endActionVideo },
+                });
+            },
+            applyEndSoundSettings: (endSounds) => {
+                set({ endSounds: clonePomodoroEndSounds(endSounds) });
             },
             tick: (deltaSeconds) => {
                 const state = get();

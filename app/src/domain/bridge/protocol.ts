@@ -1,7 +1,8 @@
 import type { BindingInput, BindingKeyEntry } from '../bindingKey';
 import type { DangerousChange } from '../settings';
 import type { AccountStatus, AccountUser, CloudSyncStatus, ConnectionStatus, RemotePlayer } from '../network';
-import type { PomodoroEndActionMode } from '../pomodoro';
+import type { PomodoroEndActionMode, PomodoroEndActionVideo } from '../pomodoro';
+import type { PomodoroEndSounds } from '../pomodoroSounds';
 import type { ActiveAppInfo } from '../activeApp';
 import type { AppUpdateSnapshot } from '../appUpdate';
 import type { CloudAccountData } from '../cloudAccountData';
@@ -33,6 +34,8 @@ export interface BridgeSnapshot {
         autoStartBreak: boolean;
         autoPinAfterFocus: boolean;
         endActionMode: PomodoroEndActionMode;
+        endActionVideo: PomodoroEndActionVideo;
+        endSounds: PomodoroEndSounds;
     };
     presence: PresencePreferences & {
         platform: PresencePlatform;
@@ -74,6 +77,8 @@ export type DispatchPayload =
     | { v: typeof BRIDGE_VERSION; store: 'settings';   action: 'applyDangerousChange' | 'revertDangerousChange'; args: [string] }
     | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'applySettings'; args: [number, number, number, boolean, boolean] }
     | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'setAutoPinAfterFocus'; args: [boolean] }
+    | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'applyEndActionSettings'; args: [PomodoroEndActionMode, PomodoroEndActionVideo] }
+    | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'applyEndSoundSettings'; args: [PomodoroEndSounds] }
     | { v: typeof BRIDGE_VERSION; store: 'presence';   action: 'applySettings'; args: [PresencePreferences] }
     | { v: typeof BRIDGE_VERSION; store: 'presence';   action: 'requestAccess' | 'retry' | 'openPrivacySettings'; args: [] }
     | { v: typeof BRIDGE_VERSION; store: 'network';    action: 'createRoom' | 'joinRoom'; args: [string] }

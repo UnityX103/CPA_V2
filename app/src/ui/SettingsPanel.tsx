@@ -8,7 +8,27 @@ import {
     MIN_SCALE,
     MAX_SCALE,
 } from '../domain/settings';
-import { usePomodoroStore } from '../domain/pomodoro';
+import {
+    usePomodoroStore,
+    type PomodoroEndActionMode,
+    type PomodoroEndActionVideo,
+} from '../domain/pomodoro';
+import {
+    BUILTIN_POMODORO_VIDEOS,
+    DEFAULT_BUILTIN_POMODORO_VIDEO_ID,
+} from '../domain/pomodoroVideos';
+import { pickCustomWebmPath } from '../domain/videoFiles';
+import {
+    BREAK_END_SOUNDS,
+    clonePomodoroEndSounds,
+    FOCUS_END_SOUNDS,
+    playPomodoroSound,
+    samePomodoroEndSounds,
+    type PomodoroEndSounds,
+    type PomodoroSoundPhase,
+    type PomodoroSoundSelection,
+} from '../domain/pomodoroSounds';
+import { pickCustomMp3Path } from '../domain/soundFiles';
 import { useNetworkStore } from '../domain/network';
 import {
     labelForInput,
@@ -162,6 +182,9 @@ function PomodoroTab({ onApplyStateChange }: {
     const [breakMin, setBreakMin] = useState(Math.round(pomo.breakDurationSeconds / 60));
     const [autoStartBreak, setAutoStartBreak] = useState(pomo.autoStartBreak);
     const [autoPinAfterFocus, setAutoPinAfterFocus] = useState(pomo.autoPinAfterFocus);
+    const [endActionMode, setEndActionMode] = useState<PomodoroEndActionMode>(pomo.endActionMode);
+    const [endActionVideo, setEndActionVideo] = useState<PomodoroEndActionVideo>({ ...pomo.endActionVideo });
+    const [endSounds, setEndSounds] = useState<PomodoroEndSounds>(clonePomodoroEndSounds(pomo.endSounds));
     const [presenceEnabled, setPresenceEnabled] = useState(presence.enabled);
     const [presenceIntervalSeconds, setPresenceIntervalSeconds] = useState(presence.intervalSeconds);
     const [presenceThresholdSeconds, setPresenceThresholdSeconds] = useState(presence.presentThresholdSeconds);
@@ -170,6 +193,9 @@ function PomodoroTab({ onApplyStateChange }: {
         breakDurationSeconds: pomo.breakDurationSeconds,
         autoStartBreak: pomo.autoStartBreak,
         autoPinAfterFocus: pomo.autoPinAfterFocus,
+        endActionMode: pomo.endActionMode,
+        endActionVideo: { ...pomo.endActionVideo },
+        endSounds: clonePomodoroEndSounds(pomo.endSounds),
         presenceEnabled: presence.enabled,
         presenceIntervalSeconds: presence.intervalSeconds,
         presenceThresholdSeconds: presence.presentThresholdSeconds,
@@ -182,6 +208,10 @@ function PomodoroTab({ onApplyStateChange }: {
             breakMin * 60 !== previous.breakDurationSeconds ||
             autoStartBreak !== previous.autoStartBreak ||
             autoPinAfterFocus !== previous.autoPinAfterFocus;
+        const endActionDraftDirty =
+            endActionMode !== previous.endActionMode ||
+            !sameEndActionVideo(endActionVideo, previous.endActionVideo);
+        const endSoundDraftDirty = !samePomodoroEndSounds(endSounds, previous.endSounds);
         const presenceDraftDirty =
             presenceEnabled !== previous.presenceEnabled
             || presenceIntervalSeconds !== previous.presenceIntervalSeconds
@@ -191,6 +221,21 @@ function PomodoroTab({ onApplyStateChange }: {
             setBreakMin(Math.round(pomo.breakDurationSeconds / 60));
             setAutoStartBreak(pomo.autoStartBreak);
             setAutoPinAfterFocus(pomo.autoPinAfterFocus);
+        }
+        if (!endActionDraftDirty) {
+            setEndActionMode(pomo.endActionMode);
+            setEndActionVideo((current) => (
+                sameEndActionVideo(current, pomo.endActionVideo)
+                    ? current
+                    : { ...pomo.endActionVideo }
+            ));
+        }
+        if (!endSoundDraftDirty) {
+            setEndSounds((current) => (
+                samePomodoroEndSounds(current, pomo.endSounds)
+                    ? current
+                    : clonePomodoroEndSounds(pomo.endSounds)
+            ));
         }
         if (!presenceDraftDirty) {
             setPresenceEnabled(presence.enabled);
@@ -203,6 +248,9 @@ function PomodoroTab({ onApplyStateChange }: {
             breakDurationSeconds: pomo.breakDurationSeconds,
             autoStartBreak: pomo.autoStartBreak,
             autoPinAfterFocus: pomo.autoPinAfterFocus,
+            endActionMode: pomo.endActionMode,
+            endActionVideo: { ...pomo.endActionVideo },
+            endSounds: clonePomodoroEndSounds(pomo.endSounds),
             presenceEnabled: presence.enabled,
             presenceIntervalSeconds: presence.intervalSeconds,
             presenceThresholdSeconds: presence.presentThresholdSeconds,
@@ -212,6 +260,16 @@ function PomodoroTab({ onApplyStateChange }: {
         pomo.breakDurationSeconds,
         pomo.autoStartBreak,
         pomo.autoPinAfterFocus,
+        pomo.endActionMode,
+        pomo.endActionVideo.sourceKind,
+        pomo.endActionVideo.builtinVideoId,
+        pomo.endActionVideo.customVideoPath,
+        pomo.endSounds.focus.sourceKind,
+        pomo.endSounds.focus.builtinSoundId,
+        pomo.endSounds.focus.customSoundPath,
+        pomo.endSounds.break.sourceKind,
+        pomo.endSounds.break.builtinSoundId,
+        pomo.endSounds.break.customSoundPath,
         presence.enabled,
         presence.intervalSeconds,
         presence.presentThresholdSeconds,
@@ -219,6 +277,9 @@ function PomodoroTab({ onApplyStateChange }: {
         breakMin,
         autoStartBreak,
         autoPinAfterFocus,
+        endActionMode,
+        endActionVideo,
+        endSounds,
         presenceEnabled,
         presenceIntervalSeconds,
         presenceThresholdSeconds,
@@ -229,10 +290,20 @@ function PomodoroTab({ onApplyStateChange }: {
         breakMin * 60 !== pomo.breakDurationSeconds ||
         autoStartBreak !== pomo.autoStartBreak ||
         autoPinAfterFocus !== pomo.autoPinAfterFocus ||
+        endActionMode !== pomo.endActionMode ||
+        !sameEndActionVideo(endActionVideo, pomo.endActionVideo) ||
+        !samePomodoroEndSounds(endSounds, pomo.endSounds) ||
         presenceEnabled !== presence.enabled ||
         presenceIntervalSeconds !== presence.intervalSeconds ||
         presenceThresholdSeconds !== presence.presentThresholdSeconds;
-    const canApply = dirty;
+    const hasMissingCustomVideo =
+        endActionMode === 'playVideo' &&
+        endActionVideo.sourceKind === 'custom' &&
+        !endActionVideo.customVideoPath;
+    const hasMissingCustomSound =
+        (endSounds.focus.sourceKind === 'custom' && !endSounds.focus.customSoundPath)
+        || (endSounds.break.sourceKind === 'custom' && !endSounds.break.customSoundPath);
+    const canApply = dirty && !hasMissingCustomVideo && !hasMissingCustomSound;
 
     const apply = useCallback(() => {
         if (!canApply) return;
@@ -243,6 +314,10 @@ function PomodoroTab({ onApplyStateChange }: {
             breakSeconds !== pomo.breakDurationSeconds ||
             autoStartBreak !== pomo.autoStartBreak;
         const autoPinAfterFocusChanged = autoPinAfterFocus !== pomo.autoPinAfterFocus;
+        const endActionChanged =
+            endActionMode !== pomo.endActionMode ||
+            !sameEndActionVideo(endActionVideo, pomo.endActionVideo);
+        const endSoundsChanged = !samePomodoroEndSounds(endSounds, pomo.endSounds);
         const presenceChanged =
             presenceEnabled !== presence.enabled
             || presenceIntervalSeconds !== presence.intervalSeconds
@@ -253,6 +328,18 @@ function PomodoroTab({ onApplyStateChange }: {
         }
         if (autoPinAfterFocusChanged) {
             pomo.setAutoPinAfterFocus(autoPinAfterFocus);
+        }
+        if (endActionChanged) {
+            void Promise.resolve(pomo.applyEndActionSettings(endActionMode, endActionVideo))
+                .catch((error) => {
+                    console.warn('[settings] failed to apply Pomodoro end action', error);
+                });
+        }
+        if (endSoundsChanged) {
+            void Promise.resolve(pomo.applyEndSoundSettings(endSounds))
+                .catch((error) => {
+                    console.warn('[settings] failed to apply Pomodoro end sounds', error);
+                });
         }
         if (presenceChanged) {
             void Promise.resolve(presence.applySettings({
@@ -269,6 +356,9 @@ function PomodoroTab({ onApplyStateChange }: {
         breakMin,
         autoStartBreak,
         autoPinAfterFocus,
+        endActionMode,
+        endActionVideo,
+        endSounds,
         pomo,
         presence,
         presenceEnabled,
@@ -283,6 +373,71 @@ function PomodoroTab({ onApplyStateChange }: {
             apply,
         });
     }, [onApplyStateChange, dirty, canApply, apply]);
+
+    const selectedVideoOption = endActionVideo.sourceKind === 'custom'
+        ? 'custom'
+        : endActionVideo.builtinVideoId;
+    const showVideoOptions = endActionMode === 'playVideo';
+    const showCustomVideoRow = showVideoOptions && endActionVideo.sourceKind === 'custom';
+    const customVideoName = endActionVideo.customVideoPath
+        ? fileNameFromPath(endActionVideo.customVideoPath)
+        : '未选择';
+
+    const setVideoOption = (value: string) => {
+        setEndActionMode('playVideo');
+        if (value === 'custom') {
+            setEndActionVideo((current) => ({
+                sourceKind: 'custom',
+                builtinVideoId: current.builtinVideoId || DEFAULT_BUILTIN_POMODORO_VIDEO_ID,
+                customVideoPath: current.customVideoPath,
+            }));
+            return;
+        }
+        setEndActionVideo((current) => ({
+            sourceKind: 'builtin',
+            builtinVideoId: value,
+            customVideoPath: current.customVideoPath,
+        }));
+    };
+
+    const chooseCustomVideo = async () => {
+        try {
+            const path = await pickCustomWebmPath();
+            if (!path) return;
+            setEndActionMode('playVideo');
+            setEndActionVideo((current) => ({
+                sourceKind: 'custom',
+                builtinVideoId: current.builtinVideoId || DEFAULT_BUILTIN_POMODORO_VIDEO_ID,
+                customVideoPath: path,
+            }));
+        } catch (error) {
+            console.warn('[settings] failed to select custom Pomodoro video', error);
+        }
+    };
+
+    const updateEndSound = (
+        phase: PomodoroSoundPhase,
+        update: (current: PomodoroSoundSelection) => PomodoroSoundSelection,
+    ) => {
+        setEndSounds((current) => ({
+            ...current,
+            [phase]: update(current[phase]),
+        }));
+    };
+
+    const chooseCustomSound = async (phase: PomodoroSoundPhase) => {
+        try {
+            const path = await pickCustomMp3Path();
+            if (!path) return;
+            updateEndSound(phase, (current) => ({
+                ...current,
+                sourceKind: 'custom',
+                customSoundPath: path,
+            }));
+        } catch (error) {
+            console.warn(`[settings] failed to select ${phase} end sound`, error);
+        }
+    };
 
     return (
         <>
@@ -340,7 +495,7 @@ function PomodoroTab({ onApplyStateChange }: {
                                 />
                             </div>
                             <div className="card">
-                                <span className="card-label">在场确认时长</span>
+                                <span className="card-label">切换状态确认时长</span>
                                 <NumberSuffix
                                     value={presenceThresholdSeconds}
                                     onChange={setPresenceThresholdSeconds}
@@ -367,11 +522,176 @@ function PomodoroTab({ onApplyStateChange }: {
                             <Toggle checked={autoPinAfterFocus} onChange={setAutoPinAfterFocus} ariaLabel="自动制定" />
                         </div>
 
+                        <div className="pomodoro-sound-grid">
+                            <SoundSettingsCard
+                                phase="focus"
+                                label="专注结束声音"
+                                selection={endSounds.focus}
+                                sounds={FOCUS_END_SOUNDS}
+                                onChange={(selection) => updateEndSound('focus', () => selection)}
+                                onChooseCustom={() => { void chooseCustomSound('focus'); }}
+                            />
+                            <SoundSettingsCard
+                                phase="break"
+                                label="休息结束声音"
+                                selection={endSounds.break}
+                                sounds={BREAK_END_SOUNDS}
+                                onChange={(selection) => updateEndSound('break', () => selection)}
+                                onChooseCustom={() => { void chooseCustomSound('break'); }}
+                            />
+                        </div>
+
+                        <div className="card pomo-row">
+                            <span className="pomo-row-label">计时结束提示</span>
+                            <select
+                                className="dropdown dropdown-fit"
+                                aria-label="计时结束提示"
+                                value={endActionMode}
+                                onChange={(event) => setEndActionMode(event.currentTarget.value as PomodoroEndActionMode)}
+                            >
+                                <option value="topWindow">弹窗到顶部</option>
+                                <option value="playVideo">播放视频</option>
+                            </select>
+                        </div>
+
+                        {showVideoOptions && (
+                            <div className="card pomo-row">
+                                <span className="pomo-row-label">视频选项</span>
+                                <select
+                                    className="dropdown dropdown-fit"
+                                    aria-label="视频选项"
+                                    value={selectedVideoOption}
+                                    onChange={(event) => setVideoOption(event.currentTarget.value)}
+                                >
+                                    {BUILTIN_POMODORO_VIDEOS.map((video) => (
+                                        <option key={video.id} value={video.id}>{video.name}</option>
+                                    ))}
+                                    <option value="custom">自定义视频</option>
+                                </select>
+                            </div>
+                        )}
+
+                        {showCustomVideoRow && (
+                            <button
+                                className="card pomo-row pomo-row-button"
+                                type="button"
+                                aria-label="选择自定义视频"
+                                onClick={() => { void chooseCustomVideo(); }}
+                            >
+                                <span className="pomo-row-label">自定义视频文件</span>
+                                <span className="pomo-row-right">
+                                    <span className={`pomo-row-value ${endActionVideo.customVideoPath ? 'pomo-row-value-link' : 'pomo-row-value-muted'}`}>
+                                        {customVideoName}
+                                    </span>
+                                    <FolderIcon />
+                                </span>
+                            </button>
+                        )}
+
                     </div>
                 </div>
             </div>
         </>
     );
+}
+
+function SoundSettingsCard({
+    phase,
+    label,
+    selection,
+    sounds,
+    onChange,
+    onChooseCustom,
+}: {
+    phase: PomodoroSoundPhase;
+    label: string;
+    selection: PomodoroSoundSelection;
+    sounds: typeof FOCUS_END_SOUNDS | typeof BREAK_END_SOUNDS;
+    onChange: (selection: PomodoroSoundSelection) => void;
+    onChooseCustom: () => void;
+}) {
+    const selectedOption = selection.sourceKind === 'builtin'
+        ? selection.builtinSoundId
+        : selection.sourceKind;
+    const canPreview = selection.sourceKind !== 'off'
+        && (selection.sourceKind !== 'custom' || Boolean(selection.customSoundPath));
+    const customFileName = selection.customSoundPath
+        ? fileNameFromPath(selection.customSoundPath)
+        : '未选择';
+
+    const selectSound = (value: string) => {
+        if (value === 'off' || value === 'custom') {
+            onChange({ ...selection, sourceKind: value });
+            return;
+        }
+        onChange({
+            ...selection,
+            sourceKind: 'builtin',
+            builtinSoundId: value,
+        });
+    };
+
+    const preview = async () => {
+        try {
+            await playPomodoroSound(selection, phase);
+        } catch (error) {
+            console.warn(`[settings] failed to preview ${phase} end sound`, error);
+        }
+    };
+
+    return (
+        <div className={`card pomodoro-sound-card ${phase === 'break' ? 'pomodoro-sound-card-break' : ''}`}>
+            <span className="card-label">{label}</span>
+            <div className="pomodoro-sound-select-row">
+                <select
+                    className="dropdown pomodoro-sound-select"
+                    aria-label={label}
+                    value={selectedOption}
+                    onChange={(event) => selectSound(event.currentTarget.value)}
+                >
+                    <option value="off">关闭</option>
+                    {sounds.map((sound) => (
+                        <option key={sound.id} value={sound.id}>{sound.name}</option>
+                    ))}
+                    <option value="custom">自定义 MP3</option>
+                </select>
+                <button
+                    className="pomodoro-sound-preview"
+                    type="button"
+                    aria-label={`试听${label}`}
+                    title={`试听${label}`}
+                    disabled={!canPreview}
+                    onClick={() => { void preview(); }}
+                >
+                    <PlayIcon />
+                </button>
+            </div>
+            <button
+                className="pomodoro-sound-file"
+                type="button"
+                aria-label={`选择${label}本机 MP3`}
+                title={`选择${label}本机 MP3`}
+                onClick={onChooseCustom}
+            >
+                <span className={selection.customSoundPath ? 'pomo-row-value-link' : 'pomo-row-value-muted'}>
+                    本机 MP3 · {customFileName}
+                </span>
+                <FolderIcon />
+            </button>
+        </div>
+    );
+}
+
+function sameEndActionVideo(a: PomodoroEndActionVideo, b: PomodoroEndActionVideo): boolean {
+    return (
+        a.sourceKind === b.sourceKind &&
+        a.builtinVideoId === b.builtinVideoId &&
+        a.customVideoPath === b.customVideoPath
+    );
+}
+
+function fileNameFromPath(path: string): string {
+    return path.split(/[\\/]/).pop() || path;
 }
 
 function presenceObservationText(observation: PresenceObservation): string {
@@ -1086,6 +1406,22 @@ function CloseIcon() {
     return (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M18 6 6 18M6 6l12 12" />
+        </svg>
+    );
+}
+
+function FolderIcon() {
+    return (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />
+        </svg>
+    );
+}
+
+function PlayIcon() {
+    return (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m7 4 13 8-13 8Z" />
         </svg>
     );
 }

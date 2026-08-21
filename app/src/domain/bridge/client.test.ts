@@ -16,6 +16,15 @@ function snapshot(): BridgeSnapshot {
             autoStartBreak: true,
             autoPinAfterFocus: false,
             endActionMode: 'topWindow',
+            endActionVideo: {
+                sourceKind: 'custom',
+                builtinVideoId: 'qianqian',
+                customVideoPath: '/Users/xpy/Videos/focus-end.webm',
+            },
+            endSounds: {
+                focus: { sourceKind: 'builtin', builtinSoundId: 'light-success', customSoundPath: '' },
+                break: { sourceKind: 'custom', builtinSoundId: 'triple-ping', customSoundPath: '/Users/xpy/Music/rest.mp3' },
+            },
         },
         presence: {
             enabled: true,
@@ -75,6 +84,15 @@ describe('bridge client', () => {
             focusDurationSeconds: 900,
             autoPinAfterFocus: false,
             endActionMode: 'topWindow',
+            endActionVideo: {
+                sourceKind: 'custom',
+                builtinVideoId: 'qianqian',
+                customVideoPath: '/Users/xpy/Videos/focus-end.webm',
+            },
+            endSounds: {
+                focus: { sourceKind: 'builtin', builtinSoundId: 'light-success', customSoundPath: '' },
+                break: { sourceKind: 'custom', builtinSoundId: 'triple-ping', customSoundPath: '/Users/xpy/Music/rest.mp3' },
+            },
         }));
         expect(usePresenceStore.getState()).toEqual(expect.objectContaining({
             enabled: true,

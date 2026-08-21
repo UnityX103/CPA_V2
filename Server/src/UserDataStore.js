@@ -144,6 +144,15 @@ function normalizePomodoro(value)
     {
         throw new UserDataStoreError('INVALID_USER_DATA', '番茄设置缺失');
     }
+    const endActionMode = value.endActionMode === 'topWindow' || value.endActionMode === 'playVideo'
+        ? value.endActionMode
+        : 'playVideo';
+    const endActionVideo = value.endActionVideo && typeof value.endActionVideo === 'object'
+        ? value.endActionVideo
+        : {};
+    const endSounds = value.endSounds && typeof value.endSounds === 'object'
+        ? value.endSounds
+        : {};
     return {
         focusDurationSeconds: normalizePositiveInteger(value.focusDurationSeconds),
         breakDurationSeconds: normalizeNonNegativeInteger(value.breakDurationSeconds),
@@ -152,7 +161,29 @@ function normalizePomodoro(value)
         autoPinAfterFocus: typeof value.autoPinAfterFocus === 'boolean'
             ? value.autoPinAfterFocus
             : true,
-        endActionMode: 'topWindow'
+        endActionMode,
+        endActionVideo: {
+            sourceKind: endActionVideo.sourceKind === 'custom' ? 'custom' : 'builtin',
+            builtinVideoId: clampString(endActionVideo.builtinVideoId, 128) || 'qianqian',
+            customVideoPath: clampString(endActionVideo.customVideoPath, 1024)
+        },
+        endSounds: {
+            focus: normalizeEndSound(endSounds.focus, 'clear-success'),
+            break: normalizeEndSound(endSounds.break, 'triple-ping')
+        }
+    };
+}
+
+function normalizeEndSound(value, defaultBuiltinSoundId)
+{
+    const sound = value && typeof value === 'object' ? value : {};
+    const sourceKind = sound.sourceKind === 'off' || sound.sourceKind === 'custom'
+        ? sound.sourceKind
+        : 'builtin';
+    return {
+        sourceKind,
+        builtinSoundId: clampString(sound.builtinSoundId, 128) || defaultBuiltinSoundId,
+        customSoundPath: clampString(sound.customSoundPath, 1024)
     };
 }
 

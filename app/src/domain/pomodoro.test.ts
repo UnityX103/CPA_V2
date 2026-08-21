@@ -8,12 +8,51 @@ function freshStore() {
 }
 
 describe('Pomodoro end action', () => {
-    it('only supports bringing the main window to the top', () => {
+    it('defaults to playing the bundled qianqian video', () => {
         const store = freshStore();
 
-        expect(store.getState().endActionMode).toBe('topWindow');
+        expect(store.getState().endActionMode).toBe('playVideo');
+        expect(store.getState().endActionVideo).toEqual({
+            sourceKind: 'builtin',
+            builtinVideoId: 'qianqian',
+            customVideoPath: '',
+        });
+        expect(store.getState().endSounds).toEqual({
+            focus: { sourceKind: 'builtin', builtinSoundId: 'clear-success', customSoundPath: '' },
+            break: { sourceKind: 'builtin', builtinSoundId: 'triple-ping', customSoundPath: '' },
+        });
         expect(store.getState().autoPinAfterFocus).toBe(true);
         expect(store.getState().lastEndEvent).toBeNull();
+    });
+
+    it('applies focus-end prompt mode and custom video settings', async () => {
+        const store = freshStore();
+
+        await store.getState().applyEndActionSettings('playVideo', {
+            sourceKind: 'custom',
+            builtinVideoId: 'qianqian',
+            customVideoPath: '/Users/xpy/Videos/custom.webm',
+        });
+
+        expect(store.getState().endActionVideo).toEqual({
+            sourceKind: 'custom',
+            builtinVideoId: 'qianqian',
+            customVideoPath: '/Users/xpy/Videos/custom.webm',
+        });
+    });
+
+    it('applies independent focus and break sound settings', async () => {
+        const store = freshStore();
+
+        await store.getState().applyEndSoundSettings({
+            focus: { sourceKind: 'off', builtinSoundId: 'clear-success', customSoundPath: '' },
+            break: { sourceKind: 'custom', builtinSoundId: 'triple-ping', customSoundPath: '/tmp/rest.mp3' },
+        });
+
+        expect(store.getState().endSounds).toEqual({
+            focus: { sourceKind: 'off', builtinSoundId: 'clear-success', customSoundPath: '' },
+            break: { sourceKind: 'custom', builtinSoundId: 'triple-ping', customSoundPath: '/tmp/rest.mp3' },
+        });
     });
 });
 

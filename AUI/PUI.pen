@@ -106,51 +106,6 @@
           "children": [
             {
               "type": "frame",
-              "id": "aCOWE",
-              "name": "pomoNotif",
-              "width": "fill_container",
-              "fill": "#F6F7F8",
-              "cornerRadius": 16,
-              "padding": [
-                14,
-                16
-              ],
-              "justifyContent": "space_between",
-              "alignItems": "center",
-              "children": [
-                {
-                  "type": "frame",
-                  "id": "hlKwN",
-                  "name": "pomoNotifLeft",
-                  "gap": 10,
-                  "alignItems": "center",
-                  "children": [
-                    {
-                      "type": "text",
-                      "id": "0tEyw",
-                      "name": "pomoNotifText",
-                      "fill": "#1A1A1A",
-                      "content": "结束提示音",
-                      "fontFamily": "MaokenAssortedSans",
-                      "fontSize": 14,
-                      "fontWeight": "500"
-                    }
-                  ]
-                },
-                {
-                  "type": "text",
-                  "id": "wauq6",
-                  "name": "pomoNotifState",
-                  "fill": "#6366F1",
-                  "content": "柔和铃声",
-                  "fontFamily": "MaokenAssortedSans",
-                  "fontSize": 12,
-                  "fontWeight": "700"
-                }
-              ]
-            },
-            {
-              "type": "frame",
               "id": "jUmlc",
               "name": "pomoPresenceToggle",
               "width": 572,
@@ -489,53 +444,6 @@
             },
             {
               "type": "frame",
-              "id": "I6SsL5",
-              "name": "pomoEndAction",
-              "width": "fill_container",
-              "fill": "#F6F7F8",
-              "cornerRadius": 16,
-              "padding": [
-                14,
-                16
-              ],
-              "justifyContent": "space_between",
-              "alignItems": "center",
-              "children": [
-                {
-                  "type": "frame",
-                  "id": "E49hj1",
-                  "name": "pomoEndActionLeft",
-                  "gap": 10,
-                  "alignItems": "center",
-                  "children": [
-                    {
-                      "type": "text",
-                      "id": "ztvfx",
-                      "name": "pomoEndActionText",
-                      "fill": "#1A1A1A",
-                      "content": "计时结束提示",
-                      "fontFamily": "MaokenAssortedSans",
-                      "fontSize": 14,
-                      "fontWeight": "500"
-                    }
-                  ]
-                },
-                {
-                  "id": "Tp1bH",
-                  "type": "ref",
-                  "ref": "Frjkw",
-                  "name": "pomoEndActionDropdown",
-                  "width": "fit_content",
-                  "descendants": {
-                    "d5bpi": {
-                      "content": "弹窗到顶部"
-                    }
-                  }
-                }
-              ]
-            },
-            {
-              "type": "frame",
               "id": "WSnlp",
               "x": 0,
               "y": 0,
@@ -579,6 +487,231 @@
                   "descendants": {
                     "d5bpi": {
                       "content": "未选择"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "aDBoa",
+              "name": "pomoSoundSettings",
+              "width": "fill_container",
+              "height": 150,
+              "fill": {
+                "type": "color",
+                "color": "#FFFFFF",
+                "enabled": false
+              },
+              "layout": "vertical",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "Av4tX",
+                  "name": "pomoSoundSelectionGrid",
+                  "width": "fill_container",
+                  "height": 150,
+                  "gap": 12,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "fqBMx",
+                      "name": "pomoWork",
+                      "width": "fill_container",
+                      "fill": "#F6F7F8",
+                      "cornerRadius": 16,
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": 16,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "GSEyn",
+                          "name": "pomoWorkLabel",
+                          "fill": "#9CA3AF",
+                          "content": "专注结束声音",
+                          "fontFamily": "MaokenAssortedSans",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "id": "DN7h3",
+                          "type": "ref",
+                          "ref": "0cT2B",
+                          "name": "pomoWorkInput",
+                          "width": "fill_container",
+                          "descendants": {
+                            "OQv34": {
+                              "content": "清澈完成",
+                              "fontSize": 14
+                            },
+                            "zpqfK": {
+                              "type": "icon",
+                              "id": "uYt0Y",
+                              "name": "focusEndSoundPlayIcon",
+                              "width": 16,
+                              "height": 16,
+                              "icon": "play",
+                              "library": "lucide",
+                              "fill": "#6366F1"
+                            }
+                          }
+                        },
+                        {
+                          "id": "Matuc",
+                          "type": "ref",
+                          "ref": "0cT2B",
+                          "name": "focusEndCustomMp3Input",
+                          "width": "fill_container",
+                          "descendants": {
+                            "OQv34": {
+                              "content": "本机 MP3 · 未选择",
+                              "fontSize": 12,
+                              "fill": "#9CA3AF"
+                            },
+                            "zpqfK": {
+                              "type": "icon",
+                              "id": "zVx2R",
+                              "name": "focusEndCustomMp3FolderIcon",
+                              "width": 15,
+                              "height": 15,
+                              "icon": "folder",
+                              "library": "lucide",
+                              "fill": "#9CA3AF"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "YPvSc",
+                      "name": "pomoBreak",
+                      "width": "fill_container",
+                      "fill": "#FFF7D9",
+                      "cornerRadius": 16,
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": 16,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "LXRAn",
+                          "name": "pomoBreakLabel",
+                          "fill": "#D97706",
+                          "content": "休息结束声音",
+                          "fontFamily": "MaokenAssortedSans",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "id": "iGOd5",
+                          "type": "ref",
+                          "ref": "0cT2B",
+                          "name": "pomoBreakInput",
+                          "width": "fill_container",
+                          "fill": "#FFFFFFB8",
+                          "stroke": "#F3D28B",
+                          "strokeWidth": 1,
+                          "strokeLinejoin": "miter",
+                          "strokeLinecap": "butt",
+                          "strokeAlignment": "inner",
+                          "descendants": {
+                            "OQv34": {
+                              "content": "三连提示",
+                              "fontSize": 14
+                            },
+                            "zpqfK": {
+                              "type": "icon",
+                              "id": "C2o94G",
+                              "name": "breakEndSoundPlayIcon",
+                              "width": 16,
+                              "height": 16,
+                              "icon": "play",
+                              "library": "lucide",
+                              "fill": "#D97706"
+                            }
+                          }
+                        },
+                        {
+                          "id": "QFovM",
+                          "type": "ref",
+                          "ref": "0cT2B",
+                          "name": "breakEndCustomMp3Input",
+                          "width": "fill_container",
+                          "fill": "#FFFFFFB8",
+                          "stroke": "#F3D28B",
+                          "strokeWidth": 1,
+                          "strokeLinejoin": "miter",
+                          "strokeLinecap": "butt",
+                          "strokeAlignment": "inner",
+                          "descendants": {
+                            "OQv34": {
+                              "content": "本机 MP3 · 未选择",
+                              "fontSize": 12,
+                              "fill": "#A16207"
+                            },
+                            "zpqfK": {
+                              "type": "icon",
+                              "id": "Y31ksb",
+                              "name": "breakEndCustomMp3FolderIcon",
+                              "width": 15,
+                              "height": 15,
+                              "icon": "folder",
+                              "library": "lucide",
+                              "fill": "#A16207"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "ZAXRz",
+              "name": "pomoEndAction",
+              "width": "fill_container",
+              "fill": "#F6F7F8",
+              "cornerRadius": 16,
+              "padding": [
+                14,
+                16
+              ],
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "fTvMA",
+                  "name": "pomoEndActionLeft",
+                  "gap": 10,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "NSqRc",
+                      "name": "pomoEndActionText",
+                      "fill": "#1A1A1A",
+                      "content": "计时结束提示",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 14,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "id": "R9L3S0",
+                  "type": "ref",
+                  "ref": "Frjkw",
+                  "name": "pomoEndActionDropdown",
+                  "width": "fit_content",
+                  "descendants": {
+                    "d5bpi": {
+                      "content": "弹窗到顶部"
                     }
                   }
                 }
@@ -1271,9 +1404,9 @@
                     "mo62i": {
                       "flipX": false,
                       "flipY": false,
-                      "width": 49.67948717948718,
+                      "width": 49.36102892833662,
                       "height": 18,
-                      "x": 13.91025641025641,
+                      "x": 13.821088099934254,
                       "y": 21,
                       "textGrowth": "fixed-width-height",
                       "fontSize": 17
@@ -5651,7 +5784,12 @@
                   "ref": "YRqeB",
                   "name": "Pomodoro-Present",
                   "width": 233,
-                  "height": 155
+                  "height": 155,
+                  "descendants": {
+                    "DiaNW": {
+                      "height": 78
+                    }
+                  }
                 }
               ]
             },
@@ -5700,6 +5838,9 @@
                   "width": 233,
                   "height": 155,
                   "descendants": {
+                    "DiaNW": {
+                      "height": 78
+                    },
                     "uJiuO": {
                       "fill": "#FBE8E2",
                       "stroke": "#EEC8BD"

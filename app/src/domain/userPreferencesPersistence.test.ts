@@ -28,13 +28,34 @@ describe('user preferences persistence', () => {
         const normalized = normalizeUserPreferencesSnapshot(input);
 
         expect(normalized?.settings).toEqual({ uiScale: 1.25, autostartEnabled: true });
-        expect(normalized?.pomodoro.endActionMode).toBe('topWindow');
+        expect(normalized?.pomodoro.endActionMode).toBe('playVideo');
+        expect(normalized?.pomodoro.endActionVideo).toEqual({
+            sourceKind: 'builtin',
+            builtinVideoId: 'qianqian',
+            customVideoPath: '',
+        });
+        expect(normalized?.pomodoro.endSounds).toEqual({
+            focus: { sourceKind: 'builtin', builtinSoundId: 'clear-success', customSoundPath: '' },
+            break: { sourceKind: 'builtin', builtinSoundId: 'triple-ping', customSoundPath: '' },
+        });
     });
 
     it('loads normalized preferences', async () => {
         store.get.mockResolvedValue(defaultUserPreferencesSnapshot());
 
         await expect(loadPersistedUserPreferences()).resolves.toEqual(defaultUserPreferencesSnapshot());
+    });
+
+    it('adds default end sounds when loading an older schema-v1 snapshot', () => {
+        const legacy = defaultUserPreferencesSnapshot() as unknown as {
+            pomodoro: Record<string, unknown>;
+        };
+        delete legacy.pomodoro.endSounds;
+
+        expect(normalizeUserPreferencesSnapshot(legacy)?.pomodoro.endSounds).toEqual({
+            focus: { sourceKind: 'builtin', builtinSoundId: 'clear-success', customSoundPath: '' },
+            break: { sourceKind: 'builtin', builtinSoundId: 'triple-ping', customSoundPath: '' },
+        });
     });
 
     it('saves the retained schema', async () => {

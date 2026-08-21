@@ -98,7 +98,24 @@ function validUserDataPayload()
             totalRounds: 4,
             autoStartBreak: false,
             autoPinAfterFocus: true,
-            endActionMode: 'topWindow'
+            endActionMode: 'playVideo',
+            endActionVideo: {
+                sourceKind: 'builtin',
+                builtinVideoId: 'qianqian',
+                customVideoPath: ''
+            },
+            endSounds: {
+                focus: {
+                    sourceKind: 'builtin',
+                    builtinSoundId: 'clear-success',
+                    customSoundPath: ''
+                },
+                break: {
+                    sourceKind: 'builtin',
+                    builtinSoundId: 'triple-ping',
+                    customSoundPath: ''
+                }
+            }
         },
         settings: {
             uiScale: 1,
@@ -175,6 +192,7 @@ test('authenticated clients can save and load user data', async (t) =>
     sendJson(ws, { type: 'user_data_get' });
     const snapshot = await inbox.waitFor('user_data_snapshot');
     assert.equal(snapshot.data.pomodoro.focusDurationSeconds, 1500);
+    assert.equal(snapshot.data.pomodoro.endSounds.break.builtinSoundId, 'triple-ping');
 });
 
 test('user_data_get requires authentication', async (t) =>
