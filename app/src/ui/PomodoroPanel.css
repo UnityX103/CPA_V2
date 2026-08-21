@@ -2,10 +2,11 @@
  * 外壳 233x155, padding 12, radius 24, stroke 1px #EFDCCD, fill #FFFDFBEE
  * 内容 BTIJv: layout vertical, gap 18, height 121
  *   ├─ head S3Nbk: horizontal, justify space_between, align center
- *   └─ contentRow DiaNW: gap 22, vertical padding 16
+ *   ├─ contentRow DiaNW: gap 22, vertical padding 16
  *       ├─ ClockRing nNt9z: 78x78
- *       ├─ chipsRow p4kgU: vertical, gap 8 (startBtn / skipBtn 各占满列宽)
- *       └─ pp-pin-btn HApJ0: absolute x=193 y=69, 22x22 round
+ *       └─ chipsRow p4kgU: vertical, gap 8 (startBtn / skipBtn 各占满列宽)
+ *   └─ presenceStatus uJiuO: absolute x=128 y=2, 20x20 round
+ * pp-pin-btn HApJ0: root absolute x=205 y=123, 22x22 round
  */
 
 .pomo-panel {
@@ -103,6 +104,37 @@
     line-height: 1;
     font-variant-numeric: tabular-nums;
 }
+
+/* presenceStatus uJiuO + presenceStatusIcon K8G3ut */
+.pomo-presence-status {
+    position: absolute;
+    left: 128px;
+    top: 2px;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border: 1px solid;
+    border-radius: 10px;
+    box-sizing: border-box;
+    pointer-events: none;
+}
+
+.pomo-presence-status.is-present {
+    background: #E7F5EA;
+    border-color: #CBE7D2;
+    color: #3D8A58;
+}
+
+.pomo-presence-status.is-absent {
+    background: #FBE8E2;
+    border-color: #EEC8BD;
+    color: #C65D46;
+}
+
+.pomo-presence-status svg { display: block; }
 
 /* ----- contentRow ----- */
 
@@ -209,14 +241,11 @@
     background: #FFF7EE;
 }
 
-/* pp-pin-btn HApJ0 (cM79C): absolute, 22x22, radius 11.
- * Design: HApJ0 在 contentRow 内 x=193 y=69 — pin right edge intentionally extends past
- * contentRow's right-padded content area (193) into the panel-padding zone, leaving 6px
- * to the panel border (panel 233 − padding 12 − pomo-body pin-x (193+22) = 6). */
+/* pp-pin-btn HApJ0 (cM79C): root absolute x=205 y=123, 22x22, radius 11. */
 .pomo-pin {
     position: absolute;
-    left: 193px;
-    top: 69px;
+    left: 205px;
+    top: 123px;
     width: 22px;
     height: 22px;
     border-radius: 11px;

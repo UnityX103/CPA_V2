@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { invoke } from '@tauri-apps/api/core';
 import { usePomodoroStore, formatMmSs, type PomodoroPhase } from '../domain/pomodoro';
+import { usePresenceStore, type PresenceObservation } from '../domain/presence';
 import { shouldStartWindowDrag } from './windowDrag';
 import './PomodoroPanel.css';
 
@@ -21,6 +22,7 @@ function phaseLabel(phase: PomodoroPhase, isRunning: boolean): string {
 
 export function PomodoroPanel() {
     const state = usePomodoroStore();
+    const presence = usePresenceStore();
     const tickRef = useRef<number | null>(null);
 
     useEffect(() => {
@@ -55,6 +57,12 @@ export function PomodoroPanel() {
     const clockState = clockStateOf(state.currentPhase, state.isRunning);
     const startLabel = state.isRunning ? '暂停' : '开始';
     const showSkip = state.isRunning && state.currentPhase !== 'completed';
+    const presenceObservation = presence.enabled
+        && (presence.availability === 'ready' || presence.availability === 'checking')
+        && presence.lastSuccessfulAt != null
+        && presence.latestObservation !== 'unknown'
+        ? presence.latestObservation
+        : null;
 
     const onStartClick = () => {
         const s = usePomodoroStore.getState();
@@ -119,16 +127,62 @@ export function PomodoroPanel() {
                             跳过
                         </button>
                     </div>
-                    <button
-                        className={`pomo-pin ${state.isPinned ? 'is-pinned' : ''}`}
-                        onClick={onTogglePin}
-                        aria-label="置顶"
-                        title={state.isPinned ? '取消置顶' : '置顶'}
-                    >
-                        <PinIcon active={state.isPinned} />
-                    </button>
                 </div>
+                {presenceObservation && (
+                    <PresenceStatus observation={presenceObservation} />
+                )}
             </div>
+            <button
+                className={`pomo-pin ${state.isPinned ? 'is-pinned' : ''}`}
+                onClick={onTogglePin}
+                aria-label="置顶"
+                title={state.isPinned ? '取消置顶' : '置顶'}
+            >
+                <PinIcon active={state.isPinned} />
+            </button>
+        </div>
+    );
+}
+
+function PresenceStatus({
+    observation,
+}: {
+    observation: Exclude<PresenceObservation, 'unknown'>;
+}) {
+    const present = observation === 'present';
+    return (
+        <div
+            className={`pomo-presence-status is-${observation}`}
+            role="status"
+            aria-label={present ? '检测到人，在工位' : '未检测到人，已离开'}
+            data-presence-observation={observation}
+        >
+            <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+            >
+                {present ? (
+                    <>
+                        <path d="M2 21a8 8 0 0 1 13.292-6" />
+                        <circle cx="10" cy="8" r="5" />
+                        <path d="m16 19 2 2 4-4" />
+                    </>
+                ) : (
+                    <>
+                        <path d="M2 21a8 8 0 0 1 11.873-7" />
+                        <circle cx="10" cy="8" r="5" />
+                        <path d="m17 17 5 5" />
+                        <path d="m22 17-5 5" />
+                    </>
+                )}
+            </svg>
         </div>
     );
 }

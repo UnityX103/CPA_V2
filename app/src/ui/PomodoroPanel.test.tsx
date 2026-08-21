@@ -4,6 +4,11 @@ import path from 'node:path';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup, waitFor, act } from '@testing-library/react';
 import { usePomodoroStore } from '../domain/pomodoro';
+import {
+    applyPresenceSample,
+    usePresenceStore,
+    type PresenceAvailability,
+} from '../domain/presence';
 import { PomodoroPanel } from './PomodoroPanel';
 
 const { startDragging, invokeMock } = vi.hoisted(() => ({
@@ -37,6 +42,18 @@ function resetPomodoro() {
     });
 }
 
+function resetPresence() {
+    usePresenceStore.setState({
+        enabled: false,
+        availability: 'disabled',
+        latestObservation: 'unknown',
+        lastSuccessfulAt: null,
+        lastError: null,
+        inFlight: false,
+        generation: 0,
+    });
+}
+
 function pinCalls() {
     return invokeMock.mock.calls.filter(([cmd]) => cmd === 'set_main_window_pinned');
 }
@@ -49,6 +66,7 @@ beforeEach(() => {
     vi.stubGlobal('requestAnimationFrame', vi.fn(() => 1));
     vi.stubGlobal('cancelAnimationFrame', vi.fn());
     resetPomodoro();
+    resetPresence();
 });
 
 afterEach(() => {
@@ -101,6 +119,90 @@ describe('PomodoroPanel scale root', () => {
 
         expect(css).toMatch(/\.app-scale-root\s*\{[^}]*--app-ui-scale:\s*1/);
         expect(css).toMatch(/\.app-root\s*\{[^}]*zoom:\s*var\(--app-ui-scale\)/);
+    });
+});
+
+describe('PomodoroPanel camera presence status', () => {
+    it('shows the Pencil present state and switches immediately to the away state', () => {
+        usePresenceStore.setState({
+            enabled: true,
+            availability: 'ready',
+            latestObservation: 'unknown',
+            lastSuccessfulAt: null,
+        });
+        const { container } = render(<PomodoroPanel />);
+
+        act(() => {
+            applyPresenceSample(usePresenceStore, usePomodoroStore, {
+                observation: 'present',
+                availability: 'ready',
+                errorCode: null,
+            }, 1_000);
+        });
+
+        expect(screen.getByRole('status', { name: '检测到人，在工位' })).toBeTruthy();
+        expect(container.querySelector('.pomo-presence-status.is-present')).toBeTruthy();
+
+        act(() => {
+            applyPresenceSample(usePresenceStore, usePomodoroStore, {
+                observation: 'absent',
+                availability: 'ready',
+                errorCode: null,
+            }, 2_000);
+        });
+
+        expect(screen.getByRole('status', { name: '未检测到人，已离开' })).toBeTruthy();
+        expect(container.querySelector('.pomo-presence-status.is-absent')).toBeTruthy();
+    });
+
+    it('keeps the last successful state visible while the next sample is checking', () => {
+        usePresenceStore.setState({
+            enabled: true,
+            availability: 'checking',
+            latestObservation: 'present',
+            lastSuccessfulAt: 1_000,
+            inFlight: true,
+        });
+
+        render(<PomodoroPanel />);
+
+        expect(screen.getByRole('status', { name: '检测到人，在工位' })).toBeTruthy();
+    });
+
+    it.each([
+        ['feature disabled', false, 'disabled'],
+        ['permission required', true, 'permissionRequired'],
+        ['permission denied', true, 'permissionDenied'],
+        ['camera unavailable', true, 'noDevice'],
+        ['camera busy', true, 'busy'],
+        ['camera error', true, 'error'],
+    ] as const)(
+        'hides the icon when %s',
+        (_label, enabled, availability: PresenceAvailability) => {
+            usePresenceStore.setState({
+                enabled,
+                availability,
+                latestObservation: 'present',
+                lastSuccessfulAt: 1_000,
+            });
+
+            render(<PomodoroPanel />);
+
+            expect(screen.queryByRole('status')).toBeNull();
+        },
+    );
+
+    it('hides the icon before the first successful observation', () => {
+        usePresenceStore.setState({
+            enabled: true,
+            availability: 'ready',
+            latestObservation: 'unknown',
+            lastSuccessfulAt: null,
+        });
+
+        render(<PomodoroPanel />);
+
+        expect(screen.queryByRole('status')).toBeNull();
     });
 });
 
