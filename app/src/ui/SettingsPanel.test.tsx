@@ -84,14 +84,15 @@ describe('SettingsPanel', () => {
 
         fireEvent.click(screen.getByRole('button', { name: '摄像头自动控制' }));
         const inputs = screen.getAllByRole('spinbutton');
-        fireEvent.change(inputs[2], { target: { value: '30' } });
+        expect(inputs[2].getAttribute('min')).toBe('5');
+        fireEvent.change(inputs[2], { target: { value: '5' } });
         fireEvent.change(inputs[3], { target: { value: '120' } });
         fireEvent.click(screen.getByRole('button', { name: '应用' }));
 
         await vi.waitFor(() => {
             expect(usePresenceStore.getState()).toEqual(expect.objectContaining({
                 enabled: true,
-                intervalSeconds: 30,
+                intervalSeconds: 5,
                 presentThresholdSeconds: 120,
             }));
         });

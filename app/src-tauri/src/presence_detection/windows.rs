@@ -2,6 +2,7 @@ use super::{NativeError, NativeErrorKind, PresenceAvailability};
 use nokhwa::pixel_format::RgbFormat;
 use nokhwa::utils::{ApiBackend, FrameFormat, RequestedFormat, RequestedFormatType};
 use nokhwa::Camera;
+use std::time::Duration;
 use windows::Graphics::Imaging::{BitmapPixelFormat, SoftwareBitmap};
 use windows::Media::FaceAnalysis::FaceDetector;
 use windows::Security::Cryptography::CryptographicBuffer;
@@ -13,7 +14,6 @@ const RAW_CAMERA_FORMATS: &[FrameFormat] = &[
     FrameFormat::RAWRGB,
     FrameFormat::RAWBGR,
 ];
-
 struct RoInitializeGuard {
     initialized: bool,
 }
@@ -56,6 +56,35 @@ pub(super) fn open_privacy_settings() -> Result<(), String> {
 
 pub(super) fn sample() -> Result<bool, NativeError> {
     let _winrt = RoInitializeGuard::new();
+    let mut camera = open_camera()?;
+    let detector = create_face_detector()?;
+    let detection = sample_open_camera(&mut camera, &detector);
+    let stop_result = camera.stop_stream().map_err(map_camera_error);
+    match (detection, stop_result) {
+        (Err(error), _) | (Ok(_), Err(error)) => Err(error),
+        (Ok(present), Ok(())) => Ok(present),
+    }
+}
+
+pub(super) fn stream_samples(
+    frame_interval: Duration,
+    mut emit: impl FnMut(Result<bool, NativeError>) -> bool,
+) -> Result<(), NativeError> {
+    let _winrt = RoInitializeGuard::new();
+    let mut camera = open_camera()?;
+    let detector = create_face_detector()?;
+    loop {
+        let result = sample_open_camera(&mut camera, &detector);
+        let sample_succeeded = result.is_ok();
+        if !emit(result) || !sample_succeeded {
+            break;
+        }
+        std::thread::sleep(frame_interval);
+    }
+    camera.stop_stream().map_err(map_camera_error)
+}
+
+fn open_camera() -> Result<Camera, NativeError> {
     let devices = nokhwa::query(ApiBackend::MediaFoundation).map_err(map_camera_error)?;
     let index = devices
         .first()
@@ -68,6 +97,16 @@ pub(super) fn sample() -> Result<bool, NativeError> {
     let mut camera = Camera::with_backend(index, format, ApiBackend::MediaFoundation)
         .map_err(map_camera_error)?;
     camera.open_stream().map_err(map_camera_error)?;
+    Ok(camera)
+}
+
+fn create_face_detector() -> Result<FaceDetector, NativeError> {
+    FaceDetector::CreateAsync()
+        .and_then(|operation| operation.get())
+        .map_err(|_| NativeError::new(NativeErrorKind::Error, "face-detector-unavailable"))
+}
+
+fn sample_open_camera(camera: &mut Camera, detector: &FaceDetector) -> Result<bool, NativeError> {
     let frame = camera.frame().map_err(map_camera_error)?;
     let decoded = frame
         .decode_image::<RgbFormat>()
@@ -88,17 +127,11 @@ pub(super) fn sample() -> Result<bool, NativeError> {
         height as i32,
     )
     .map_err(|_| NativeError::new(NativeErrorKind::Error, "software-bitmap-failed"))?;
-    let detector = FaceDetector::CreateAsync()
-        .and_then(|operation| operation.get())
-        .map_err(|_| NativeError::new(NativeErrorKind::Error, "face-detector-unavailable"))?;
     let faces = detector
         .DetectFacesAsync(&bitmap)
         .and_then(|operation| operation.get())
         .map_err(|_| NativeError::new(NativeErrorKind::Error, "face-detection-failed"))?;
-    let present = faces.Size().unwrap_or(0) > 0;
-
-    camera.stop_stream().map_err(map_camera_error)?;
-    Ok(present)
+    Ok(faces.Size().unwrap_or(0) > 0)
 }
 
 fn availability_for_error(error: &NativeError) -> PresenceAvailability {

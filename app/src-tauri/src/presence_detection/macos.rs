@@ -24,7 +24,6 @@ const RAW_CAMERA_FORMATS: &[FrameFormat] = &[
     FrameFormat::RAWRGB,
     FrameFormat::RAWBGR,
 ];
-
 fn video_media_type() -> &'static objc2_av_foundation::AVMediaType {
     unsafe { AVMediaTypeVideo.expect("AVMediaTypeVideo is unavailable") }
 }
@@ -76,6 +75,32 @@ pub(super) fn open_privacy_settings() -> Result<(), String> {
 }
 
 pub(super) fn sample() -> Result<bool, NativeError> {
+    let mut camera = open_camera()?;
+    let detection = sample_open_camera(&mut camera);
+    let stop_result = camera.stop_stream().map_err(map_camera_error);
+    match (detection, stop_result) {
+        (Err(error), _) | (Ok(_), Err(error)) => Err(error),
+        (Ok(present), Ok(())) => Ok(present),
+    }
+}
+
+pub(super) fn stream_samples(
+    frame_interval: Duration,
+    mut emit: impl FnMut(Result<bool, NativeError>) -> bool,
+) -> Result<(), NativeError> {
+    let mut camera = open_camera()?;
+    loop {
+        let result = sample_open_camera(&mut camera);
+        let sample_succeeded = result.is_ok();
+        if !emit(result) || !sample_succeeded {
+            break;
+        }
+        std::thread::sleep(frame_interval);
+    }
+    camera.stop_stream().map_err(map_camera_error)
+}
+
+fn open_camera() -> Result<Camera, NativeError> {
     match status() {
         PresenceAvailability::PermissionRequired | PresenceAvailability::PermissionDenied => {
             return Err(NativeError::new(
@@ -106,6 +131,10 @@ pub(super) fn sample() -> Result<bool, NativeError> {
     let mut camera =
         Camera::with_backend(index, format, ApiBackend::AVFoundation).map_err(map_camera_error)?;
     camera.open_stream().map_err(map_camera_error)?;
+    Ok(camera)
+}
+
+fn sample_open_camera(camera: &mut Camera) -> Result<bool, NativeError> {
     let frame = camera.frame().map_err(map_camera_error)?;
     let decoded = frame
         .decode_image::<RgbFormat>()
@@ -113,12 +142,7 @@ pub(super) fn sample() -> Result<bool, NativeError> {
     let (width, height) = decoded.dimensions();
     let bytes = decoded.into_raw();
 
-    let detection = detect_face(&bytes, width as usize, height as usize);
-    let stop_result = camera.stop_stream().map_err(map_camera_error);
-    match (detection, stop_result) {
-        (Err(error), _) | (Ok(_), Err(error)) => Err(error),
-        (Ok(present), Ok(())) => Ok(present),
-    }
+    detect_face(&bytes, width as usize, height as usize)
 }
 
 fn default_camera_index() -> Result<nokhwa::utils::CameraIndex, NativeError> {

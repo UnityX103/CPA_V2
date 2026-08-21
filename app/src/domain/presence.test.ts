@@ -1,4 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
+
+vi.mock('./presencePersistence', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('./presencePersistence')>();
+    return {
+        ...actual,
+        savePresencePreferences: vi.fn(async () => {}),
+    };
+});
+
 import { createPomodoroStore } from './pomodoro';
 import {
     applyPresenceSample,
@@ -32,6 +41,65 @@ async function flushPromises() {
     await Promise.resolve();
     await Promise.resolve();
 }
+
+describe('presence settings updates', () => {
+    it('applies a new interval without clearing the last visible observation', async () => {
+        const { presence } = freshStores();
+        presence.setState({
+            enabled: true,
+            intervalSeconds: 60,
+            presentThresholdSeconds: 60,
+            availability: 'ready',
+            latestObservation: 'present',
+            lastSuccessfulAt: 1_000,
+            generation: 4,
+        });
+
+        await presence.getState().applySettings({
+            enabled: true,
+            intervalSeconds: 5,
+            presentThresholdSeconds: 5,
+        });
+
+        expect(presence.getState()).toMatchObject({
+            enabled: true,
+            intervalSeconds: 5,
+            presentThresholdSeconds: 5,
+            availability: 'ready',
+            latestObservation: 'present',
+            lastSuccessfulAt: 1_000,
+            generation: 5,
+        });
+    });
+
+    it('applies a confirmation threshold without restarting the active monitor', async () => {
+        const { presence } = freshStores();
+        presence.setState({
+            enabled: true,
+            intervalSeconds: 60,
+            presentThresholdSeconds: 60,
+            availability: 'ready',
+            latestObservation: 'absent',
+            lastSuccessfulAt: 2_000,
+            generation: 7,
+        });
+
+        await presence.getState().applySettings({
+            enabled: true,
+            intervalSeconds: 60,
+            presentThresholdSeconds: 5,
+        });
+
+        expect(presence.getState()).toMatchObject({
+            intervalSeconds: 60,
+            presentThresholdSeconds: 5,
+            availability: 'ready',
+            latestObservation: 'absent',
+            lastSuccessfulAt: 2_000,
+            generation: 7,
+        });
+    });
+});
 
 describe('presence evidence and pomodoro integration', () => {
     it('requires two present observations and the full threshold before leaving break', () => {
@@ -180,6 +248,8 @@ describe('presence monitor scheduling', () => {
         });
         await flushPromises();
         expect(invokeSample).toHaveBeenCalledTimes(1);
+        expect(invokeSample).toHaveBeenCalledWith(30);
+        expect(presence.getState().availability).toBe('ready');
 
         intervalCallback();
         expect(invokeSample).toHaveBeenCalledTimes(1);
@@ -189,7 +259,7 @@ describe('presence monitor scheduling', () => {
         cleanup();
     });
 
-    it('refreshes the live observation every two seconds without accelerating automation', async () => {
+    it('uses the configured detection interval for sampling and automation', async () => {
         const { presence, pomodoro } = freshStores();
         presence.setState({ enabled: true, generation: 1, intervalSeconds: 30 });
         pomodoro.setState({
@@ -223,24 +293,16 @@ describe('presence monitor scheduling', () => {
         });
         await flushPromises();
 
-        expect(intervalDelay).toBe(2_000);
+        expect(intervalDelay).toBe(30_000);
         expect(presence.getState().latestObservation).toBe('present');
-
-        for (const liveTick of [2_000, 4_000, 6_000, 8_000]) {
-            now = liveTick;
-            intervalCallback();
-            await flushPromises();
-        }
-
-        expect(presence.getState()).toMatchObject({
-            latestObservation: 'absent',
-            candidateCount: 0,
-        });
-        expect(pomodoro.getState().isRunning).toBe(true);
 
         now = 30_000;
         intervalCallback();
         await flushPromises();
+        expect(presence.getState()).toMatchObject({
+            latestObservation: 'absent',
+            candidateCount: 1,
+        });
         expect(pomodoro.getState().isRunning).toBe(true);
 
         now = 60_000;

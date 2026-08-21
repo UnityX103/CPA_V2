@@ -483,6 +483,7 @@ pub fn run() {
             presence_detection::camera_presence_status,
             presence_detection::request_camera_presence_access,
             presence_detection::open_camera_privacy_settings,
+            presence_detection::stop_camera_presence_stream,
             presence_detection::sample_camera_presence,
         ])
         .build(tauri::generate_context!())

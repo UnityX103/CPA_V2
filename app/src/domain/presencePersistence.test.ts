@@ -22,7 +22,7 @@ describe('presence persistence', () => {
     it('defaults to disabled when no value exists', async () => {
         await expect(persistence.loadPresencePreferences()).resolves.toEqual({
             enabled: false,
-            intervalSeconds: 60,
+            intervalSeconds: 10,
             presentThresholdSeconds: 60,
         });
     });
@@ -42,6 +42,21 @@ describe('presence persistence', () => {
         });
     });
 
+    it('accepts a five-second camera detection interval', async () => {
+        storeData.set('presencePreferences', {
+            schemaVersion: 1,
+            enabled: true,
+            intervalSeconds: 5,
+            presentThresholdSeconds: 5,
+        });
+
+        await expect(persistence.loadPresencePreferences()).resolves.toEqual({
+            enabled: true,
+            intervalSeconds: 5,
+            presentThresholdSeconds: 5,
+        });
+    });
+
     it('falls back for unsupported schemas', async () => {
         storeData.set('presencePreferences', {
             schemaVersion: 2,
@@ -51,7 +66,7 @@ describe('presence persistence', () => {
         });
         await expect(persistence.loadPresencePreferences()).resolves.toEqual({
             enabled: false,
-            intervalSeconds: 60,
+            intervalSeconds: 10,
             presentThresholdSeconds: 60,
         });
     });

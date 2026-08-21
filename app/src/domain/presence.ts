@@ -180,18 +180,23 @@ export function createPresenceStore(opts: { isSettingsWindow: boolean }): Presen
         },
         applySettings: async (preferences) => {
             const normalized = normalizePresencePreferences(preferences);
-            const wasEnabled = get().enabled;
+            const previous = get();
+            const enabledChanged = previous.enabled !== normalized.enabled;
+            const intervalChanged = previous.intervalSeconds !== normalized.intervalSeconds;
+            const monitorChanged = enabledChanged || intervalChanged;
             set((state) => ({
                 ...normalized,
-                availability: normalized.enabled ? 'checking' : 'disabled',
-                generation: state.generation + 1,
-                latestObservation: 'unknown',
-                lastSuccessfulAt: null,
-                lastError: null,
-                inFlight: false,
+                availability: normalized.enabled
+                    ? (enabledChanged ? 'checking' : state.availability)
+                    : 'disabled',
+                generation: monitorChanged ? state.generation + 1 : state.generation,
+                latestObservation: enabledChanged ? 'unknown' : state.latestObservation,
+                lastSuccessfulAt: enabledChanged ? null : state.lastSuccessfulAt,
+                lastError: enabledChanged ? null : state.lastError,
+                inFlight: monitorChanged ? false : state.inFlight,
                 ...evidenceReset(),
             }));
-            if (wasEnabled && !normalized.enabled) {
+            if (previous.enabled && !normalized.enabled) {
                 usePomodoroStore.getState().clearPresenceAutomationOwnership();
             }
             await savePresencePreferences(normalized);
@@ -389,7 +394,8 @@ export function applyPresenceSample(
 
 interface PresenceMonitorRuntime {
     invokeCapability: () => Promise<PresenceCapability>;
-    invokeSample: () => Promise<PresenceSample>;
+    invokeSample: (intervalSeconds: number) => Promise<PresenceSample>;
+    stopSampleStream?: () => Promise<unknown>;
     now: () => number;
     setInterval: (callback: () => void, delayMs: number) => number;
     clearInterval: (id: number) => void;
@@ -399,7 +405,10 @@ interface PresenceMonitorRuntime {
 
 const defaultMonitorRuntime: PresenceMonitorRuntime = {
     invokeCapability: () => invoke<PresenceCapability>('camera_presence_status'),
-    invokeSample: () => invoke<PresenceSample>('sample_camera_presence'),
+    invokeSample: (intervalSeconds) => invoke<PresenceSample>('sample_camera_presence', {
+        intervalSeconds,
+    }),
+    stopSampleStream: () => invoke('stop_camera_presence_stream'),
     now: () => performance.now(),
     setInterval: (callback, delayMs) => window.setInterval(callback, delayMs),
     clearInterval: (id) => window.clearInterval(id),
@@ -410,7 +419,6 @@ const defaultMonitorRuntime: PresenceMonitorRuntime = {
 // Native supervision terminates the helper at 10 seconds. This fallback only
 // protects the UI if IPC itself stalls after native cleanup should have finished.
 const SAMPLE_TIMEOUT_MS = 12_000;
-const LIVE_OBSERVATION_INTERVAL_MS = 2_000;
 
 export function startPresenceMonitor({
     store,
@@ -425,7 +433,8 @@ export function startPresenceMonitor({
     let stopped = false;
     let intervalId: number | null = null;
     let inFlight = false;
-    let lastAutomationSampleAt: number | null = null;
+    const intervalSeconds = store.getState().intervalSeconds;
+    const intervalMs = intervalSeconds * 1000;
 
     const isCurrent = () => !stopped
         && store.getState().enabled
@@ -437,11 +446,15 @@ export function startPresenceMonitor({
             intervalId = null;
         }
     };
+    const stopSampleStream = () => {
+        const stop = runtime.stopSampleStream;
+        if (stop) void stop().catch(() => {});
+    };
 
     const sample = async () => {
         if (!isCurrent() || inFlight) return;
         inFlight = true;
-        store.setState({ availability: 'checking', inFlight: true });
+        store.setState({ inFlight: true });
         let timeoutId: number | null = null;
         const timeout = new Promise<PresenceSample>((resolve) => {
             timeoutId = runtime.setTimeout(() => resolve({
@@ -451,21 +464,16 @@ export function startPresenceMonitor({
             }), SAMPLE_TIMEOUT_MS);
         });
         const applyResult = (result: PresenceSample) => {
-            const sampledAt = runtime.now();
-            const automationDue = lastAutomationSampleAt == null
-                || sampledAt - lastAutomationSampleAt >= store.getState().intervalSeconds * 1000;
-            if (automationDue) {
-                lastAutomationSampleAt = sampledAt;
-                applyPresenceSample(store, pomodoro, result, sampledAt);
-            } else {
-                applyLivePresenceSample(store, result, sampledAt);
-            }
+            applyPresenceSample(store, pomodoro, result, runtime.now());
         };
         try {
-            const result = await Promise.race([runtime.invokeSample(), timeout]);
+            const result = await Promise.race([runtime.invokeSample(intervalSeconds), timeout]);
             if (!isCurrent()) return;
             applyResult(result);
-            if (terminalAvailability(result.availability)) stopInterval();
+            if (terminalAvailability(result.availability)) {
+                stopInterval();
+                stopSampleStream();
+            }
         } catch (error) {
             if (!isCurrent()) return;
             applyResult({
@@ -488,8 +496,11 @@ export function startPresenceMonitor({
             if (!isCurrent()) return;
             applyPresenceCapability(store, capability);
             if (capability.availability === 'permissionRequired'
-                || terminalAvailability(capability.availability)) return;
-            intervalId = runtime.setInterval(() => { void sample(); }, LIVE_OBSERVATION_INTERVAL_MS);
+                || terminalAvailability(capability.availability)) {
+                stopSampleStream();
+                return;
+            }
+            intervalId = runtime.setInterval(() => { void sample(); }, intervalMs);
             if (capability.availability === 'ready') void sample();
         } catch (error) {
             if (!isCurrent()) return;
@@ -499,7 +510,7 @@ export function startPresenceMonitor({
                 lastError: String(error),
                 ...evidenceReset(),
             });
-            intervalId = runtime.setInterval(() => { void sample(); }, LIVE_OBSERVATION_INTERVAL_MS);
+            intervalId = runtime.setInterval(() => { void sample(); }, intervalMs);
         }
     };
 
@@ -531,4 +542,9 @@ export function usePresenceMonitor({ enabled }: { enabled: boolean }): void {
             pomodoro: usePomodoroStore,
         });
     }, [enabled, presenceEnabled, intervalSeconds, generation]);
+
+    useEffect(() => {
+        if (!enabled || presenceEnabled) return;
+        void invoke('stop_camera_presence_stream').catch(() => {});
+    }, [enabled, presenceEnabled]);
 }

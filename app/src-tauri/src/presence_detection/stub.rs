@@ -18,3 +18,12 @@ pub(super) fn sample() -> Result<bool, NativeError> {
         "unsupported-platform",
     ))
 }
+
+pub(super) fn stream_samples(
+    _frame_interval: std::time::Duration,
+    mut emit: impl FnMut(Result<bool, NativeError>) -> bool,
+) -> Result<(), NativeError> {
+    let error = NativeError::new(NativeErrorKind::Error, "unsupported-platform");
+    let _ = emit(Err(error.clone()));
+    Err(error)
+}

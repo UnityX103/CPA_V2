@@ -8,11 +8,11 @@ export interface PresencePreferences {
 
 export const DEFAULT_PRESENCE_PREFERENCES: PresencePreferences = {
     enabled: false,
-    intervalSeconds: 60,
+    intervalSeconds: 10,
     presentThresholdSeconds: 60,
 };
 
-export const MIN_PRESENCE_SECONDS = 30;
+export const MIN_PRESENCE_SECONDS = 5;
 export const MAX_PRESENCE_SECONDS = 600;
 
 const STORE_PATH = 'presence-preferences.json';

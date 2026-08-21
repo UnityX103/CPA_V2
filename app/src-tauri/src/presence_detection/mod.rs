@@ -1,8 +1,11 @@
 use serde::{Deserialize, Serialize};
 use std::ffi::OsStr;
-use std::io::{Read, Write};
-use std::process::{Child, Command, Stdio};
+#[cfg(test)]
+use std::io::Read;
+use std::io::{BufRead, BufReader, Write};
+use std::process::{Child, ChildStdout, Command, Stdio};
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Condvar, Mutex, OnceLock};
 use std::time::{Duration, Instant};
 
 #[cfg(target_os = "macos")]
@@ -12,11 +15,14 @@ mod stub;
 #[cfg(target_os = "windows")]
 mod windows;
 
-static SAMPLE_IN_FLIGHT: AtomicBool = AtomicBool::new(false);
 static STOP_REQUESTED: AtomicBool = AtomicBool::new(false);
 
 const SAMPLE_HELPER_ARG: &str = "--camera-presence-sample-helper";
+const STREAM_HELPER_ARG: &str = "--camera-presence-stream-helper";
 const SAMPLE_TIMEOUT: Duration = Duration::from_secs(10);
+const MIN_STREAM_INTERVAL_SECONDS: u64 = 5;
+const MAX_STREAM_INTERVAL_SECONDS: u64 = 600;
+#[cfg(test)]
 const SAMPLE_POLL_INTERVAL: Duration = Duration::from_millis(25);
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
@@ -85,21 +91,15 @@ impl NativeError {
     }
 }
 
-struct SampleGuard;
-
-impl SampleGuard {
-    fn acquire() -> Option<Self> {
-        SAMPLE_IN_FLIGHT
-            .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
-            .ok()
-            .map(|_| Self)
-    }
-}
-
-impl Drop for SampleGuard {
-    fn drop(&mut self) {
-        SAMPLE_IN_FLIGHT.store(false, Ordering::Release);
-    }
+#[derive(Default)]
+struct StreamState {
+    child: Option<Child>,
+    generation: u64,
+    sequence: u64,
+    delivered_sequence: u64,
+    latest: Option<(u64, Result<bool, NativeError>)>,
+    running: bool,
+    frame_interval: Option<Duration>,
 }
 
 fn platform() -> PresencePlatform {
@@ -130,11 +130,55 @@ fn parse_helper_output(output: &str) -> Result<bool, NativeError> {
         .map_err(|_| NativeError::new(NativeErrorKind::Error, "camera-helper-invalid-response"))?
 }
 
+fn validated_stream_interval(seconds: u64) -> Result<Duration, NativeError> {
+    if !(MIN_STREAM_INTERVAL_SECONDS..=MAX_STREAM_INTERVAL_SECONDS).contains(&seconds) {
+        return Err(NativeError::new(
+            NativeErrorKind::Error,
+            "camera-sample-interval-invalid",
+        ));
+    }
+    Ok(Duration::from_secs(seconds))
+}
+
+fn parse_stream_interval(value: &OsStr) -> Result<Duration, NativeError> {
+    let seconds = value
+        .to_str()
+        .and_then(|raw| raw.parse::<u64>().ok())
+        .ok_or_else(|| {
+            NativeError::new(NativeErrorKind::Error, "camera-sample-interval-invalid")
+        })?;
+    validated_stream_interval(seconds)
+}
+
+fn requested_stream_helper_interval() -> Option<Result<Duration, NativeError>> {
+    let mut args = std::env::args_os();
+    while let Some(arg) = args.next() {
+        if arg == OsStr::new(STREAM_HELPER_ARG) {
+            return Some(args.next().map_or_else(
+                || {
+                    Err(NativeError::new(
+                        NativeErrorKind::Error,
+                        "camera-sample-interval-missing",
+                    ))
+                },
+                |value| parse_stream_interval(&value),
+            ));
+        }
+    }
+    None
+}
+
+fn stream_runtime() -> &'static (Mutex<StreamState>, Condvar) {
+    static RUNTIME: OnceLock<(Mutex<StreamState>, Condvar)> = OnceLock::new();
+    RUNTIME.get_or_init(|| (Mutex::new(StreamState::default()), Condvar::new()))
+}
+
 fn terminate_child(child: &mut Child) {
     let _ = child.kill();
     let _ = child.wait();
 }
 
+#[cfg(test)]
 fn wait_for_sample_child(
     mut child: Child,
     timeout: Duration,
@@ -185,24 +229,218 @@ fn wait_for_sample_child(
     }
 }
 
-fn sample_with_timeout() -> Result<bool, NativeError> {
+fn stop_stream_locked(state: &mut StreamState) {
+    state.generation = state.generation.wrapping_add(1);
+    if let Some(mut child) = state.child.take() {
+        terminate_child(&mut child);
+    }
+    state.sequence = 0;
+    state.delivered_sequence = 0;
+    state.latest = None;
+    state.running = false;
+    state.frame_interval = None;
+}
+
+fn stop_stream_process() {
+    let (mutex, ready) = stream_runtime();
+    let mut state = mutex
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+    stop_stream_locked(&mut state);
+    ready.notify_all();
+}
+
+fn publish_stream_result(generation: u64, result: Result<bool, NativeError>) {
+    let (mutex, ready) = stream_runtime();
+    let mut state = mutex
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+    if state.generation != generation {
+        return;
+    }
+    state.sequence = state.sequence.wrapping_add(1);
+    let sequence = state.sequence;
+    state.latest = Some((sequence, result));
+    ready.notify_all();
+}
+
+fn finish_stream_reader(generation: u64, error: Option<NativeError>) {
+    let (mutex, ready) = stream_runtime();
+    let mut state = mutex
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+    if state.generation != generation {
+        return;
+    }
+    state.running = false;
+    let has_undelivered = state
+        .latest
+        .as_ref()
+        .is_some_and(|(sequence, _)| *sequence > state.delivered_sequence);
+    if !has_undelivered {
+        state.sequence = state.sequence.wrapping_add(1);
+        let sequence = state.sequence;
+        state.latest = Some((
+            sequence,
+            Err(error.unwrap_or_else(|| {
+                NativeError::new(NativeErrorKind::Error, "camera-stream-helper-exited")
+            })),
+        ));
+    }
+    ready.notify_all();
+}
+
+fn read_stream_output(stdout: ChildStdout, generation: u64) {
+    let mut reader = BufReader::new(stdout);
+    loop {
+        let mut line = String::new();
+        match reader.read_line(&mut line) {
+            Ok(0) => {
+                finish_stream_reader(generation, None);
+                return;
+            }
+            Ok(_) => publish_stream_result(generation, parse_helper_output(&line)),
+            Err(_) => {
+                finish_stream_reader(
+                    generation,
+                    Some(NativeError::new(
+                        NativeErrorKind::Error,
+                        "camera-stream-output-read-failed",
+                    )),
+                );
+                return;
+            }
+        }
+    }
+}
+
+fn start_stream_locked(
+    state: &mut StreamState,
+    frame_interval: Duration,
+) -> Result<(), NativeError> {
     let executable = std::env::current_exe().map_err(|_| {
         NativeError::new(NativeErrorKind::Error, "camera-helper-executable-not-found")
     })?;
-    let child = Command::new(executable)
-        .arg(SAMPLE_HELPER_ARG)
+    let mut child = Command::new(executable)
+        .arg(STREAM_HELPER_ARG)
+        .arg(frame_interval.as_secs().to_string())
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
         .spawn()
-        .map_err(|_| NativeError::new(NativeErrorKind::Error, "camera-helper-spawn-failed"))?;
+        .map_err(|_| NativeError::new(NativeErrorKind::Error, "camera-stream-spawn-failed"))?;
+    let Some(stdout) = child.stdout.take() else {
+        terminate_child(&mut child);
+        return Err(NativeError::new(
+            NativeErrorKind::Error,
+            "camera-stream-output-unavailable",
+        ));
+    };
 
-    wait_for_sample_child(child, SAMPLE_TIMEOUT, || {
-        STOP_REQUESTED.load(Ordering::Acquire)
-    })
+    state.generation = state.generation.wrapping_add(1);
+    let generation = state.generation;
+    state.sequence = 0;
+    state.delivered_sequence = 0;
+    state.latest = None;
+    state.running = true;
+    state.frame_interval = Some(frame_interval);
+    state.child = Some(child);
+    std::thread::spawn(move || read_stream_output(stdout, generation));
+    Ok(())
+}
+
+fn sample_from_stream_with_timeout(frame_interval: Duration) -> Result<bool, NativeError> {
+    let deadline = Instant::now() + SAMPLE_TIMEOUT;
+    let (mutex, ready) = stream_runtime();
+    let mut state = mutex
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+    if state
+        .frame_interval
+        .is_some_and(|current| current != frame_interval)
+    {
+        stop_stream_locked(&mut state);
+    }
+    let has_undelivered = state
+        .latest
+        .as_ref()
+        .is_some_and(|(sequence, _)| *sequence > state.delivered_sequence);
+    if !state.running && !has_undelivered {
+        stop_stream_locked(&mut state);
+        start_stream_locked(&mut state, frame_interval)?;
+    }
+    let generation = state.generation;
+    let after_sequence = state.delivered_sequence;
+
+    loop {
+        if STOP_REQUESTED.load(Ordering::Acquire) {
+            stop_stream_locked(&mut state);
+            return Err(NativeError::new(
+                NativeErrorKind::Error,
+                "camera-sample-cancelled",
+            ));
+        }
+        if state.generation != generation {
+            return Err(NativeError::new(
+                NativeErrorKind::Error,
+                "camera-sample-cancelled",
+            ));
+        }
+        if let Some((sequence, result)) = state.latest.as_ref() {
+            if *sequence > after_sequence {
+                let sequence = *sequence;
+                let result = result.clone();
+                state.delivered_sequence = state.delivered_sequence.max(sequence);
+                return result;
+            }
+        }
+
+        let now = Instant::now();
+        if now >= deadline {
+            stop_stream_locked(&mut state);
+            return Err(NativeError::new(
+                NativeErrorKind::Error,
+                "camera-sample-timeout",
+            ));
+        }
+        let remaining = deadline.saturating_duration_since(now);
+        let (next_state, timeout) = ready
+            .wait_timeout(state, remaining)
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
+        state = next_state;
+        if timeout.timed_out() {
+            stop_stream_locked(&mut state);
+            return Err(NativeError::new(
+                NativeErrorKind::Error,
+                "camera-sample-timeout",
+            ));
+        }
+    }
+}
+
+fn write_stream_result(stdout: &mut impl Write, result: &Result<bool, NativeError>) -> bool {
+    serde_json::to_writer(&mut *stdout, result).is_ok()
+        && stdout.write_all(b"\n").is_ok()
+        && stdout.flush().is_ok()
 }
 
 pub(crate) fn run_sample_helper_if_requested() -> bool {
+    if let Some(frame_interval) = requested_stream_helper_interval() {
+        let mut stdout = std::io::stdout().lock();
+        let mut emitted = false;
+        let result = frame_interval.and_then(|frame_interval| {
+            platform_impl::stream_samples(frame_interval, |sample| {
+                emitted = true;
+                write_stream_result(&mut stdout, &sample)
+            })
+        });
+        if let Err(error) = result {
+            if !emitted {
+                let _ = write_stream_result(&mut stdout, &Err(error));
+            }
+        }
+        return true;
+    }
     if !std::env::args_os().any(|arg| arg == OsStr::new(SAMPLE_HELPER_ARG)) {
         return false;
     }
@@ -216,10 +454,12 @@ pub(crate) fn run_sample_helper_if_requested() -> bool {
 
 pub(crate) fn prepare_for_run() {
     STOP_REQUESTED.store(false, Ordering::Release);
+    stop_stream_process();
 }
 
 pub(crate) fn stop_for_exit() {
     STOP_REQUESTED.store(true, Ordering::Release);
+    stop_stream_process();
 }
 
 #[tauri::command]
@@ -264,18 +504,21 @@ pub fn open_camera_privacy_settings() -> Result<(), String> {
 }
 
 #[tauri::command]
-pub async fn sample_camera_presence() -> Result<PresenceSample, String> {
-    let Some(guard) = SampleGuard::acquire() else {
-        return Ok(error_sample(NativeError::new(
-            NativeErrorKind::Busy,
-            "sample-in-flight",
-        )));
-    };
+pub fn stop_camera_presence_stream() {
+    stop_stream_process();
+}
 
-    let result = tauri::async_runtime::spawn_blocking(sample_with_timeout)
-        .await
-        .map_err(|error| format!("camera sample task failed: {error}"));
-    drop(guard);
+#[tauri::command]
+pub async fn sample_camera_presence(interval_seconds: u64) -> Result<PresenceSample, String> {
+    let frame_interval = match validated_stream_interval(interval_seconds) {
+        Ok(interval) => interval,
+        Err(error) => return Ok(error_sample(error)),
+    };
+    let result = tauri::async_runtime::spawn_blocking(move || {
+        sample_from_stream_with_timeout(frame_interval)
+    })
+    .await
+    .map_err(|error| format!("camera sample task failed: {error}"));
 
     match result? {
         Ok(present) => Ok(PresenceSample {
@@ -326,21 +569,32 @@ mod tests {
     }
 
     #[test]
-    fn sample_guard_is_single_flight_and_releases_on_drop() {
-        SAMPLE_IN_FLIGHT.store(false, Ordering::Release);
-        let first = SampleGuard::acquire().expect("first sample should acquire the guard");
-        assert!(SampleGuard::acquire().is_none());
-        drop(first);
-        assert!(SampleGuard::acquire().is_some());
-    }
-
-    #[test]
     fn helper_payload_round_trips_success_and_structured_errors() {
         assert_eq!(parse_helper_output(r#"{"Ok":true}"#), Ok(true));
         let error = NativeError::new(NativeErrorKind::Busy, "camera-busy");
         let payload = serde_json::to_string(&Result::<bool, NativeError>::Err(error.clone()))
             .expect("serialize helper error");
         assert_eq!(parse_helper_output(&payload), Err(error));
+    }
+
+    #[test]
+    fn stream_interval_uses_configured_seconds_and_rejects_out_of_range_values() {
+        assert_eq!(
+            parse_stream_interval(OsStr::new("5")),
+            Ok(Duration::from_secs(5))
+        );
+        assert_eq!(
+            parse_stream_interval(OsStr::new("4"))
+                .expect_err("interval below the settings minimum should be rejected")
+                .code,
+            "camera-sample-interval-invalid"
+        );
+        assert_eq!(
+            parse_stream_interval(OsStr::new("601"))
+                .expect_err("interval above the settings maximum should be rejected")
+                .code,
+            "camera-sample-interval-invalid"
+        );
     }
 
     #[cfg(unix)]
