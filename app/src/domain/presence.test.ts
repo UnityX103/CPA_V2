@@ -189,6 +189,70 @@ describe('presence monitor scheduling', () => {
         cleanup();
     });
 
+    it('refreshes the live observation every two seconds without accelerating automation', async () => {
+        const { presence, pomodoro } = freshStores();
+        presence.setState({ enabled: true, generation: 1, intervalSeconds: 30 });
+        pomodoro.setState({
+            currentPhase: 'focus',
+            isRunning: true,
+            breakDurationSeconds: 5,
+        });
+        let now = 0;
+        let sampleCount = 0;
+        let intervalCallback = () => {};
+        let intervalDelay = 0;
+        const cleanup = startPresenceMonitor({
+            store: presence,
+            pomodoro,
+            runtime: {
+                invokeCapability: vi.fn(async (): Promise<PresenceCapability> => ({
+                    platform: 'macos',
+                    availability: 'ready',
+                })),
+                invokeSample: vi.fn(async () => sample(sampleCount++ === 0 ? 'present' : 'absent')),
+                now: () => now,
+                setInterval: vi.fn((callback: () => void, delayMs: number) => {
+                    intervalCallback = callback;
+                    intervalDelay = delayMs;
+                    return 1;
+                }),
+                clearInterval: vi.fn(),
+                setTimeout: vi.fn(() => 2),
+                clearTimeout: vi.fn(),
+            },
+        });
+        await flushPromises();
+
+        expect(intervalDelay).toBe(2_000);
+        expect(presence.getState().latestObservation).toBe('present');
+
+        for (const liveTick of [2_000, 4_000, 6_000, 8_000]) {
+            now = liveTick;
+            intervalCallback();
+            await flushPromises();
+        }
+
+        expect(presence.getState()).toMatchObject({
+            latestObservation: 'absent',
+            candidateCount: 0,
+        });
+        expect(pomodoro.getState().isRunning).toBe(true);
+
+        now = 30_000;
+        intervalCallback();
+        await flushPromises();
+        expect(pomodoro.getState().isRunning).toBe(true);
+
+        now = 60_000;
+        intervalCallback();
+        await flushPromises();
+        expect(pomodoro.getState()).toMatchObject({
+            isRunning: false,
+            presenceOwnedPause: true,
+        });
+        cleanup();
+    });
+
     it('drops a sample that completes after generation changes', async () => {
         const { presence, pomodoro } = freshStores();
         presence.setState({ enabled: true, generation: 4 });
