@@ -127,7 +127,7 @@ describe('SettingsPanel', () => {
         fireEvent.click(screen.getByRole('button', { name: '选择专注结束声音本机 MP3' }));
 
         expect(await screen.findByText('本机 MP3 · focus-end.mp3')).toBeTruthy();
-        const applyButton = screen.getByRole('button', { name: '应用' });
+        const applyButton = await screen.findByRole('button', { name: '应用' });
         await vi.waitFor(() => expect(applyButton).toHaveProperty('disabled', false));
         fireEvent.click(applyButton);
 

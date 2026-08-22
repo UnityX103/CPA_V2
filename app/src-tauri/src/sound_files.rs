@@ -112,7 +112,7 @@ mod tests {
             Some("铃声路径必须是绝对路径")
         );
         assert_eq!(
-            validate_mp3_path(Path::new("/tmp/focus-end.wav"))
+            validate_mp3_path(&std::env::temp_dir().join("focus-end.wav"))
                 .message
                 .as_deref(),
             Some("请选择 .mp3 音频文件")

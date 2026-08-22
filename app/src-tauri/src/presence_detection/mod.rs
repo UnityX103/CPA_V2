@@ -424,6 +424,22 @@ fn write_stream_result(stdout: &mut impl Write, result: &Result<bool, NativeErro
         && stdout.flush().is_ok()
 }
 
+fn run_releasing_sample_loop(
+    frame_interval: Duration,
+    mut sample: impl FnMut() -> Result<bool, NativeError>,
+    mut emit: impl FnMut(Result<bool, NativeError>) -> bool,
+    mut wait: impl FnMut(Duration),
+) -> Result<(), NativeError> {
+    loop {
+        let result = sample();
+        let sample_succeeded = result.is_ok();
+        if !emit(result) || !sample_succeeded {
+            return Ok(());
+        }
+        wait(frame_interval);
+    }
+}
+
 pub(crate) fn run_sample_helper_if_requested() -> bool {
     if let Some(frame_interval) = requested_stream_helper_interval() {
         let mut stdout = std::io::stdout().lock();
@@ -595,6 +611,54 @@ mod tests {
                 .code,
             "camera-sample-interval-invalid"
         );
+    }
+
+    #[test]
+    fn stream_loop_runs_a_fresh_releasing_sample_after_each_interval() {
+        use std::cell::{Cell, RefCell};
+
+        let sample_calls = Cell::new(0);
+        let waits = RefCell::new(Vec::new());
+        let emitted = RefCell::new(Vec::new());
+
+        run_releasing_sample_loop(
+            Duration::from_secs(30),
+            || {
+                let call = sample_calls.get() + 1;
+                sample_calls.set(call);
+                Ok(call == 1)
+            },
+            |result| {
+                emitted.borrow_mut().push(result);
+                emitted.borrow().len() < 2
+            },
+            |duration| waits.borrow_mut().push(duration),
+        )
+        .expect("sample loop should stop cleanly when the receiver closes");
+
+        assert_eq!(sample_calls.get(), 2);
+        assert_eq!(emitted.into_inner(), vec![Ok(true), Ok(false)]);
+        assert_eq!(waits.into_inner(), vec![Duration::from_secs(30)]);
+    }
+
+    #[test]
+    fn stream_loop_stops_without_waiting_after_a_sample_error() {
+        use std::cell::Cell;
+
+        let waits = Cell::new(0);
+        let error = NativeError::new(NativeErrorKind::Busy, "camera-busy");
+        run_releasing_sample_loop(
+            Duration::from_secs(30),
+            || Err(error.clone()),
+            |result| {
+                assert_eq!(result, Err(error.clone()));
+                true
+            },
+            |_| waits.set(waits.get() + 1),
+        )
+        .expect("expected capture failures are delivered as structured samples");
+
+        assert_eq!(waits.get(), 0);
     }
 
     #[cfg(unix)]

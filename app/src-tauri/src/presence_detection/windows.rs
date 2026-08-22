@@ -6,7 +6,7 @@ use std::time::Duration;
 use windows::Graphics::Imaging::{BitmapPixelFormat, SoftwareBitmap};
 use windows::Media::FaceAnalysis::FaceDetector;
 use windows::Security::Cryptography::CryptographicBuffer;
-use windows::Win32::System::WinRT::{RoInitialize, RoUninitialize, RO_INIT_MULTITHREADED};
+use windows::Win32::System::WinRT::{RoInitialize, RoUninitialize, RO_INIT_SINGLETHREADED};
 
 const RAW_CAMERA_FORMATS: &[FrameFormat] = &[
     FrameFormat::YUYV,
@@ -21,9 +21,16 @@ struct RoInitializeGuard {
 impl RoInitializeGuard {
     fn new() -> Self {
         Self {
-            initialized: unsafe { RoInitialize(RO_INIT_MULTITHREADED) }.is_ok(),
+            // nokhwa's Media Foundation backend initializes COM as STA. WinRT
+            // must use the same apartment or device enumeration fails with
+            // RPC_E_CHANGED_MODE before the camera permission can be checked.
+            initialized: unsafe { RoInitialize(winrt_apartment()) }.is_ok(),
         }
     }
+}
+
+fn winrt_apartment() -> windows::Win32::System::WinRT::RO_INIT_TYPE {
+    RO_INIT_SINGLETHREADED
 }
 
 impl Drop for RoInitializeGuard {
@@ -35,10 +42,9 @@ impl Drop for RoInitializeGuard {
 }
 
 pub(super) fn status() -> PresenceAvailability {
-    match nokhwa::query(ApiBackend::MediaFoundation) {
-        Ok(devices) if devices.is_empty() => PresenceAvailability::NoDevice,
-        Ok(_) => PresenceAvailability::Ready,
-        Err(error) => availability_for_error(&classify_camera_error(&error.to_string())),
+    match probe_camera_access() {
+        Ok(()) => PresenceAvailability::Ready,
+        Err(error) => availability_for_error(&error),
     }
 }
 
@@ -59,7 +65,9 @@ pub(super) fn sample() -> Result<bool, NativeError> {
     let mut camera = open_camera()?;
     let detector = create_face_detector()?;
     let detection = sample_open_camera(&mut camera, &detector);
-    let stop_result = camera.stop_stream().map_err(map_camera_error);
+    let stop_result = camera
+        .stop_stream()
+        .map_err(|error| map_camera_error_at(error, "camera-stream-stop-failed"));
     match (detection, stop_result) {
         (Err(error), _) | (Ok(_), Err(error)) => Err(error),
         (Ok(present), Ok(())) => Ok(present),
@@ -68,24 +76,21 @@ pub(super) fn sample() -> Result<bool, NativeError> {
 
 pub(super) fn stream_samples(
     frame_interval: Duration,
-    mut emit: impl FnMut(Result<bool, NativeError>) -> bool,
+    emit: impl FnMut(Result<bool, NativeError>) -> bool,
 ) -> Result<(), NativeError> {
-    let _winrt = RoInitializeGuard::new();
+    super::run_releasing_sample_loop(frame_interval, sample, emit, std::thread::sleep)
+}
+
+fn probe_camera_access() -> Result<(), NativeError> {
     let mut camera = open_camera()?;
-    let detector = create_face_detector()?;
-    loop {
-        let result = sample_open_camera(&mut camera, &detector);
-        let sample_succeeded = result.is_ok();
-        if !emit(result) || !sample_succeeded {
-            break;
-        }
-        std::thread::sleep(frame_interval);
-    }
-    camera.stop_stream().map_err(map_camera_error)
+    camera
+        .stop_stream()
+        .map_err(|error| map_camera_error_at(error, "camera-stream-stop-failed"))
 }
 
 fn open_camera() -> Result<Camera, NativeError> {
-    let devices = nokhwa::query(ApiBackend::MediaFoundation).map_err(map_camera_error)?;
+    let devices = nokhwa::query(ApiBackend::MediaFoundation)
+        .map_err(|error| map_camera_error_at(error, "camera-query-failed"))?;
     let index = devices
         .first()
         .map(|device| device.index().clone())
@@ -95,8 +100,10 @@ fn open_camera() -> Result<Camera, NativeError> {
         RAW_CAMERA_FORMATS,
     );
     let mut camera = Camera::with_backend(index, format, ApiBackend::MediaFoundation)
-        .map_err(map_camera_error)?;
-    camera.open_stream().map_err(map_camera_error)?;
+        .map_err(|error| map_camera_error_at(error, "camera-open-failed"))?;
+    camera
+        .open_stream()
+        .map_err(|error| map_camera_error_at(error, "camera-stream-open-failed"))?;
     Ok(camera)
 }
 
@@ -107,10 +114,12 @@ fn create_face_detector() -> Result<FaceDetector, NativeError> {
 }
 
 fn sample_open_camera(camera: &mut Camera, detector: &FaceDetector) -> Result<bool, NativeError> {
-    let frame = camera.frame().map_err(map_camera_error)?;
+    let frame = camera
+        .frame()
+        .map_err(|error| map_camera_error_at(error, "camera-frame-read-failed"))?;
     let decoded = frame
         .decode_image::<RgbFormat>()
-        .map_err(map_camera_error)?;
+        .map_err(|error| map_camera_error_at(error, "camera-frame-decode-failed"))?;
     let (width, height) = decoded.dimensions();
     let rgb = decoded.into_raw();
 
@@ -143,8 +152,13 @@ fn availability_for_error(error: &NativeError) -> PresenceAvailability {
     }
 }
 
-fn map_camera_error(error: nokhwa::NokhwaError) -> NativeError {
-    classify_camera_error(&error.to_string())
+fn map_camera_error_at(error: nokhwa::NokhwaError, fallback_code: &'static str) -> NativeError {
+    let classified = classify_camera_error(&error.to_string());
+    if classified.kind == NativeErrorKind::Error {
+        NativeError::new(NativeErrorKind::Error, fallback_code)
+    } else {
+        classified
+    }
 }
 
 fn classify_camera_error(message: &str) -> NativeError {
@@ -191,5 +205,20 @@ mod tests {
             classify_camera_error("decode failed").kind,
             NativeErrorKind::Error
         );
+    }
+
+    #[test]
+    fn generic_camera_errors_keep_their_safe_pipeline_stage() {
+        let error = map_camera_error_at(
+            nokhwa::NokhwaError::GeneralError("driver detail".to_string()),
+            "camera-frame-read-failed",
+        );
+        assert_eq!(error.kind, NativeErrorKind::Error);
+        assert_eq!(error.code, "camera-frame-read-failed");
+    }
+
+    #[test]
+    fn winrt_uses_the_sta_required_by_the_media_foundation_backend() {
+        assert_eq!(winrt_apartment().0, RO_INIT_SINGLETHREADED.0);
     }
 }

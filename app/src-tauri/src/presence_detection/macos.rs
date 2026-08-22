@@ -86,18 +86,9 @@ pub(super) fn sample() -> Result<bool, NativeError> {
 
 pub(super) fn stream_samples(
     frame_interval: Duration,
-    mut emit: impl FnMut(Result<bool, NativeError>) -> bool,
+    emit: impl FnMut(Result<bool, NativeError>) -> bool,
 ) -> Result<(), NativeError> {
-    let mut camera = open_camera()?;
-    loop {
-        let result = sample_open_camera(&mut camera);
-        let sample_succeeded = result.is_ok();
-        if !emit(result) || !sample_succeeded {
-            break;
-        }
-        std::thread::sleep(frame_interval);
-    }
-    camera.stop_stream().map_err(map_camera_error)
+    super::run_releasing_sample_loop(frame_interval, sample, emit, std::thread::sleep)
 }
 
 fn open_camera() -> Result<Camera, NativeError> {
