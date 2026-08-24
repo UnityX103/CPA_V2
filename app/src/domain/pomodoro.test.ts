@@ -185,7 +185,7 @@ describe('PomodoroTimerSystem.skip', () => {
 });
 
 describe('Pomodoro presence automation', () => {
-    it('advances a running or paused break into a running focus', () => {
+    it('never advances a running or paused break before it finishes', () => {
         for (const isRunning of [true, false]) {
             const store = freshStore();
             store.getState().applySettings(60, 30, 2, true, false);
@@ -194,20 +194,16 @@ describe('Pomodoro presence automation', () => {
             store.getState().startFocusFromPresence();
 
             expect(store.getState()).toMatchObject({
-                currentPhase: 'focus',
-                currentRound: 2,
-                remainingSeconds: 60,
-                isRunning: true,
+                currentPhase: 'break',
+                currentRound: 1,
+                remainingSeconds: 20,
+                isRunning,
             });
-            expect(store.getState().lastEndEvent).toMatchObject({
-                fromPhase: 'break',
-                toPhase: 'focus',
-                triggeredBy: 'presence',
-            });
+            expect(store.getState().lastEndEvent).toBeNull();
         }
     });
 
-    it('completes the final break instead of starting a new set', () => {
+    it('does not complete the final break from a presence observation', () => {
         const store = freshStore();
         store.getState().applySettings(60, 30, 1, true, false);
         store.setState({ currentPhase: 'break', isRunning: true, remainingSeconds: 20 });
@@ -215,10 +211,10 @@ describe('Pomodoro presence automation', () => {
         store.getState().startFocusFromPresence();
 
         expect(store.getState()).toMatchObject({
-            currentPhase: 'completed',
+            currentPhase: 'break',
             currentRound: 1,
-            remainingSeconds: 0,
-            isRunning: false,
+            remainingSeconds: 20,
+            isRunning: true,
         });
     });
 

@@ -102,23 +102,46 @@ describe('presence settings updates', () => {
 });
 
 describe('presence evidence and pomodoro integration', () => {
-    it('requires two present observations and the full threshold before leaving break', () => {
+    it('does not interrupt break even after present confirmation reaches the threshold', () => {
         const { presence, pomodoro } = freshStores();
         presence.setState({ enabled: true, intervalSeconds: 30, presentThresholdSeconds: 30 });
         pomodoro.getState().applySettings(60, 30, 2, true, false);
-        pomodoro.setState({ currentPhase: 'break', isRunning: false, remainingSeconds: 20 });
+        pomodoro.setState({ currentPhase: 'break', isRunning: true, remainingSeconds: 20 });
 
         applyPresenceSample(presence, pomodoro, sample('present'), 0);
-        expect(pomodoro.getState().currentPhase).toBe('break');
-
-        applyPresenceSample(presence, pomodoro, sample('present'), 29_999);
-        expect(pomodoro.getState().currentPhase).toBe('break');
-
         applyPresenceSample(presence, pomodoro, sample('present'), 30_000);
+
+        expect(pomodoro.getState()).toMatchObject({
+            currentPhase: 'break',
+            currentRound: 1,
+            remainingSeconds: 20,
+            isRunning: true,
+        });
+    });
+
+    it('starts focus on the first present observation after break finishes naturally', () => {
+        const { presence, pomodoro } = freshStores();
+        presence.setState({ enabled: true, intervalSeconds: 30, presentThresholdSeconds: 30 });
+        pomodoro.getState().applySettings(60, 1, 2, true, false);
+        pomodoro.setState({ currentPhase: 'break', isRunning: true, remainingSeconds: 1 });
+
+        pomodoro.getState().tick(1);
+        expect(pomodoro.getState()).toMatchObject({
+            currentPhase: 'focus',
+            isRunning: false,
+            presenceAutoStartEligible: true,
+        });
+
+        applyPresenceSample(presence, pomodoro, sample('absent'), 30_000);
+        expect(pomodoro.getState().isRunning).toBe(false);
+
+        applyPresenceSample(presence, pomodoro, sample('present'), 60_000);
+
         expect(pomodoro.getState()).toMatchObject({
             currentPhase: 'focus',
             currentRound: 2,
             isRunning: true,
+            presenceAutoStartEligible: false,
         });
     });
 

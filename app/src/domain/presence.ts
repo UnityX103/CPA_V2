@@ -356,6 +356,18 @@ export function applyPresenceSample(
         observedPomodoroEpoch: pomo.presenceAutomationEpoch,
     });
 
+    if (
+        sample.observation === 'present'
+        && pomodoro.getState().startFocusFromPresence()
+    ) {
+        store.setState({
+            notice: notice('检测到在岗，已开始专注'),
+            observedPomodoroEpoch: pomodoro.getState().presenceAutomationEpoch,
+            ...evidenceReset(),
+        });
+        return;
+    }
+
     if (!thresholdMet) return;
 
     if (sample.observation === 'absent') {
@@ -369,17 +381,9 @@ export function applyPresenceSample(
         return;
     }
 
-    if (pomo.currentPhase === 'break') {
-        pomodoro.getState().startFocusFromPresence();
-    } else if (pomo.currentPhase === 'focus' && !pomo.isRunning && pomo.presenceOwnedPause) {
+    if (pomo.currentPhase === 'focus' && !pomo.isRunning && pomo.presenceOwnedPause) {
         pomodoro.getState().resumeFocusFromPresence();
         store.setState({ notice: notice('检测到返回，已继续专注') });
-    } else if (
-        pomo.currentPhase === 'focus'
-        && !pomo.isRunning
-        && pomo.presenceAutoStartEligible
-    ) {
-        pomodoro.getState().startFocusFromPresence();
     } else {
         return;
     }

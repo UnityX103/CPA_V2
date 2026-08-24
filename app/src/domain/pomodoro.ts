@@ -53,7 +53,7 @@ export interface PomodoroActions {
     pause: () => void;
     skip: () => void;
     reset: () => void;
-    startFocusFromPresence: () => void;
+    startFocusFromPresence: () => boolean;
     pauseFocusFromPresence: () => void;
     resumeFocusFromPresence: () => void;
     clearPresenceAutomationOwnership: () => void;
@@ -114,7 +114,7 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
             pause: () => {},
             skip: () => {},
             reset: () => {},
-            startFocusFromPresence: () => {},
+            startFocusFromPresence: () => false,
             pauseFocusFromPresence: () => {},
             resumeFocusFromPresence: () => {},
             clearPresenceAutomationOwnership: () => {},
@@ -298,16 +298,6 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
             },
             startFocusFromPresence: () => {
                 const state = get();
-                if (state.currentPhase === 'break') {
-                    accumulator = 0;
-                    const next = advancePhase(state, 'presence');
-                    set({
-                        ...next,
-                        isRunning: next.currentPhase === 'focus',
-                        presenceAutoStartEligible: false,
-                    });
-                    return;
-                }
                 if (
                     state.currentPhase === 'focus'
                     && !state.isRunning
@@ -318,7 +308,9 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
                         presenceAutoStartEligible: false,
                         presenceAutomationEpoch: state.presenceAutomationEpoch + 1,
                     });
+                    return true;
                 }
+                return false;
             },
             pauseFocusFromPresence: () => {
                 const state = get();
