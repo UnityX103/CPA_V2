@@ -55,6 +55,8 @@ echo
 check_cmd git || failed=1
 check_cmd gh || failed=1
 check_cmd npm || failed=1
+check_cmd curl || failed=1
+check_cmd jq || failed=1
 if [[ -n "${RUST_TOOLCHAIN_BIN:-}" && -x "$RUST_TOOLCHAIN_BIN/cargo" ]]; then
   printf '%-34s %s\n' "cargo" "$RUST_TOOLCHAIN_BIN/cargo"
 elif command -v cargo >/dev/null 2>&1; then
@@ -65,7 +67,27 @@ else
 fi
 check_cmd codesign || true
 check_cmd hdiutil || true
+check_cmd lipo || true
 echo
+
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  if command -v rustup >/dev/null 2>&1; then
+    printf '%-34s %s\n' "rustup" "$(command -v rustup)"
+    installed_targets="$(rustup target list --installed)"
+    for target in x86_64-apple-darwin aarch64-apple-darwin; do
+      if grep -qx "$target" <<<"$installed_targets"; then
+        printf '%-34s %s\n' "rust target $target" "OK"
+      else
+        printf '%-34s %s\n' "rust target $target" "missing"
+        failed=1
+      fi
+    done
+  else
+    printf '%-34s %s\n' "rustup" "missing"
+    failed=1
+  fi
+  echo
+fi
 
 if command -v gh >/dev/null 2>&1; then
   gh auth status || failed=1
