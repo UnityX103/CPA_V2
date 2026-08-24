@@ -185,36 +185,40 @@ describe('PomodoroTimerSystem.skip', () => {
 });
 
 describe('Pomodoro presence automation', () => {
-    it('never advances a running or paused break before it finishes', () => {
+    it('advances a running or paused break into a running focus', () => {
         for (const isRunning of [true, false]) {
             const store = freshStore();
             store.getState().applySettings(60, 30, 2, true, false);
             store.setState({ currentPhase: 'break', isRunning, remainingSeconds: 20 });
 
-            store.getState().startFocusFromPresence();
+            store.getState().finishBreakFromPresence();
 
             expect(store.getState()).toMatchObject({
-                currentPhase: 'break',
-                currentRound: 1,
-                remainingSeconds: 20,
-                isRunning,
+                currentPhase: 'focus',
+                currentRound: 2,
+                remainingSeconds: 60,
+                isRunning: true,
             });
-            expect(store.getState().lastEndEvent).toBeNull();
+            expect(store.getState().lastEndEvent).toMatchObject({
+                fromPhase: 'break',
+                toPhase: 'focus',
+                triggeredBy: 'presence',
+            });
         }
     });
 
-    it('does not complete the final break from a presence observation', () => {
+    it('completes the final break instead of starting a new set', () => {
         const store = freshStore();
         store.getState().applySettings(60, 30, 1, true, false);
         store.setState({ currentPhase: 'break', isRunning: true, remainingSeconds: 20 });
 
-        store.getState().startFocusFromPresence();
+        store.getState().finishBreakFromPresence();
 
         expect(store.getState()).toMatchObject({
-            currentPhase: 'break',
+            currentPhase: 'completed',
             currentRound: 1,
-            remainingSeconds: 20,
-            isRunning: true,
+            remainingSeconds: 0,
+            isRunning: false,
         });
     });
 

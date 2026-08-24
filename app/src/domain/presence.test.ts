@@ -102,19 +102,21 @@ describe('presence settings updates', () => {
 });
 
 describe('presence evidence and pomodoro integration', () => {
-    it('does not interrupt break even after present confirmation reaches the threshold', () => {
+    it('ends break early on the first present observation', () => {
         const { presence, pomodoro } = freshStores();
         presence.setState({ enabled: true, intervalSeconds: 30, presentThresholdSeconds: 30 });
         pomodoro.getState().applySettings(60, 30, 2, true, false);
         pomodoro.setState({ currentPhase: 'break', isRunning: true, remainingSeconds: 20 });
 
-        applyPresenceSample(presence, pomodoro, sample('present'), 0);
+        applyPresenceSample(presence, pomodoro, sample('absent'), 0);
+        expect(pomodoro.getState().currentPhase).toBe('break');
+
         applyPresenceSample(presence, pomodoro, sample('present'), 30_000);
 
         expect(pomodoro.getState()).toMatchObject({
-            currentPhase: 'break',
-            currentRound: 1,
-            remainingSeconds: 20,
+            currentPhase: 'focus',
+            currentRound: 2,
+            remainingSeconds: 60,
             isRunning: true,
         });
     });
@@ -148,7 +150,7 @@ describe('presence evidence and pomodoro integration', () => {
     it('clears evidence on unknown, opposite observations, and excessive scheduling gaps', () => {
         const { presence, pomodoro } = freshStores();
         presence.setState({ enabled: true, intervalSeconds: 30, presentThresholdSeconds: 30 });
-        pomodoro.setState({ currentPhase: 'break', isRunning: true });
+        pomodoro.setState({ currentPhase: 'completed', isRunning: false });
 
         applyPresenceSample(presence, pomodoro, sample('present'), 0);
         applyPresenceSample(presence, pomodoro, sample('unknown', 'busy'), 30_000);
@@ -160,7 +162,7 @@ describe('presence evidence and pomodoro integration', () => {
 
         applyPresenceSample(presence, pomodoro, sample('absent'), 151_000);
         expect(presence.getState()).toMatchObject({ candidateDirection: 'absent', candidateCount: 1 });
-        expect(pomodoro.getState().currentPhase).toBe('break');
+        expect(pomodoro.getState().currentPhase).toBe('completed');
     });
 
     it('pauses focus after sustained absence and only resumes its presence-owned pause', () => {

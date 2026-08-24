@@ -356,16 +356,18 @@ export function applyPresenceSample(
         observedPomodoroEpoch: pomo.presenceAutomationEpoch,
     });
 
-    if (
-        sample.observation === 'present'
-        && pomodoro.getState().startFocusFromPresence()
-    ) {
-        store.setState({
-            notice: notice('检测到在岗，已开始专注'),
-            observedPomodoroEpoch: pomodoro.getState().presenceAutomationEpoch,
-            ...evidenceReset(),
-        });
-        return;
+    if (sample.observation === 'present') {
+        const focusStarted = pomodoro.getState().startFocusFromPresence();
+        const breakFinished = !focusStarted
+            && pomodoro.getState().finishBreakFromPresence();
+        if (focusStarted || breakFinished) {
+            store.setState({
+                notice: notice('检测到在岗，已开始专注'),
+                observedPomodoroEpoch: pomodoro.getState().presenceAutomationEpoch,
+                ...evidenceReset(),
+            });
+            return;
+        }
     }
 
     if (!thresholdMet) return;
