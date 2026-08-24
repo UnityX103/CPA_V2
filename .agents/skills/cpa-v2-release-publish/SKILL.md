@@ -52,11 +52,11 @@ From the repo root in `CPA_V2`:
    cd app
    npx vitest run src/updateConfig.test.ts scripts/prepare-updater-release.test.mjs
    ```
-3. Build both thin macOS targets locally. Set only the private-key path; exporting both `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PATH` makes newer Tauri signer versions fail with conflicting arguments:
+3. Build both thin macOS targets locally. Tauri `build` requires the private-key content in `TAURI_SIGNING_PRIVATE_KEY`; it does not consume `TAURI_SIGNING_PRIVATE_KEY_PATH`. Clear the path variable so newer signer versions do not receive conflicting arguments:
    ```bash
    source ~/.config/cpa-v2-release/release-secret-paths.env
-   unset TAURI_SIGNING_PRIVATE_KEY
-   export TAURI_SIGNING_PRIVATE_KEY_PATH="$CPA_UPDATER_PRIVATE_KEY_PATH"
+   unset TAURI_SIGNING_PRIVATE_KEY_PATH
+   export TAURI_SIGNING_PRIVATE_KEY="$(cat "$CPA_UPDATER_PRIVATE_KEY_PATH")"
    export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="$(cat "$CPA_UPDATER_PASSWORD_PATH")"
    PATH="$RUST_TOOLCHAIN_BIN:$PATH" npm run tauri build -- \
      --target x86_64-apple-darwin --bundles app,dmg
