@@ -93,6 +93,14 @@ describe('SettingsPanel', () => {
         expect(screen.getByText('最近观测')).toBeTruthy();
     });
 
+    it('labels automatic focus-end pinning clearly', () => {
+        render(<SettingsPanel />);
+
+        expect(screen.getByRole('button', { name: '专注结束后自动置顶' })).toBeTruthy();
+        expect(screen.getByText('专注结束后自动置顶')).toBeTruthy();
+        expect(screen.queryByText('自动制定')).toBeNull();
+    });
+
     it('shows focus-end video prompt settings with bundled and custom sources', () => {
         render(<SettingsPanel />);
 

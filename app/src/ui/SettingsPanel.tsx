@@ -518,8 +518,12 @@ function PomodoroTab({ onApplyStateChange }: {
                         </div>
 
                         <div className="card pomo-row">
-                            <span className="pomo-row-label">自动制定</span>
-                            <Toggle checked={autoPinAfterFocus} onChange={setAutoPinAfterFocus} ariaLabel="自动制定" />
+                            <span className="pomo-row-label">专注结束后自动置顶</span>
+                            <Toggle
+                                checked={autoPinAfterFocus}
+                                onChange={setAutoPinAfterFocus}
+                                ariaLabel="专注结束后自动置顶"
+                            />
                         </div>
 
                         <div className="pomodoro-sound-grid">
