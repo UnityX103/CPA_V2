@@ -102,7 +102,7 @@ pub fn play_sound(
         .with_hint("mp3")
         .build()
         .map_err(|error| format!("无法解码 MP3 音频：{error}"))?;
-    let player = Player::connect_new(&device_sink.mixer());
+    let player = Player::connect_new(device_sink.mixer());
     player.set_volume(normalize_volume(request.volume));
     player.append(decoder);
 
