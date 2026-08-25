@@ -54,7 +54,7 @@ export interface PresenceNotice {
 interface PresenceState extends PresencePreferences {
     platform: PresencePlatform;
     availability: PresenceAvailability;
-    latestObservation: PresenceObservation;
+    confirmedPresence: PresenceObservation;
     lastSuccessfulAt: number | null;
     lastError: string | null;
     inFlight: boolean;
@@ -84,7 +84,7 @@ function initialPresenceState(): PresenceState {
         ...DEFAULT_PRESENCE_PREFERENCES,
         platform: 'other',
         availability: 'disabled',
-        latestObservation: 'unknown',
+        confirmedPresence: 'unknown',
         lastSuccessfulAt: null,
         lastError: null,
         inFlight: false,
@@ -164,7 +164,7 @@ export function createPresenceStore(opts: { isSettingsWindow: boolean }): Presen
                 ...normalized,
                 availability: normalized.enabled ? 'checking' : 'disabled',
                 generation: state.generation + 1,
-                latestObservation: 'unknown',
+                confirmedPresence: 'unknown',
                 lastSuccessfulAt: null,
                 lastError: null,
                 inFlight: false,
@@ -185,7 +185,7 @@ export function createPresenceStore(opts: { isSettingsWindow: boolean }): Presen
                     ? (enabledChanged ? 'checking' : state.availability)
                     : 'disabled',
                 generation: monitorChanged ? state.generation + 1 : state.generation,
-                latestObservation: enabledChanged ? 'unknown' : state.latestObservation,
+                confirmedPresence: enabledChanged ? 'unknown' : state.confirmedPresence,
                 lastSuccessfulAt: enabledChanged ? null : state.lastSuccessfulAt,
                 lastError: enabledChanged ? null : state.lastError,
                 inFlight: monitorChanged ? false : state.inFlight,
@@ -202,7 +202,7 @@ export function createPresenceStore(opts: { isSettingsWindow: boolean }): Presen
             set((state) => ({
                 availability: 'checking',
                 inFlight: true,
-                latestObservation: 'unknown',
+                confirmedPresence: 'unknown',
                 lastSuccessfulAt: null,
                 lastError: null,
                 generation: state.generation + 1,
@@ -227,7 +227,7 @@ export function createPresenceStore(opts: { isSettingsWindow: boolean }): Presen
             set((state) => ({
                 availability: 'checking',
                 inFlight: true,
-                latestObservation: 'unknown',
+                confirmedPresence: 'unknown',
                 lastSuccessfulAt: null,
                 lastError: null,
                 generation: state.generation + 1,
@@ -286,7 +286,7 @@ function applyLivePresenceSample(
     if (sample.observation === 'unknown') {
         store.setState({
             availability: sample.availability,
-            latestObservation: 'unknown',
+            confirmedPresence: 'unknown',
             lastError: sample.errorCode,
             inFlight: false,
             consecutiveAbsentSamples: 0,
@@ -299,7 +299,7 @@ function applyLivePresenceSample(
 
     store.setState({
         availability: sample.availability,
-        latestObservation: sample.observation,
+        confirmedPresence: sample.observation,
         lastSuccessfulAt: nowMs,
         lastError: sample.errorCode,
         inFlight: false,
@@ -331,7 +331,7 @@ export function applyPresenceSample(
         const confirmed = consecutiveAbsentSamples >= requiredSamples;
         store.setState({
             availability: sample.availability,
-            latestObservation: confirmed ? 'absent' : current.latestObservation,
+            confirmedPresence: confirmed ? 'absent' : current.confirmedPresence,
             lastSuccessfulAt: nowMs,
             lastError: sample.errorCode,
             inFlight: false,
@@ -346,7 +346,7 @@ export function applyPresenceSample(
 
     store.setState({
         availability: sample.availability,
-        latestObservation: 'present',
+        confirmedPresence: 'present',
         lastSuccessfulAt: nowMs,
         lastError: sample.errorCode,
         inFlight: false,

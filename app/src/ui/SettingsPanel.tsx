@@ -517,8 +517,8 @@ function PomodoroTab({ onApplyStateChange }: {
                         </div>
 
                         <div className="card pomo-row">
-                            <span className="pomo-row-label">最近观测</span>
-                            <span className="pomo-row-value">{presenceObservationText(presence.latestObservation)}</span>
+                            <span className="pomo-row-label">工位状态</span>
+                            <span className="pomo-row-value">{presenceObservationText(presence.confirmedPresence)}</span>
                         </div>
 
                         {/* pomoAutoStartBreak fnZ59: 结束提示音下方 → Toggle */}

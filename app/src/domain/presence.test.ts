@@ -49,7 +49,7 @@ describe('presence settings updates', () => {
             enabled: true,
             intervalSeconds: 60,
             availability: 'ready',
-            latestObservation: 'present',
+            confirmedPresence: 'present',
             lastSuccessfulAt: 1_000,
             generation: 4,
         });
@@ -65,7 +65,7 @@ describe('presence settings updates', () => {
             intervalSeconds: 5,
             absenceSensitivity: 'strict',
             availability: 'ready',
-            latestObservation: 'present',
+            confirmedPresence: 'present',
             lastSuccessfulAt: 1_000,
             generation: 5,
         });
@@ -93,7 +93,7 @@ describe('presence settings updates', () => {
 
         expect(presence.getState()).toMatchObject({
             generation: 4,
-            latestObservation: 'present',
+            confirmedPresence: 'present',
         });
         applyPresenceSample(presence, pomodoro, sample('absent'), 60_000);
         applyPresenceSample(presence, pomodoro, sample('absent'), 70_000);
@@ -123,7 +123,7 @@ describe('presence and pomodoro integration', () => {
         applyPresenceSample(presence, pomodoro, sample('present'), 0);
         for (let index = 1; index < requiredSamples; index += 1) {
             applyPresenceSample(presence, pomodoro, sample('absent'), index * 10_000);
-            expect(presence.getState().latestObservation).toBe('present');
+            expect(presence.getState().confirmedPresence).toBe('present');
             expect(pomodoro.getState()).toMatchObject({
                 currentPhase: 'focus',
                 isRunning: true,
@@ -138,7 +138,7 @@ describe('presence and pomodoro integration', () => {
             requiredSamples * 10_000,
         );
 
-        expect(presence.getState().latestObservation).toBe('absent');
+        expect(presence.getState().confirmedPresence).toBe('absent');
         expect(pomodoro.getState()).toMatchObject({
             currentPhase: 'focus',
             isRunning: false,
@@ -334,18 +334,18 @@ describe('presence monitor scheduling', () => {
         await flushPromises();
 
         expect(intervalDelay).toBe(30_000);
-        expect(presence.getState().latestObservation).toBe('present');
+        expect(presence.getState().confirmedPresence).toBe('present');
 
         now = 30_000;
         intervalCallback();
         await flushPromises();
-        expect(presence.getState().latestObservation).toBe('present');
+        expect(presence.getState().confirmedPresence).toBe('present');
         expect(pomodoro.getState().isRunning).toBe(true);
 
         now = 60_000;
         intervalCallback();
         await flushPromises();
-        expect(presence.getState().latestObservation).toBe('absent');
+        expect(presence.getState().confirmedPresence).toBe('absent');
         expect(pomodoro.getState()).toMatchObject({
             isRunning: false,
             presenceOwnedPause: true,
@@ -374,11 +374,11 @@ describe('presence monitor scheduling', () => {
             },
         });
         await flushPromises();
-        presence.setState({ generation: 5, latestObservation: 'unknown' });
+        presence.setState({ generation: 5, confirmedPresence: 'unknown' });
         pending.resolve(sample('present'));
         await flushPromises();
 
-        expect(presence.getState().latestObservation).toBe('unknown');
+        expect(presence.getState().confirmedPresence).toBe('unknown');
         cleanup();
     });
 
@@ -415,7 +415,7 @@ describe('presence monitor scheduling', () => {
         expect(setTimeout).toHaveBeenCalledTimes(1);
         expect(presence.getState()).toMatchObject({
             availability: 'error',
-            latestObservation: 'unknown',
+            confirmedPresence: 'unknown',
             lastError: 'sampleTimeout',
             inFlight: false,
         });

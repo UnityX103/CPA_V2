@@ -97,7 +97,7 @@ export function applySnapshotToMirrors(snap: BridgeSnapshot): void {
         absenceSensitivity: snap.presence.absenceSensitivity,
         platform: snap.presence.platform,
         availability: snap.presence.availability,
-        latestObservation: snap.presence.latestObservation,
+        confirmedPresence: snap.presence.confirmedPresence,
         lastSuccessfulAt: snap.presence.lastSuccessfulAt,
         lastError: snap.presence.lastError,
     });

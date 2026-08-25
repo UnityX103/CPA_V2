@@ -39,7 +39,7 @@ function snapshot(): BridgeSnapshot {
             absenceSensitivity: 'relaxed',
             platform: 'macos',
             availability: 'ready',
-            latestObservation: 'present',
+            confirmedPresence: 'present',
             lastSuccessfulAt: 123,
             lastError: null,
         },
@@ -78,7 +78,7 @@ function snapshot(): BridgeSnapshot {
 
 beforeEach(() => {
     useSettingsStore.setState({ uiScale: 1, committedUiScale: 1, autostartEnabled: false, dangerousChange: null });
-    usePresenceStore.setState({ enabled: false, availability: 'disabled', latestObservation: 'unknown' });
+    usePresenceStore.setState({ enabled: false, availability: 'disabled', confirmedPresence: 'unknown' });
 });
 
 describe('bridge client', () => {
@@ -110,7 +110,7 @@ describe('bridge client', () => {
             intervalSeconds: 30,
             absenceSensitivity: 'relaxed',
             availability: 'ready',
-            latestObservation: 'present',
+            confirmedPresence: 'present',
         }));
     });
 

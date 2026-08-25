@@ -58,7 +58,7 @@ beforeEach(() => {
         absenceSensitivity: 'strict',
         platform: 'macos',
         availability: 'disabled',
-        latestObservation: 'unknown',
+        confirmedPresence: 'unknown',
         lastSuccessfulAt: null,
         lastError: null,
         inFlight: false,
@@ -120,7 +120,7 @@ describe('SettingsPanel', () => {
         expect(screen.getByRole('option', { name: '宽松' })).toBeTruthy();
         expect(screen.getByText('摄像头授权')).toBeTruthy();
         expect(screen.getByText('未启用')).toBeTruthy();
-        expect(screen.getByText('最近观测')).toBeTruthy();
+        expect(screen.getByText('工位状态')).toBeTruthy();
     });
 
     it('labels automatic focus-end pinning clearly', () => {

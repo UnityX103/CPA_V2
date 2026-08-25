@@ -47,7 +47,7 @@ function resetPresence() {
         enabled: false,
         absenceSensitivity: 'strict',
         availability: 'disabled',
-        latestObservation: 'unknown',
+        confirmedPresence: 'unknown',
         lastSuccessfulAt: null,
         lastError: null,
         inFlight: false,
@@ -134,7 +134,7 @@ describe('PomodoroPanel camera presence status', () => {
         usePresenceStore.setState({
             enabled: true,
             availability: 'ready',
-            latestObservation: 'unknown',
+            confirmedPresence: 'unknown',
             lastSuccessfulAt: null,
         });
         const { container } = render(<PomodoroPanel />);
@@ -177,7 +177,7 @@ describe('PomodoroPanel camera presence status', () => {
         usePresenceStore.setState({
             enabled: true,
             availability: 'checking',
-            latestObservation: 'present',
+            confirmedPresence: 'present',
             lastSuccessfulAt: 1_000,
             inFlight: true,
         });
@@ -201,7 +201,7 @@ describe('PomodoroPanel camera presence status', () => {
         usePresenceStore.setState({
             enabled: true,
             availability: 'ready',
-            latestObservation: 'present',
+            confirmedPresence: 'present',
             lastSuccessfulAt: 1_000,
         });
 
@@ -233,7 +233,7 @@ describe('PomodoroPanel camera presence status', () => {
             usePresenceStore.setState({
                 enabled,
                 availability,
-                latestObservation: 'present',
+                confirmedPresence: 'present',
                 lastSuccessfulAt: 1_000,
             });
 
@@ -247,7 +247,7 @@ describe('PomodoroPanel camera presence status', () => {
         usePresenceStore.setState({
             enabled: true,
             availability: 'ready',
-            latestObservation: 'unknown',
+            confirmedPresence: 'unknown',
             lastSuccessfulAt: null,
         });
 

@@ -42,7 +42,7 @@ export interface BridgeSnapshot {
     presence: PresencePreferences & {
         platform: PresencePlatform;
         availability: PresenceAvailability;
-        latestObservation: PresenceObservation;
+        confirmedPresence: PresenceObservation;
         lastSuccessfulAt: number | null;
         lastError: string | null;
     };

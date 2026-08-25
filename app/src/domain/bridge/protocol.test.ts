@@ -36,7 +36,7 @@ describe('bridge protocol', () => {
                 absenceSensitivity: 'strict',
                 platform: 'macos',
                 availability: 'ready',
-                latestObservation: 'present',
+                confirmedPresence: 'present',
                 lastSuccessfulAt: 123,
                 lastError: null,
             },

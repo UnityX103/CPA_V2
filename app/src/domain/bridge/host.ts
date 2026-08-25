@@ -118,7 +118,7 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
             absenceSensitivity: presence.absenceSensitivity,
             platform: presence.platform,
             availability: presence.availability,
-            latestObservation: presence.latestObservation,
+            confirmedPresence: presence.confirmedPresence,
             lastSuccessfulAt: presence.lastSuccessfulAt,
             lastError: presence.lastError,
         },
@@ -333,7 +333,7 @@ export function presenceSig(s: {
     absenceSensitivity: PresenceAbsenceSensitivity;
     platform: string;
     availability: string;
-    latestObservation: string;
+    confirmedPresence: string;
     lastSuccessfulAt: number | null;
     lastError: string | null;
 }): string {
@@ -343,7 +343,7 @@ export function presenceSig(s: {
         s.absenceSensitivity,
         s.platform,
         s.availability,
-        s.latestObservation,
+        s.confirmedPresence,
         s.lastSuccessfulAt,
         s.lastError,
     ]);

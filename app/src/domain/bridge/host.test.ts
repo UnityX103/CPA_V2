@@ -33,7 +33,7 @@ beforeEach(() => {
         absenceSensitivity: 'strict',
         platform: 'macos',
         availability: 'disabled',
-        latestObservation: 'unknown',
+        confirmedPresence: 'unknown',
         lastSuccessfulAt: null,
         lastError: null,
     });

@@ -24,6 +24,10 @@ _Avoid_: Taking a break, offline
 A Presence Observation that cannot establish Present or Absent because the camera, permission, capture, or detector is unavailable.
 _Avoid_: Absent, failure-as-absence
 
+**Confirmed Presence（确认在场状态）**:
+The debounced Present, Absent, or Unknown state used by the UI and Pomodoro automation. It is derived from one or more Presence Observations and may intentionally differ from the latest observation while absence evidence is still accumulating.
+_Avoid_: Latest observation, raw camera result
+
 **Presence-Owned Pause（在场检测暂停）**:
 A paused focus session whose pause was initiated by presence automation and may therefore be resumed by that automation.
 _Avoid_: Manual pause, break

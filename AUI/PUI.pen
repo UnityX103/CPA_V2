@@ -377,8 +377,9 @@
                   "type": "text",
                   "id": "x0C8f",
                   "name": "pomoPresenceObservationLabel",
+                  "context": "显示防抖后的确认在场状态，不是最近一次原始摄像头观测。",
                   "fill": "#1A1A1A",
-                  "content": "最近观测",
+                  "content": "工位状态",
                   "fontFamily": "MaokenAssortedSans",
                   "fontSize": 14,
                   "fontWeight": "500"
