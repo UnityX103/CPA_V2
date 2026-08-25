@@ -198,6 +198,7 @@ describe('presence and pomodoro integration', () => {
             isRunning: true,
             presenceAutomationState: 'none',
         });
+        expect(presence.getState().notice?.message).toBe('检测到在场，已开始专注');
     });
 
     it('starts a naturally reached paused break only after confirmed absence', () => {

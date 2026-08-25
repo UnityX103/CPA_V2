@@ -377,7 +377,7 @@ export function applyPresenceSample(
     if (focusStarted || focusResumed) {
         store.setState({
             notice: notice(focusStarted
-                ? '检测到在岗，已开始专注'
+                ? '检测到在场，已开始专注'
                 : '检测到返回，已继续专注'),
         });
     }
