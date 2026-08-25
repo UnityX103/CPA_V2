@@ -86,6 +86,13 @@ pub fn play_sound(
     state: tauri::State<'_, AudioPlaybackState>,
     request: PlaySoundRequest,
 ) -> Result<AudioPlaybackResult, String> {
+    start_playback(state.inner(), request)
+}
+
+fn start_playback(
+    state: &AudioPlaybackState,
+    request: PlaySoundRequest,
+) -> Result<AudioPlaybackResult, String> {
     let host = rodio::cpal::default_host();
     let requested_device = request
         .output_device_id
@@ -195,7 +202,10 @@ fn normalize_volume(volume: f32) -> f32 {
 
 #[cfg(test)]
 mod tests {
-    use super::{builtin_sound_bytes, normalize_volume};
+    use super::{
+        builtin_sound_bytes, list_audio_output_devices, normalize_volume, start_playback,
+        AudioPlaybackState, PlaySoundRequest, SoundSource,
+    };
 
     #[test]
     fn embeds_every_builtin_pomodoro_sound() {
@@ -219,5 +229,33 @@ mod tests {
         assert_eq!(normalize_volume(0.4), 0.4);
         assert_eq!(normalize_volume(2.0), 1.0);
         assert_eq!(normalize_volume(f32::NAN), 1.0);
+    }
+
+    #[test]
+    #[ignore = "requires a physical audio output device"]
+    fn selected_output_device_plays_builtin_sound() {
+        let devices = list_audio_output_devices().expect("list output devices");
+        let selected = devices
+            .iter()
+            .find(|device| device.is_default)
+            .or_else(|| devices.first())
+            .expect("at least one output device");
+        eprintln!("audio smoke device: {}", selected.name);
+
+        let state = AudioPlaybackState::default();
+        let result = start_playback(
+            &state,
+            PlaySoundRequest {
+                source: SoundSource::Builtin {
+                    id: "clear-success".to_string(),
+                },
+                output_device_id: Some(selected.id.clone()),
+                volume: 0.25,
+            },
+        )
+        .expect("play built-in sound");
+
+        assert!(!result.fell_back_to_default);
+        std::thread::sleep(std::time::Duration::from_millis(1500));
     }
 }
