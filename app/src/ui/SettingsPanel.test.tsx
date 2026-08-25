@@ -55,6 +55,7 @@ beforeEach(() => {
     usePresenceStore.setState({
         enabled: false,
         intervalSeconds: 60,
+        absenceSensitivity: 'strict',
         platform: 'macos',
         availability: 'disabled',
         latestObservation: 'unknown',
@@ -111,7 +112,12 @@ describe('SettingsPanel', () => {
         expect(toggle.getAttribute('aria-pressed')).toBe('false');
         expect(toggleRow?.nextElementSibling).toBe(authorizationControl);
         expect(screen.getByText('检测间隔')).toBeTruthy();
-        expect(screen.queryByText('切换状态确认时长')).toBeNull();
+        const threshold = screen.getByRole('combobox', { name: '离席判定阈值' }) as HTMLSelectElement;
+        expect(threshold.value).toBe('strict');
+        expect(screen.getByRole('option', { name: '关闭防抖' })).toBeTruthy();
+        expect(screen.getByRole('option', { name: '严谨' })).toBeTruthy();
+        expect(screen.getByRole('option', { name: '中等' })).toBeTruthy();
+        expect(screen.getByRole('option', { name: '宽松' })).toBeTruthy();
         expect(screen.getByText('摄像头授权')).toBeTruthy();
         expect(screen.getByText('未启用')).toBeTruthy();
         expect(screen.getByText('最近观测')).toBeTruthy();
@@ -210,12 +216,16 @@ describe('SettingsPanel', () => {
         expect(inputs).toHaveLength(3);
         expect(inputs[2].getAttribute('min')).toBe('5');
         fireEvent.change(inputs[2], { target: { value: '5' } });
+        fireEvent.change(screen.getByRole('combobox', { name: '离席判定阈值' }), {
+            target: { value: 'balanced' },
+        });
         fireEvent.click(screen.getByRole('button', { name: '应用' }));
 
         await vi.waitFor(() => {
             expect(usePresenceStore.getState()).toEqual(expect.objectContaining({
                 enabled: true,
                 intervalSeconds: 5,
+                absenceSensitivity: 'balanced',
             }));
         });
     });

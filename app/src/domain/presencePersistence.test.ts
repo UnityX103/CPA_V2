@@ -23,6 +23,7 @@ describe('presence persistence', () => {
         await expect(persistence.loadPresencePreferences()).resolves.toEqual({
             enabled: false,
             intervalSeconds: 10,
+            absenceSensitivity: 'strict',
         });
     });
 
@@ -37,7 +38,25 @@ describe('presence persistence', () => {
         await expect(persistence.loadPresencePreferences()).resolves.toEqual({
             enabled: true,
             intervalSeconds: 45,
+            absenceSensitivity: 'strict',
         });
+    });
+
+    it('loads the disabled state and all three sensitivity levels from device-local v2 settings', async () => {
+        for (const absenceSensitivity of ['off', 'strict', 'balanced', 'relaxed']) {
+            storeData.set('presencePreferences', {
+                schemaVersion: 2,
+                enabled: true,
+                intervalSeconds: 10,
+                absenceSensitivity,
+            });
+
+            await expect(persistence.loadPresencePreferences()).resolves.toEqual({
+                enabled: true,
+                intervalSeconds: 10,
+                absenceSensitivity,
+            });
+        }
     });
 
     it('accepts a five-second camera detection interval', async () => {
@@ -50,31 +69,35 @@ describe('presence persistence', () => {
         await expect(persistence.loadPresencePreferences()).resolves.toEqual({
             enabled: true,
             intervalSeconds: 5,
+            absenceSensitivity: 'strict',
         });
     });
 
     it('falls back for unsupported schemas', async () => {
         storeData.set('presencePreferences', {
-            schemaVersion: 2,
+            schemaVersion: 3,
             enabled: true,
             intervalSeconds: 30,
         });
         await expect(persistence.loadPresencePreferences()).resolves.toEqual({
             enabled: false,
             intervalSeconds: 10,
+            absenceSensitivity: 'strict',
         });
     });
 
-    it('saves only device-local v1 settings', async () => {
+    it('saves only device-local v2 settings', async () => {
         await persistence.savePresencePreferences({
             enabled: true,
             intervalSeconds: 30,
+            absenceSensitivity: 'relaxed',
         });
 
         expect(storeData.get('presencePreferences')).toEqual({
-            schemaVersion: 1,
+            schemaVersion: 2,
             enabled: true,
             intervalSeconds: 30,
+            absenceSensitivity: 'relaxed',
         });
         expect(save).toHaveBeenCalledTimes(1);
     });

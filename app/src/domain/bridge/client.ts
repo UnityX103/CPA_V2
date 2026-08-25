@@ -94,6 +94,7 @@ export function applySnapshotToMirrors(snap: BridgeSnapshot): void {
     usePresenceStore.setState({
         enabled: snap.presence.enabled,
         intervalSeconds: snap.presence.intervalSeconds,
+        absenceSensitivity: snap.presence.absenceSensitivity,
         platform: snap.presence.platform,
         availability: snap.presence.availability,
         latestObservation: snap.presence.latestObservation,

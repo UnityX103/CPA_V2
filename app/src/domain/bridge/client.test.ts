@@ -36,6 +36,7 @@ function snapshot(): BridgeSnapshot {
         presence: {
             enabled: true,
             intervalSeconds: 30,
+            absenceSensitivity: 'relaxed',
             platform: 'macos',
             availability: 'ready',
             latestObservation: 'present',
@@ -107,6 +108,7 @@ describe('bridge client', () => {
         expect(usePresenceStore.getState()).toEqual(expect.objectContaining({
             enabled: true,
             intervalSeconds: 30,
+            absenceSensitivity: 'relaxed',
             availability: 'ready',
             latestObservation: 'present',
         }));

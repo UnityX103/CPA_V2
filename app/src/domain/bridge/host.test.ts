@@ -30,6 +30,7 @@ beforeEach(() => {
     usePresenceStore.setState({
         enabled: false,
         intervalSeconds: 60,
+        absenceSensitivity: 'strict',
         platform: 'macos',
         availability: 'disabled',
         latestObservation: 'unknown',
@@ -46,6 +47,7 @@ describe('bridge host', () => {
         expect(snapshot.presence).toEqual(expect.objectContaining({
             enabled: false,
             intervalSeconds: 60,
+            absenceSensitivity: 'strict',
             availability: 'disabled',
         }));
     });
@@ -79,12 +81,13 @@ describe('bridge host', () => {
             v: BRIDGE_VERSION,
             store: 'presence',
             action: 'applySettings',
-            args: [{ enabled: true, intervalSeconds: 30 }],
+            args: [{ enabled: true, intervalSeconds: 30, absenceSensitivity: 'balanced' }],
         });
 
         expect(applySettings).toHaveBeenCalledWith({
             enabled: true,
             intervalSeconds: 30,
+            absenceSensitivity: 'balanced',
         });
     });
 
@@ -97,6 +100,10 @@ describe('bridge host', () => {
         expect(presenceSig(usePresenceStore.getState())).not.toBe(presenceSig({
             ...usePresenceStore.getState(),
             availability: 'ready',
+        }));
+        expect(presenceSig(usePresenceStore.getState())).not.toBe(presenceSig({
+            ...usePresenceStore.getState(),
+            absenceSensitivity: 'relaxed',
         }));
     });
 });

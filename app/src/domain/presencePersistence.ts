@@ -3,11 +3,15 @@ import { load } from '@tauri-apps/plugin-store';
 export interface PresencePreferences {
     enabled: boolean;
     intervalSeconds: number;
+    absenceSensitivity: PresenceAbsenceSensitivity;
 }
+
+export type PresenceAbsenceSensitivity = 'off' | 'strict' | 'balanced' | 'relaxed';
 
 export const DEFAULT_PRESENCE_PREFERENCES: PresencePreferences = {
     enabled: false,
     intervalSeconds: 10,
+    absenceSensitivity: 'strict',
 };
 
 export const MIN_PRESENCE_SECONDS = 5;
@@ -25,6 +29,12 @@ function normalizeSeconds(value: unknown, fallback: number): number {
         : fallback;
 }
 
+function normalizeAbsenceSensitivity(value: unknown): PresenceAbsenceSensitivity {
+    return value === 'off' || value === 'strict' || value === 'balanced' || value === 'relaxed'
+        ? value
+        : DEFAULT_PRESENCE_PREFERENCES.absenceSensitivity;
+}
+
 export function normalizePresencePreferences(value: unknown): PresencePreferences {
     if (!value || typeof value !== 'object') {
         return { ...DEFAULT_PRESENCE_PREFERENCES };
@@ -38,6 +48,7 @@ export function normalizePresencePreferences(value: unknown): PresencePreference
             persisted.intervalSeconds,
             DEFAULT_PRESENCE_PREFERENCES.intervalSeconds,
         ),
+        absenceSensitivity: normalizeAbsenceSensitivity(persisted.absenceSensitivity),
     };
 }
 
@@ -49,7 +60,11 @@ export async function loadPresencePreferences(): Promise<PresencePreferences> {
     try {
         const store = await openStore();
         const value = await store.get<unknown>(STORE_KEY);
-        if (!value || typeof value !== 'object' || (value as { schemaVersion?: unknown }).schemaVersion !== 1) {
+        if (!value || typeof value !== 'object') {
+            return { ...DEFAULT_PRESENCE_PREFERENCES };
+        }
+        const schemaVersion = (value as { schemaVersion?: unknown }).schemaVersion;
+        if (schemaVersion !== 1 && schemaVersion !== 2) {
             return { ...DEFAULT_PRESENCE_PREFERENCES };
         }
         return normalizePresencePreferences(value);
@@ -63,7 +78,7 @@ export async function savePresencePreferences(preferences: PresencePreferences):
     try {
         const store = await openStore();
         await store.set(STORE_KEY, {
-            schemaVersion: 1,
+            schemaVersion: 2,
             ...normalizePresencePreferences(preferences),
         });
         await store.save();

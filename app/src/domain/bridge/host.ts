@@ -112,6 +112,7 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
         presence: {
             enabled: presence.enabled,
             intervalSeconds: presence.intervalSeconds,
+            absenceSensitivity: presence.absenceSensitivity,
             platform: presence.platform,
             availability: presence.availability,
             latestObservation: presence.latestObservation,
@@ -326,6 +327,7 @@ export function pomoSig(s: {
 export function presenceSig(s: {
     enabled: boolean;
     intervalSeconds: number;
+    absenceSensitivity: string;
     platform: string;
     availability: string;
     latestObservation: string;
@@ -335,6 +337,7 @@ export function presenceSig(s: {
     return JSON.stringify([
         s.enabled,
         s.intervalSeconds,
+        s.absenceSensitivity,
         s.platform,
         s.availability,
         s.latestObservation,

@@ -45,6 +45,7 @@ import { InputBindingBadge } from './InputBindingBadge';
 import { shouldStartWindowDrag } from './windowDrag';
 import {
     usePresenceStore,
+    type PresenceAbsenceSensitivity,
     type PresenceObservation,
 } from '../domain/presence';
 import {
@@ -188,6 +189,7 @@ function PomodoroTab({ onApplyStateChange }: {
     const [endSounds, setEndSounds] = useState<PomodoroEndSounds>(clonePomodoroEndSounds(pomo.endSounds));
     const [presenceEnabled, setPresenceEnabled] = useState(presence.enabled);
     const [presenceIntervalSeconds, setPresenceIntervalSeconds] = useState(presence.intervalSeconds);
+    const [absenceSensitivity, setAbsenceSensitivity] = useState(presence.absenceSensitivity);
     const committedRef = useRef({
         focusDurationSeconds: pomo.focusDurationSeconds,
         breakDurationSeconds: pomo.breakDurationSeconds,
@@ -198,6 +200,7 @@ function PomodoroTab({ onApplyStateChange }: {
         endSounds: clonePomodoroEndSounds(pomo.endSounds),
         presenceEnabled: presence.enabled,
         presenceIntervalSeconds: presence.intervalSeconds,
+        absenceSensitivity: presence.absenceSensitivity,
     });
 
     useEffect(() => {
@@ -213,7 +216,8 @@ function PomodoroTab({ onApplyStateChange }: {
         const endSoundDraftDirty = !samePomodoroEndSounds(endSounds, previous.endSounds);
         const presenceDraftDirty =
             presenceEnabled !== previous.presenceEnabled
-            || presenceIntervalSeconds !== previous.presenceIntervalSeconds;
+            || presenceIntervalSeconds !== previous.presenceIntervalSeconds
+            || absenceSensitivity !== previous.absenceSensitivity;
         if (!durationDraftDirty) {
             setFocusMin(Math.round(pomo.focusDurationSeconds / 60));
             setBreakMin(Math.round(pomo.breakDurationSeconds / 60));
@@ -238,6 +242,7 @@ function PomodoroTab({ onApplyStateChange }: {
         if (!presenceDraftDirty) {
             setPresenceEnabled(presence.enabled);
             setPresenceIntervalSeconds(presence.intervalSeconds);
+            setAbsenceSensitivity(presence.absenceSensitivity);
         }
 
         committedRef.current = {
@@ -250,6 +255,7 @@ function PomodoroTab({ onApplyStateChange }: {
             endSounds: clonePomodoroEndSounds(pomo.endSounds),
             presenceEnabled: presence.enabled,
             presenceIntervalSeconds: presence.intervalSeconds,
+            absenceSensitivity: presence.absenceSensitivity,
         };
     }, [
         pomo.focusDurationSeconds,
@@ -268,6 +274,7 @@ function PomodoroTab({ onApplyStateChange }: {
         pomo.endSounds.break.customSoundPath,
         presence.enabled,
         presence.intervalSeconds,
+        presence.absenceSensitivity,
         focusMin,
         breakMin,
         autoStartBreak,
@@ -277,6 +284,7 @@ function PomodoroTab({ onApplyStateChange }: {
         endSounds,
         presenceEnabled,
         presenceIntervalSeconds,
+        absenceSensitivity,
     ]);
 
     const dirty =
@@ -288,7 +296,8 @@ function PomodoroTab({ onApplyStateChange }: {
         !sameEndActionVideo(endActionVideo, pomo.endActionVideo) ||
         !samePomodoroEndSounds(endSounds, pomo.endSounds) ||
         presenceEnabled !== presence.enabled ||
-        presenceIntervalSeconds !== presence.intervalSeconds;
+        presenceIntervalSeconds !== presence.intervalSeconds ||
+        absenceSensitivity !== presence.absenceSensitivity;
     const hasMissingCustomVideo =
         endActionMode === 'playVideo' &&
         endActionVideo.sourceKind === 'custom' &&
@@ -313,7 +322,8 @@ function PomodoroTab({ onApplyStateChange }: {
         const endSoundsChanged = !samePomodoroEndSounds(endSounds, pomo.endSounds);
         const presenceChanged =
             presenceEnabled !== presence.enabled
-            || presenceIntervalSeconds !== presence.intervalSeconds;
+            || presenceIntervalSeconds !== presence.intervalSeconds
+            || absenceSensitivity !== presence.absenceSensitivity;
 
         if (durationChanged) {
             pomo.applySettings(focusSeconds, breakSeconds, pomo.totalRounds, true, autoStartBreak);
@@ -337,6 +347,7 @@ function PomodoroTab({ onApplyStateChange }: {
             void Promise.resolve(presence.applySettings({
                 enabled: presenceEnabled,
                 intervalSeconds: presenceIntervalSeconds,
+                absenceSensitivity,
             })).catch((error) => {
                 console.warn('[settings] failed to apply presence settings', error);
             });
@@ -354,6 +365,7 @@ function PomodoroTab({ onApplyStateChange }: {
         presence,
         presenceEnabled,
         presenceIntervalSeconds,
+        absenceSensitivity,
     ]);
 
     useEffect(() => {
@@ -473,15 +485,33 @@ function PomodoroTab({ onApplyStateChange }: {
                             onOpenPrivacySettings={() => { void presence.openPrivacySettings(); }}
                         />
 
-                        <div className="card">
-                            <span className="card-label">检测间隔</span>
-                            <NumberSuffix
-                                value={presenceIntervalSeconds}
-                                onChange={setPresenceIntervalSeconds}
-                                min={MIN_PRESENCE_SECONDS}
-                                max={MAX_PRESENCE_SECONDS}
-                                suffix="秒"
-                            />
+                        <div className="card card-grid">
+                            <div className="card">
+                                <span className="card-label">检测间隔</span>
+                                <NumberSuffix
+                                    value={presenceIntervalSeconds}
+                                    onChange={setPresenceIntervalSeconds}
+                                    min={MIN_PRESENCE_SECONDS}
+                                    max={MAX_PRESENCE_SECONDS}
+                                    suffix="秒"
+                                />
+                            </div>
+                            <div className="card">
+                                <span className="card-label">离席判定阈值</span>
+                                <select
+                                    className="dropdown"
+                                    aria-label="离席判定阈值"
+                                    value={absenceSensitivity}
+                                    onChange={(event) => setAbsenceSensitivity(
+                                        event.currentTarget.value as PresenceAbsenceSensitivity,
+                                    )}
+                                >
+                                    <option value="off">关闭防抖</option>
+                                    <option value="strict">严谨</option>
+                                    <option value="balanced">中等</option>
+                                    <option value="relaxed">宽松</option>
+                                </select>
+                            </div>
                         </div>
 
                         <div className="card pomo-row">

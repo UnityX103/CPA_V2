@@ -8,10 +8,14 @@ import {
     DEFAULT_PRESENCE_PREFERENCES,
     normalizePresencePreferences,
     savePresencePreferences,
+    type PresenceAbsenceSensitivity,
     type PresencePreferences,
 } from './presencePersistence';
 
-export type { PresencePreferences } from './presencePersistence';
+export type {
+    PresenceAbsenceSensitivity,
+    PresencePreferences,
+} from './presencePersistence';
 
 export type PresencePlatform = 'macos' | 'windows' | 'other';
 export type PresenceAvailability =
@@ -50,6 +54,7 @@ interface PresenceState extends PresencePreferences {
     lastError: string | null;
     inFlight: boolean;
     generation: number;
+    consecutiveAbsentSamples: number;
     notice: PresenceNotice | null;
 }
 
@@ -66,6 +71,16 @@ export type PresenceStore = UseBoundStore<StoreApi<PresenceStoreState>>;
 
 let nextNoticeId = 1;
 
+// A single face-detector miss is common while the user leans on a hand,
+// turns sideways, or adjusts the camera. Return detection stays immediate;
+// the selected level controls how much absence evidence is required.
+const ABSENT_CONFIRMATION_SAMPLES: Record<PresenceAbsenceSensitivity, number> = {
+    off: 1,
+    strict: 2,
+    balanced: 3,
+    relaxed: 6,
+};
+
 function initialPresenceState(): PresenceState {
     return {
         ...DEFAULT_PRESENCE_PREFERENCES,
@@ -76,6 +91,7 @@ function initialPresenceState(): PresenceState {
         lastError: null,
         inFlight: false,
         generation: 0,
+        consecutiveAbsentSamples: 0,
         notice: null,
     };
 }
@@ -104,6 +120,9 @@ function capabilityState(
         ...(becameUnavailable
             ? { notice: notice('摄像头不可用，自动控制暂不可用') }
             : {}),
+        ...(capability.availability === 'ready'
+            ? {}
+            : { consecutiveAbsentSamples: 0 }),
     };
 }
 
@@ -151,6 +170,7 @@ export function createPresenceStore(opts: { isSettingsWindow: boolean }): Presen
                 lastSuccessfulAt: null,
                 lastError: null,
                 inFlight: false,
+                consecutiveAbsentSamples: 0,
             }));
         },
         applySettings: async (preferences) => {
@@ -158,6 +178,8 @@ export function createPresenceStore(opts: { isSettingsWindow: boolean }): Presen
             const previous = get();
             const enabledChanged = previous.enabled !== normalized.enabled;
             const intervalChanged = previous.intervalSeconds !== normalized.intervalSeconds;
+            const sensitivityChanged = previous.absenceSensitivity
+                !== normalized.absenceSensitivity;
             const monitorChanged = enabledChanged || intervalChanged;
             set((state) => ({
                 ...normalized,
@@ -169,6 +191,9 @@ export function createPresenceStore(opts: { isSettingsWindow: boolean }): Presen
                 lastSuccessfulAt: enabledChanged ? null : state.lastSuccessfulAt,
                 lastError: enabledChanged ? null : state.lastError,
                 inFlight: monitorChanged ? false : state.inFlight,
+                consecutiveAbsentSamples: monitorChanged || sensitivityChanged
+                    ? 0
+                    : state.consecutiveAbsentSamples,
             }));
             if (previous.enabled && !normalized.enabled) {
                 usePomodoroStore.getState().clearPresenceAutomationOwnership();
@@ -183,6 +208,7 @@ export function createPresenceStore(opts: { isSettingsWindow: boolean }): Presen
                 lastSuccessfulAt: null,
                 lastError: null,
                 generation: state.generation + 1,
+                consecutiveAbsentSamples: 0,
             }));
             try {
                 const capability = await invoke<PresenceCapability>('request_camera_presence_access');
@@ -207,6 +233,7 @@ export function createPresenceStore(opts: { isSettingsWindow: boolean }): Presen
                 lastSuccessfulAt: null,
                 lastError: null,
                 generation: state.generation + 1,
+                consecutiveAbsentSamples: 0,
             }));
             try {
                 const capability = await invoke<PresenceCapability>('camera_presence_status');
@@ -264,6 +291,7 @@ function applyLivePresenceSample(
             latestObservation: 'unknown',
             lastError: sample.errorCode,
             inFlight: false,
+            consecutiveAbsentSamples: 0,
             ...(becameUnavailable
                 ? { notice: notice('摄像头不可用，自动控制暂不可用') }
                 : {}),
@@ -286,6 +314,7 @@ export function applyPresenceSample(
     sample: PresenceSample,
     nowMs: number,
 ): void {
+    const current = store.getState();
     const pomo = pomodoro.getState();
 
     if (sample.observation === 'unknown') {
@@ -293,20 +322,36 @@ export function applyPresenceSample(
         return;
     }
 
-    store.setState({
-        availability: sample.availability,
-        latestObservation: sample.observation,
-        lastSuccessfulAt: nowMs,
-        lastError: sample.errorCode,
-        inFlight: false,
-    });
-
     if (sample.observation === 'absent') {
+        const requiredSamples = ABSENT_CONFIRMATION_SAMPLES[current.absenceSensitivity];
+        const consecutiveAbsentSamples = Math.min(
+            current.consecutiveAbsentSamples + 1,
+            requiredSamples,
+        );
+        const confirmed = consecutiveAbsentSamples >= requiredSamples;
+        store.setState({
+            availability: sample.availability,
+            latestObservation: confirmed ? 'absent' : current.latestObservation,
+            lastSuccessfulAt: nowMs,
+            lastError: sample.errorCode,
+            inFlight: false,
+            consecutiveAbsentSamples,
+        });
+        if (!confirmed) return;
         if (pomo.currentPhase !== 'focus' || !pomo.isRunning) return;
         pomodoro.getState().pauseFocusFromPresence();
         store.setState({ notice: notice('检测到离开，已暂停专注') });
         return;
     }
+
+    store.setState({
+        availability: sample.availability,
+        latestObservation: 'present',
+        lastSuccessfulAt: nowMs,
+        lastError: sample.errorCode,
+        inFlight: false,
+        consecutiveAbsentSamples: 0,
+    });
 
     const focusStarted = pomodoro.getState().startFocusFromPresence();
     const breakFinished = !focusStarted
@@ -381,6 +426,19 @@ export function startPresenceMonitor({
         if (stop) void stop().catch(() => {});
     };
 
+    const unsubscribePomodoro = pomodoro.subscribe((state, previous) => {
+        const contextChanged = state.currentPhase !== previous.currentPhase
+            || state.currentRound !== previous.currentRound
+            || state.isRunning !== previous.isRunning
+            || state.presenceOwnedPause !== previous.presenceOwnedPause
+            || state.presenceAutoStartEligible !== previous.presenceAutoStartEligible
+            || state.focusDurationSeconds !== previous.focusDurationSeconds
+            || state.breakDurationSeconds !== previous.breakDurationSeconds
+            || state.totalRounds !== previous.totalRounds
+            || state.autoStartBreak !== previous.autoStartBreak;
+        if (contextChanged) store.setState({ consecutiveAbsentSamples: 0 });
+    });
+
     const sample = async () => {
         if (!isCurrent() || inFlight) return;
         inFlight = true;
@@ -448,6 +506,7 @@ export function startPresenceMonitor({
     return () => {
         stopped = true;
         stopInterval();
+        unsubscribePomodoro();
     };
 }
 

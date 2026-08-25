@@ -45,6 +45,7 @@ function resetPomodoro() {
 function resetPresence() {
     usePresenceStore.setState({
         enabled: false,
+        absenceSensitivity: 'strict',
         availability: 'disabled',
         latestObservation: 'unknown',
         lastSuccessfulAt: null,
@@ -129,7 +130,7 @@ describe('PomodoroPanel scale root', () => {
 });
 
 describe('PomodoroPanel camera presence status', () => {
-    it('shows the Pencil present state and switches immediately to the away state', () => {
+    it('keeps the present state through one miss and switches away after the default second cycle', () => {
         usePresenceStore.setState({
             enabled: true,
             availability: 'ready',
@@ -155,6 +156,17 @@ describe('PomodoroPanel camera presence status', () => {
                 availability: 'ready',
                 errorCode: null,
             }, 2_000);
+        });
+
+        expect(screen.getByRole('status', { name: '检测到人，在工位' })).toBeTruthy();
+        expect(container.querySelector('.pomo-presence-status.is-present')).toBeTruthy();
+
+        act(() => {
+            applyPresenceSample(usePresenceStore, usePomodoroStore, {
+                observation: 'absent',
+                availability: 'ready',
+                errorCode: null,
+            }, 3_000);
         });
 
         expect(screen.getByRole('status', { name: '未检测到人，已离开' })).toBeTruthy();

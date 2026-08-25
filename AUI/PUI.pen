@@ -336,25 +336,21 @@
                       "id": "q0416",
                       "name": "pomoPresenceThresholdLabel",
                       "fill": "#9CA3AF",
-                      "content": "在场确认时长",
+                      "content": "离席判定阈值",
                       "fontFamily": "MaokenAssortedSans",
                       "fontSize": 12,
                       "fontWeight": "600"
                     },
                     {
-                      "id": "XkQPa",
+                      "id": "B8Zos",
                       "type": "ref",
-                      "ref": "0cT2B",
-                      "name": "pomoPresenceThresholdInput",
+                      "ref": "Frjkw",
+                      "name": "pomoPresenceThresholdDropdown",
                       "width": "fill_container",
-                      "enabled": true,
-                      "opacity": 1,
+                      "context": "离席防抖选项：关闭防抖=1个周期；严谨（默认）=2个周期；中等=3个周期；宽松=6个周期。开启防抖时阈值最低为2。",
                       "descendants": {
-                        "OQv34": {
-                          "content": "30"
-                        },
-                        "zpqfK": {
-                          "content": "秒"
+                        "d5bpi": {
+                          "content": "严谨"
                         }
                       }
                     }
@@ -1404,9 +1400,9 @@
                     "mo62i": {
                       "flipX": false,
                       "flipY": false,
-                      "width": 49.0446120762319,
+                      "width": 48.730223537281695,
                       "height": 18,
-                      "x": 13.732491381344932,
+                      "x": 13.644462590438875,
                       "y": 21,
                       "textGrowth": "fixed-width-height",
                       "fontSize": 17
