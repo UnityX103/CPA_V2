@@ -1,6 +1,6 @@
 ---
 name: cpa-v2-release-publish
-description: Use when packaging CPA_V2, publishing Tauri updater artifacts to GitHub Releases, checking macOS DMG/Gatekeeper issues, or migrating CPA_V2 release keys to another computer.
+description: Use when packaging CPA_V2, publishing Tauri updater artifacts to GitHub Releases, using an available Parallels Windows VM for Windows x64 release builds, checking macOS DMG/Gatekeeper issues, or migrating CPA_V2 release keys to another computer.
 ---
 
 # CPA_V2 Release Publish
@@ -146,6 +146,16 @@ From the repo root in `CPA_V2`:
 ## Windows GitHub Release Flow
 
 Use this path when publishing the Windows updater package.
+
+### Parallels VM lifecycle
+
+When `prlctl` is available, check `prlctl list -a` before treating Windows as unavailable. A full cross-platform publish request authorizes starting a suitable existing Windows VM when it is stopped; record the VM name and whether this workflow started it.
+
+- Read [references/parallels-windows-build.md](references/parallels-windows-build.md) before building through Parallels.
+- Prefer `prlctl exec` over manual UI automation when Parallels Tools is available.
+- A VM started by this workflow **must be shut down before the final response**, whether publishing succeeds or fails. Use a finally-style cleanup, request a graceful Windows shutdown first, and verify `prlctl list -a` reports `stopped`.
+- A VM that was already running is not owned by this workflow. Do not shut it down unless the user explicitly asked for that VM to be closed after publishing.
+- Never publish Latest until Windows artifacts have been copied back to the host and the four-platform manifest gate passes. If the VM cannot produce Windows x64 artifacts, keep the release as a draft and report the blocker.
 
 1. Confirm the local artifacts exist:
    - `app/release-updates/stable/latest.json`
