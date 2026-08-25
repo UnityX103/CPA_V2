@@ -1,6 +1,6 @@
 [package]
 name = "app"
-version = "0.1.17"
+version = "0.1.18"
 description = "桌宠番茄钟 (Tauri 2 重写)"
 authors = ["NanZhai"]
 edition = "2021"
