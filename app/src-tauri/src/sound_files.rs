@@ -16,7 +16,7 @@ fn invalid(message: &str) -> CustomSoundValidation {
     }
 }
 
-fn validate_mp3_path(path: &Path) -> CustomSoundValidation {
+pub(crate) fn validate_mp3_path(path: &Path) -> CustomSoundValidation {
     if path.is_relative() {
         return invalid("铃声路径必须是绝对路径");
     }

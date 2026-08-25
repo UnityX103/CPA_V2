@@ -1404,9 +1404,9 @@
                     "mo62i": {
                       "flipX": false,
                       "flipY": false,
-                      "width": 49.36102892833662,
+                      "width": 49.0446120762319,
                       "height": 18,
-                      "x": 13.821088099934254,
+                      "x": 13.732491381344932,
                       "y": 21,
                       "textGrowth": "fixed-width-height",
                       "fontSize": 17
@@ -4434,14 +4434,16 @@
                   "width": 349,
                   "height": 318,
                   "fill": "#FFFFFF00",
-                  "layout": "vertical",
-                  "gap": 16,
+                  "layout": "none",
                   "children": [
                     {
                       "type": "frame",
                       "id": "Hi42m",
+                      "x": 0,
+                      "y": 0,
                       "name": "gspScale",
-                      "width": "fill_container",
+                      "width": 349,
+                      "height": 78,
                       "fill": "#F6F7F8",
                       "cornerRadius": 16,
                       "layout": "vertical",
@@ -4471,8 +4473,11 @@
                     {
                       "type": "frame",
                       "id": "lWpyb",
+                      "x": 0,
+                      "y": 286,
                       "name": "gspAutostart",
-                      "width": "fill_container",
+                      "width": 349,
+                      "height": 56,
                       "fill": "#F6F7F8",
                       "cornerRadius": 16,
                       "padding": 16,
@@ -4502,8 +4507,10 @@
                     {
                       "type": "frame",
                       "id": "APTe7",
+                      "x": 0,
+                      "y": 358,
                       "name": "gspAutoUpdate",
-                      "width": "fill_container",
+                      "width": 349,
                       "height": 74,
                       "fill": "#F6F7F8",
                       "cornerRadius": 16,
@@ -4554,8 +4561,11 @@
                     {
                       "type": "frame",
                       "id": "DZztk",
+                      "x": 0,
+                      "y": 448,
                       "name": "gspBindingKey",
-                      "width": "fill_container",
+                      "width": 349,
+                      "height": 224,
                       "fill": "#F6F7F8",
                       "cornerRadius": 16,
                       "layout": "vertical",
@@ -4677,6 +4687,85 @@
                               "fontWeight": "500"
                             }
                           ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "RMjBf",
+                      "x": 0,
+                      "y": 94,
+                      "name": "gspAudio",
+                      "width": 349,
+                      "height": 176,
+                      "fill": "#F6F7F8",
+                      "cornerRadius": 16,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "fV6yT",
+                          "x": 16,
+                          "y": 16,
+                          "name": "gsp-audio-title",
+                          "fill": "#1A1A1A",
+                          "content": "声音",
+                          "fontFamily": "MaokenAssortedSans",
+                          "fontSize": 14,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "d5Zrbq",
+                          "x": 16,
+                          "y": 40,
+                          "name": "gsp-audio-device-label",
+                          "fill": "#9CA3AF",
+                          "content": "播放设备",
+                          "fontFamily": "MaokenAssortedSans",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "id": "nnoMO",
+                          "type": "ref",
+                          "ref": "Frjkw",
+                          "name": "gsp-audio-device-dropdown",
+                          "width": 317,
+                          "x": 16,
+                          "y": 62,
+                          "descendants": {
+                            "d5bpi": {
+                              "content": "跟随系统默认设备"
+                            }
+                          }
+                        },
+                        {
+                          "type": "text",
+                          "id": "Dsawe",
+                          "x": 16,
+                          "y": 114,
+                          "name": "gsp-audio-volume-label",
+                          "fill": "#9CA3AF",
+                          "content": "声音音量",
+                          "fontFamily": "MaokenAssortedSans",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "id": "zcAn3",
+                          "type": "ref",
+                          "ref": "YwCv6",
+                          "name": "gsp-audio-volume-slider",
+                          "width": 317,
+                          "height": 24,
+                          "x": 16,
+                          "y": 136,
+                          "descendants": {
+                            "dXdRg": {
+                              "content": "100%"
+                            }
+                          }
                         }
                       ]
                     }
@@ -5458,15 +5547,18 @@
       "y": 1751,
       "name": "Global Settings Panel",
       "width": 572,
+      "height": 661,
       "fill": "#FFFFFF00",
-      "layout": "vertical",
-      "gap": 16,
+      "layout": "none",
       "children": [
         {
           "type": "frame",
           "id": "yEmJT",
+          "x": 0,
+          "y": 0,
           "name": "gspScale",
-          "width": "fill_container",
+          "width": 572,
+          "height": 78,
           "fill": "#F6F7F8",
           "cornerRadius": 16,
           "layout": "vertical",
@@ -5496,8 +5588,11 @@
         {
           "type": "frame",
           "id": "s51Nx",
+          "x": 0,
+          "y": 286,
           "name": "gspAutostart",
-          "width": "fill_container",
+          "width": 572,
+          "height": 56,
           "fill": "#F6F7F8",
           "cornerRadius": 16,
           "padding": 16,
@@ -5527,8 +5622,10 @@
         {
           "type": "frame",
           "id": "MfQzm",
+          "x": 0,
+          "y": 358,
           "name": "gspAutoUpdate",
-          "width": "fill_container",
+          "width": 572,
           "height": 74,
           "fill": "#F6F7F8",
           "cornerRadius": 16,
@@ -5579,8 +5676,11 @@
         {
           "type": "frame",
           "id": "UUogI",
+          "x": 0,
+          "y": 448,
           "name": "gspBindingKey",
-          "width": "fill_container",
+          "width": 572,
+          "height": 213,
           "fill": "#F6F7F8",
           "cornerRadius": 16,
           "layout": "vertical",
@@ -5702,6 +5802,85 @@
                   "fontWeight": "500"
                 }
               ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "LlTBJ",
+          "x": 0,
+          "y": 94,
+          "name": "gspAudio",
+          "width": 572,
+          "height": 176,
+          "fill": "#F6F7F8",
+          "cornerRadius": 16,
+          "layout": "none",
+          "children": [
+            {
+              "type": "text",
+              "id": "b8OZJ",
+              "x": 16,
+              "y": 16,
+              "name": "gsp-audio-title",
+              "fill": "#1A1A1A",
+              "content": "声音",
+              "fontFamily": "MaokenAssortedSans",
+              "fontSize": 14,
+              "fontWeight": "700"
+            },
+            {
+              "type": "text",
+              "id": "L0Jg4L",
+              "x": 16,
+              "y": 40,
+              "name": "gsp-audio-device-label",
+              "fill": "#9CA3AF",
+              "content": "播放设备",
+              "fontFamily": "MaokenAssortedSans",
+              "fontSize": 12,
+              "fontWeight": "600"
+            },
+            {
+              "id": "V11CY4",
+              "type": "ref",
+              "ref": "Frjkw",
+              "name": "gsp-audio-device-dropdown",
+              "width": 540,
+              "x": 16,
+              "y": 62,
+              "descendants": {
+                "d5bpi": {
+                  "content": "跟随系统默认设备"
+                }
+              }
+            },
+            {
+              "type": "text",
+              "id": "a9oyS",
+              "x": 16,
+              "y": 114,
+              "name": "gsp-audio-volume-label",
+              "fill": "#9CA3AF",
+              "content": "声音音量",
+              "fontFamily": "MaokenAssortedSans",
+              "fontSize": 12,
+              "fontWeight": "600"
+            },
+            {
+              "id": "r22EAS",
+              "type": "ref",
+              "ref": "YwCv6",
+              "name": "gsp-audio-volume-slider",
+              "width": 540,
+              "height": 24,
+              "x": 16,
+              "y": 136,
+              "descendants": {
+                "dXdRg": {
+                  "content": "100%"
+                }
+              }
             }
           ]
         }

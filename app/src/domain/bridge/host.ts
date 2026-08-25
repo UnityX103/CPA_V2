@@ -95,6 +95,8 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
             uiScale: s.uiScale,
             committedUiScale: s.committedUiScale,
             autostartEnabled: s.autostartEnabled,
+            audioOutputDeviceId: s.audioOutputDeviceId,
+            soundVolume: s.soundVolume,
             dangerousChange: cloneDangerousChange(s.dangerousChange),
         },
         pomodoro: {
@@ -156,6 +158,8 @@ export async function applyDispatch(payload: DispatchPayload): Promise<void> {
                 case 'setUiScale': s.setUiScale(...payload.args); return;
                 case 'previewDangerousUiScale': s.previewDangerousUiScale(...payload.args); return;
                 case 'setAutostartEnabled': await s.setAutostartEnabled(...payload.args); return;
+                case 'setAudioOutputDeviceId': s.setAudioOutputDeviceId(...payload.args); return;
+                case 'setSoundVolume': s.setSoundVolume(...payload.args); return;
                 case 'applyDangerousChange': s.applyDangerousChange(...payload.args); return;
                 case 'revertDangerousChange': s.revertDangerousChange(...payload.args); return;
             }
@@ -276,12 +280,16 @@ export function settingsSig(s: {
     uiScale: number;
     committedUiScale: number;
     autostartEnabled: boolean;
+    audioOutputDeviceId: string | null;
+    soundVolume: number;
     dangerousChange: unknown;
 }): string {
     return JSON.stringify([
         s.uiScale,
         s.committedUiScale,
         s.autostartEnabled,
+        s.audioOutputDeviceId,
+        s.soundVolume,
         s.dangerousChange,
     ]);
 }

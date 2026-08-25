@@ -17,10 +17,25 @@ vi.mock('@tauri-apps/api/window', () => ({
 vi.mock('@tauri-apps/plugin-dialog', () => ({ open, message }));
 
 beforeEach(() => {
-    invoke.mockReset().mockResolvedValue(undefined);
+    invoke.mockReset().mockImplementation((command: string) => {
+        if (command === 'list_audio_output_devices') {
+            return Promise.resolve([
+                { id: 'coreaudio:built-in-output', name: 'MacBook Pro 扬声器', isDefault: true },
+                { id: 'coreaudio:external-dac', name: 'USB DAC', isDefault: false },
+            ]);
+        }
+        return Promise.resolve(undefined);
+    });
     open.mockReset().mockResolvedValue(null);
     message.mockReset().mockResolvedValue(undefined);
-    useSettingsStore.setState({ activeTab: 'pomodoro', uiScale: 1, committedUiScale: 1, autostartEnabled: false });
+    useSettingsStore.setState({
+        activeTab: 'pomodoro',
+        uiScale: 1,
+        committedUiScale: 1,
+        autostartEnabled: false,
+        audioOutputDeviceId: null,
+        soundVolume: 1,
+    });
     usePomodoroStore.setState({
         focusDurationSeconds: 1500,
         breakDurationSeconds: 300,
@@ -69,6 +84,21 @@ describe('SettingsPanel', () => {
 
         expect(screen.getByText('界面缩放')).toBeTruthy();
         expect(screen.getByText('开机自启动')).toBeTruthy();
+    });
+
+    it('selects the playback device and exposes a volume control in global settings', async () => {
+        render(<SettingsPanel />);
+        fireEvent.click(screen.getByRole('button', { name: '全局' }));
+
+        const device = await screen.findByRole('combobox', { name: '播放声音的设备' });
+        expect(screen.getByRole('option', { name: '跟随系统默认设备' })).toBeTruthy();
+        expect(screen.getByRole('option', { name: 'MacBook Pro 扬声器（系统默认）' })).toBeTruthy();
+        expect(screen.getByRole('option', { name: 'USB DAC' })).toBeTruthy();
+        fireEvent.change(device, { target: { value: 'coreaudio:external-dac' } });
+
+        expect(useSettingsStore.getState().audioOutputDeviceId).toBe('coreaudio:external-dac');
+        expect(screen.getByRole('slider', { name: '声音音量' }).getAttribute('aria-valuenow')).toBe('100');
+        expect(screen.getByText('100%')).toBeTruthy();
     });
 
     it('renders the local camera automation controls', () => {

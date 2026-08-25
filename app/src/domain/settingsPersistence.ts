@@ -6,12 +6,16 @@ const STORE_KEY = 'settings';
 export interface PersistedSettings {
     uiScale: number;
     autostartEnabled: boolean;
+    audioOutputDeviceId: string | null;
+    soundVolume: number;
 }
 
 interface PersistedSettingsV1 {
     v: 1;
     uiScale: number;
     autostartEnabled?: boolean;
+    audioOutputDeviceId?: string | null;
+    soundVolume?: number;
 }
 
 const obsoleteActiveTitleKey = 'showActiveApp' + 'WindowTitle';
@@ -34,6 +38,15 @@ function isPersistedSettingsV1(value: unknown): value is PersistedSettingsV1 {
             || typeof candidate.autostartEnabled === 'boolean'
         )
         && (
+            candidate.audioOutputDeviceId === undefined
+            || candidate.audioOutputDeviceId === null
+            || typeof candidate.audioOutputDeviceId === 'string'
+        )
+        && (
+            candidate.soundVolume === undefined
+            || (typeof candidate.soundVolume === 'number' && Number.isFinite(candidate.soundVolume))
+        )
+        && (
             obsoleteAutoPinValue === undefined
             || typeof obsoleteAutoPinValue === 'boolean'
         );
@@ -51,6 +64,8 @@ export async function loadPersistedSettings(): Promise<PersistedSettings | null>
         return {
             uiScale: value.uiScale,
             autostartEnabled: value.autostartEnabled ?? false,
+            audioOutputDeviceId: value.audioOutputDeviceId?.trim() || null,
+            soundVolume: Math.max(0, Math.min(1, value.soundVolume ?? 1)),
         };
     } catch (err) {
         console.warn('[settingsPersistence] load failed', err);
@@ -65,6 +80,8 @@ export async function savePersistedSettings(settings: PersistedSettings): Promis
             v: 1,
             uiScale: settings.uiScale,
             autostartEnabled: settings.autostartEnabled,
+            audioOutputDeviceId: settings.audioOutputDeviceId,
+            soundVolume: settings.soundVolume,
         } satisfies PersistedSettingsV1);
         await store.save();
     } catch (err) {

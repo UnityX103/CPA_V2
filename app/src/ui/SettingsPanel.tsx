@@ -29,6 +29,7 @@ import {
     type PomodoroSoundSelection,
 } from '../domain/pomodoroSounds';
 import { pickCustomMp3Path } from '../domain/soundFiles';
+import { listAudioOutputDevices, type AudioOutputDevice } from '../domain/audioPlayback';
 import { useNetworkStore } from '../domain/network';
 import {
     labelForInput,
@@ -1090,6 +1091,8 @@ function GlobalTab() {
                     </div>
                 </div>
 
+                <AudioSettingsCard />
+
                 <div className="card">
                     <div className="card-row">
                         <span className="card-label">开机自启动</span>
@@ -1186,6 +1189,80 @@ function GlobalTab() {
                     </button>
                 </div>
             </div>
+        </div>
+    );
+}
+
+function AudioSettingsCard() {
+    const audioOutputDeviceId = useSettingsStore((s) => s.audioOutputDeviceId);
+    const soundVolume = useSettingsStore((s) => s.soundVolume);
+    const setAudioOutputDeviceId = useSettingsStore((s) => s.setAudioOutputDeviceId);
+    const setSoundVolume = useSettingsStore((s) => s.setSoundVolume);
+    const [devices, setDevices] = useState<AudioOutputDevice[]>([]);
+    const [loadError, setLoadError] = useState(false);
+    const [volumePreview, setVolumePreview] = useState<number | null>(null);
+
+    useEffect(() => {
+        let cancelled = false;
+        void listAudioOutputDevices()
+            .then((nextDevices) => {
+                if (cancelled) return;
+                setDevices(nextDevices);
+                setLoadError(false);
+            })
+            .catch((error) => {
+                if (cancelled) return;
+                console.warn('[settings] failed to list audio output devices', error);
+                setLoadError(true);
+            });
+        return () => { cancelled = true; };
+    }, []);
+
+    const selectedDeviceIsMissing = audioOutputDeviceId !== null
+        && !devices.some((device) => device.id === audioOutputDeviceId);
+    const volumePercent = Math.round(soundVolume * 100);
+    const displayVolumePercent = volumePreview ?? volumePercent;
+
+    return (
+        <div className="card audio-settings-card">
+            <span className="card-title">声音</span>
+            <label className="audio-setting-field">
+                <span className="card-label">播放设备</span>
+                <select
+                    className="dropdown audio-device-select"
+                    aria-label="播放声音的设备"
+                    value={audioOutputDeviceId ?? ''}
+                    onChange={(event) => setAudioOutputDeviceId(event.currentTarget.value || null)}
+                >
+                    <option value="">跟随系统默认设备</option>
+                    {selectedDeviceIsMissing && (
+                        <option value={audioOutputDeviceId!}>当前选择的设备不可用</option>
+                    )}
+                    {devices.map((device) => (
+                        <option key={device.id} value={device.id}>
+                            {device.name}{device.isDefault ? '（系统默认）' : ''}
+                        </option>
+                    ))}
+                </select>
+            </label>
+            <div className="audio-setting-field">
+                <span className="card-label">声音音量</span>
+                <div className="slider-row">
+                    <Slider
+                        value={volumePercent}
+                        min={0}
+                        max={100}
+                        ariaLabel="声音音量"
+                        onPreviewChange={setVolumePreview}
+                        onChange={(value) => {
+                            setVolumePreview(null);
+                            setSoundVolume(value / 100);
+                        }}
+                    />
+                    <span className="slider-value">{displayVolumePercent}%</span>
+                </div>
+            </div>
+            {loadError && <span className="status-text">无法读取设备列表，将跟随系统默认设备</span>}
         </div>
     );
 }
@@ -1330,9 +1407,10 @@ interface SliderProps {
     max: number;
     onPreviewChange?: (v: number | null) => void;
     onChange: (v: number) => void;
+    ariaLabel?: string;
 }
 
-function Slider({ value, min, max, onPreviewChange, onChange }: SliderProps) {
+function Slider({ value, min, max, onPreviewChange, onChange, ariaLabel }: SliderProps) {
     const draggingPointerIdRef = useRef<number | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [dragValue, setDragValue] = useState(value);
@@ -1389,6 +1467,7 @@ function Slider({ value, min, max, onPreviewChange, onChange }: SliderProps) {
             onPointerUp={stopDragging}
             onPointerCancel={stopDragging}
             role="slider"
+            aria-label={ariaLabel}
             aria-valuenow={displayValue}
             aria-valuemin={min}
             aria-valuemax={max}

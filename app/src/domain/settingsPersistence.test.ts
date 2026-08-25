@@ -26,6 +26,8 @@ describe('settingsPersistence', () => {
             uiScale: 1.75,
             [obsoleteActiveTitleKey]: false,
             autostartEnabled: true,
+            audioOutputDeviceId: 'coreaudio:external-dac',
+            soundVolume: 0.45,
             [obsoleteAutoPinKey]: false,
         });
         const { loadPersistedSettings } = await import('./settingsPersistence');
@@ -33,6 +35,8 @@ describe('settingsPersistence', () => {
         await expect(loadPersistedSettings()).resolves.toEqual({
             uiScale: 1.75,
             autostartEnabled: true,
+            audioOutputDeviceId: 'coreaudio:external-dac',
+            soundVolume: 0.45,
         });
     });
 
@@ -43,6 +47,8 @@ describe('settingsPersistence', () => {
         await expect(loadPersistedSettings()).resolves.toEqual({
             uiScale: 1.75,
             autostartEnabled: false,
+            audioOutputDeviceId: null,
+            soundVolume: 1,
         });
     });
 
@@ -71,12 +77,16 @@ describe('settingsPersistence', () => {
         await savePersistedSettings({
             uiScale: 2,
             autostartEnabled: true,
+            audioOutputDeviceId: 'wasapi:speakers',
+            soundVolume: 0.8,
         });
 
         expect(store.set).toHaveBeenCalledWith('settings', {
             v: 1,
             uiScale: 2,
             autostartEnabled: true,
+            audioOutputDeviceId: 'wasapi:speakers',
+            soundVolume: 0.8,
         });
         expect(store.save).toHaveBeenCalledTimes(1);
     });

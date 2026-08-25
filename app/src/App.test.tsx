@@ -34,11 +34,22 @@ vi.mock('./domain/userPreferencesPersistence', () => ({
 }));
 
 beforeEach(() => {
-    mocks.loadSettings.mockReset().mockResolvedValue({ uiScale: 1.25, autostartEnabled: false });
+    mocks.loadSettings.mockReset().mockResolvedValue({
+        uiScale: 1.25,
+        autostartEnabled: false,
+        audioOutputDeviceId: 'coreaudio:external-dac',
+        soundVolume: 0.55,
+    });
     mocks.readAutostart.mockReset().mockResolvedValue(true);
     mocks.loadPreferences.mockReset().mockResolvedValue(null);
     mocks.savePreferences.mockReset().mockResolvedValue(undefined);
-    useSettingsStore.setState({ uiScale: 1, committedUiScale: 1, autostartEnabled: false });
+    useSettingsStore.setState({
+        uiScale: 1,
+        committedUiScale: 1,
+        autostartEnabled: false,
+        audioOutputDeviceId: null,
+        soundVolume: 1,
+    });
     useNetworkStore.setState({
         accountStatus: 'guest',
         cloudSyncStatus: 'idle',
@@ -62,6 +73,8 @@ describe('App startup', () => {
             uiScale: 1.25,
             committedUiScale: 1.25,
             autostartEnabled: true,
+            audioOutputDeviceId: 'coreaudio:external-dac',
+            soundVolume: 0.55,
         })));
         expect(mocks.savePreferences).toHaveBeenCalledWith(expect.objectContaining({
             settings: { uiScale: 1.25, autostartEnabled: true },

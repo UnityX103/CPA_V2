@@ -20,18 +20,24 @@ export interface SettingsState {
     uiScale: number;
     committedUiScale: number;
     autostartEnabled: boolean;
+    audioOutputDeviceId: string | null;
+    soundVolume: number;
     dangerousChange: DangerousChange | null;
 }
 
 export interface PersistedSettingsSnapshot {
     uiScale: number;
     autostartEnabled?: boolean;
+    audioOutputDeviceId?: string | null;
+    soundVolume?: number;
 }
 
 interface SettingsActions {
     setActiveTab: (tab: SettingsTab) => void;
     setUiScale: (scale: number) => void;
     setAutostartEnabled: (enabled: boolean) => Promise<void> | void;
+    setAudioOutputDeviceId: (deviceId: string | null) => void;
+    setSoundVolume: (volume: number) => void;
     previewDangerousUiScale: (scale: number) => void;
     applyDangerousChange: (id: string) => void;
     revertDangerousChange: (id: string) => void;
@@ -49,6 +55,15 @@ function clampScale(scale: number): number {
     return Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale));
 }
 
+function clampSoundVolume(volume: number): number {
+    if (!Number.isFinite(volume)) return 1;
+    return Math.max(0, Math.min(1, volume));
+}
+
+function normalizeAudioOutputDeviceId(deviceId: string | null | undefined): string | null {
+    return typeof deviceId === 'string' && deviceId.trim() ? deviceId : null;
+}
+
 function createDangerousChangeId(): string {
     if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
         return crypto.randomUUID();
@@ -60,6 +75,8 @@ function persistedSnapshot(state: SettingsState): PersistedSettings {
     return {
         uiScale: state.committedUiScale,
         autostartEnabled: state.autostartEnabled,
+        audioOutputDeviceId: state.audioOutputDeviceId,
+        soundVolume: state.soundVolume,
     };
 }
 
@@ -70,6 +87,8 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
             uiScale: 1.0,
             committedUiScale: 1.0,
             autostartEnabled: false,
+            audioOutputDeviceId: null,
+            soundVolume: 1,
             dangerousChange: null,
             setActiveTab: (tab) => set({ activeTab: tab }),
             setUiScale: (scale) => {
@@ -83,6 +102,22 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
                     args: [enabled],
                 } as Parameters<typeof dispatch>[0]);
             },
+            setAudioOutputDeviceId: (deviceId) => {
+                void dispatch({
+                    v: BRIDGE_VERSION,
+                    store: 'settings',
+                    action: 'setAudioOutputDeviceId',
+                    args: [deviceId],
+                });
+            },
+            setSoundVolume: (volume) => {
+                void dispatch({
+                    v: BRIDGE_VERSION,
+                    store: 'settings',
+                    action: 'setSoundVolume',
+                    args: [volume],
+                });
+            },
             previewDangerousUiScale: (scale) => {
                 void dispatch({ v: BRIDGE_VERSION, store: 'settings', action: 'previewDangerousUiScale', args: [scale] });
             },
@@ -92,15 +127,21 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
             revertDangerousChange: (id) => {
                 void dispatch({ v: BRIDGE_VERSION, store: 'settings', action: 'revertDangerousChange', args: [id] });
             },
-            hydrateSettings: (snapshot) => {
+            hydrateSettings: (snapshot) => set((state) => {
                 const uiScale = clampScale(snapshot.uiScale);
-                set({
+                return {
                     uiScale,
                     committedUiScale: uiScale,
                     autostartEnabled: snapshot.autostartEnabled ?? false,
+                    audioOutputDeviceId: snapshot.audioOutputDeviceId === undefined
+                        ? state.audioOutputDeviceId
+                        : normalizeAudioOutputDeviceId(snapshot.audioOutputDeviceId),
+                    soundVolume: snapshot.soundVolume === undefined
+                        ? state.soundVolume
+                        : clampSoundVolume(snapshot.soundVolume),
                     dangerousChange: null,
-                });
-            },
+                };
+            }),
         }));
     }
     return create<SettingsState & SettingsActions>((set, get) => ({
@@ -108,6 +149,8 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
         uiScale: 1.0,
         committedUiScale: 1.0,
         autostartEnabled: false,
+        audioOutputDeviceId: null,
+        soundVolume: 1,
         dangerousChange: null,
         setActiveTab: (tab) => set({ activeTab: tab }),
         setUiScale: (scale) => {
@@ -118,6 +161,14 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
             const fallback = get().autostartEnabled;
             const confirmed = await applyAutostartEnabled(enabled, fallback);
             set({ autostartEnabled: confirmed });
+            void savePersistedSettings(persistedSnapshot(get()));
+        },
+        setAudioOutputDeviceId: (deviceId) => {
+            set({ audioOutputDeviceId: normalizeAudioOutputDeviceId(deviceId) });
+            void savePersistedSettings(persistedSnapshot(get()));
+        },
+        setSoundVolume: (volume) => {
+            set({ soundVolume: clampSoundVolume(volume) });
             void savePersistedSettings(persistedSnapshot(get()));
         },
         previewDangerousUiScale: (scale) => {
@@ -149,15 +200,21 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
             if (!change || change.id !== id) return;
             set({ uiScale: change.previousValue, dangerousChange: null });
         },
-        hydrateSettings: (snapshot) => {
+        hydrateSettings: (snapshot) => set((state) => {
             const uiScale = clampScale(snapshot.uiScale);
-            set({
+            return {
                 uiScale,
                 committedUiScale: uiScale,
                 autostartEnabled: snapshot.autostartEnabled ?? false,
+                audioOutputDeviceId: snapshot.audioOutputDeviceId === undefined
+                    ? state.audioOutputDeviceId
+                    : normalizeAudioOutputDeviceId(snapshot.audioOutputDeviceId),
+                soundVolume: snapshot.soundVolume === undefined
+                    ? state.soundVolume
+                    : clampSoundVolume(snapshot.soundVolume),
                 dangerousChange: null,
-            });
-        },
+            };
+        }),
     }));
 }
 

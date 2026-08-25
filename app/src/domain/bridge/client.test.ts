@@ -8,7 +8,14 @@ import { BRIDGE_VERSION, type BridgeSnapshot } from './protocol';
 function snapshot(): BridgeSnapshot {
     return {
         v: BRIDGE_VERSION,
-        settings: { uiScale: 1.25, committedUiScale: 1.25, autostartEnabled: true, dangerousChange: null },
+        settings: {
+            uiScale: 1.25,
+            committedUiScale: 1.25,
+            autostartEnabled: true,
+            audioOutputDeviceId: 'coreaudio:built-in-output',
+            soundVolume: 0.7,
+            dangerousChange: null,
+        },
         pomodoro: {
             focusDurationSeconds: 900,
             breakDurationSeconds: 180,
@@ -80,6 +87,8 @@ describe('bridge client', () => {
         expect(useSettingsStore.getState()).toEqual(expect.objectContaining({
             uiScale: 1.25,
             autostartEnabled: true,
+            audioOutputDeviceId: 'coreaudio:built-in-output',
+            soundVolume: 0.7,
         }));
         expect(usePomodoroStore.getState()).toEqual(expect.objectContaining({
             focusDurationSeconds: 900,

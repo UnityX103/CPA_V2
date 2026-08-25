@@ -68,11 +68,15 @@ function getStartupSettingsState() {
         uiScale,
         committedUiScale,
         autostartEnabled,
+        audioOutputDeviceId,
+        soundVolume,
     } = useSettingsStore.getState();
     return {
         uiScale,
         committedUiScale,
         autostartEnabled,
+        audioOutputDeviceId,
+        soundVolume,
     };
 }
 
@@ -204,6 +208,7 @@ export default function App() {
 
         async function hydrateAndSubscribe() {
             const stores = userPreferenceStores();
+            const initialSettings = getStartupSettingsState();
             try {
                 const [preferences, legacySettings, , presencePreferences] = await Promise.all([
                     loadPersistedUserPreferences(),
@@ -214,7 +219,17 @@ export default function App() {
                 if (cancelled) return;
                 usePresenceStore.getState().hydrate(presencePreferences);
 
-                const initialSettings = getStartupSettingsState();
+                const audioSettingsChangedDuringLoad =
+                    useSettingsStore.getState().audioOutputDeviceId !== initialSettings.audioOutputDeviceId
+                    || useSettingsStore.getState().soundVolume !== initialSettings.soundVolume;
+                if (!audioSettingsChangedDuringLoad) {
+                    useSettingsStore.setState({
+                        audioOutputDeviceId: legacySettings?.audioOutputDeviceId
+                            ?? initialSettings.audioOutputDeviceId,
+                        soundVolume: legacySettings?.soundVolume
+                            ?? initialSettings.soundVolume,
+                    });
+                }
                 const fallbackAutostartEnabled = preferences?.settings.autostartEnabled
                     ?? legacySettings?.autostartEnabled
                     ?? false;

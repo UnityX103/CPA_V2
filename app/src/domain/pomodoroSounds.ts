@@ -1,9 +1,9 @@
 import {
-    customSoundSrc,
     showCustomSoundMissingMessage,
     validateCustomSoundPath,
     type CustomSoundValidation,
 } from './soundFiles';
+import { playSound, type SoundSource } from './audioPlayback';
 
 export type PomodoroSoundPhase = 'focus' | 'break';
 export type PomodoroSoundSourceKind = 'off' | 'builtin' | 'custom';
@@ -101,35 +101,18 @@ export function normalizePomodoroSoundSelection(
 
 interface PomodoroSoundPlaybackDeps {
     validateCustomSoundPath: (path: string) => Promise<CustomSoundValidation>;
-    customSoundSrc: (path: string) => Promise<string>;
     showCustomSoundMissingMessage: (text: string) => Promise<void>;
-    playAudioSource: (src: string) => Promise<void>;
+    playAudioSource: (source: SoundSource) => Promise<void>;
 }
 
 const defaultPlaybackDeps: PomodoroSoundPlaybackDeps = {
     validateCustomSoundPath,
-    customSoundSrc,
     showCustomSoundMissingMessage,
     playAudioSource,
 };
 
-let activeAudio: HTMLAudioElement | null = null;
-
-export async function playAudioSource(src: string): Promise<void> {
-    activeAudio?.pause();
-    const audio = new Audio(src);
-    activeAudio = audio;
-    audio.preload = 'auto';
-    audio.addEventListener('ended', () => {
-        if (activeAudio === audio) activeAudio = null;
-    }, { once: true });
-
-    try {
-        await audio.play();
-    } catch (error) {
-        if (activeAudio === audio) activeAudio = null;
-        throw error;
-    }
+export async function playAudioSource(source: SoundSource): Promise<void> {
+    await playSound(source);
 }
 
 export async function playPomodoroSound(
@@ -142,7 +125,7 @@ export async function playPomodoroSound(
     if (selection.sourceKind === 'builtin') {
         const sound = builtinSoundForSelection(selection, phase);
         if (!sound) return false;
-        await deps.playAudioSource(sound.src);
+        await deps.playAudioSource({ kind: 'builtin', id: sound.id });
         return true;
     }
 
@@ -153,7 +136,7 @@ export async function playPomodoroSound(
         return false;
     }
 
-    await deps.playAudioSource(await deps.customSoundSrc(selection.customSoundPath));
+    await deps.playAudioSource({ kind: 'custom', path: selection.customSoundPath });
     return true;
 }
 

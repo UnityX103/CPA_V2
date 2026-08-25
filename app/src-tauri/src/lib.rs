@@ -1,5 +1,6 @@
 mod accessibility;
 mod active_app;
+mod audio;
 mod key_counter;
 mod presence_detection;
 mod scaled_window;
@@ -460,6 +461,7 @@ pub fn run() {
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             None,
         ))
+        .manage(audio::AudioPlaybackState::default())
         .manage::<std::sync::Arc<accessibility::ListenerHandle>>(listener_handle_for_manage)
         .setup(move |app| {
             // 在主线程构建隐藏的设置窗口 + 装 first-mouse hook。点齿轮时只做
@@ -629,6 +631,8 @@ pub fn run() {
             presence_detection::open_camera_privacy_settings,
             presence_detection::stop_camera_presence_stream,
             presence_detection::sample_camera_presence,
+            audio::list_audio_output_devices,
+            audio::play_sound,
             sound_files::validate_custom_sound_path,
             sound_files::prepare_custom_sound_path,
             video_files::validate_custom_video_path,

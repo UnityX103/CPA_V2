@@ -25,6 +25,8 @@ export interface BridgeSnapshot {
         uiScale: number;
         committedUiScale: number;
         autostartEnabled: boolean;
+        audioOutputDeviceId: string | null;
+        soundVolume: number;
         dangerousChange: DangerousChange | null;
     };
     pomodoro: {
@@ -74,6 +76,8 @@ export interface BridgeSnapshot {
 export type DispatchPayload =
     | { v: typeof BRIDGE_VERSION; store: 'settings';   action: 'setUiScale' | 'previewDangerousUiScale'; args: [number] }
     | { v: typeof BRIDGE_VERSION; store: 'settings';   action: 'setAutostartEnabled'; args: [boolean] }
+    | { v: typeof BRIDGE_VERSION; store: 'settings';   action: 'setAudioOutputDeviceId'; args: [string | null] }
+    | { v: typeof BRIDGE_VERSION; store: 'settings';   action: 'setSoundVolume'; args: [number] }
     | { v: typeof BRIDGE_VERSION; store: 'settings';   action: 'applyDangerousChange' | 'revertDangerousChange'; args: [string] }
     | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'applySettings'; args: [number, number, number, boolean, boolean] }
     | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'setAutoPinAfterFocus'; args: [boolean] }

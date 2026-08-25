@@ -35,7 +35,48 @@ describe('settings store', () => {
         await store.getState().setAutostartEnabled(true);
 
         expect(store.getState().autostartEnabled).toBe(true);
-        expect(save).toHaveBeenCalledWith({ uiScale: 1, autostartEnabled: true });
+        expect(save).toHaveBeenCalledWith({
+            uiScale: 1,
+            autostartEnabled: true,
+            audioOutputDeviceId: null,
+            soundVolume: 1,
+        });
+    });
+
+    it('persists output-device and clamped volume changes locally', () => {
+        const save = vi.spyOn(persistence, 'savePersistedSettings').mockResolvedValue();
+        const store = createSettingsStore({ isSettingsWindow: false });
+
+        store.getState().setAudioOutputDeviceId('wasapi:speakers');
+        store.getState().setSoundVolume(1.5);
+
+        expect(store.getState()).toEqual(expect.objectContaining({
+            audioOutputDeviceId: 'wasapi:speakers',
+            soundVolume: 1,
+        }));
+        expect(save).toHaveBeenLastCalledWith({
+            uiScale: 1,
+            autostartEnabled: false,
+            audioOutputDeviceId: 'wasapi:speakers',
+            soundVolume: 1,
+        });
+    });
+
+    it('preserves machine-local audio settings when cloud preferences hydrate', () => {
+        const store = createSettingsStore({ isSettingsWindow: false });
+        store.setState({
+            audioOutputDeviceId: 'coreaudio:external-dac',
+            soundVolume: 0.35,
+        });
+
+        store.getState().hydrateSettings({ uiScale: 1.25, autostartEnabled: true });
+
+        expect(store.getState()).toEqual(expect.objectContaining({
+            uiScale: 1.25,
+            autostartEnabled: true,
+            audioOutputDeviceId: 'coreaudio:external-dac',
+            soundVolume: 0.35,
+        }));
     });
 
     it('dispatches settings-window changes to the main store', () => {
@@ -49,6 +90,14 @@ describe('settings store', () => {
             store: 'settings',
             action: 'setUiScale',
             args: [1.25],
+        });
+
+        store.getState().setSoundVolume(0.4);
+        expect(dispatch).toHaveBeenLastCalledWith({
+            v: BRIDGE_VERSION,
+            store: 'settings',
+            action: 'setSoundVolume',
+            args: [0.4],
         });
     });
 });

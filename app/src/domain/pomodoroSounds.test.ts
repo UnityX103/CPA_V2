@@ -36,17 +36,18 @@ describe('Pomodoro end sounds', () => {
 
         await expect(playPomodoroEndSound(DEFAULT_POMODORO_END_SOUNDS, 'focus', {
             validateCustomSoundPath: vi.fn(),
-            customSoundSrc: vi.fn(),
             showCustomSoundMissingMessage: vi.fn(),
             playAudioSource,
         })).resolves.toBe(true);
 
-        expect(playAudioSource).toHaveBeenCalledWith('/sounds/pomodoro/focus-clear-success.mp3');
+        expect(playAudioSource).toHaveBeenCalledWith({
+            kind: 'builtin',
+            id: 'clear-success',
+        });
     });
 
     it('validates a custom MP3 before authorizing and playing it', async () => {
         const validateCustomSoundPath = vi.fn(async () => ({ ok: true, message: null }));
-        const customSoundSrc = vi.fn(async () => 'asset://localhost/custom.mp3');
         const playAudioSource = vi.fn(async () => {});
 
         await expect(playPomodoroEndSound({
@@ -58,14 +59,15 @@ describe('Pomodoro end sounds', () => {
             },
         }, 'break', {
             validateCustomSoundPath,
-            customSoundSrc,
             showCustomSoundMissingMessage: vi.fn(),
             playAudioSource,
         })).resolves.toBe(true);
 
         expect(validateCustomSoundPath).toHaveBeenCalledWith('/Users/xpy/Music/rest.mp3');
-        expect(customSoundSrc).toHaveBeenCalledWith('/Users/xpy/Music/rest.mp3');
-        expect(playAudioSource).toHaveBeenCalledWith('asset://localhost/custom.mp3');
+        expect(playAudioSource).toHaveBeenCalledWith({
+            kind: 'custom',
+            path: '/Users/xpy/Music/rest.mp3',
+        });
     });
 
     it('normalizes invalid built-in ids back to the phase default', () => {

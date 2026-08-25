@@ -9,6 +9,8 @@ describe('bridge protocol', () => {
                 uiScale: 1,
                 committedUiScale: 1,
                 autostartEnabled: false,
+                audioOutputDeviceId: null,
+                soundVolume: 1,
                 dangerousChange: null,
             },
             pomodoro: {
