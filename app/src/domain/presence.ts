@@ -347,8 +347,10 @@ export function applyPresenceSample(
             return;
         }
         if (pomo.currentPhase !== 'focus' || !pomo.isRunning) return;
-        pomodoro.getState().pauseFocusFromPresence();
-        store.setState({ notice: notice('检测到离开，已暂停专注') });
+        const paused = pomodoro.getState().pauseFocusFromPresence();
+        if (paused) {
+            store.setState({ notice: notice('检测到离开，已暂停专注') });
+        }
         return;
     }
 
@@ -370,14 +372,14 @@ export function applyPresenceSample(
     }
 
     const focusStarted = pomodoro.getState().startFocusFromPresence();
-    if (focusStarted) {
-        store.setState({ notice: notice('检测到在岗，已开始专注') });
-        return;
-    }
-
-    if (pomo.currentPhase === 'focus' && !pomo.isRunning && pomo.presenceOwnedPause) {
-        pomodoro.getState().resumeFocusFromPresence();
-        store.setState({ notice: notice('检测到返回，已继续专注') });
+    const focusResumed = !focusStarted
+        && pomodoro.getState().resumeFocusFromPresence();
+    if (focusStarted || focusResumed) {
+        store.setState({
+            notice: notice(focusStarted
+                ? '检测到在岗，已开始专注'
+                : '检测到返回，已继续专注'),
+        });
     }
 }
 

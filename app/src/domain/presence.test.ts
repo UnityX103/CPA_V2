@@ -102,7 +102,7 @@ describe('presence settings updates', () => {
         applyPresenceSample(presence, pomodoro, sample('absent'), 80_000);
         expect(pomodoro.getState()).toMatchObject({
             isRunning: false,
-            presenceOwnedPause: true,
+            presenceAutomationState: 'focusPaused',
         });
     });
 
@@ -127,7 +127,7 @@ describe('presence and pomodoro integration', () => {
             expect(pomodoro.getState()).toMatchObject({
                 currentPhase: 'focus',
                 isRunning: true,
-                presenceOwnedPause: false,
+                presenceAutomationState: 'none',
             });
         }
 
@@ -142,7 +142,7 @@ describe('presence and pomodoro integration', () => {
         expect(pomodoro.getState()).toMatchObject({
             currentPhase: 'focus',
             isRunning: false,
-            presenceOwnedPause: true,
+            presenceAutomationState: 'focusPaused',
         });
     });
 
@@ -159,7 +159,7 @@ describe('presence and pomodoro integration', () => {
             currentRound: 1,
             remainingSeconds: 20,
             isRunning: false,
-            presenceOwnedPause: true,
+            presenceAutomationState: 'breakPaused',
         });
 
         applyPresenceSample(presence, pomodoro, sample('absent'), 30_000);
@@ -170,7 +170,7 @@ describe('presence and pomodoro integration', () => {
             currentPhase: 'break',
             remainingSeconds: 20,
             isRunning: true,
-            presenceOwnedPause: false,
+            presenceAutomationState: 'none',
         });
     });
 
@@ -184,7 +184,7 @@ describe('presence and pomodoro integration', () => {
         expect(pomodoro.getState()).toMatchObject({
             currentPhase: 'focus',
             isRunning: false,
-            presenceAutoStartEligible: true,
+            presenceAutomationState: 'focusAutoStartEligible',
         });
 
         applyPresenceSample(presence, pomodoro, sample('absent'), 30_000);
@@ -196,7 +196,7 @@ describe('presence and pomodoro integration', () => {
             currentPhase: 'focus',
             currentRound: 2,
             isRunning: true,
-            presenceAutoStartEligible: false,
+            presenceAutomationState: 'none',
         });
     });
 
@@ -211,6 +211,7 @@ describe('presence and pomodoro integration', () => {
             currentPhase: 'break',
             isRunning: false,
             remainingSeconds: 30,
+            presenceAutomationState: 'breakResumeEligible',
         });
 
         applyPresenceSample(presence, pomodoro, sample('present'), 0);
@@ -231,7 +232,7 @@ describe('presence and pomodoro integration', () => {
         pomodoro.setState({ currentPhase: 'break', isRunning: true, remainingSeconds: 20 });
 
         applyPresenceSample(presence, pomodoro, sample('present'), 0);
-        expect(pomodoro.getState().presenceOwnedPause).toBe(true);
+        expect(pomodoro.getState().presenceAutomationState).toBe('breakPaused');
 
         pomodoro.getState().pause();
         applyPresenceSample(presence, pomodoro, sample('absent'), 30_000);
@@ -241,7 +242,34 @@ describe('presence and pomodoro integration', () => {
             currentPhase: 'break',
             isRunning: false,
             remainingSeconds: 20,
-            presenceOwnedPause: false,
+            presenceAutomationState: 'none',
+        });
+    });
+
+    it('honors a manual break resume until presence changes away and back', () => {
+        const { presence, pomodoro } = freshStores();
+        presence.setState({ enabled: true, intervalSeconds: 30 });
+        pomodoro.setState({ currentPhase: 'break', isRunning: true, remainingSeconds: 20 });
+
+        applyPresenceSample(presence, pomodoro, sample('present'), 0);
+        expect(pomodoro.getState().isRunning).toBe(false);
+
+        pomodoro.getState().start();
+        expect(pomodoro.getState().presenceAutomationState).toBe('breakPresentOverride');
+        applyPresenceSample(presence, pomodoro, sample('present'), 30_000);
+        expect(pomodoro.getState().isRunning).toBe(true);
+        expect(pomodoro.getState().presenceAutomationState).toBe('breakPresentOverride');
+
+        applyPresenceSample(presence, pomodoro, sample('absent'), 60_000);
+        applyPresenceSample(presence, pomodoro, sample('absent'), 90_000);
+        expect(pomodoro.getState().isRunning).toBe(true);
+        expect(pomodoro.getState().presenceAutomationState).toBe('none');
+
+        applyPresenceSample(presence, pomodoro, sample('present'), 120_000);
+        expect(pomodoro.getState()).toMatchObject({
+            currentPhase: 'break',
+            isRunning: false,
+            presenceAutomationState: 'breakPaused',
         });
     });
 
@@ -260,7 +288,7 @@ describe('presence and pomodoro integration', () => {
             currentPhase: 'focus',
             remainingSeconds: remaining,
             isRunning: false,
-            presenceOwnedPause: true,
+            presenceAutomationState: 'focusPaused',
             lastEndEvent: null,
         });
 
@@ -268,7 +296,7 @@ describe('presence and pomodoro integration', () => {
         expect(pomodoro.getState()).toMatchObject({
             remainingSeconds: remaining,
             isRunning: true,
-            presenceOwnedPause: false,
+            presenceAutomationState: 'none',
         });
 
         pomodoro.getState().pause();
@@ -402,7 +430,7 @@ describe('presence monitor scheduling', () => {
         expect(presence.getState().confirmedPresence).toBe('absent');
         expect(pomodoro.getState()).toMatchObject({
             isRunning: false,
-            presenceOwnedPause: true,
+            presenceAutomationState: 'focusPaused',
         });
         cleanup();
     });

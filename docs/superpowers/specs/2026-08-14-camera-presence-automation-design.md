@@ -180,7 +180,7 @@
 ### 手动操作优先级
 
 - 用户手动暂停的 focus 永不因 `present` 自动恢复；手动暂停的 break 永不因 `absent` 自动恢复。
-- 用户在 Presence-Owned Pause 状态手动点击开始，视为用户接管：立即开始并清除自动暂停归属。
+- 用户在 Presence-Owned Pause 状态手动点击开始，视为用户接管：立即开始，并锁定当前确认在场状态的自动动作，直到确认状态先变为相反方向才解除；不得在下一采样周期立即重新暂停。
 - 用户执行 skip、reset 或应用会重置进度的番茄钟设置后，清除所有 presence 自动化归属。
 - 用户在 break 中手动暂停会立即清除 presence 自动恢复资格。
 
@@ -298,7 +298,7 @@ sample_camera_presence(): PresenceSample
 
 - 设备本地配置：`enabled`、`intervalSeconds`、`absenceSensitivity`。
 - 运行态：availability、确认在场状态（Confirmed Presence）、连续 `absent` 计数、最近成功时间、in-flight、generation、lastError。
-- 自动化归属：focus/break 的 Presence-Owned Pause、自然进入但未自动开始的 break 恢复资格，以及自然 break 结束后的 focus 自动启动资格。
+- 自动化归属：用互斥的 `presenceAutomationState` 表达 focus/break 的 Presence-Owned Pause、自然进入但未自动开始的 break 恢复资格、自然 break 结束后的 focus 自动启动资格，以及手动接管锁定；不得用多个布尔值组合出无效状态。
 - `usePresenceMonitor({ enabled: localHydrated })`，只挂载在主窗口。
 
 设置窗口不得直接调用采样 command。扩展现有 bridge：
@@ -432,7 +432,7 @@ sample_camera_presence(): PresenceSample
 4. **AC-04 休息结束后启动**：自然 break 结束进入停止的 focus 后，第一次成功 present 会开始 focus；应用初始停止态不会自动开始。
 5. **AC-05 可关闭的三档离席防抖**：关闭防抖/严谨/中等/宽松分别在连续 1/2/3/6 次 absent 时确认离席；确认离席在 focus 中暂停、在 break 中恢复；unknown 无动作。
 6. **AC-06 失败安全**：权限拒绝、设备忙、无设备、超时连续发生时，番茄钟阶段、轮次、剩余时间和运行状态不因 presence 自动化改变。
-7. **AC-07 手动优先**：手动暂停 focus 后收到 present，或手动暂停 break 后达到 absent 阈值，计时器都仍保持暂停。
+7. **AC-07 手动优先**：手动暂停 focus 后收到 present，或手动暂停 break 后达到 absent 阈值，计时器都仍保持暂停；手动继续 Presence-Owned Pause 后，相同的确认在场状态不得立即重新暂停。
 8. **AC-08 睡眠恢复**：系统恢复后的成功观测继续按所选阈值处理，unknown 无动作。
 9. **AC-09 数据边界**：本地 store、云账号 payload、房间 WebSocket payload和日志中均不存在图片、人脸框或在场状态；云账号切换不会改变本机摄像头开关。
 10. **AC-10 在场检测暂停与恢复**：focus 运行中连续 absent 达所选阈值后，phase/round/remaining 保持、isRunning=false、无 focus completion；第一次成功 present 后恢复同一 remaining，手动暂停则不恢复。

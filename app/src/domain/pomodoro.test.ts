@@ -198,7 +198,7 @@ describe('Pomodoro presence automation', () => {
             currentRound: 1,
             remainingSeconds: 20,
             isRunning: false,
-            presenceOwnedPause: true,
+            presenceAutomationState: 'breakPaused',
             lastEndEvent: before.lastEndEvent,
         });
 
@@ -207,7 +207,7 @@ describe('Pomodoro presence automation', () => {
             currentPhase: 'break',
             remainingSeconds: 20,
             isRunning: true,
-            presenceOwnedPause: false,
+            presenceAutomationState: 'none',
         });
     });
 
@@ -217,7 +217,7 @@ describe('Pomodoro presence automation', () => {
         store.setState({ currentPhase: 'break', isRunning: true, remainingSeconds: 1 });
         store.getState().tick(1);
 
-        expect(store.getState().presenceAutoStartEligible).toBe(true);
+        expect(store.getState().presenceAutomationState).toBe('focusAutoStartEligible');
         store.getState().startFocusFromPresence();
         expect(store.getState().isRunning).toBe(true);
 
@@ -225,7 +225,7 @@ describe('Pomodoro presence automation', () => {
         store.getState().startFocusFromPresence();
         expect(store.getState().isRunning).toBe(false);
 
-        store.setState({ presenceAutoStartEligible: true });
+        store.setState({ presenceAutomationState: 'focusAutoStartEligible' });
         store.getState().pause();
         store.getState().startFocusFromPresence();
         expect(store.getState().isRunning).toBe(false);
@@ -245,7 +245,7 @@ describe('Pomodoro presence automation', () => {
             currentRound: before.currentRound,
             remainingSeconds: before.remainingSeconds,
             isRunning: false,
-            presenceOwnedPause: true,
+            presenceAutomationState: 'focusPaused',
             lastEndEvent: before.lastEndEvent,
         });
 
@@ -254,7 +254,7 @@ describe('Pomodoro presence automation', () => {
             currentPhase: 'focus',
             remainingSeconds: before.remainingSeconds,
             isRunning: true,
-            presenceOwnedPause: false,
+            presenceAutomationState: 'none',
         });
     });
 
@@ -262,15 +262,33 @@ describe('Pomodoro presence automation', () => {
         const store = freshStore();
         store.getState().start();
         store.getState().pauseFocusFromPresence();
-        expect(store.getState().presenceOwnedPause).toBe(true);
+        expect(store.getState().presenceAutomationState).toBe('focusPaused');
 
         store.getState().pause();
         store.getState().resumeFocusFromPresence();
         expect(store.getState().isRunning).toBe(false);
 
         store.getState().start();
-        expect(store.getState().presenceOwnedPause).toBe(false);
+        expect(store.getState().presenceAutomationState).toBe('none');
         expect(store.getState().isRunning).toBe(true);
+    });
+
+    it('keeps a manually resumed focus running until presence changes', () => {
+        const store = freshStore();
+        store.getState().start();
+        expect(store.getState().pauseFocusFromPresence()).toBe(true);
+
+        store.getState().start();
+        expect(store.getState()).toMatchObject({
+            isRunning: true,
+            presenceAutomationState: 'focusAbsentOverride',
+        });
+        expect(store.getState().pauseFocusFromPresence()).toBe(false);
+        expect(store.getState().isRunning).toBe(true);
+
+        expect(store.getState().resumeFocusFromPresence()).toBe(false);
+        expect(store.getState().presenceAutomationState).toBe('none');
+        expect(store.getState().pauseFocusFromPresence()).toBe(true);
     });
 });
 
