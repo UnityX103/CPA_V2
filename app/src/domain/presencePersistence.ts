@@ -1,4 +1,11 @@
 import { load } from '@tauri-apps/plugin-store';
+import {
+    DEFAULT_PRESENCE_ABSENCE_SENSITIVITY,
+    isPresenceAbsenceSensitivity,
+    type PresenceAbsenceSensitivity,
+} from './presencePolicy';
+
+export type { PresenceAbsenceSensitivity } from './presencePolicy';
 
 export interface PresencePreferences {
     enabled: boolean;
@@ -6,12 +13,10 @@ export interface PresencePreferences {
     absenceSensitivity: PresenceAbsenceSensitivity;
 }
 
-export type PresenceAbsenceSensitivity = 'off' | 'strict' | 'balanced' | 'relaxed';
-
 export const DEFAULT_PRESENCE_PREFERENCES: PresencePreferences = {
     enabled: false,
     intervalSeconds: 10,
-    absenceSensitivity: 'strict',
+    absenceSensitivity: DEFAULT_PRESENCE_ABSENCE_SENSITIVITY,
 };
 
 export const MIN_PRESENCE_SECONDS = 5;
@@ -30,7 +35,7 @@ function normalizeSeconds(value: unknown, fallback: number): number {
 }
 
 function normalizeAbsenceSensitivity(value: unknown): PresenceAbsenceSensitivity {
-    return value === 'off' || value === 'strict' || value === 'balanced' || value === 'relaxed'
+    return isPresenceAbsenceSensitivity(value)
         ? value
         : DEFAULT_PRESENCE_PREFERENCES.absenceSensitivity;
 }

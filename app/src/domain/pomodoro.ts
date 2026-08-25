@@ -47,6 +47,31 @@ export interface PomodoroState {
     presenceAutoStartEligible: boolean;
 }
 
+export function presenceAutomationContextSignature(state: Pick<
+    PomodoroState,
+    | 'currentPhase'
+    | 'currentRound'
+    | 'isRunning'
+    | 'presenceOwnedPause'
+    | 'presenceAutoStartEligible'
+    | 'focusDurationSeconds'
+    | 'breakDurationSeconds'
+    | 'totalRounds'
+    | 'autoStartBreak'
+>): string {
+    return JSON.stringify([
+        state.currentPhase,
+        state.currentRound,
+        state.isRunning,
+        state.presenceOwnedPause,
+        state.presenceAutoStartEligible,
+        state.focusDurationSeconds,
+        state.breakDurationSeconds,
+        state.totalRounds,
+        state.autoStartBreak,
+    ]);
+}
+
 export interface PomodoroActions {
     start: () => void;
     pause: () => void;

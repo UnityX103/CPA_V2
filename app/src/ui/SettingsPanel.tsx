@@ -44,6 +44,7 @@ import { useAppUpdateStore, type AppUpdateStatus } from '../domain/appUpdate';
 import { InputBindingBadge } from './InputBindingBadge';
 import { shouldStartWindowDrag } from './windowDrag';
 import {
+    PRESENCE_ABSENCE_POLICIES,
     usePresenceStore,
     type PresenceAbsenceSensitivity,
     type PresenceObservation,
@@ -506,10 +507,11 @@ function PomodoroTab({ onApplyStateChange }: {
                                         event.currentTarget.value as PresenceAbsenceSensitivity,
                                     )}
                                 >
-                                    <option value="off">关闭防抖</option>
-                                    <option value="strict">严谨</option>
-                                    <option value="balanced">中等</option>
-                                    <option value="relaxed">宽松</option>
+                                    {PRESENCE_ABSENCE_POLICIES.map((policy) => (
+                                        <option key={policy.value} value={policy.value}>
+                                            {policy.label}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
                         </div>

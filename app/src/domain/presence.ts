@@ -3,19 +3,24 @@ import { invoke } from '@tauri-apps/api/core';
 import { create, type StoreApi, type UseBoundStore } from 'zustand';
 import { dispatch, dispatchConfirmed } from './bridge/dispatch';
 import { BRIDGE_VERSION } from './bridge/protocol';
-import { usePomodoroStore, type PomodoroStore } from './pomodoro';
+import {
+    presenceAutomationContextSignature,
+    usePomodoroStore,
+    type PomodoroStore,
+} from './pomodoro';
+import {
+    presenceAbsencePolicy,
+} from './presencePolicy';
 import {
     DEFAULT_PRESENCE_PREFERENCES,
     normalizePresencePreferences,
     savePresencePreferences,
-    type PresenceAbsenceSensitivity,
     type PresencePreferences,
 } from './presencePersistence';
 
-export type {
-    PresenceAbsenceSensitivity,
-    PresencePreferences,
-} from './presencePersistence';
+export { PRESENCE_ABSENCE_POLICIES } from './presencePolicy';
+export type { PresenceAbsenceSensitivity } from './presencePolicy';
+export type { PresencePreferences } from './presencePersistence';
 
 export type PresencePlatform = 'macos' | 'windows' | 'other';
 export type PresenceAvailability =
@@ -74,13 +79,6 @@ let nextNoticeId = 1;
 // A single face-detector miss is common while the user leans on a hand,
 // turns sideways, or adjusts the camera. Return detection stays immediate;
 // the selected level controls how much absence evidence is required.
-const ABSENT_CONFIRMATION_SAMPLES: Record<PresenceAbsenceSensitivity, number> = {
-    off: 1,
-    strict: 2,
-    balanced: 3,
-    relaxed: 6,
-};
-
 function initialPresenceState(): PresenceState {
     return {
         ...DEFAULT_PRESENCE_PREFERENCES,
@@ -323,7 +321,9 @@ export function applyPresenceSample(
     }
 
     if (sample.observation === 'absent') {
-        const requiredSamples = ABSENT_CONFIRMATION_SAMPLES[current.absenceSensitivity];
+        const requiredSamples = presenceAbsencePolicy(
+            current.absenceSensitivity,
+        ).requiredAbsentSamples;
         const consecutiveAbsentSamples = Math.min(
             current.consecutiveAbsentSamples + 1,
             requiredSamples,
@@ -427,15 +427,8 @@ export function startPresenceMonitor({
     };
 
     const unsubscribePomodoro = pomodoro.subscribe((state, previous) => {
-        const contextChanged = state.currentPhase !== previous.currentPhase
-            || state.currentRound !== previous.currentRound
-            || state.isRunning !== previous.isRunning
-            || state.presenceOwnedPause !== previous.presenceOwnedPause
-            || state.presenceAutoStartEligible !== previous.presenceAutoStartEligible
-            || state.focusDurationSeconds !== previous.focusDurationSeconds
-            || state.breakDurationSeconds !== previous.breakDurationSeconds
-            || state.totalRounds !== previous.totalRounds
-            || state.autoStartBreak !== previous.autoStartBreak;
+        const contextChanged = presenceAutomationContextSignature(state)
+            !== presenceAutomationContextSignature(previous);
         if (contextChanged) store.setState({ consecutiveAbsentSamples: 0 });
     });
 

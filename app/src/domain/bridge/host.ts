@@ -8,7 +8,10 @@ import { useBindingKeyStore, type BindingKeyEntry } from '../bindingKey';
 import { useActiveAppStore, type ActiveAppInfo } from '../activeApp';
 import { useAppUpdateStore, type AppUpdateSnapshot } from '../appUpdate';
 import { REMOTE_PLAYER_WINDOW_LABELS } from '../remotePlayerWindowLabels';
-import { usePresenceStore } from '../presence';
+import {
+    usePresenceStore,
+    type PresenceAbsenceSensitivity,
+} from '../presence';
 import { clonePomodoroEndSounds, type PomodoroEndSounds } from '../pomodoroSounds';
 import {
     BRIDGE_VERSION,
@@ -327,7 +330,7 @@ export function pomoSig(s: {
 export function presenceSig(s: {
     enabled: boolean;
     intervalSeconds: number;
-    absenceSensitivity: string;
+    absenceSensitivity: PresenceAbsenceSensitivity;
     platform: string;
     availability: string;
     latestObservation: string;
