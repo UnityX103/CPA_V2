@@ -46,8 +46,8 @@ import { shouldStartWindowDrag } from './windowDrag';
 import {
     PRESENCE_ABSENCE_POLICIES,
     usePresenceStore,
+    type ConfirmedPresence,
     type PresenceAbsenceSensitivity,
-    type PresenceObservation,
 } from '../domain/presence';
 import {
     MAX_PRESENCE_SECONDS,
@@ -518,7 +518,7 @@ function PomodoroTab({ onApplyStateChange }: {
 
                         <div className="card pomo-row">
                             <span className="pomo-row-label">工位状态</span>
-                            <span className="pomo-row-value">{presenceObservationText(presence.confirmedPresence)}</span>
+                            <span className="pomo-row-value">{confirmedPresenceText(presence.confirmedPresence)}</span>
                         </div>
 
                         {/* pomoAutoStartBreak fnZ59: 结束提示音下方 → Toggle */}
@@ -708,9 +708,9 @@ function fileNameFromPath(path: string): string {
     return path.split(/[\\/]/).pop() || path;
 }
 
-function presenceObservationText(observation: PresenceObservation): string {
-    if (observation === 'present') return '在场';
-    if (observation === 'absent') return '离场';
+function confirmedPresenceText(presence: ConfirmedPresence): string {
+    if (presence === 'present') return '在场';
+    if (presence === 'absent') return '离场';
     return '未知';
 }
 

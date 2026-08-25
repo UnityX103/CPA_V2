@@ -7,8 +7,8 @@ import type { ActiveAppInfo } from '../activeApp';
 import type { AppUpdateSnapshot } from '../appUpdate';
 import type { CloudAccountData } from '../cloudAccountData';
 import type {
+    ConfirmedPresence,
     PresenceAvailability,
-    PresenceObservation,
     PresencePlatform,
     PresencePreferences,
 } from '../presence';
@@ -42,7 +42,7 @@ export interface BridgeSnapshot {
     presence: PresencePreferences & {
         platform: PresencePlatform;
         availability: PresenceAvailability;
-        confirmedPresence: PresenceObservation;
+        confirmedPresence: ConfirmedPresence;
         lastSuccessfulAt: number | null;
         lastError: string | null;
     };

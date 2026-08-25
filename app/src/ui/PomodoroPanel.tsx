@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { invoke } from '@tauri-apps/api/core';
 import { usePomodoroStore, formatMmSs, type PomodoroPhase } from '../domain/pomodoro';
-import { usePresenceStore, type PresenceObservation } from '../domain/presence';
+import { usePresenceStore, type ConfirmedPresence } from '../domain/presence';
 import { shouldStartWindowDrag } from './windowDrag';
 import './PomodoroPanel.css';
 
@@ -129,7 +129,7 @@ export function PomodoroPanel() {
                     </div>
                 </div>
                 {confirmedPresence && (
-                    <PresenceStatus observation={confirmedPresence} />
+                    <ConfirmedPresenceStatus presence={confirmedPresence} />
                 )}
             </div>
             <button
@@ -144,18 +144,18 @@ export function PomodoroPanel() {
     );
 }
 
-function PresenceStatus({
-    observation,
+function ConfirmedPresenceStatus({
+    presence,
 }: {
-    observation: Exclude<PresenceObservation, 'unknown'>;
+    presence: Exclude<ConfirmedPresence, 'unknown'>;
 }) {
-    const present = observation === 'present';
+    const present = presence === 'present';
     return (
         <div
-            className={`pomo-presence-status is-${observation}`}
+            className={`pomo-presence-status is-${presence}`}
             role="status"
             aria-label={present ? '检测到人，在工位' : '未检测到人，已离开'}
-            data-presence-observation={observation}
+            data-confirmed-presence={presence}
         >
             <svg
                 width="12"

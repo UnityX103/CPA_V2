@@ -361,7 +361,7 @@
             {
               "type": "frame",
               "id": "nVTsG",
-              "name": "pomoPresenceObservation",
+              "name": "pomoConfirmedPresence",
               "width": 572,
               "height": 52,
               "fill": "#F6F7F8",
@@ -376,7 +376,7 @@
                 {
                   "type": "text",
                   "id": "x0C8f",
-                  "name": "pomoPresenceObservationLabel",
+                  "name": "pomoConfirmedPresenceLabel",
                   "context": "显示防抖后的确认在场状态，不是最近一次原始摄像头观测。",
                   "fill": "#1A1A1A",
                   "content": "工位状态",
@@ -387,7 +387,7 @@
                 {
                   "type": "text",
                   "id": "jVl13",
-                  "name": "pomoPresenceObservationValue",
+                  "name": "pomoConfirmedPresenceValue",
                   "fill": "#6B7280",
                   "content": "在场",
                   "fontFamily": "MaokenAssortedSans",

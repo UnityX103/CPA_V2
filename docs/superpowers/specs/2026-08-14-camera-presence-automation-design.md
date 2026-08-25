@@ -291,7 +291,7 @@ sample_camera_presence(): PresenceSample
 新增 `app/src/domain/presence.ts`，负责：
 
 - 设备本地配置：`enabled`、`intervalSeconds`、`absenceSensitivity`。
-- 运行态：availability、最近确认观测、连续 `absent` 计数、最近成功时间、in-flight、generation、lastError。
+- 运行态：availability、确认在场状态（Confirmed Presence）、连续 `absent` 计数、最近成功时间、in-flight、generation、lastError。
 - 自动化归属：是否为 Presence-Owned Pause，以及自然 break 结束后的自动启动资格。
 - `usePresenceMonitor({ enabled: localHydrated })`，只挂载在主窗口。
 

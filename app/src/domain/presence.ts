@@ -34,6 +34,7 @@ export type PresenceAvailability =
     | 'error';
 export type NativePresenceAvailability = Exclude<PresenceAvailability, 'disabled' | 'checking'>;
 export type PresenceObservation = 'present' | 'absent' | 'unknown';
+export type ConfirmedPresence = PresenceObservation;
 
 export interface PresenceCapability {
     platform: PresencePlatform;
@@ -54,7 +55,7 @@ export interface PresenceNotice {
 interface PresenceState extends PresencePreferences {
     platform: PresencePlatform;
     availability: PresenceAvailability;
-    confirmedPresence: PresenceObservation;
+    confirmedPresence: ConfirmedPresence;
     lastSuccessfulAt: number | null;
     lastError: string | null;
     inFlight: boolean;
