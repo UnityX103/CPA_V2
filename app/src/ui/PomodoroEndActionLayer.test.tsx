@@ -133,20 +133,4 @@ describe('PomodoroEndActionLayer', () => {
         expect(playPomodoroEndSound).not.toHaveBeenCalled();
     });
 
-    it('does not ring when presence automation ends a break early', async () => {
-        render(<PomodoroEndActionLayer />);
-
-        await act(async () => {
-            usePomodoroStore.setState({
-                lastEndEvent: endEvent({
-                    fromPhase: 'break',
-                    toPhase: 'focus',
-                    triggeredBy: 'presence',
-                }),
-            });
-        });
-
-        expect(await screen.findByText('休息结束')).toBeTruthy();
-        expect(playPomodoroEndSound).not.toHaveBeenCalled();
-    });
 });

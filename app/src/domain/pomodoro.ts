@@ -23,7 +23,7 @@ export interface PomodoroEndEvent {
     id: number;
     fromPhase: PomodoroPhase;
     toPhase: PomodoroPhase;
-    triggeredBy: 'timer' | 'skip' | 'presence';
+    triggeredBy: 'timer' | 'skip';
 }
 
 export interface PomodoroState {
@@ -45,6 +45,7 @@ export interface PomodoroState {
     lastEndEvent: PomodoroEndEvent | null;
     presenceOwnedPause: boolean;
     presenceAutoStartEligible: boolean;
+    presenceBreakResumeEligible: boolean;
 }
 
 export function presenceAutomationContextSignature(state: Pick<
@@ -54,6 +55,7 @@ export function presenceAutomationContextSignature(state: Pick<
     | 'isRunning'
     | 'presenceOwnedPause'
     | 'presenceAutoStartEligible'
+    | 'presenceBreakResumeEligible'
     | 'focusDurationSeconds'
     | 'breakDurationSeconds'
     | 'totalRounds'
@@ -65,6 +67,7 @@ export function presenceAutomationContextSignature(state: Pick<
         state.isRunning,
         state.presenceOwnedPause,
         state.presenceAutoStartEligible,
+        state.presenceBreakResumeEligible,
         state.focusDurationSeconds,
         state.breakDurationSeconds,
         state.totalRounds,
@@ -78,9 +81,10 @@ export interface PomodoroActions {
     skip: () => void;
     reset: () => void;
     startFocusFromPresence: () => boolean;
-    finishBreakFromPresence: () => boolean;
     pauseFocusFromPresence: () => void;
     resumeFocusFromPresence: () => void;
+    pauseBreakFromPresence: () => boolean;
+    resumeBreakFromPresence: () => boolean;
     clearPresenceAutomationOwnership: () => void;
     togglePin: () => void;
     setPinned: (isPinned: boolean) => void;
@@ -134,14 +138,16 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
             lastEndEvent: null,
             presenceOwnedPause: false,
             presenceAutoStartEligible: false,
+            presenceBreakResumeEligible: false,
             start: () => {},
             pause: () => {},
             skip: () => {},
             reset: () => {},
             startFocusFromPresence: () => false,
-            finishBreakFromPresence: () => false,
             pauseFocusFromPresence: () => {},
             resumeFocusFromPresence: () => {},
+            pauseBreakFromPresence: () => false,
+            resumeBreakFromPresence: () => false,
             clearPresenceAutomationOwnership: () => {},
             togglePin: () => {},
             setPinned: () => {},
@@ -213,6 +219,8 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
                     lastEndEvent: makeEndEvent(state, 'break', triggeredBy),
                     presenceOwnedPause: false,
                     presenceAutoStartEligible: false,
+                    presenceBreakResumeEligible: triggeredBy === 'timer'
+                        && !state.autoStartBreak,
                 };
             }
             if (state.currentPhase === 'break') {
@@ -226,6 +234,7 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
                         lastEndEvent: makeEndEvent(state, 'completed', triggeredBy),
                         presenceOwnedPause: false,
                         presenceAutoStartEligible: false,
+                        presenceBreakResumeEligible: false,
                     };
                 }
                 return {
@@ -236,6 +245,7 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
                     lastEndEvent: makeEndEvent(state, 'focus', triggeredBy),
                     presenceOwnedPause: false,
                     presenceAutoStartEligible: triggeredBy === 'timer',
+                    presenceBreakResumeEligible: false,
                 };
             }
             return {};
@@ -260,6 +270,7 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
             lastEndEvent: null,
             presenceOwnedPause: false,
             presenceAutoStartEligible: false,
+            presenceBreakResumeEligible: false,
 
             start: () => {
                 const state = get();
@@ -277,6 +288,7 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
                         lastEndEvent: null,
                         presenceOwnedPause: false,
                         presenceAutoStartEligible: false,
+                        presenceBreakResumeEligible: false,
                         ...autoPinReset,
                     });
                     return;
@@ -285,6 +297,7 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
                     isRunning: true,
                     presenceOwnedPause: false,
                     presenceAutoStartEligible: false,
+                    presenceBreakResumeEligible: false,
                     ...(state.currentPhase === 'focus' ? autoPinReset : {}),
                 });
             },
@@ -292,6 +305,7 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
                 isRunning: false,
                 presenceOwnedPause: false,
                 presenceAutoStartEligible: false,
+                presenceBreakResumeEligible: false,
             }),
             skip: () => {
                 const state = get();
@@ -311,6 +325,7 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
                     lastEndEvent: null,
                     presenceOwnedPause: false,
                     presenceAutoStartEligible: false,
+                    presenceBreakResumeEligible: false,
                 });
             },
             startFocusFromPresence: () => {
@@ -323,22 +338,11 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
                     set({
                         isRunning: true,
                         presenceAutoStartEligible: false,
+                        presenceBreakResumeEligible: false,
                     });
                     return true;
                 }
                 return false;
-            },
-            finishBreakFromPresence: () => {
-                const state = get();
-                if (state.currentPhase !== 'break') return false;
-                accumulator = 0;
-                const next = advancePhase(state, 'presence');
-                set({
-                    ...next,
-                    isRunning: next.currentPhase === 'focus',
-                    presenceAutoStartEligible: false,
-                });
-                return true;
             },
             pauseFocusFromPresence: () => {
                 const state = get();
@@ -348,6 +352,7 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
                     isRunning: false,
                     presenceOwnedPause: true,
                     presenceAutoStartEligible: false,
+                    presenceBreakResumeEligible: false,
                 });
             },
             resumeFocusFromPresence: () => {
@@ -362,14 +367,48 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
                     isRunning: true,
                     presenceOwnedPause: false,
                     presenceAutoStartEligible: false,
+                    presenceBreakResumeEligible: false,
                 });
+            },
+            pauseBreakFromPresence: () => {
+                const state = get();
+                if (state.currentPhase !== 'break' || !state.isRunning) return false;
+                accumulator = 0;
+                set({
+                    isRunning: false,
+                    presenceOwnedPause: true,
+                    presenceAutoStartEligible: false,
+                    presenceBreakResumeEligible: false,
+                });
+                return true;
+            },
+            resumeBreakFromPresence: () => {
+                const state = get();
+                if (
+                    state.currentPhase !== 'break'
+                    || state.isRunning
+                    || (!state.presenceOwnedPause && !state.presenceBreakResumeEligible)
+                ) return false;
+                accumulator = 0;
+                set({
+                    isRunning: true,
+                    presenceOwnedPause: false,
+                    presenceAutoStartEligible: false,
+                    presenceBreakResumeEligible: false,
+                });
+                return true;
             },
             clearPresenceAutomationOwnership: () => {
                 const state = get();
-                if (!state.presenceOwnedPause && !state.presenceAutoStartEligible) return;
+                if (
+                    !state.presenceOwnedPause
+                    && !state.presenceAutoStartEligible
+                    && !state.presenceBreakResumeEligible
+                ) return;
                 set({
                     presenceOwnedPause: false,
                     presenceAutoStartEligible: false,
+                    presenceBreakResumeEligible: false,
                 });
             },
             togglePin: () => set((s) => {
@@ -398,6 +437,7 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
                     autoStartBreak,
                     presenceOwnedPause: false,
                     presenceAutoStartEligible: false,
+                    presenceBreakResumeEligible: false,
                 });
                 if (resetProgress) {
                     accumulator = 0;

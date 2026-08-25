@@ -29,7 +29,7 @@ The debounced Present, Absent, or Unknown state used by the UI and Pomodoro auto
 _Avoid_: Latest observation, raw camera result
 
 **Presence-Owned Pause（在场检测暂停）**:
-A paused focus session whose pause was initiated by presence automation and may therefore be resumed by that automation.
+A paused focus or break session whose pause was initiated by presence automation and may therefore be resumed by that automation in the phase-specific opposite presence state.
 _Avoid_: Manual pause, break
 
 **Manual Pause（手动暂停）**:

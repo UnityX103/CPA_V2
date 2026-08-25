@@ -146,22 +146,31 @@ describe('presence and pomodoro integration', () => {
         });
     });
 
-    it('ends break early on the first present observation', () => {
+    it('pauses a running break while present and resumes after confirmed absence', () => {
         const { presence, pomodoro } = freshStores();
         presence.setState({ enabled: true, intervalSeconds: 30 });
         pomodoro.getState().applySettings(60, 30, 2, true, false);
         pomodoro.setState({ currentPhase: 'break', isRunning: true, remainingSeconds: 20 });
 
-        applyPresenceSample(presence, pomodoro, sample('absent'), 0);
-        expect(pomodoro.getState().currentPhase).toBe('break');
-
-        applyPresenceSample(presence, pomodoro, sample('present'), 30_000);
+        applyPresenceSample(presence, pomodoro, sample('present'), 0);
 
         expect(pomodoro.getState()).toMatchObject({
-            currentPhase: 'focus',
-            currentRound: 2,
-            remainingSeconds: 60,
+            currentPhase: 'break',
+            currentRound: 1,
+            remainingSeconds: 20,
+            isRunning: false,
+            presenceOwnedPause: true,
+        });
+
+        applyPresenceSample(presence, pomodoro, sample('absent'), 30_000);
+        expect(pomodoro.getState().isRunning).toBe(false);
+        applyPresenceSample(presence, pomodoro, sample('absent'), 60_000);
+
+        expect(pomodoro.getState()).toMatchObject({
+            currentPhase: 'break',
+            remainingSeconds: 20,
             isRunning: true,
+            presenceOwnedPause: false,
         });
     });
 
@@ -188,6 +197,51 @@ describe('presence and pomodoro integration', () => {
             currentRound: 2,
             isRunning: true,
             presenceAutoStartEligible: false,
+        });
+    });
+
+    it('starts a naturally reached paused break only after confirmed absence', () => {
+        const { presence, pomodoro } = freshStores();
+        presence.setState({ enabled: true, intervalSeconds: 30 });
+        pomodoro.getState().applySettings(1, 30, 2, true, false);
+        pomodoro.getState().start();
+        pomodoro.getState().tick(1);
+
+        expect(pomodoro.getState()).toMatchObject({
+            currentPhase: 'break',
+            isRunning: false,
+            remainingSeconds: 30,
+        });
+
+        applyPresenceSample(presence, pomodoro, sample('present'), 0);
+        applyPresenceSample(presence, pomodoro, sample('absent'), 30_000);
+        expect(pomodoro.getState().isRunning).toBe(false);
+
+        applyPresenceSample(presence, pomodoro, sample('absent'), 60_000);
+        expect(pomodoro.getState()).toMatchObject({
+            currentPhase: 'break',
+            isRunning: true,
+            remainingSeconds: 30,
+        });
+    });
+
+    it('never resumes a manually paused break after absence', () => {
+        const { presence, pomodoro } = freshStores();
+        presence.setState({ enabled: true, intervalSeconds: 30 });
+        pomodoro.setState({ currentPhase: 'break', isRunning: true, remainingSeconds: 20 });
+
+        applyPresenceSample(presence, pomodoro, sample('present'), 0);
+        expect(pomodoro.getState().presenceOwnedPause).toBe(true);
+
+        pomodoro.getState().pause();
+        applyPresenceSample(presence, pomodoro, sample('absent'), 30_000);
+        applyPresenceSample(presence, pomodoro, sample('absent'), 60_000);
+
+        expect(pomodoro.getState()).toMatchObject({
+            currentPhase: 'break',
+            isRunning: false,
+            remainingSeconds: 20,
+            presenceOwnedPause: false,
         });
     });
 

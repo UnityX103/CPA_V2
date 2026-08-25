@@ -339,6 +339,13 @@ export function applyPresenceSample(
             consecutiveAbsentSamples,
         });
         if (!confirmed) return;
+        if (pomo.currentPhase === 'break') {
+            const resumed = pomodoro.getState().resumeBreakFromPresence();
+            if (resumed) {
+                store.setState({ notice: notice('检测到离开，已继续休息') });
+            }
+            return;
+        }
         if (pomo.currentPhase !== 'focus' || !pomo.isRunning) return;
         pomodoro.getState().pauseFocusFromPresence();
         store.setState({ notice: notice('检测到离开，已暂停专注') });
@@ -354,10 +361,16 @@ export function applyPresenceSample(
         consecutiveAbsentSamples: 0,
     });
 
+    if (pomo.currentPhase === 'break') {
+        const paused = pomodoro.getState().pauseBreakFromPresence();
+        if (paused) {
+            store.setState({ notice: notice('仍在工位，已暂停休息') });
+        }
+        return;
+    }
+
     const focusStarted = pomodoro.getState().startFocusFromPresence();
-    const breakFinished = !focusStarted
-        && pomodoro.getState().finishBreakFromPresence();
-    if (focusStarted || breakFinished) {
+    if (focusStarted) {
         store.setState({ notice: notice('检测到在岗，已开始专注') });
         return;
     }

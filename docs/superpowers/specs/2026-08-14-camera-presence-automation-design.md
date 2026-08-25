@@ -56,7 +56,7 @@
 
 - 默认摄像头的按需单帧采集。
 - 基于人脸存在与否的三值观测：`present | absent | unknown`。
-- 休息期间或自然休息结束后的自动进入专注。
+- 休息期间在场暂停、离席恢复，以及自然休息结束后的自动进入专注。
 - 专注期间持续离场后的自动动作，以及仅对自动动作的自动恢复。
 - macOS 摄像头授权、Windows 摄像头隐私限制和两端错误分类。
 - 设备本地设置、设置窗口状态、主窗口动作提示。
@@ -110,11 +110,11 @@
 - 严谨（默认）：2 次连续 `absent`；开启防抖时的最低阈值为 2。
 - 中等：3 次连续 `absent`。
 - 宽松：6 次连续 `absent`。
-- 达到当前阈值后才把最近确认状态切换为 `absent`，并暂停正在运行的 focus。
-- 第一次 `present` 可立即恢复 Presence-Owned Pause、启动自然休息结束后等待的 focus，或提前结束 break。
+- 达到当前阈值后才把确认状态切换为 `absent`：focus 中暂停专注，break 中恢复休息。
+- 第一次 `present` 立即把确认状态切换为 `present`：focus 中恢复专注或启动自然休息结束后等待的 focus，break 中暂停休息。
 - `present`、`unknown`、阈值配置变更或相关番茄钟上下文变化都清空未确认的 `absent` 计数。
 - `unknown` 永不改变番茄钟运行状态。
-- 手动暂停不属于 Presence-Owned Pause，不能由 `present` 自动恢复。
+- 手动暂停不属于 Presence-Owned Pause，不能由后续 `present` 或 `absent` 自动恢复。
 - 同一时刻最多一个采样请求。上一次未完成时跳过本次调度，不排队、不并发打开摄像头。
 - 单次采样应有 10 秒超时；超时产生 `unknown` 并释放摄像头。
 
@@ -135,16 +135,22 @@
 3. 清空未确认的离席计数、最近结果和 Presence-Owned Pause 标记。
 4. 已被自动暂停的计时器保持暂停；关闭功能本身不得擅自恢复计时。
 
-### 休息中自动进入专注
+### 休息中在场暂停、离席恢复
 
 资格状态：`currentPhase === 'break'`，不论休息计时是否正在运行。
 
 第一次成功 `present` 观测后：
 
-- 通过新的番茄钟 action 以 `triggeredBy: 'presence'` 执行 `break -> focus`。
-- 若仍有下一轮，进入下一轮 `focus` 并立即运行。
-- 若当前 break 是最后一轮之后的休息，按既有规则进入 `completed`，不得自动创建新一组番茄钟。
-- 该阶段变化可以复用现有「休息结束」提示，但不能播放 focus 结束视频或增加打卡计数。
+- 若 break 正在运行，保留 `currentRound`、`remainingSeconds` 和阶段，只把 `isRunning` 设为 false。
+- 标记为 Presence-Owned Pause，不生成阶段结束事件，并提示「仍在工位，已暂停休息」。
+- 若 break 因自然 focus 结束且 `autoStartBreak=false` 而未运行，保留「离席后可启动休息」资格。
+
+连续 `absent` 达到当前离席判定阈值后：
+
+- 仅恢复 Presence-Owned Pause 或上述自然休息启动资格，从原 `remainingSeconds` 继续 break。
+- 主窗口提示「检测到离开，已继续休息」。
+- 用户手动暂停的 break 不具备自动恢复资格。
+- presence 观测不得提前结束 break、推进轮次或进入 `completed`。
 
 ### 自然休息结束后自动开始专注
 
@@ -173,10 +179,10 @@
 
 ### 手动操作优先级
 
-- 用户手动暂停的 focus 永不因 `present` 自动恢复。
+- 用户手动暂停的 focus 永不因 `present` 自动恢复；手动暂停的 break 永不因 `absent` 自动恢复。
 - 用户在 Presence-Owned Pause 状态手动点击开始，视为用户接管：立即开始并清除自动暂停归属。
 - 用户执行 skip、reset 或应用会重置进度的番茄钟设置后，清除所有 presence 自动化归属。
-- 用户在 break 中手动暂停不阻止「检测到在场后进入 focus」；这是 R2 的既定行为。
+- 用户在 break 中手动暂停会立即清除 presence 自动恢复资格。
 
 ## D-01：已确认决策
 
@@ -292,7 +298,7 @@ sample_camera_presence(): PresenceSample
 
 - 设备本地配置：`enabled`、`intervalSeconds`、`absenceSensitivity`。
 - 运行态：availability、确认在场状态（Confirmed Presence）、连续 `absent` 计数、最近成功时间、in-flight、generation、lastError。
-- 自动化归属：是否为 Presence-Owned Pause，以及自然 break 结束后的自动启动资格。
+- 自动化归属：focus/break 的 Presence-Owned Pause、自然进入但未自动开始的 break 恢复资格，以及自然 break 结束后的 focus 自动启动资格。
 - `usePresenceMonitor({ enabled: localHydrated })`，只挂载在主窗口。
 
 设置窗口不得直接调用采样 command。扩展现有 bridge：
@@ -304,9 +310,10 @@ sample_camera_presence(): PresenceSample
 
 番茄钟新增窄 action，不让 presence 模块直接 `setState`：
 
-- `startFocusFromPresence()`：处理 break 中或自然 break 结束后的自动进入 focus。
-- `pauseFocusFromPresence()` / `resumeFocusFromPresence()`：分别建立和消费 Presence-Owned Pause。
-- `PomodoroEndEvent.triggeredBy` 增加 `presence`，只用于真实阶段变化。
+- `startFocusFromPresence()`：仅处理自然 break 结束后的 focus 自动启动资格。
+- `pauseFocusFromPresence()` / `resumeFocusFromPresence()`：在 focus 中响应离席/在场。
+- `pauseBreakFromPresence()` / `resumeBreakFromPresence()`：在 break 中响应在场/离席，并且只消费自动化拥有的暂停或自然 break 启动资格。
+- presence 不再产生番茄钟阶段结束事件；`PomodoroEndEvent.triggeredBy` 仅保留 `timer | skip`。
 - Presence-Owned Pause 的提示使用独立 presence action/notice，不伪造阶段结束事件。
 
 ## 持久化、云与网络边界
@@ -342,7 +349,9 @@ sample_camera_presence(): PresenceSample
 
 主窗口只在动作或可用性发生变化时显示一次短提示，不在每次采样时提示：
 
-- 自动进入 focus：复用「休息结束」。
+- 在场暂停休息：`仍在工位，已暂停休息`。
+- 离席恢复休息：`检测到离开，已继续休息`。
+- 自然休息结束后在场启动 focus：`检测到在岗，已开始专注`。
 - 自动暂停：`检测到离开，已暂停专注`。
 - 自动继续：`检测到返回，已继续专注`。
 - 运行中失去权限或设备持续不可用：`摄像头不可用，自动控制暂不可用`，同一状态不重复刷屏。
@@ -370,6 +379,9 @@ sample_camera_presence(): PresenceSample
 | completed | 不自动开始新番茄钟 |
 | 初始 focus 停止态 | 不因在场自动开始 |
 | 手动暂停 focus | 永不由摄像头恢复 |
+| 手动暂停 break | 永不由离席观测恢复 |
+| 运行中 break 检测到 present | 保留阶段/轮次/剩余时间并进入 Presence-Owned Pause |
+| Presence-Owned break pause 达到 absent 阈值 | 从原剩余时间继续 break |
 | Presence-Owned Pause 后 unknown | 保持暂停，不恢复、不推进 |
 
 ## 测试要求
@@ -381,14 +393,14 @@ sample_camera_presence(): PresenceSample
 1. 默认关闭，不调用原生采样。
 2. 启用后立即采样，之后按间隔采样；in-flight 时不并发。
 3. 关闭防抖/严谨/中等/宽松分别在连续 1/2/3/6 次 absent 时暂停运行中的 focus；启用防抖的阈值不得小于 2，阈值前不改变已确认状态或番茄钟。
-4. 第一次成功 present 立即恢复 Presence-Owned Pause；`present`、`unknown`和相关状态变更清空未确认的 absent 计数。
-5. break 运行中和暂停中第一次 present 都进入下一 focus 并运行。
-6. 最后一轮 break 第一次 present 时进入 completed，不新开一组。
+4. focus 中第一次成功 present 立即恢复 Presence-Owned Pause；break 中第一次 present 立即暂停运行中的休息。
+5. break 中连续 absent 达所选阈值时，只恢复 Presence-Owned Pause 或自然休息启动资格；手动暂停不恢复。
+6. presence 不得提前结束 break、推进轮次或进入 completed。
 7. 自然 break 结束后的 focus 可由第一次 present 启动；初始/reset/手动暂停 focus 不可。
 8. 手动 start/pause/skip/reset 优先并清空自动化状态。
 9. completed 对任意观测无动作。
 10. 关闭时丢弃过期采样结果；已自动暂停的 focus 保持暂停。
-11. 离场只暂停并保留 round/remaining，不产生 focus completion；返回后只恢复 Presence-Owned Pause。
+11. focus 离席暂停/在场恢复与break 在场暂停/离席恢复都保留 round/remaining、不产生 completion event，且只恢复 Presence-Owned Pause。
 12. 检测间隔合法范围、关闭防抖与三档阈值、设备本地持久化损坏回退，以及 v1 数据默认迁移到严谨档。
 
 ### Bridge 与 UI 测试
@@ -398,7 +410,7 @@ sample_camera_presence(): PresenceSample
 - dirty/apply 包含启用开关和检测间隔；权限/重试不污染 dirty。
 - 每个 availability 状态显示正确文案和可用操作。
 - 主窗口提示按状态变化去重。
-- `triggeredBy: 'presence'` 的 break 结束不触发 focus 完成视频、自动置顶或打卡增加。
+- presence 暂停/恢复不产生 `PomodoroEndEvent`，因此不触发结束视频、声音、自动置顶或打卡增加。
 
 ### Rust 与平台测试
 
@@ -416,28 +428,30 @@ sample_camera_presence(): PresenceSample
 
 1. **AC-01 默认隐私**：全新安装首次启动 10 分钟内不出现摄像头权限提示或摄像头指示灯，直到用户明确启用并授权。
 2. **AC-02 按需释放**：启用后每次采样结束或失败后摄像头被释放；FaceTime/Camera/会议软件可在采样间隔内重新取得设备。
-3. **AC-03 在场进入 focus**：break 中第一次成功 present 后，下一轮 focus 已运行。
+3. **AC-03 休息镜像控制**：运行中 break 第一次成功 present 后保留 remaining 并暂停；连续 absent 达所选阈值后恢复同一 remaining。
 4. **AC-04 休息结束后启动**：自然 break 结束进入停止的 focus 后，第一次成功 present 会开始 focus；应用初始停止态不会自动开始。
-5. **AC-05 可关闭的三档离席防抖**：focus 运行中，关闭防抖/严谨/中等/宽松分别在连续 1/2/3/6 次 absent 时暂停；Presence-Owned Pause 中第一次成功 present 立即恢复；unknown 无动作。
+5. **AC-05 可关闭的三档离席防抖**：关闭防抖/严谨/中等/宽松分别在连续 1/2/3/6 次 absent 时确认离席；确认离席在 focus 中暂停、在 break 中恢复；unknown 无动作。
 6. **AC-06 失败安全**：权限拒绝、设备忙、无设备、超时连续发生时，番茄钟阶段、轮次、剩余时间和运行状态不因 presence 自动化改变。
-7. **AC-07 手动优先**：手动暂停 focus 后收到 present，计时器仍保持暂停。
+7. **AC-07 手动优先**：手动暂停 focus 后收到 present，或手动暂停 break 后达到 absent 阈值，计时器都仍保持暂停。
 8. **AC-08 睡眠恢复**：系统恢复后的成功观测继续按所选阈值处理，unknown 无动作。
 9. **AC-09 数据边界**：本地 store、云账号 payload、房间 WebSocket payload和日志中均不存在图片、人脸框或在场状态；云账号切换不会改变本机摄像头开关。
 10. **AC-10 在场检测暂停与恢复**：focus 运行中连续 absent 达所选阈值后，phase/round/remaining 保持、isRunning=false、无 focus completion；第一次成功 present 后恢复同一 remaining，手动暂停则不恢复。
-11. **AC-11 双平台**：macOS x86_64、macOS ARM64 和 Windows x86_64 的发布构建均包含非 stub 摄像头实现，并通过正常/拒绝/占用三条人工路径。
-12. **AC-12 退出清理**：退出应用后 2 秒内摄像头指示灯熄灭，进程不因摄像头任务或线程滞留。
+11. **AC-11 休息不提前结束**：presence 只改变 break 的 `isRunning` 与自动化归属，不改变 phase/round/remaining，不产生阶段结束事件。
+12. **AC-12 双平台**：macOS x86_64、macOS ARM64 和 Windows x86_64 的发布构建均包含非 stub 摄像头实现，并通过正常/拒绝/占用三条人工路径。
+13. **AC-13 退出清理**：退出应用后 2 秒内摄像头指示灯熄灭，进程不因摄像头任务或线程滞留。
 
 ## 已确认决策与假设
 
 ### 已确认事实/请求
 
 - 摄像头是主信号，macOS 与 Windows 都必须实现。
-- 需要自动进入 focus、自动暂停/继续、权限、隐私和可观察验收。
-- 只修改文档；本规范不实施代码、依赖、构建或测试。
+- 需要 focus 中离席暂停/在场恢复，break 中在场暂停/离席恢复，以及权限、隐私和可观察验收。
+- 本规范与实现代码、测试和发布验收同步维护。
 
 ### 用户确认决策
 
 - focus 连续检测到离场且达所选阈值后，保留当前进度并进入 Presence-Owned Pause；第一次检测到返回后自动继续同一 focus。
+- break 第一次检测到在场后保留当前进度并进入 Presence-Owned Pause；确认离场后自动继续同一 break，不提前结束休息。
 
 ### 实施基线
 

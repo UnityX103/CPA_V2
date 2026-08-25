@@ -185,40 +185,29 @@ describe('PomodoroTimerSystem.skip', () => {
 });
 
 describe('Pomodoro presence automation', () => {
-    it('advances a running or paused break into a running focus', () => {
-        for (const isRunning of [true, false]) {
-            const store = freshStore();
-            store.getState().applySettings(60, 30, 2, true, false);
-            store.setState({ currentPhase: 'break', isRunning, remainingSeconds: 20 });
-
-            store.getState().finishBreakFromPresence();
-
-            expect(store.getState()).toMatchObject({
-                currentPhase: 'focus',
-                currentRound: 2,
-                remainingSeconds: 60,
-                isRunning: true,
-            });
-            expect(store.getState().lastEndEvent).toMatchObject({
-                fromPhase: 'break',
-                toPhase: 'focus',
-                triggeredBy: 'presence',
-            });
-        }
-    });
-
-    it('completes the final break instead of starting a new set', () => {
+    it('pauses and resumes the same break without creating a completion event', () => {
         const store = freshStore();
-        store.getState().applySettings(60, 30, 1, true, false);
+        store.getState().applySettings(60, 30, 2, true, false);
         store.setState({ currentPhase: 'break', isRunning: true, remainingSeconds: 20 });
+        const before = store.getState();
 
-        store.getState().finishBreakFromPresence();
+        expect(store.getState().pauseBreakFromPresence()).toBe(true);
 
         expect(store.getState()).toMatchObject({
-            currentPhase: 'completed',
+            currentPhase: 'break',
             currentRound: 1,
-            remainingSeconds: 0,
+            remainingSeconds: 20,
             isRunning: false,
+            presenceOwnedPause: true,
+            lastEndEvent: before.lastEndEvent,
+        });
+
+        expect(store.getState().resumeBreakFromPresence()).toBe(true);
+        expect(store.getState()).toMatchObject({
+            currentPhase: 'break',
+            remainingSeconds: 20,
+            isRunning: true,
+            presenceOwnedPause: false,
         });
     });
 
