@@ -31,7 +31,6 @@ describe('bridge protocol', () => {
             presence: {
                 enabled: true,
                 intervalSeconds: 60,
-                presentThresholdSeconds: 90,
                 platform: 'macos',
                 availability: 'ready',
                 latestObservation: 'present',
@@ -85,7 +84,7 @@ describe('bridge protocol', () => {
                 focus: { sourceKind: 'builtin', builtinSoundId: 'clear-success', customSoundPath: '' },
                 break: { sourceKind: 'builtin', builtinSoundId: 'triple-ping', customSoundPath: '' },
             }] },
-            { v: BRIDGE_VERSION, store: 'presence', action: 'applySettings', args: [{ enabled: true, intervalSeconds: 60, presentThresholdSeconds: 60 }] },
+            { v: BRIDGE_VERSION, store: 'presence', action: 'applySettings', args: [{ enabled: true, intervalSeconds: 60 }] },
             { v: BRIDGE_VERSION, store: 'presence', action: 'requestAccess', args: [] },
             { v: BRIDGE_VERSION, store: 'presence', action: 'retry', args: [] },
             { v: BRIDGE_VERSION, store: 'presence', action: 'openPrivacySettings', args: [] },

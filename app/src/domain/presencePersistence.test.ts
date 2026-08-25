@@ -23,11 +23,10 @@ describe('presence persistence', () => {
         await expect(persistence.loadPresencePreferences()).resolves.toEqual({
             enabled: false,
             intervalSeconds: 10,
-            presentThresholdSeconds: 60,
         });
     });
 
-    it('loads valid fields and independently defaults malformed or missing fields', async () => {
+    it('loads valid fields and ignores the removed confirmation threshold', async () => {
         storeData.set('presencePreferences', {
             schemaVersion: 1,
             enabled: true,
@@ -38,7 +37,6 @@ describe('presence persistence', () => {
         await expect(persistence.loadPresencePreferences()).resolves.toEqual({
             enabled: true,
             intervalSeconds: 45,
-            presentThresholdSeconds: 60,
         });
     });
 
@@ -47,13 +45,11 @@ describe('presence persistence', () => {
             schemaVersion: 1,
             enabled: true,
             intervalSeconds: 5,
-            presentThresholdSeconds: 5,
         });
 
         await expect(persistence.loadPresencePreferences()).resolves.toEqual({
             enabled: true,
             intervalSeconds: 5,
-            presentThresholdSeconds: 5,
         });
     });
 
@@ -62,12 +58,10 @@ describe('presence persistence', () => {
             schemaVersion: 2,
             enabled: true,
             intervalSeconds: 30,
-            presentThresholdSeconds: 30,
         });
         await expect(persistence.loadPresencePreferences()).resolves.toEqual({
             enabled: false,
             intervalSeconds: 10,
-            presentThresholdSeconds: 60,
         });
     });
 
@@ -75,14 +69,12 @@ describe('presence persistence', () => {
         await persistence.savePresencePreferences({
             enabled: true,
             intervalSeconds: 30,
-            presentThresholdSeconds: 120,
         });
 
         expect(storeData.get('presencePreferences')).toEqual({
             schemaVersion: 1,
             enabled: true,
             intervalSeconds: 30,
-            presentThresholdSeconds: 120,
         });
         expect(save).toHaveBeenCalledTimes(1);
     });

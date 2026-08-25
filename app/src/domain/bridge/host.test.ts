@@ -30,7 +30,6 @@ beforeEach(() => {
     usePresenceStore.setState({
         enabled: false,
         intervalSeconds: 60,
-        presentThresholdSeconds: 60,
         platform: 'macos',
         availability: 'disabled',
         latestObservation: 'unknown',
@@ -80,13 +79,12 @@ describe('bridge host', () => {
             v: BRIDGE_VERSION,
             store: 'presence',
             action: 'applySettings',
-            args: [{ enabled: true, intervalSeconds: 30, presentThresholdSeconds: 90 }],
+            args: [{ enabled: true, intervalSeconds: 30 }],
         });
 
         expect(applySettings).toHaveBeenCalledWith({
             enabled: true,
             intervalSeconds: 30,
-            presentThresholdSeconds: 90,
         });
     });
 

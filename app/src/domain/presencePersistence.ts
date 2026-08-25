@@ -3,13 +3,11 @@ import { load } from '@tauri-apps/plugin-store';
 export interface PresencePreferences {
     enabled: boolean;
     intervalSeconds: number;
-    presentThresholdSeconds: number;
 }
 
 export const DEFAULT_PRESENCE_PREFERENCES: PresencePreferences = {
     enabled: false,
     intervalSeconds: 10,
-    presentThresholdSeconds: 60,
 };
 
 export const MIN_PRESENCE_SECONDS = 5;
@@ -39,10 +37,6 @@ export function normalizePresencePreferences(value: unknown): PresencePreference
         intervalSeconds: normalizeSeconds(
             persisted.intervalSeconds,
             DEFAULT_PRESENCE_PREFERENCES.intervalSeconds,
-        ),
-        presentThresholdSeconds: normalizeSeconds(
-            persisted.presentThresholdSeconds,
-            DEFAULT_PRESENCE_PREFERENCES.presentThresholdSeconds,
         ),
     };
 }

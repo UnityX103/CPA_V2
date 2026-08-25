@@ -187,7 +187,6 @@ function PomodoroTab({ onApplyStateChange }: {
     const [endSounds, setEndSounds] = useState<PomodoroEndSounds>(clonePomodoroEndSounds(pomo.endSounds));
     const [presenceEnabled, setPresenceEnabled] = useState(presence.enabled);
     const [presenceIntervalSeconds, setPresenceIntervalSeconds] = useState(presence.intervalSeconds);
-    const [presenceThresholdSeconds, setPresenceThresholdSeconds] = useState(presence.presentThresholdSeconds);
     const committedRef = useRef({
         focusDurationSeconds: pomo.focusDurationSeconds,
         breakDurationSeconds: pomo.breakDurationSeconds,
@@ -198,7 +197,6 @@ function PomodoroTab({ onApplyStateChange }: {
         endSounds: clonePomodoroEndSounds(pomo.endSounds),
         presenceEnabled: presence.enabled,
         presenceIntervalSeconds: presence.intervalSeconds,
-        presenceThresholdSeconds: presence.presentThresholdSeconds,
     });
 
     useEffect(() => {
@@ -214,8 +212,7 @@ function PomodoroTab({ onApplyStateChange }: {
         const endSoundDraftDirty = !samePomodoroEndSounds(endSounds, previous.endSounds);
         const presenceDraftDirty =
             presenceEnabled !== previous.presenceEnabled
-            || presenceIntervalSeconds !== previous.presenceIntervalSeconds
-            || presenceThresholdSeconds !== previous.presenceThresholdSeconds;
+            || presenceIntervalSeconds !== previous.presenceIntervalSeconds;
         if (!durationDraftDirty) {
             setFocusMin(Math.round(pomo.focusDurationSeconds / 60));
             setBreakMin(Math.round(pomo.breakDurationSeconds / 60));
@@ -240,7 +237,6 @@ function PomodoroTab({ onApplyStateChange }: {
         if (!presenceDraftDirty) {
             setPresenceEnabled(presence.enabled);
             setPresenceIntervalSeconds(presence.intervalSeconds);
-            setPresenceThresholdSeconds(presence.presentThresholdSeconds);
         }
 
         committedRef.current = {
@@ -253,7 +249,6 @@ function PomodoroTab({ onApplyStateChange }: {
             endSounds: clonePomodoroEndSounds(pomo.endSounds),
             presenceEnabled: presence.enabled,
             presenceIntervalSeconds: presence.intervalSeconds,
-            presenceThresholdSeconds: presence.presentThresholdSeconds,
         };
     }, [
         pomo.focusDurationSeconds,
@@ -272,7 +267,6 @@ function PomodoroTab({ onApplyStateChange }: {
         pomo.endSounds.break.customSoundPath,
         presence.enabled,
         presence.intervalSeconds,
-        presence.presentThresholdSeconds,
         focusMin,
         breakMin,
         autoStartBreak,
@@ -282,7 +276,6 @@ function PomodoroTab({ onApplyStateChange }: {
         endSounds,
         presenceEnabled,
         presenceIntervalSeconds,
-        presenceThresholdSeconds,
     ]);
 
     const dirty =
@@ -294,8 +287,7 @@ function PomodoroTab({ onApplyStateChange }: {
         !sameEndActionVideo(endActionVideo, pomo.endActionVideo) ||
         !samePomodoroEndSounds(endSounds, pomo.endSounds) ||
         presenceEnabled !== presence.enabled ||
-        presenceIntervalSeconds !== presence.intervalSeconds ||
-        presenceThresholdSeconds !== presence.presentThresholdSeconds;
+        presenceIntervalSeconds !== presence.intervalSeconds;
     const hasMissingCustomVideo =
         endActionMode === 'playVideo' &&
         endActionVideo.sourceKind === 'custom' &&
@@ -320,8 +312,7 @@ function PomodoroTab({ onApplyStateChange }: {
         const endSoundsChanged = !samePomodoroEndSounds(endSounds, pomo.endSounds);
         const presenceChanged =
             presenceEnabled !== presence.enabled
-            || presenceIntervalSeconds !== presence.intervalSeconds
-            || presenceThresholdSeconds !== presence.presentThresholdSeconds;
+            || presenceIntervalSeconds !== presence.intervalSeconds;
 
         if (durationChanged) {
             pomo.applySettings(focusSeconds, breakSeconds, pomo.totalRounds, true, autoStartBreak);
@@ -345,7 +336,6 @@ function PomodoroTab({ onApplyStateChange }: {
             void Promise.resolve(presence.applySettings({
                 enabled: presenceEnabled,
                 intervalSeconds: presenceIntervalSeconds,
-                presentThresholdSeconds: presenceThresholdSeconds,
             })).catch((error) => {
                 console.warn('[settings] failed to apply presence settings', error);
             });
@@ -363,7 +353,6 @@ function PomodoroTab({ onApplyStateChange }: {
         presence,
         presenceEnabled,
         presenceIntervalSeconds,
-        presenceThresholdSeconds,
     ]);
 
     useEffect(() => {
@@ -483,27 +472,15 @@ function PomodoroTab({ onApplyStateChange }: {
                             onOpenPrivacySettings={() => { void presence.openPrivacySettings(); }}
                         />
 
-                        <div className="card card-grid presence-number-grid">
-                            <div className="card">
-                                <span className="card-label">检测间隔</span>
-                                <NumberSuffix
-                                    value={presenceIntervalSeconds}
-                                    onChange={setPresenceIntervalSeconds}
-                                    min={MIN_PRESENCE_SECONDS}
-                                    max={MAX_PRESENCE_SECONDS}
-                                    suffix="秒"
-                                />
-                            </div>
-                            <div className="card">
-                                <span className="card-label">切换状态确认时长</span>
-                                <NumberSuffix
-                                    value={presenceThresholdSeconds}
-                                    onChange={setPresenceThresholdSeconds}
-                                    min={MIN_PRESENCE_SECONDS}
-                                    max={MAX_PRESENCE_SECONDS}
-                                    suffix="秒"
-                                />
-                            </div>
+                        <div className="card">
+                            <span className="card-label">检测间隔</span>
+                            <NumberSuffix
+                                value={presenceIntervalSeconds}
+                                onChange={setPresenceIntervalSeconds}
+                                min={MIN_PRESENCE_SECONDS}
+                                max={MAX_PRESENCE_SECONDS}
+                                suffix="秒"
+                            />
                         </div>
 
                         <div className="card pomo-row">

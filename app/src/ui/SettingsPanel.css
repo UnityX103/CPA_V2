@@ -859,10 +859,6 @@
     gap: var(--settings-card-gap); /* 10 */
 }
 
-.presence-number-grid {
-    margin-top: 0;
-}
-
 .presence-auth-control {
     min-height: 78px;
     padding: 10px 12px;

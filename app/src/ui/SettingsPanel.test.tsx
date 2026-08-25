@@ -40,7 +40,6 @@ beforeEach(() => {
     usePresenceStore.setState({
         enabled: false,
         intervalSeconds: 60,
-        presentThresholdSeconds: 60,
         platform: 'macos',
         availability: 'disabled',
         latestObservation: 'unknown',
@@ -48,11 +47,6 @@ beforeEach(() => {
         lastError: null,
         inFlight: false,
         generation: 0,
-        candidateDirection: null,
-        candidateFirstAt: null,
-        candidateLastAt: null,
-        candidateCount: 0,
-        observedPomodoroEpoch: 0,
         notice: null,
     });
 });
@@ -87,7 +81,7 @@ describe('SettingsPanel', () => {
         expect(toggle.getAttribute('aria-pressed')).toBe('false');
         expect(toggleRow?.nextElementSibling).toBe(authorizationControl);
         expect(screen.getByText('检测间隔')).toBeTruthy();
-        expect(screen.getByText('切换状态确认时长')).toBeTruthy();
+        expect(screen.queryByText('切换状态确认时长')).toBeNull();
         expect(screen.getByText('摄像头授权')).toBeTruthy();
         expect(screen.getByText('未启用')).toBeTruthy();
         expect(screen.getByText('最近观测')).toBeTruthy();
@@ -183,16 +177,15 @@ describe('SettingsPanel', () => {
 
         fireEvent.click(screen.getByRole('button', { name: '摄像头自动控制' }));
         const inputs = screen.getAllByRole('spinbutton');
+        expect(inputs).toHaveLength(3);
         expect(inputs[2].getAttribute('min')).toBe('5');
         fireEvent.change(inputs[2], { target: { value: '5' } });
-        fireEvent.change(inputs[3], { target: { value: '120' } });
         fireEvent.click(screen.getByRole('button', { name: '应用' }));
 
         await vi.waitFor(() => {
             expect(usePresenceStore.getState()).toEqual(expect.objectContaining({
                 enabled: true,
                 intervalSeconds: 5,
-                presentThresholdSeconds: 120,
             }));
         });
     });

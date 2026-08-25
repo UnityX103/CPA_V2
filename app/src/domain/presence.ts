@@ -50,11 +50,6 @@ interface PresenceState extends PresencePreferences {
     lastError: string | null;
     inFlight: boolean;
     generation: number;
-    candidateDirection: Exclude<PresenceObservation, 'unknown'> | null;
-    candidateFirstAt: number | null;
-    candidateLastAt: number | null;
-    candidateCount: number;
-    observedPomodoroEpoch: number;
     notice: PresenceNotice | null;
 }
 
@@ -64,7 +59,6 @@ interface PresenceActions {
     requestAccess: () => Promise<void> | void;
     retry: () => Promise<void> | void;
     openPrivacySettings: () => Promise<void> | void;
-    clearEvidence: () => void;
 }
 
 type PresenceStoreState = PresenceState & PresenceActions;
@@ -82,23 +76,7 @@ function initialPresenceState(): PresenceState {
         lastError: null,
         inFlight: false,
         generation: 0,
-        candidateDirection: null,
-        candidateFirstAt: null,
-        candidateLastAt: null,
-        candidateCount: 0,
-        observedPomodoroEpoch: 0,
         notice: null,
-    };
-}
-
-function evidenceReset(): Pick<PresenceState,
-    'candidateDirection' | 'candidateFirstAt' | 'candidateLastAt' | 'candidateCount'
-> {
-    return {
-        candidateDirection: null,
-        candidateFirstAt: null,
-        candidateLastAt: null,
-        candidateCount: 0,
     };
 }
 
@@ -126,7 +104,6 @@ function capabilityState(
         ...(becameUnavailable
             ? { notice: notice('摄像头不可用，自动控制暂不可用') }
             : {}),
-        ...(capability.availability === 'ready' ? {} : evidenceReset()),
     };
 }
 
@@ -159,7 +136,6 @@ export function createPresenceStore(opts: { isSettingsWindow: boolean }): Presen
                 action: 'openPrivacySettings',
                 args: [],
             }),
-            clearEvidence: () => {},
         }));
     }
 
@@ -175,7 +151,6 @@ export function createPresenceStore(opts: { isSettingsWindow: boolean }): Presen
                 lastSuccessfulAt: null,
                 lastError: null,
                 inFlight: false,
-                ...evidenceReset(),
             }));
         },
         applySettings: async (preferences) => {
@@ -194,7 +169,6 @@ export function createPresenceStore(opts: { isSettingsWindow: boolean }): Presen
                 lastSuccessfulAt: enabledChanged ? null : state.lastSuccessfulAt,
                 lastError: enabledChanged ? null : state.lastError,
                 inFlight: monitorChanged ? false : state.inFlight,
-                ...evidenceReset(),
             }));
             if (previous.enabled && !normalized.enabled) {
                 usePomodoroStore.getState().clearPresenceAutomationOwnership();
@@ -209,7 +183,6 @@ export function createPresenceStore(opts: { isSettingsWindow: boolean }): Presen
                 lastSuccessfulAt: null,
                 lastError: null,
                 generation: state.generation + 1,
-                ...evidenceReset(),
             }));
             try {
                 const capability = await invoke<PresenceCapability>('request_camera_presence_access');
@@ -223,7 +196,6 @@ export function createPresenceStore(opts: { isSettingsWindow: boolean }): Presen
                     inFlight: false,
                     lastError: String(error),
                     generation: state.generation + 1,
-                    ...evidenceReset(),
                 }));
             }
         },
@@ -235,7 +207,6 @@ export function createPresenceStore(opts: { isSettingsWindow: boolean }): Presen
                 lastSuccessfulAt: null,
                 lastError: null,
                 generation: state.generation + 1,
-                ...evidenceReset(),
             }));
             try {
                 const capability = await invoke<PresenceCapability>('camera_presence_status');
@@ -249,7 +220,6 @@ export function createPresenceStore(opts: { isSettingsWindow: boolean }): Presen
                     inFlight: false,
                     lastError: String(error),
                     generation: state.generation + 1,
-                    ...evidenceReset(),
                 }));
             }
         },
@@ -260,7 +230,6 @@ export function createPresenceStore(opts: { isSettingsWindow: boolean }): Presen
                 set({ lastError: String(error) });
             }
         },
-        clearEvidence: () => set(evidenceReset()),
     }));
 }
 
@@ -298,20 +267,16 @@ function applyLivePresenceSample(
             ...(becameUnavailable
                 ? { notice: notice('摄像头不可用，自动控制暂不可用') }
                 : {}),
-            ...evidenceReset(),
         });
         return;
     }
 
-    const directionChanged = current.candidateDirection != null
-        && current.candidateDirection !== sample.observation;
     store.setState({
         availability: sample.availability,
         latestObservation: sample.observation,
         lastSuccessfulAt: nowMs,
         lastError: sample.errorCode,
         inFlight: false,
-        ...(directionChanged ? evidenceReset() : {}),
     });
 }
 
@@ -321,7 +286,6 @@ export function applyPresenceSample(
     sample: PresenceSample,
     nowMs: number,
 ): void {
-    const current = store.getState();
     const pomo = pomodoro.getState();
 
     if (sample.observation === 'unknown') {
@@ -329,71 +293,33 @@ export function applyPresenceSample(
         return;
     }
 
-    const epochChanged = current.observedPomodoroEpoch !== pomo.presenceAutomationEpoch;
-    const staleGap = current.candidateLastAt != null
-        && nowMs - current.candidateLastAt > current.intervalSeconds * 2000;
-    const sameDirection = !epochChanged
-        && !staleGap
-        && current.candidateDirection === sample.observation;
-    const candidateFirstAt = sameDirection && current.candidateFirstAt != null
-        ? current.candidateFirstAt
-        : nowMs;
-    const candidateCount = sameDirection ? current.candidateCount + 1 : 1;
-    const thresholdSeconds = current.presentThresholdSeconds;
-    const thresholdMet = candidateCount >= 2
-        && nowMs - candidateFirstAt >= thresholdSeconds * 1000;
-
     store.setState({
         availability: sample.availability,
         latestObservation: sample.observation,
         lastSuccessfulAt: nowMs,
         lastError: sample.errorCode,
         inFlight: false,
-        candidateDirection: sample.observation,
-        candidateFirstAt,
-        candidateLastAt: nowMs,
-        candidateCount,
-        observedPomodoroEpoch: pomo.presenceAutomationEpoch,
     });
-
-    if (sample.observation === 'present') {
-        const focusStarted = pomodoro.getState().startFocusFromPresence();
-        const breakFinished = !focusStarted
-            && pomodoro.getState().finishBreakFromPresence();
-        if (focusStarted || breakFinished) {
-            store.setState({
-                notice: notice('检测到在岗，已开始专注'),
-                observedPomodoroEpoch: pomodoro.getState().presenceAutomationEpoch,
-                ...evidenceReset(),
-            });
-            return;
-        }
-    }
-
-    if (!thresholdMet) return;
 
     if (sample.observation === 'absent') {
         if (pomo.currentPhase !== 'focus' || !pomo.isRunning) return;
         pomodoro.getState().pauseFocusFromPresence();
-        store.setState({
-            notice: notice('检测到离开，已暂停专注'),
-            observedPomodoroEpoch: pomodoro.getState().presenceAutomationEpoch,
-            ...evidenceReset(),
-        });
+        store.setState({ notice: notice('检测到离开，已暂停专注') });
+        return;
+    }
+
+    const focusStarted = pomodoro.getState().startFocusFromPresence();
+    const breakFinished = !focusStarted
+        && pomodoro.getState().finishBreakFromPresence();
+    if (focusStarted || breakFinished) {
+        store.setState({ notice: notice('检测到在岗，已开始专注') });
         return;
     }
 
     if (pomo.currentPhase === 'focus' && !pomo.isRunning && pomo.presenceOwnedPause) {
         pomodoro.getState().resumeFocusFromPresence();
         store.setState({ notice: notice('检测到返回，已继续专注') });
-    } else {
-        return;
     }
-
-    store.setState({
-        observedPomodoroEpoch: pomodoro.getState().presenceAutomationEpoch,
-        ...evidenceReset(),
-    });
 }
 
 interface PresenceMonitorRuntime {
@@ -512,25 +438,16 @@ export function startPresenceMonitor({
                 availability: 'error',
                 inFlight: false,
                 lastError: String(error),
-                ...evidenceReset(),
             });
             intervalId = runtime.setInterval(() => { void sample(); }, intervalMs);
         }
     };
 
-    const unsubscribePomodoro = pomodoro.subscribe((state, previous) => {
-        if (state.presenceAutomationEpoch === previous.presenceAutomationEpoch) return;
-        store.setState({
-            observedPomodoroEpoch: state.presenceAutomationEpoch,
-            ...evidenceReset(),
-        });
-    });
     void initialize();
 
     return () => {
         stopped = true;
         stopInterval();
-        unsubscribePomodoro();
     };
 }
 

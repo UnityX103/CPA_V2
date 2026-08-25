@@ -99,26 +99,16 @@
 | 设置 | 默认值 | 合法范围 | 持久化 |
 |---|---:|---:|---|
 | 摄像头自动控制 | 关闭 | 开 / 关 | 设备本地 |
-| 检测间隔 | 60 秒 | 30-600 秒，整数 | 设备本地 |
-| 切换状态确认时长 | 60 秒 | 30-600 秒，整数 | 设备本地 |
+| 检测间隔 | 10 秒 | 5-600 秒，整数 | 设备本地 |
 
-进入专注、离开专注和返回后继续专注共用「切换状态确认时长」。无论阈值为何，仍必须满足下述「至少两次成功同向观测」，不能由一次观测立即触发。
+### 瞬时切换
 
-### 连续证据与防误判
+每次成功观测立即按当前番茄钟状态执行对应动作，不维护候选方向、确认阈值或连续成功次数：
 
-前端维护候选方向、首个成功观测时间、最近成功观测时间和连续成功次数。
-
-一次自动动作必须同时满足：
-
-1. 至少两次连续成功观测结果相同。
-2. 首次与当前观测之间的真实单调时钟时长达到对应阈值。
-3. 两次相邻计划采样之间的实际间隔没有超过配置间隔的 2 倍。
-4. 当前番茄钟状态仍符合该动作的资格条件。
-
-重置规则：
-
-- 相反结果、`unknown`、功能关闭、配置应用、阶段变化以及任意手动 `start / pause / skip / reset` 都清空候选证据。
-- 采样间隔超过配置间隔的 2 倍时，视为睡眠、挂起或调度中断，清空旧证据后从当前观测重新开始；恢复后的第一次观测不能单独触发动作。
+- 第一次 `absent` 可立即暂停正在运行的 focus。
+- 第一次 `present` 可立即恢复 Presence-Owned Pause、启动自然休息结束后等待的 focus，或提前结束 break。
+- `unknown` 永不改变番茄钟状态。
+- 手动暂停不属于 Presence-Owned Pause，不能由 `present` 自动恢复。
 - 同一时刻最多一个采样请求。上一次未完成时跳过本次调度，不排队、不并发打开摄像头。
 - 单次采样应有 10 秒超时；超时产生 `unknown` 并释放摄像头。
 
@@ -127,7 +117,7 @@
 ### 启用
 
 1. 用户在番茄钟设置中打开「摄像头自动控制」并点击现有「应用」。
-2. 主窗口保存设备本地配置并清空旧候选证据。
+2. 主窗口保存设备本地配置。
 3. macOS 若权限为 `notDetermined`，设置窗口显示「需要授权」，仅在用户点击「授权」时弹系统提示；应用启动或打开设置页不得自行弹权限框。
 4. Windows 在第一次显式启用后的探测中验证系统相机访问；若系统隐私开关拒绝访问，显示「权限被拒绝」。
 5. 权限可用后立即执行一次采样，之后按配置间隔调度。
@@ -136,14 +126,14 @@
 
 1. 用户关闭设置并应用后，取消后续调度。
 2. 正在执行的采样允许完成，但其结果必须因 generation 不匹配而被丢弃。
-3. 清空候选证据、最近结果和 Presence-Owned Pause 标记。
+3. 清空最近结果和 Presence-Owned Pause 标记。
 4. 已被自动暂停的计时器保持暂停；关闭功能本身不得擅自恢复计时。
 
 ### 休息中自动进入专注
 
 资格状态：`currentPhase === 'break'`，不论休息计时是否正在运行。
 
-满足在场确认后：
+第一次成功 `present` 观测后：
 
 - 通过新的番茄钟 action 以 `triggeredBy: 'presence'` 执行 `break -> focus`。
 - 若仍有下一轮，进入下一轮 `focus` 并立即运行。
@@ -159,39 +149,39 @@
 - 最近一次真实阶段事件是 `break -> focus`；
 - 之后没有发生手动 `pause / reset / applySettings`。
 
-满足在场确认后直接启动当前 focus。初次启动、reset 后的 focus、用户手动暂停的 focus 和 `completed` 都不具备该资格。
+第一次成功 `present` 观测后直接启动当前 focus。初次启动、reset 后的 focus、用户手动暂停的 focus 和 `completed` 都不具备该资格。
 
 ### 专注中离场
 
 资格状态：`currentPhase === 'focus' && isRunning === true`。
 
-持续 `absent` 且达到切换状态确认时长后：
+第一次成功 `absent` 观测后：
 
 - 保持 `currentPhase`、`currentRound` 和触发时刻的 `remainingSeconds`，只把 `isRunning` 设为 false。
 - 标记为 Presence-Owned Pause，不生成 focus 完成事件，不增加连续专注或打卡计数。
 - 主窗口显示一次「检测到离开，已暂停专注」。
-- 之后持续 `present` 达到切换状态确认时长时，自动继续同一 focus，并显示一次「检测到返回，已继续专注」。
+- 之后第一次成功 `present` 观测时，自动继续同一 focus，并显示一次「检测到返回，已继续专注」。
 - `unknown` 时维持暂停，不自动继续。
-- 一次离场自动动作最多触发一次；手动动作立即取消旧离场证据和自动恢复资格。
+- 一次离场自动动作最多触发一次；手动动作立即取消自动恢复资格。
 - 不得通过伪造 `focus -> break` 完成事件复用提示 UI，否则会污染连续专注次数和打卡计数。
 
 ### 手动操作优先级
 
 - 用户手动暂停的 focus 永不因 `present` 自动恢复。
 - 用户在 Presence-Owned Pause 状态手动点击开始，视为用户接管：立即开始并清除自动暂停归属。
-- 用户执行 skip、reset 或应用会重置进度的番茄钟设置后，清除所有 presence 自动化归属和证据。
-- 用户在 break 中手动暂停不阻止「持续在场后进入 focus」；这是 R2 的既定行为。
+- 用户执行 skip、reset 或应用会重置进度的番茄钟设置后，清除所有 presence 自动化归属。
+- 用户在 break 中手动暂停不阻止「检测到在场后进入 focus」；这是 R2 的既定行为。
 
 ## D-01：已确认决策
 
-**决定**：运行中的 focus 持续离场达到切换状态确认时长后，保留进度并自动暂停；确认用户返回后自动继续同一 focus。
+**决定**：运行中的 focus 第一次检测到离场后保留进度并自动暂停；第一次检测到用户返回后自动继续同一 focus。
 
 ### 选定方案：保留进度并自动暂停/继续
 
 - 保持 `currentPhase`、`currentRound` 和 `remainingSeconds`，只把 `isRunning` 设为 false。
 - 标记为 Presence-Owned Pause，不生成 focus 完成事件，不增加连续专注或打卡计数。
 - 主窗口显示一次「检测到离开，已暂停专注」。
-- 之后持续 `present` 达到切换状态确认时长时，自动继续同一 focus，并显示一次「检测到返回，已继续专注」。
+- 之后第一次成功 `present` 观测时，自动继续同一 focus，并显示一次「检测到返回，已继续专注」。
 - `unknown` 时维持暂停，不自动继续。
 
 理由：符合任务对「自动暂停/继续状态机」的要求；不会因误判丢失当前专注；不会制造虚假的 focus 完成记录；用户可通过任意手动操作接管。
@@ -229,11 +219,11 @@
 | `disabled` | 功能关闭 | 不采样 | 无动作 |
 | `permissionRequired` | 尚未请求授权 | 等用户操作 | 无动作 |
 | `checking` | 正在探测或采样 | 禁止并发 | 无动作 |
-| `ready` | 最近一次采样成功 | 正常调度 | 可积累证据 |
+| `ready` | 最近一次采样成功 | 正常调度 | 成功观测立即按当前状态动作 |
 | `permissionDenied` | 系统拒绝 | 暂停调度到重试/重启 | 无动作 |
 | `noDevice` | 无可用摄像头 | 暂停调度到重试/重启 | 无动作 |
-| `busy` | 设备被占用 | 下一间隔重试 | 清空证据，无动作 |
-| `error` | 其他原生失败 | 下一间隔重试，连续错误去重提示 | 清空证据，无动作 |
+| `busy` | 设备被占用 | 下一间隔重试 | 无动作 |
+| `error` | 其他原生失败 | 下一间隔重试，连续错误去重提示 | 无动作 |
 
 ## 原生实现边界
 
@@ -294,14 +284,14 @@ sample_camera_presence(): PresenceSample
 
 新增 `app/src/domain/presence.ts`，负责：
 
-- 设备本地配置：`enabled`、`intervalSeconds`、`presentThresholdSeconds`。
-- 运行态：availability、最近观测、最近成功时间、候选证据、in-flight、generation、lastError。
+- 设备本地配置：`enabled`、`intervalSeconds`。
+- 运行态：availability、最近观测、最近成功时间、in-flight、generation、lastError。
 - 自动化归属：是否为 Presence-Owned Pause，以及自然 break 结束后的自动启动资格。
 - `usePresenceMonitor({ enabled: localHydrated })`，只挂载在主窗口。
 
 设置窗口不得直接调用采样 command。扩展现有 bridge：
 
-- `BridgeSnapshot.presence` 同步配置和可展示运行态，但不包含候选计数或人脸数据。
+- `BridgeSnapshot.presence` 同步配置和可展示运行态，但不包含人脸数据。
 - `DispatchPayload` 增加 presence 的 `applySettings`、`requestAccess`、`retry`、`openPrivacySettings`。
 - settings mirror 只派发动作，由主窗口执行并回推 snapshot。
 - bridge version 只有在保持兼容不可行时才升级；同一发布内所有窗口必须使用相同契约。
@@ -319,10 +309,10 @@ sample_camera_presence(): PresenceSample
 
 不得把以下字段加入 `UserPreferencesSnapshot`、`CloudAccountData`、Server `UserDataStore` 或房间 `RemoteState`：
 
-- enabled、interval、threshold；
+- enabled、interval；
 - 权限、设备、busy/error 状态；
 - present/absent/unknown；
-- 候选证据、自动暂停归属；
+- 自动暂停归属；
 - 任何图片或检测元数据。
 
 这是 `2026-05-22-local-first-settings-sync-design.md` 的显式隐私例外：摄像头能力与授权是设备特定的，从其他设备同步 `enabled=true` 可能在未经该设备用户确认的情况下启动摄像头探测。
@@ -336,13 +326,12 @@ sample_camera_presence(): PresenceSample
 设置页包含：
 
 - 「摄像头自动控制」开关，默认关。
-- 「检测间隔」数值控件，单位秒，30-600。
-- 「切换状态确认时长」数值控件，单位秒，30-600。
+- 「检测间隔」数值控件，单位秒，5-600。
 - 「摄像头状态」值：未启用、需要授权、检测中、可用、权限被拒绝、未找到摄像头、摄像头被占用、检测失败。
 - 按状态提供「授权」「打开系统设置」「重试」，不显示无效动作。
 - 最近观测只显示「在场 / 离场 / 未知」，不显示画面或人脸数量。
 
-三个配置参与番茄钟页现有 dirty/apply 流程。关闭或参数变更必须在点击「应用」后生效；权限和重试动作立即执行，不参与 dirty 状态。
+两个配置参与番茄钟页现有 dirty/apply 流程。关闭或间隔变更必须在点击「应用」后生效；权限和重试动作立即执行，不参与 dirty 状态。
 
 主窗口只在动作或可用性发生变化时显示一次短提示，不在每次采样时提示：
 
@@ -364,18 +353,17 @@ sample_camera_presence(): PresenceSample
 
 | 场景 | 期望结果 |
 |---|---|
-| 摄像头被会议软件占用 | `unknown + busy`，清空证据，番茄钟不动作，下个间隔重试 |
-| 运行中撤销权限 | 停止有效观测，清空证据，若已 Presence-Owned Pause 则继续保持暂停 |
+| 摄像头被会议软件占用 | `unknown + busy`，番茄钟不动作，下个间隔重试 |
+| 运行中撤销权限 | 停止有效观测，若已 Presence-Owned Pause 则继续保持暂停 |
 | 功能关闭时仍有请求返回 | generation 不匹配，结果丢弃 |
-| 系统睡眠后恢复 | 旧证据失效，至少两次新的成功观测后才能动作 |
-| 用户戴口罩、背对或暗光 | 可能得到 absent；连续次数与时长共同防抖，不引入身份或人体检测猜测 |
+| 系统睡眠后恢复 | 恢复后的第一次成功观测可立即动作 |
+| 用户戴口罩、背对或暗光 | 可能得到 absent 并立即暂停；不引入身份或人体检测猜测 |
 | 检测到照片或屏幕中的脸 | v1 可能视为 present；活体检测不在范围内 |
-| breakDurationSeconds = 0 | 离场仍按切换状态确认时长判断，且至少需要两次连续 absent |
+| breakDurationSeconds = 0 | 观测仍按瞬时规则处理，不借用休息时长作为阈值 |
 | completed | 不自动开始新番茄钟 |
 | 初始 focus 停止态 | 不因在场自动开始 |
 | 手动暂停 focus | 永不由摄像头恢复 |
 | Presence-Owned Pause 后 unknown | 保持暂停，不恢复、不推进 |
-| 参数修改时已有候选证据 | 应用新参数并清空旧证据，不能用旧时长立即触发 |
 
 ## 测试要求
 
@@ -385,22 +373,22 @@ sample_camera_presence(): PresenceSample
 
 1. 默认关闭，不调用原生采样。
 2. 启用后立即采样，之后按间隔采样；in-flight 时不并发。
-3. 两次同向观测且真实时长达阈值才触发；一次观测不触发。
-4. `unknown`、相反结果、超长调度间隔和配置变更清空证据。
-5. break 运行中和暂停中满足 present 时都进入下一 focus 并运行。
-6. 最后一轮 break 满足 present 时进入 completed，不新开一组。
-7. 自然 break 结束后的 focus 可由 present 启动；初始/reset/手动暂停 focus 不可。
+3. 第一次成功 absent 立即暂停运行中的 focus；第一次成功 present 立即恢复 Presence-Owned Pause。
+4. `unknown` 不改变番茄钟状态。
+5. break 运行中和暂停中第一次 present 都进入下一 focus 并运行。
+6. 最后一轮 break 第一次 present 时进入 completed，不新开一组。
+7. 自然 break 结束后的 focus 可由第一次 present 启动；初始/reset/手动暂停 focus 不可。
 8. 手动 start/pause/skip/reset 优先并清空自动化状态。
 9. completed 对任意观测无动作。
 10. 关闭时丢弃过期采样结果；已自动暂停的 focus 保持暂停。
 11. 离场只暂停并保留 round/remaining，不产生 focus completion；返回后只恢复 Presence-Owned Pause。
-12. 设置合法范围、设备本地持久化损坏回退和旧数据缺字段默认。
+12. 检测间隔合法范围、设备本地持久化损坏回退，以及旧数据中的确认时长字段被安全忽略。
 
 ### Bridge 与 UI 测试
 
 - presence snapshot 在设置窗口正确镜像。
 - 设置窗口 action 只由主窗口执行。
-- dirty/apply 包含三个设置；权限/重试不污染 dirty。
+- dirty/apply 包含启用开关和检测间隔；权限/重试不污染 dirty。
 - 每个 availability 状态显示正确文案和可用操作。
 - 主窗口提示按状态变化去重。
 - `triggeredBy: 'presence'` 的 break 结束不触发 focus 完成视频、自动置顶或打卡增加。
@@ -421,14 +409,14 @@ sample_camera_presence(): PresenceSample
 
 1. **AC-01 默认隐私**：全新安装首次启动 10 分钟内不出现摄像头权限提示或摄像头指示灯，直到用户明确启用并授权。
 2. **AC-02 按需释放**：启用后每次采样结束或失败后摄像头被释放；FaceTime/Camera/会议软件可在采样间隔内重新取得设备。
-3. **AC-03 在场进入 focus**：配置 30 秒间隔、30 秒在场阈值，在 break 中连续两次成功 present 且相隔至少 30 秒后，下一轮 focus 已运行。
-4. **AC-04 休息结束后启动**：自然 break 结束进入停止的 focus 后，连续在场满足阈值会开始 focus；应用初始停止态不会自动开始。
-5. **AC-05 防单点误判**：任意一次 present、absent 或 unknown 都不能单独改变番茄钟。
+3. **AC-03 在场进入 focus**：break 中第一次成功 present 后，下一轮 focus 已运行。
+4. **AC-04 休息结束后启动**：自然 break 结束进入停止的 focus 后，第一次成功 present 会开始 focus；应用初始停止态不会自动开始。
+5. **AC-05 瞬时切换**：focus 运行中第一次成功 absent 立即暂停；Presence-Owned Pause 中第一次成功 present 立即恢复；unknown 无动作。
 6. **AC-06 失败安全**：权限拒绝、设备忙、无设备、超时连续发生时，番茄钟阶段、轮次、剩余时间和运行状态不因 presence 自动化改变。
-7. **AC-07 手动优先**：手动暂停 focus 后连续 present 超过阈值，计时器仍保持暂停。
-8. **AC-08 睡眠恢复**：在候选证据积累中让系统睡眠超过 2 个检测间隔，恢复后的第一次观测不触发动作。
+7. **AC-07 手动优先**：手动暂停 focus 后收到 present，计时器仍保持暂停。
+8. **AC-08 睡眠恢复**：系统恢复后的第一次成功观测按瞬时规则处理，unknown 无动作。
 9. **AC-09 数据边界**：本地 store、云账号 payload、房间 WebSocket payload和日志中均不存在图片、人脸框或在场状态；云账号切换不会改变本机摄像头开关。
-10. **AC-10 在场检测暂停与恢复**：focus 运行中连续 absent 达到切换状态确认时长后，phase/round/remaining 保持、isRunning=false、无 focus completion；连续 present 达到同一阈值后恢复同一 remaining，手动暂停则不恢复。
+10. **AC-10 在场检测暂停与恢复**：focus 运行中第一次成功 absent 后，phase/round/remaining 保持、isRunning=false、无 focus completion；第一次成功 present 后恢复同一 remaining，手动暂停则不恢复。
 11. **AC-11 双平台**：macOS x86_64、macOS ARM64 和 Windows x86_64 的发布构建均包含非 stub 摄像头实现，并通过正常/拒绝/占用三条人工路径。
 12. **AC-12 退出清理**：退出应用后 2 秒内摄像头指示灯熄灭，进程不因摄像头任务或线程滞留。
 
@@ -442,22 +430,22 @@ sample_camera_presence(): PresenceSample
 
 ### 用户确认决策
 
-- focus 持续离场达到切换状态确认时长后，保留当前进度并进入 Presence-Owned Pause；确认返回后自动继续同一 focus。
+- focus 第一次检测到离场后，保留当前进度并进入 Presence-Owned Pause；第一次检测到返回后自动继续同一 focus。
 
 ### 实施基线
 
 - 人脸存在是「工位在场」代理，不声称用户在工作。
-- 默认关闭、60 秒检测间隔、60 秒在场确认，范围 30-600 秒。
-- 每次按需开合摄像头，至少两次连续成功观测并满足真实时长。
+- 默认关闭、10 秒检测间隔，范围 5-600 秒。
+- 每次按需开合摄像头，每次成功观测立即按当前番茄钟状态处理。
 - 摄像头设置设备本地，不进行账号云同步或房间同步。
 - 默认摄像头唯一，v1 不做设备选择、预览或模型回退。
 - 原生采集与原生系统人脸检测，前端只做调度和状态机。
 
 ### 合理假设
 
-- 桌面用户通常面向摄像头；暗光、背对和遮挡由连续证据降低风险，但不能完全消除。
+- 桌面用户通常面向摄像头；暗光、背对和遮挡可能产生瞬时误判，这是即时切换策略的已知取舍。
 - 系统默认摄像头能满足 v1；无默认设备时使用 `noDevice` 降级。
-- 30 秒是按需开合、系统指示灯和自动控制响应之间可接受的最小间隔。
+- 5 秒是按需开合、系统指示灯和自动控制响应之间可接受的最小间隔。
 
 ## 未决问题
 
