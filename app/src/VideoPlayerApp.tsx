@@ -27,6 +27,7 @@ export default function VideoPlayerApp() {
                 src={src}
                 aria-label={`播放 ${title}`}
                 autoPlay
+                muted
                 playsInline
                 onEnded={closePlayerWindow}
                 onError={closePlayerWindow}

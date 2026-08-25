@@ -22,8 +22,9 @@ describe('VideoPlayerApp', () => {
 
     it('renders the selected focus-end video', () => {
         render(<VideoPlayerApp />);
-        expect(screen.getByLabelText('播放 千千').getAttribute('src'))
-            .toBe('/videos/ms1-alpha.mov');
+        const video = screen.getByLabelText('播放 千千') as HTMLVideoElement;
+        expect(video.getAttribute('src')).toBe('/videos/ms1-alpha.mov');
+        expect(video.muted).toBe(true);
     });
 
     it('closes when playback ends, errors, or Escape is pressed', () => {
