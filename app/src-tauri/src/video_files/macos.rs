@@ -25,7 +25,7 @@ pub(super) fn prepare_playable_path(
 
     let temporary_target = alpha_tmp_path(&target);
     let _ = fs::remove_file(&temporary_target);
-    if let Err(error) = run_ffmpeg_alpha_transcode(source, &temporary_target) {
+    if let Err(error) = run_ffmpeg_alpha_transcode(app, source, &temporary_target) {
         let _ = fs::remove_file(&temporary_target);
         return Err(error);
     }
@@ -34,10 +34,17 @@ pub(super) fn prepare_playable_path(
     Ok(target)
 }
 
-fn run_ffmpeg_alpha_transcode(source: &Path, target: &Path) -> Result<(), String> {
+fn run_ffmpeg_alpha_transcode(
+    app: &tauri::AppHandle,
+    source: &Path,
+    target: &Path,
+) -> Result<(), String> {
     let mut candidates = Vec::new();
     if let Some(configured) = std::env::var_os("CPA_FFMPEG") {
         candidates.push(PathBuf::from(configured));
+    }
+    if let Some(downloaded) = crate::video_editor_module::bundled_tool_path(app, "ffmpeg") {
+        candidates.push(downloaded);
     }
     candidates.extend([
         PathBuf::from("ffmpeg"),

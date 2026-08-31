@@ -5,6 +5,7 @@ mod key_counter;
 mod presence_detection;
 mod scaled_window;
 mod sound_files;
+mod video_editor_module;
 mod video_files;
 mod window_helpers;
 mod window_layout;
@@ -576,6 +577,7 @@ pub fn run() {
             None,
         ))
         .manage(audio::AudioPlaybackState::default())
+        .manage(video_editor_module::VideoEditorModuleState::default())
         .manage::<std::sync::Arc<accessibility::ListenerHandle>>(listener_handle_for_manage)
         .setup(move |app| {
             // 在主线程构建隐藏的设置窗口 + 装 first-mouse hook。点齿轮时只做
@@ -758,12 +760,17 @@ pub fn run() {
             sound_files::prepare_custom_sound_path,
             video_files::validate_custom_video_path,
             video_files::prepare_custom_alpha_video_path,
+            video_editor_module::video_editor_module_status,
+            video_editor_module::download_video_editor_module,
+            video_editor_module::launch_video_editor_module,
+            video_editor_module::uninstall_video_editor_module,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application");
 
     app.run(move |_handle, event| {
         if matches!(event, RunEvent::ExitRequested { .. } | RunEvent::Exit) {
+            video_editor_module::stop_for_exit(_handle);
             presence_detection::stop_for_exit();
             active_app_stop_for_exit.store(true, Ordering::Relaxed);
             accessibility_stop_for_exit.store(true, Ordering::Relaxed);

@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "version": "1.0.0",
+  "debugOnly": false,
+  "packages": {
+    "macos-arm64": {
+      "url": "https://github.com/UnityX103/CPA_V2/releases/download/video-editor-v1.0.0/video-editor-module-1.0.0-macos-arm64.zip",
+      "sha256": "<sha256>",
+      "size": 0
+    },
+    "macos-x86_64": {
+      "url": "https://github.com/UnityX103/CPA_V2/releases/download/video-editor-v1.0.0/video-editor-module-1.0.0-macos-x86_64.zip",
+      "sha256": "<sha256>",
+      "size": 0
+    },
+    "windows-x86_64": {
+      "url": "https://github.com/UnityX103/CPA_V2/releases/download/video-editor-v1.0.0/video-editor-module-1.0.0-windows-x86_64.zip",
+      "sha256": "<sha256>",
+      "size": 0
+    }
+  }
+}

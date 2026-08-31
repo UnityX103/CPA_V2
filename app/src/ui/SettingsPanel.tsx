@@ -58,11 +58,13 @@ import {
     presenceAuthorizationView,
     type PresenceAuthorizationAction,
 } from './presenceAuthorization';
+import { VideoEditorModuleTab } from './VideoEditorModuleTab';
 import './SettingsPanel.css';
 
 const TABS: Array<{ id: SettingsTab; label: string }> = [
     { id: 'pomodoro', label: '番茄钟' },
     { id: 'online', label: '联机' },
+    { id: 'video', label: '视频编辑' },
     { id: 'global', label: '全局' },
 ];
 
@@ -145,6 +147,7 @@ export function SettingsPanel() {
                 <div className="settings-content" data-no-window-drag>
                     {activeTab === 'pomodoro' && <PomodoroTab onApplyStateChange={setOrdinaryApply} />}
                     {activeTab === 'online' && <OnlineTab />}
+                    {activeTab === 'video' && <VideoEditorModuleTab />}
                     {activeTab === 'global' && <GlobalTab />}
                     <SettingsApplyRow
                         visible={ordinaryApply.dirty}

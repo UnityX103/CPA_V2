@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob: data:; media-src 'self' blob:; connect-src 'self';" />
+  <title>AI 视频编辑器</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <main class="editor-shell">
+    <header class="editor-head">
+      <div>
+        <h1>AI 视频编辑器</h1>
+        <p>SAM 2.1 锁定同一只动物，BiRefNet 保留毛发与运动软边。</p>
+      </div>
+      <label class="button secondary import-button">
+        <input id="video-file" type="file" accept="video/mp4,video/quicktime,video/webm,video/ogg" />
+        导入视频
+      </label>
+    </header>
+
+    <section class="workspace">
+      <div class="preview-column">
+        <article class="card preview-card">
+          <div class="card-head">
+            <div>
+              <strong>源视频预览</strong>
+              <span id="source-meta">请选择视频</span>
+            </div>
+            <button id="screenshot-button" class="button secondary" type="button" disabled>截取当前帧</button>
+          </div>
+          <div class="video-stage">
+            <video id="source-video" controls muted playsinline></video>
+          </div>
+        </article>
+
+        <article class="card result-card">
+          <div class="card-head">
+            <div>
+              <strong>透明成品预览</strong>
+              <span id="result-meta">生成后可在棋盘背景上检查毛发边缘</span>
+            </div>
+            <a id="download-output" class="button primary disabled" aria-disabled="true">下载透明 WebM</a>
+          </div>
+          <div class="video-stage checkerboard">
+            <video id="result-video" controls muted playsinline loop></video>
+          </div>
+        </article>
+      </div>
+
+      <aside class="controls-column">
+        <article class="card control-card">
+          <h2>时间范围</h2>
+          <label>开始秒数<input id="start-seconds" type="number" min="0" step="0.1" value="0" /></label>
+          <label>结束秒数<input id="end-seconds" type="number" min="0.1" step="0.1" value="0" /></label>
+        </article>
+
+        <article class="card control-card">
+          <h2>输出分辨率</h2>
+          <label>预设
+            <select id="resolution-preset">
+              <option value="original">原始尺寸</option>
+              <option value="720">最长边 720</option>
+              <option value="1080">最长边 1080</option>
+              <option value="custom">自定义</option>
+            </select>
+          </label>
+          <div class="resolution-grid">
+            <label>宽度<input id="output-width" type="number" min="2" max="4096" step="2" /></label>
+            <label>高度<input id="output-height" type="number" min="2" max="4096" step="2" /></label>
+          </div>
+          <p>输出始终使用固定完整画布；不提供裁剪框或区域绘制。</p>
+        </article>
+
+        <article class="card pipeline-card">
+          <h2>处理流程</h2>
+          <ol>
+            <li>BiRefNet 生成逐帧动物 soft alpha</li>
+            <li>自动选择清晰主体帧</li>
+            <li>SAM 2.1 前后双向跟踪</li>
+            <li>融合并编码 VP8 Alpha WebM</li>
+          </ol>
+          <button id="process-button" class="button primary wide" type="button" disabled>生成透明视频</button>
+          <div id="progress-panel" class="progress-panel hidden" aria-live="polite">
+            <div class="progress-track"><div id="progress-fill" class="progress-fill"></div></div>
+            <span id="progress-text">等待处理</span>
+          </div>
+          <div id="error-panel" class="error-panel hidden" role="alert"></div>
+        </article>
+      </aside>
+    </section>
+  </main>
+  <script src="/app.js" defer></script>
+</body>
+</html>

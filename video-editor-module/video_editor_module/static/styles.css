@@ -1,0 +1,54 @@
+:root {
+  font-family: Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: #5b4636;
+  background: #f6efe8;
+  font-synthesis: none;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 820px; min-height: 600px; background: linear-gradient(145deg, #fffaf6, #f4e9df); }
+button, input, select { font: inherit; }
+
+.editor-shell { min-height: 100vh; padding: 22px; display: flex; flex-direction: column; gap: 18px; }
+.editor-head { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.editor-head h1 { margin: 0 0 5px; font-size: 23px; }
+.editor-head p { margin: 0; color: #8b7462; font-size: 13px; }
+
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) 310px; gap: 18px; min-height: 0; }
+.preview-column, .controls-column { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.card { border: 1px solid #eadccf; border-radius: 18px; padding: 15px; background: rgba(255, 255, 255, .92); box-shadow: 0 12px 28px rgba(92, 63, 42, .08); }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.card-head > div { display: flex; flex-direction: column; gap: 4px; }
+.card-head strong, .control-card h2, .pipeline-card h2 { color: #49372b; }
+.card-head span { color: #8b7462; font-size: 11px; }
+
+.video-stage { position: relative; overflow: hidden; width: 100%; min-height: 230px; aspect-ratio: 16 / 9; border-radius: 13px; background: #201d1b; display: grid; place-items: center; }
+.video-stage video { width: 100%; height: 100%; object-fit: contain; display: block; }
+.checkerboard { background-color: #b7b7b7; background-image: linear-gradient(45deg, #ddd 25%, transparent 25%), linear-gradient(-45deg, #ddd 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ddd 75%), linear-gradient(-45deg, transparent 75%, #ddd 75%); background-size: 36px 36px; background-position: 0 0, 0 18px, 18px -18px, -18px 0; }
+
+.button { display: inline-flex; align-items: center; justify-content: center; min-height: 34px; padding: 8px 13px; border: 0; border-radius: 10px; cursor: pointer; text-decoration: none; font-weight: 700; font-size: 12px; }
+.button.primary { background: #6f56d9; color: white; }
+.button.secondary { background: #f3e9e0; color: #5b4636; }
+.button:disabled, .button.disabled { opacity: .45; cursor: not-allowed; pointer-events: none; }
+.button.wide { width: 100%; margin-top: 6px; }
+.import-button input { display: none; }
+
+.control-card, .pipeline-card { display: flex; flex-direction: column; gap: 11px; }
+.control-card h2, .pipeline-card h2 { margin: 0 0 2px; font-size: 14px; }
+.control-card label { display: flex; flex-direction: column; gap: 5px; color: #8b7462; font-size: 11px; }
+.control-card input, .control-card select { width: 100%; border: 1px solid #dfd0c2; border-radius: 9px; padding: 8px 9px; color: #49372b; background: white; }
+.resolution-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.control-card p { margin: 0; padding: 9px; border-radius: 10px; background: #fff7d9; color: #8a6d00; font-size: 10px; line-height: 1.45; }
+.pipeline-card ol { margin: 0; padding-left: 20px; color: #7d6654; font-size: 11px; line-height: 1.7; }
+
+.progress-panel { display: flex; flex-direction: column; gap: 6px; color: #7d6654; font-size: 11px; }
+.progress-track { height: 7px; overflow: hidden; border-radius: 99px; background: #eee4db; }
+.progress-fill { width: 0; height: 100%; background: #6f56d9; transition: width .2s ease; }
+.error-panel { padding: 9px; border-radius: 10px; background: #fee2e2; color: #991b1b; font-size: 11px; line-height: 1.45; }
+.hidden { display: none; }
+
+@media (max-width: 900px) {
+  .workspace { grid-template-columns: 1fr; }
+  .controls-column { display: grid; grid-template-columns: 1fr 1fr; }
+  .pipeline-card { grid-column: 1 / -1; }
+}

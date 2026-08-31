@@ -75,7 +75,39 @@ describe('SettingsPanel', () => {
 
         expect(screen.getByRole('button', { name: '番茄钟' })).toBeTruthy();
         expect(screen.getByRole('button', { name: '联机' })).toBeTruthy();
+        expect(screen.getByRole('button', { name: '视频编辑' })).toBeTruthy();
         expect(screen.getByRole('button', { name: '全局' })).toBeTruthy();
+    });
+
+    it('shows the separately downloadable video editor module shell', async () => {
+        invoke.mockImplementation((command: string) => {
+            if (command === 'video_editor_module_status') {
+                return Promise.resolve({
+                    installed: false,
+                    version: null,
+                    target: 'macos-arm64',
+                    message: '视频编辑模块尚未下载',
+                });
+            }
+            if (command === 'download_video_editor_module') {
+                return Promise.resolve({
+                    installed: true,
+                    version: '1.0.0',
+                    target: 'macos-arm64',
+                    message: '视频编辑模块已下载',
+                });
+            }
+            return Promise.resolve(undefined);
+        });
+        render(<SettingsPanel />);
+
+        fireEvent.click(screen.getByRole('button', { name: '视频编辑' }));
+        expect(await screen.findByText('视频编辑模板需要单独下载')).toBeTruthy();
+        expect(screen.getByText(/默认应用包不包含这些内容/)).toBeTruthy();
+
+        fireEvent.click(screen.getByRole('button', { name: '下载视频编辑模板' }));
+        await screen.findByRole('button', { name: '打开视频编辑器' });
+        expect(invoke).toHaveBeenCalledWith('download_video_editor_module');
     });
 
     it('opens the global settings surface', () => {
