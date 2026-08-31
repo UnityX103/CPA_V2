@@ -1496,9 +1496,9 @@
                     "mo62i": {
                       "flipX": false,
                       "flipY": false,
-                      "width": 48.41785030947861,
+                      "width": 48.10747947416144,
                       "height": 18,
-                      "x": 13.55699808665401,
+                      "x": 13.470094252765202,
                       "y": 21,
                       "textGrowth": "fixed-width-height",
                       "fontSize": 17
@@ -4484,6 +4484,28 @@
                 },
                 {
                   "type": "frame",
+                  "id": "w5JE74",
+                  "name": "tab-video",
+                  "width": "fill_container",
+                  "padding": [
+                    10,
+                    14
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "p0vE88",
+                      "name": "lbl-video",
+                      "fill": "#9E8E80",
+                      "content": "视频编辑",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 13,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
                   "id": "htxKX",
                   "name": "tab-global",
                   "width": "fill_container",
@@ -4897,6 +4919,19 @@
                       "gap": 0
                     }
                   }
+                },
+                {
+                  "id": "fa7LC",
+                  "type": "ref",
+                  "ref": "Tkpec",
+                  "name": "videoContentArea",
+                  "enabled": false,
+                  "width": 349,
+                  "height": 318,
+                  "layoutPosition": "absolute",
+                  "x": 0,
+                  "y": 0,
+                  "padding": 16
                 }
               ]
             }
@@ -6420,6 +6455,1401 @@
                           "enabled": true
                         }
                       }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "Tkpec",
+      "x": 3033,
+      "y": 1751,
+      "name": "Video Editor Settings / Not Downloaded",
+      "reusable": true,
+      "width": 572,
+      "height": 350,
+      "fill": "#FFFFFF00",
+      "layout": "vertical",
+      "gap": 16,
+      "children": [
+        {
+          "type": "frame",
+          "id": "ZzvVJ",
+          "name": "Video Editor Settings / Not Downloaded Hero",
+          "context": "仅在摄像头自动控制开启时显示；默认关闭。",
+          "width": "fill_container",
+          "height": 76,
+          "fill": "#F6F7F8",
+          "cornerRadius": 16,
+          "padding": 16,
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "W0neNg",
+              "name": "Video Editor Settings / Not Downloaded Hero Copy",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 4,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "HL8bS",
+                  "name": "Video Editor Settings / Not Downloaded Title",
+                  "fill": "#1A1A1A",
+                  "content": "AI 视频编辑器",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 16,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "M8tARt",
+                  "name": "Video Editor Settings / Not Downloaded Subtitle",
+                  "fill": "#6B7280",
+                  "content": "小动物主体分离 · 独立下载模块",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 11,
+                  "fontWeight": "500"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "lUWCK",
+              "name": "Video Editor Settings / Not Downloaded Status Badge",
+              "fill": "#E5E7EB",
+              "cornerRadius": 999,
+              "padding": [
+                6,
+                10
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "nKxxE",
+                  "name": "Video Editor Settings / Not Downloaded Status",
+                  "fill": "#6B7280",
+                  "content": "未下载",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 12,
+                  "fontWeight": "700"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "OrrkV",
+          "name": "Video Editor Settings / Not Downloaded Download Card",
+          "width": "fill_container",
+          "height": 172,
+          "fill": "#FFF7D9",
+          "cornerRadius": 16,
+          "stroke": "#F3D28B",
+          "strokeWidth": 1,
+          "strokeAlignment": "inner",
+          "layout": "vertical",
+          "gap": 12,
+          "padding": 16,
+          "children": [
+            {
+              "type": "frame",
+              "id": "as1gi",
+              "name": "Video Editor Settings / Not Downloaded Card Copy",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 6,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "tGb9d",
+                  "name": "Video Editor Settings / Not Downloaded Card Title",
+                  "fill": "#1A1A1A",
+                  "content": "视频编辑模板需要单独下载",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 14,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "m9Ll3r",
+                  "name": "Video Editor Settings / Not Downloaded Card Description",
+                  "fill": "#6B7280",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "下载包包含完整编辑界面、SAM2 / BiRefNet、模型、媒体工具和第三方许可；默认应用包不包含这些内容。",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 12,
+                  "fontWeight": "500"
+                },
+                {
+                  "type": "text",
+                  "id": "CHAEq",
+                  "name": "Video Editor Settings / Not Downloaded Target",
+                  "fill": "#A16207",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "macOS ARM64 · 仅接受签名且通过验收的运行包",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 11,
+                  "fontWeight": "600"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "tiqEK",
+              "name": "Video Editor Settings / Not Downloaded Download Button",
+              "width": "fill_container",
+              "height": 38,
+              "fill": "#D15F3D",
+              "cornerRadius": 12,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "ARROp",
+                  "name": "Video Editor Settings / Not Downloaded Download Label",
+                  "fill": "#FFFFFF",
+                  "content": "下载视频编辑模板",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 13,
+                  "fontWeight": "700"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "eEGI7",
+          "name": "Video Editor Settings / Not Downloaded Capability Boundary",
+          "width": "fill_container",
+          "height": 70,
+          "fill": "#F6F7F8",
+          "cornerRadius": 16,
+          "layout": "vertical",
+          "padding": 16,
+          "children": [
+            {
+              "type": "frame",
+              "id": "dFZMB",
+              "name": "Video Editor Settings / Not Downloaded Boundary Copy",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 7,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "alvPE",
+                  "name": "Video Editor Settings / Not Downloaded Keep",
+                  "fill": "#374151",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "保留  当前帧截图 · 输出分辨率 · 时间范围 · 透明预览与导出",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 12,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "fiNee",
+                  "name": "Video Editor Settings / Not Downloaded Remove",
+                  "fill": "#9CA3AF",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "移除  裁剪框拖拽 · 画笔剔除 · 所有区域绘制工具",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 12,
+                  "fontWeight": "500"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "owm2k",
+              "x": 0,
+              "y": 0,
+              "name": "Video Editor Settings / Not Downloaded Boundary Spacer",
+              "enabled": false,
+              "fill": "#FFFFFF00",
+              "fontFamily": "MaokenAssortedSans",
+              "fontSize": 1,
+              "fontWeight": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "MLu3W",
+      "x": 3685,
+      "y": 1751,
+      "name": "Video Editor Settings / Installed",
+      "width": 572,
+      "height": 324,
+      "fill": "#FFFFFF00",
+      "layout": "vertical",
+      "gap": 16,
+      "children": [
+        {
+          "type": "frame",
+          "id": "uycXd",
+          "name": "Video Editor Settings / Installed Hero",
+          "context": "仅在摄像头自动控制开启时显示；默认关闭。",
+          "width": "fill_container",
+          "height": 76,
+          "fill": "#F6F7F8",
+          "cornerRadius": 16,
+          "padding": 16,
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "qJOMx",
+              "name": "Video Editor Settings / Installed Hero Copy",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 4,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "euk2f",
+                  "name": "Video Editor Settings / Installed Title",
+                  "fill": "#1A1A1A",
+                  "content": "AI 视频编辑器",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 16,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "e4KqXr",
+                  "name": "Video Editor Settings / Installed Subtitle",
+                  "fill": "#6B7280",
+                  "content": "小动物主体分离 · 独立下载模块",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 11,
+                  "fontWeight": "500"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "FL0aH",
+              "name": "Video Editor Settings / Installed Status Badge",
+              "fill": "#DCFCE7",
+              "cornerRadius": 999,
+              "padding": [
+                6,
+                10
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "d4A4Qd",
+                  "name": "Video Editor Settings / Installed Status",
+                  "fill": "#15803D",
+                  "content": "已下载",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 12,
+                  "fontWeight": "700"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "BbQU3",
+          "name": "Video Editor Settings / Installed Ready Card",
+          "width": "fill_container",
+          "height": 146,
+          "fill": "#F0FDF4",
+          "cornerRadius": 16,
+          "stroke": "#BBF7D0",
+          "strokeWidth": 1,
+          "strokeAlignment": "inner",
+          "layout": "vertical",
+          "gap": 12,
+          "padding": 16,
+          "children": [
+            {
+              "type": "frame",
+              "id": "W5IvQ",
+              "name": "Video Editor Settings / Installed Card Copy",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 6,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "GfFQl",
+                  "name": "Video Editor Settings / Installed Card Title",
+                  "fill": "#1A1A1A",
+                  "content": "视频编辑模板 1.0.0",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 14,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "YhFEF",
+                  "name": "Video Editor Settings / Installed Card Description",
+                  "fill": "#6B7280",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "完整编辑界面、模型、AI worker 与媒体工具位于应用数据目录，可单独升级或删除。",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 12,
+                  "fontWeight": "500"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "wGkLr",
+              "name": "Video Editor Settings / Installed Action Row",
+              "width": "fill_container",
+              "height": 38,
+              "gap": 8,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "CIYnF",
+                  "name": "Video Editor Settings / Installed Open Button",
+                  "width": "fill_container",
+                  "height": 38,
+                  "fill": "#D15F3D",
+                  "cornerRadius": 12,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "bJkGf",
+                      "name": "Video Editor Settings / Installed Open Label",
+                      "fill": "#FFFFFF",
+                      "content": "打开视频编辑器",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 13,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "DXAJj",
+                  "name": "Video Editor Settings / Installed Remove Button",
+                  "width": "fill_container",
+                  "height": 38,
+                  "fill": "#FFFFFF",
+                  "cornerRadius": 12,
+                  "stroke": "#D1D5DB",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "vE9cP",
+                      "name": "Video Editor Settings / Installed Remove Label",
+                      "fill": "#6B7280",
+                      "content": "删除模板",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "l9E5T",
+          "name": "Video Editor Settings / Installed Capability Boundary",
+          "width": "fill_container",
+          "height": 70,
+          "fill": "#F6F7F8",
+          "cornerRadius": 16,
+          "layout": "vertical",
+          "padding": 16,
+          "children": [
+            {
+              "type": "frame",
+              "id": "cVHeT",
+              "name": "Video Editor Settings / Installed Boundary Copy",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 7,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "ozyqT",
+                  "name": "Video Editor Settings / Installed Keep",
+                  "fill": "#374151",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "保留  当前帧截图 · 输出分辨率 · 时间范围 · 透明预览与导出",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 12,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "HYaDv",
+                  "name": "Video Editor Settings / Installed Remove",
+                  "fill": "#9CA3AF",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "移除  裁剪框拖拽 · 画笔剔除 · 所有区域绘制工具",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 12,
+                  "fontWeight": "500"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "xutMy",
+              "x": 0,
+              "y": 0,
+              "name": "Video Editor Settings / Installed Boundary Spacer",
+              "enabled": false,
+              "fill": "#FFFFFF00",
+              "fontFamily": "MaokenAssortedSans",
+              "fontSize": 1,
+              "fontWeight": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "mZwXg",
+      "x": 3033,
+      "y": 2221,
+      "name": "AI Video Editor / Downloaded Template",
+      "reusable": true,
+      "clip": true,
+      "width": 1100,
+      "height": 760,
+      "fill": "#F7F3EF",
+      "cornerRadius": 20,
+      "layout": "vertical",
+      "gap": 16,
+      "padding": 24,
+      "children": [
+        {
+          "type": "frame",
+          "id": "h621sh",
+          "name": "Video Editor Header",
+          "context": "仅在摄像头自动控制开启时显示；默认关闭。",
+          "width": "fill_container",
+          "height": 68,
+          "fill": "#FFFFFF",
+          "cornerRadius": 16,
+          "padding": 14,
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "b8EgWk",
+              "name": "Video Editor Header Left",
+              "width": "fill_container",
+              "gap": 12,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "FmiCt",
+                  "name": "Video Editor App Icon",
+                  "width": 40,
+                  "height": 40,
+                  "fill": "#D15F3D",
+                  "cornerRadius": 12,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "OzsBb",
+                      "name": "Video Editor Icon",
+                      "width": 20,
+                      "height": 20,
+                      "icon": "video",
+                      "library": "lucide",
+                      "fill": "#FFFFFF"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "wyRtE",
+                  "name": "Video Editor Title Copy",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "m4ea9N",
+                      "name": "Video Editor Title",
+                      "fill": "#1A1A1A",
+                      "content": "AI 视频编辑器",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 20,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Whjp3",
+                      "name": "Video Editor Subtitle",
+                      "fill": "#6B7280",
+                      "content": "小动物主体分离 · SAM 2.1 × BiRefNet",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 11,
+                      "fontWeight": "500"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "JzjVh",
+              "name": "Video Editor Header Actions",
+              "gap": 10,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "Y3Pwr",
+                  "name": "Video Editor Version Badge",
+                  "fill": "#DCFCE7",
+                  "cornerRadius": 999,
+                  "padding": [
+                    7,
+                    11
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "z45B3H",
+                      "name": "Video Editor Version",
+                      "fill": "#15803D",
+                      "content": "模块已下载 · v1.0.0",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 11,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "M7Kpvx",
+                  "name": "Video Editor Close",
+                  "width": 32,
+                  "height": 32,
+                  "fill": "#F6F7F8",
+                  "cornerRadius": 10,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "YvTno",
+                      "name": "Video Editor Close Icon",
+                      "width": 16,
+                      "height": 16,
+                      "icon": "x",
+                      "library": "lucide",
+                      "fill": "#9E8E80"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "xSxWs",
+          "name": "Video Editor Workspace",
+          "width": "fill_container",
+          "height": 628,
+          "gap": 16,
+          "children": [
+            {
+              "type": "frame",
+              "id": "UcgY3",
+              "name": "Video Editor Source Panel",
+              "width": 510,
+              "height": 628,
+              "fill": "#FFFFFF",
+              "cornerRadius": 16,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "pTigN",
+                  "name": "Source Panel Header",
+                  "width": "fill_container",
+                  "height": 34,
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "fxXqW",
+                      "name": "Source Panel Title",
+                      "fill": "#1A1A1A",
+                      "content": "原始视频",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 15,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "awjRA",
+                      "name": "Screenshot Current Frame Button",
+                      "height": 34,
+                      "fill": "#FFFFFF",
+                      "cornerRadius": 10,
+                      "stroke": "#D1D5DB",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
+                      "gap": 6,
+                      "padding": [
+                        9,
+                        11
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "Y46F6Y",
+                          "name": "Screenshot Icon",
+                          "width": 15,
+                          "height": 15,
+                          "icon": "camera",
+                          "library": "lucide",
+                          "fill": "#6B7280"
+                        },
+                        {
+                          "type": "text",
+                          "id": "dpOLN",
+                          "name": "Screenshot Label",
+                          "fill": "#6B7280",
+                          "content": "截取当前帧",
+                          "fontFamily": "MaokenAssortedSans",
+                          "fontSize": 11,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Fil2Z",
+                  "name": "Video Import Row",
+                  "width": "fill_container",
+                  "height": 44,
+                  "fill": "#F6F7F8",
+                  "cornerRadius": 12,
+                  "gap": 8,
+                  "padding": [
+                    11,
+                    12
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "W4KLBE",
+                      "name": "Video Import Icon",
+                      "width": 16,
+                      "height": 16,
+                      "icon": "upload",
+                      "library": "lucide",
+                      "fill": "#D15F3D"
+                    },
+                    {
+                      "type": "text",
+                      "id": "JCaYW",
+                      "name": "Video Import File",
+                      "fill": "#374151",
+                      "content": "cat-walk.mp4",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "hPYnt",
+                      "name": "Video Import Spacer",
+                      "width": "fill_container",
+                      "height": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "h2KVA",
+                      "name": "Video Import Meta",
+                      "fill": "#9CA3AF",
+                      "content": "1008×720 · 8.2 秒",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 11,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "prmNw",
+                  "name": "Source Video Preview",
+                  "width": "fill_container",
+                  "height": 190,
+                  "fill": "#2D2926",
+                  "cornerRadius": 14,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "dlCIU",
+                      "name": "Source Preview Play",
+                      "width": 34,
+                      "height": 34,
+                      "icon": "play",
+                      "library": "lucide",
+                      "fill": "#FFFFFF"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Yv80q",
+                      "name": "Source Preview Time",
+                      "fill": "#FFFFFF",
+                      "content": "当前帧 00:03.200",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "dod9m",
+                  "name": "Video Time Range",
+                  "width": "fill_container",
+                  "height": 54,
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "lgSPC",
+                      "name": "Start Time",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 5,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "VdbIt",
+                          "name": "Start Time Label",
+                          "fill": "#9CA3AF",
+                          "content": "开始时间",
+                          "fontFamily": "MaokenAssortedSans",
+                          "fontSize": 11,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "pODS7",
+                          "name": "Start Time Input",
+                          "width": "fill_container",
+                          "height": 34,
+                          "fill": "#F6F7F8",
+                          "cornerRadius": 10,
+                          "stroke": "#E5E7EB",
+                          "strokeWidth": 1,
+                          "strokeAlignment": "inner",
+                          "padding": [
+                            9,
+                            11
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "PWY8e",
+                              "name": "Start Time Value",
+                              "fill": "#374151",
+                              "content": "0.000 秒",
+                              "fontFamily": "MaokenAssortedSans",
+                              "fontSize": 12,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "NWkxw",
+                      "name": "End Time",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 5,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "jLfYV",
+                          "name": "End Time Label",
+                          "fill": "#9CA3AF",
+                          "content": "结束时间",
+                          "fontFamily": "MaokenAssortedSans",
+                          "fontSize": 11,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "caIPP",
+                          "name": "End Time Input",
+                          "width": "fill_container",
+                          "height": 34,
+                          "fill": "#F6F7F8",
+                          "cornerRadius": 10,
+                          "stroke": "#E5E7EB",
+                          "strokeWidth": 1,
+                          "strokeAlignment": "inner",
+                          "padding": [
+                            9,
+                            11
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "qzK5r",
+                              "name": "End Time Value",
+                              "fill": "#374151",
+                              "content": "8.200 秒",
+                              "fontFamily": "MaokenAssortedSans",
+                              "fontSize": 12,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "lsHbQ",
+                  "name": "Output Resolution Card",
+                  "width": "fill_container",
+                  "height": 112,
+                  "fill": "#F6F7F8",
+                  "cornerRadius": 12,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "padding": 12,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "O0kh2",
+                      "name": "Resolution Header",
+                      "width": "fill_container",
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "wWYg6",
+                          "name": "Resolution Title",
+                          "fill": "#374151",
+                          "content": "输出分辨率",
+                          "fontFamily": "MaokenAssortedSans",
+                          "fontSize": 12,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "dw4iI",
+                          "name": "Resolution Hint",
+                          "fill": "#9CA3AF",
+                          "content": "保持偶数尺寸",
+                          "fontFamily": "MaokenAssortedSans",
+                          "fontSize": 10,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Pbn7N",
+                      "name": "Resolution Presets",
+                      "width": "fill_container",
+                      "gap": 6,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "v20ZU",
+                          "name": "Original Resolution",
+                          "height": 30,
+                          "fill": "#FFF1EA",
+                          "cornerRadius": 9,
+                          "stroke": "#E89A78",
+                          "strokeWidth": 1,
+                          "strokeAlignment": "inner",
+                          "padding": [
+                            8,
+                            12
+                          ],
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "Fnvg3",
+                              "name": "Original Resolution Label",
+                              "fill": "#D15F3D",
+                              "content": "原始比例",
+                              "fontFamily": "MaokenAssortedSans",
+                              "fontSize": 11,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "yKtsX",
+                          "name": "720 Resolution",
+                          "height": 30,
+                          "fill": "#F6F7F8",
+                          "cornerRadius": 9,
+                          "stroke": "#E5E7EB",
+                          "strokeWidth": 1,
+                          "strokeAlignment": "inner",
+                          "padding": [
+                            8,
+                            12
+                          ],
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "TZE49",
+                              "name": "720 Resolution Label",
+                              "fill": "#6B7280",
+                              "content": "720p",
+                              "fontFamily": "MaokenAssortedSans",
+                              "fontSize": 11,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "Pv7WM",
+                          "name": "1080 Resolution",
+                          "height": 30,
+                          "fill": "#F6F7F8",
+                          "cornerRadius": 9,
+                          "stroke": "#E5E7EB",
+                          "strokeWidth": 1,
+                          "strokeAlignment": "inner",
+                          "padding": [
+                            8,
+                            12
+                          ],
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "LgrGU",
+                              "name": "1080 Resolution Label",
+                              "fill": "#6B7280",
+                              "content": "1080p",
+                              "fontFamily": "MaokenAssortedSans",
+                              "fontSize": 11,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "RT70i",
+                      "name": "Resolution Custom Inputs",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "svOhs",
+                          "name": "Resolution Width Input",
+                          "width": "fill_container",
+                          "height": 30,
+                          "fill": "#FFFFFF",
+                          "cornerRadius": 9,
+                          "stroke": "#E5E7EB",
+                          "strokeWidth": 1,
+                          "strokeAlignment": "inner",
+                          "padding": [
+                            8,
+                            10
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "D1DQX",
+                              "name": "Resolution Width",
+                              "fill": "#6B7280",
+                              "content": "1008 宽",
+                              "fontFamily": "MaokenAssortedSans",
+                              "fontSize": 11,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "Ra3Ym",
+                          "name": "Resolution Height Input",
+                          "width": "fill_container",
+                          "height": 30,
+                          "fill": "#FFFFFF",
+                          "cornerRadius": 9,
+                          "stroke": "#E5E7EB",
+                          "strokeWidth": 1,
+                          "strokeAlignment": "inner",
+                          "padding": [
+                            8,
+                            10
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "Ab2n9",
+                              "name": "Resolution Height",
+                              "fill": "#6B7280",
+                              "content": "720 高",
+                              "fontFamily": "MaokenAssortedSans",
+                              "fontSize": 11,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "yyhAH",
+                  "name": "Generate Transparent Video Button",
+                  "width": "fill_container",
+                  "height": 40,
+                  "fill": "#D15F3D",
+                  "cornerRadius": 12,
+                  "gap": 7,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "UshtL",
+                      "name": "Generate Icon",
+                      "width": 16,
+                      "height": 16,
+                      "icon": "sparkles",
+                      "library": "lucide",
+                      "fill": "#FFFFFF"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Bc9dM",
+                      "name": "Generate Label",
+                      "fill": "#FFFFFF",
+                      "content": "开始 AI 主体分离",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 13,
+                      "fontWeight": "700"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "HztN3",
+              "name": "Video Editor Result Panel",
+              "width": "fill_container",
+              "height": 628,
+              "fill": "#FFFFFF",
+              "cornerRadius": 16,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "dTAjL",
+                  "name": "Result Panel Header",
+                  "width": "fill_container",
+                  "height": 34,
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "H1ALZ",
+                      "name": "Result Panel Title",
+                      "fill": "#1A1A1A",
+                      "content": "透明成品",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 15,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "HGJoT",
+                      "name": "Alpha Format Badge",
+                      "fill": "#FFF1EA",
+                      "cornerRadius": 999,
+                      "padding": [
+                        6,
+                        9
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "P2elF",
+                          "name": "Alpha Format Label",
+                          "fill": "#D15F3D",
+                          "content": "VP8 Alpha WebM",
+                          "fontFamily": "MaokenAssortedSans",
+                          "fontSize": 10,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "MtKbS",
+                  "name": "Transparent Result Preview",
+                  "width": "fill_container",
+                  "height": 356,
+                  "fill": "#E9E4DE",
+                  "cornerRadius": 14,
+                  "layout": "vertical",
+                  "gap": 10,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "Y04Tbe",
+                      "name": "Transparent Subject Placeholder",
+                      "width": 130,
+                      "height": 130,
+                      "fill": "#FFFFFFB8",
+                      "cornerRadius": 65,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "pYhpc",
+                          "name": "Transparent Subject Icon",
+                          "width": 54,
+                          "height": 54,
+                          "icon": "paw-print",
+                          "library": "lucide",
+                          "fill": "#D15F3D"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "FVqWZ",
+                      "name": "Transparent Preview Label",
+                      "fill": "#6B7280",
+                      "content": "透明背景预览",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 13,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "text",
+                      "id": "PDGyr",
+                      "name": "Transparent Preview Hint",
+                      "fill": "#9CA3AF",
+                      "content": "macOS 使用 HEVC-alpha 预览",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 10,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "aJBJJ",
+                  "name": "Processing Progress Card",
+                  "width": "fill_container",
+                  "height": 64,
+                  "fill": "#F6F7F8",
+                  "cornerRadius": 12,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "padding": 12,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "vioTg",
+                      "name": "Processing Progress Copy",
+                      "width": "fill_container",
+                      "justifyContent": "space_between",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "eFHhn",
+                          "name": "Processing Progress Label",
+                          "fill": "#374151",
+                          "content": "正在融合时序身份与毛发 alpha",
+                          "fontFamily": "MaokenAssortedSans",
+                          "fontSize": 11,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "h3Iws",
+                          "name": "Processing Progress Percent",
+                          "fill": "#D15F3D",
+                          "content": "87%",
+                          "fontFamily": "MaokenAssortedSans",
+                          "fontSize": 11,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "VzKEg",
+                      "name": "Processing Progress Track",
+                      "width": "fill_container",
+                      "height": 8,
+                      "fill": "#E5E7EB",
+                      "cornerRadius": 999,
+                      "children": [
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 999,
+                          "id": "ZNH1H",
+                          "name": "Processing Progress Fill",
+                          "fill": "#D15F3D",
+                          "width": 346,
+                          "height": 8
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "jyKrF",
+                  "name": "No Drawing Tools Notice",
+                  "width": "fill_container",
+                  "height": 40,
+                  "fill": "#FFF7D9",
+                  "cornerRadius": 10,
+                  "gap": 7,
+                  "padding": [
+                    10,
+                    12
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "DWcHq",
+                      "name": "No Drawing Icon",
+                      "width": 15,
+                      "height": 15,
+                      "icon": "shield-check",
+                      "library": "lucide",
+                      "fill": "#A16207"
+                    },
+                    {
+                      "type": "text",
+                      "id": "uTXBY",
+                      "name": "No Drawing Text",
+                      "fill": "#A16207",
+                      "content": "无裁剪框、无画笔、无区域绘制",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 11,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "kTCFK",
+                  "name": "Export Transparent WebM Button",
+                  "width": "fill_container",
+                  "height": 40,
+                  "fill": "#D15F3D",
+                  "cornerRadius": 12,
+                  "gap": 7,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "LltTK",
+                      "name": "Export Icon",
+                      "width": 16,
+                      "height": 16,
+                      "icon": "download",
+                      "library": "lucide",
+                      "fill": "#FFFFFF"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Kzut9",
+                      "name": "Export Label",
+                      "fill": "#FFFFFF",
+                      "content": "导出桌宠透明 WebM",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 13,
+                      "fontWeight": "700"
                     }
                   ]
                 }
