@@ -59,11 +59,13 @@ import {
     type PresenceAuthorizationAction,
 } from './presenceAuthorization';
 import { VideoEditorModuleTab } from './VideoEditorModuleTab';
+import { CockroachModulePanel } from './CockroachModulePanel';
 import './SettingsPanel.css';
 
 const TABS: Array<{ id: SettingsTab; label: string }> = [
     { id: 'pomodoro', label: '番茄钟' },
     { id: 'online', label: '联机' },
+    { id: 'pet', label: '宠物' },
     { id: 'video', label: '视频编辑' },
     { id: 'global', label: '全局' },
 ];
@@ -147,6 +149,7 @@ export function SettingsPanel() {
                 <div className="settings-content" data-no-window-drag>
                     {activeTab === 'pomodoro' && <PomodoroTab onApplyStateChange={setOrdinaryApply} />}
                     {activeTab === 'online' && <OnlineTab />}
+                    {activeTab === 'pet' && <PetTab />}
                     {activeTab === 'video' && <VideoEditorModuleTab />}
                     {activeTab === 'global' && <GlobalTab />}
                     <SettingsApplyRow
@@ -155,6 +158,44 @@ export function SettingsPanel() {
                         onApply={ordinaryApply.apply}
                     />
                 </div>
+            </div>
+        </div>
+    );
+}
+
+function PetTab() {
+    const mode = useSettingsStore((state) => state.breakPetMode);
+    const setMode = useSettingsStore((state) => state.setBreakPetMode);
+    return (
+        <div className="settings-content-scroll">
+            <div className="tab-pane pet-settings-pane">
+                <section className="card pet-settings-selector">
+                    <div>
+                        <h3 className="card-title">休息宠物</h3>
+                        <p>进入休息提醒条件后自动启动，休息结束时自动退出。</p>
+                    </div>
+                    <div className="pet-settings-options" role="group" aria-label="休息宠物选择">
+                        <button
+                            type="button"
+                            className={`pet-settings-option ${mode === 'off' ? 'selected' : ''}`}
+                            aria-label="关闭休息宠物"
+                            aria-pressed={mode === 'off'}
+                            onClick={() => setMode('off')}
+                        >
+                            关闭
+                        </button>
+                        <button
+                            type="button"
+                            className={`pet-settings-option ${mode === 'cockroachInvasion' ? 'selected' : ''}`}
+                            aria-label="选择蟑螂入侵"
+                            aria-pressed={mode === 'cockroachInvasion'}
+                            onClick={() => setMode('cockroachInvasion')}
+                        >
+                            蟑螂入侵
+                        </button>
+                    </div>
+                </section>
+                {mode === 'cockroachInvasion' ? <CockroachModulePanel /> : null}
             </div>
         </div>
     );
@@ -380,6 +421,9 @@ function PomodoroTab({ onApplyStateChange }: {
             })).catch((error) => {
                 console.warn('[settings] failed to apply presence settings', error);
             });
+            if (presenceEnabled && restDeskReminderEnabled) {
+                useSettingsStore.getState().setBreakPetMode('cockroachInvasion');
+            }
         }
     }, [
         canApply,
@@ -568,16 +612,18 @@ function PomodoroTab({ onApplyStateChange }: {
                         {presenceEnabled && restDeskReminderEnabled && (
                             <div className="card pomo-row">
                                 <span className="pomo-row-label">提醒方式</span>
-                                <select
-                                    className="dropdown dropdown-fit"
-                                    aria-label="提醒方式"
-                                    value={restDeskReminderMode}
-                                    onChange={(event) => setRestDeskReminderMode(
-                                        event.currentTarget.value as RestDeskReminderMode,
-                                    )}
-                                >
-                                    <option value="cockroachInvasion">蟑螂入侵</option>
-                                </select>
+                                <div className="reminder-method-actions">
+                                    <select
+                                        className="dropdown dropdown-fit"
+                                        aria-label="提醒方式"
+                                        value={restDeskReminderMode}
+                                        onChange={(event) => setRestDeskReminderMode(
+                                            event.currentTarget.value as RestDeskReminderMode,
+                                        )}
+                                    >
+                                        <option value="cockroachInvasion">蟑螂入侵</option>
+                                    </select>
+                                </div>
                             </div>
                         )}
 

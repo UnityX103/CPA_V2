@@ -27,7 +27,11 @@ describe('user preferences persistence', () => {
 
         const normalized = normalizeUserPreferencesSnapshot(input);
 
-        expect(normalized?.settings).toEqual({ uiScale: 1.25, autostartEnabled: true });
+        expect(normalized?.settings).toEqual({
+            uiScale: 1.25,
+            autostartEnabled: true,
+            breakPetMode: 'off',
+        });
         expect(normalized?.pomodoro.endActionMode).toBe('playVideo');
         expect(normalized?.pomodoro.endActionVideo).toEqual({
             sourceKind: 'builtin',

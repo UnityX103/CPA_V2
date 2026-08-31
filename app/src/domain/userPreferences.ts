@@ -41,6 +41,7 @@ export interface UserPreferencesSnapshot {
     settings: {
         uiScale: number;
         autostartEnabled: boolean;
+        breakPetMode?: 'off' | 'cockroachInvasion';
     };
     appUpdate: {
         autoUpdateEnabled: boolean;
@@ -121,6 +122,7 @@ export function defaultUserPreferencesSnapshot(): UserPreferencesSnapshot {
         settings: {
             uiScale: 1,
             autostartEnabled: false,
+            breakPetMode: 'off',
         },
         appUpdate: {
             autoUpdateEnabled: true,
@@ -159,6 +161,7 @@ export function buildUserPreferencesSnapshot(stores: UserPreferencesStores): Use
         settings: {
             uiScale: settings.committedUiScale,
             autostartEnabled: settings.autostartEnabled,
+            breakPetMode: settings.breakPetMode,
         },
         appUpdate: {
             autoUpdateEnabled: appUpdate.autoUpdateEnabled,
@@ -312,6 +315,7 @@ function normalizeSettings(
         autostartEnabled: typeof value.autostartEnabled === 'boolean'
             ? value.autostartEnabled
             : fallback.autostartEnabled,
+        breakPetMode: value.breakPetMode === 'cockroachInvasion' ? 'cockroachInvasion' : 'off',
     };
 }
 

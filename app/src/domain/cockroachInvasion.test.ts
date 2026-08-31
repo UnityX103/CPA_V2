@@ -4,9 +4,10 @@ import {
     advanceCockroachInvasionTrigger,
     createCockroachInvasionTriggerState,
 } from './cockroachInvasion';
-import { startCockroachInvasionController } from './cockroachInvasionController';
+import { startCockroachModuleController } from './cockroachModuleController';
 import { usePomodoroStore } from './pomodoro';
 import { usePresenceStore } from './presence';
+import { useSettingsStore } from './settings';
 
 describe('cockroach invasion trigger', () => {
     it('waits for continuous break-time presence and hides immediately when eligibility ends', () => {
@@ -55,12 +56,13 @@ describe('cockroach invasion trigger', () => {
             restDeskReminderMode: 'cockroachInvasion',
             confirmedPresence: 'present',
         });
+        useSettingsStore.setState({ breakPetMode: 'cockroachInvasion' });
         usePomodoroStore.setState({ currentPhase: 'break' });
         let nowMs = 0;
         let wake: (() => void) | null = null;
         const setActive = vi.fn();
 
-        const stop = startCockroachInvasionController({
+        const stop = startCockroachModuleController({
             now: () => nowMs,
             setTimeout: (callback) => {
                 wake = callback;
@@ -76,7 +78,7 @@ describe('cockroach invasion trigger', () => {
         (wake as unknown as () => void)();
         expect(setActive).toHaveBeenCalledWith(true);
 
-        usePresenceStore.setState({ confirmedPresence: 'absent' });
+        usePomodoroStore.setState({ currentPhase: 'focus' });
         expect(setActive).toHaveBeenCalledWith(false);
         stop();
     });

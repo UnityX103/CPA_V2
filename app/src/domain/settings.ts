@@ -4,7 +4,8 @@ import { BRIDGE_VERSION } from './bridge/protocol';
 import { savePersistedSettings, type PersistedSettings } from './settingsPersistence';
 import { applyAutostartEnabled } from './autostart';
 
-export type SettingsTab = 'pomodoro' | 'online' | 'video' | 'global';
+export type SettingsTab = 'pomodoro' | 'online' | 'pet' | 'video' | 'global';
+export type BreakPetMode = 'off' | 'cockroachInvasion';
 export type DangerousSettingKind = 'uiScale';
 
 export interface DangerousChange {
@@ -22,6 +23,7 @@ export interface SettingsState {
     autostartEnabled: boolean;
     audioOutputDeviceId: string | null;
     soundVolume: number;
+    breakPetMode: BreakPetMode;
     dangerousChange: DangerousChange | null;
 }
 
@@ -30,6 +32,7 @@ export interface PersistedSettingsSnapshot {
     autostartEnabled?: boolean;
     audioOutputDeviceId?: string | null;
     soundVolume?: number;
+    breakPetMode?: BreakPetMode;
 }
 
 interface SettingsActions {
@@ -38,6 +41,7 @@ interface SettingsActions {
     setAutostartEnabled: (enabled: boolean) => Promise<void> | void;
     setAudioOutputDeviceId: (deviceId: string | null) => void;
     setSoundVolume: (volume: number) => void;
+    setBreakPetMode: (mode: BreakPetMode) => void;
     previewDangerousUiScale: (scale: number) => void;
     applyDangerousChange: (id: string) => void;
     revertDangerousChange: (id: string) => void;
@@ -77,6 +81,7 @@ function persistedSnapshot(state: SettingsState): PersistedSettings {
         autostartEnabled: state.autostartEnabled,
         audioOutputDeviceId: state.audioOutputDeviceId,
         soundVolume: state.soundVolume,
+        breakPetMode: state.breakPetMode,
     };
 }
 
@@ -90,6 +95,7 @@ function hydratedSettings(
     | 'autostartEnabled'
     | 'audioOutputDeviceId'
     | 'soundVolume'
+    | 'breakPetMode'
     | 'dangerousChange'
 > {
     const uiScale = clampScale(snapshot.uiScale);
@@ -103,6 +109,7 @@ function hydratedSettings(
         soundVolume: snapshot.soundVolume === undefined
             ? state.soundVolume
             : clampSoundVolume(snapshot.soundVolume),
+        breakPetMode: snapshot.breakPetMode === 'cockroachInvasion' ? 'cockroachInvasion' : 'off',
         dangerousChange: null,
     };
 }
@@ -116,6 +123,7 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
             autostartEnabled: false,
             audioOutputDeviceId: null,
             soundVolume: 1,
+            breakPetMode: 'off',
             dangerousChange: null,
             setActiveTab: (tab) => set({ activeTab: tab }),
             setUiScale: (scale) => {
@@ -145,6 +153,14 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
                     args: [volume],
                 });
             },
+            setBreakPetMode: (mode) => {
+                void dispatch({
+                    v: BRIDGE_VERSION,
+                    store: 'settings',
+                    action: 'setBreakPetMode',
+                    args: [mode],
+                });
+            },
             previewDangerousUiScale: (scale) => {
                 void dispatch({ v: BRIDGE_VERSION, store: 'settings', action: 'previewDangerousUiScale', args: [scale] });
             },
@@ -164,6 +180,7 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
         autostartEnabled: false,
         audioOutputDeviceId: null,
         soundVolume: 1,
+        breakPetMode: 'off',
         dangerousChange: null,
         setActiveTab: (tab) => set({ activeTab: tab }),
         setUiScale: (scale) => {
@@ -182,6 +199,10 @@ export function createSettingsStore(opts: { isSettingsWindow: boolean }): Settin
         },
         setSoundVolume: (volume) => {
             set({ soundVolume: clampSoundVolume(volume) });
+            void savePersistedSettings(persistedSnapshot(get()));
+        },
+        setBreakPetMode: (mode) => {
+            set({ breakPetMode: mode === 'cockroachInvasion' ? mode : 'off' });
             void savePersistedSettings(persistedSnapshot(get()));
         },
         previewDangerousUiScale: (scale) => {

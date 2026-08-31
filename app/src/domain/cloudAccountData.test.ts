@@ -24,7 +24,7 @@ describe('cloud account data', () => {
     it('builds the retained account snapshot', () => {
         const data = buildCloudAccountData(stores);
 
-        expect(data.settings).toEqual({ uiScale: 1, autostartEnabled: false });
+        expect(data.settings).toEqual({ uiScale: 1, autostartEnabled: false, breakPetMode: 'off' });
         expect(data.pomodoro.endActionMode).toBe('topWindow');
     });
 
@@ -44,7 +44,7 @@ describe('cloud account data', () => {
 
         expect(mergeCloudAccountDataConflict({ server, local })).toEqual(expect.objectContaining({
             updatedAt: 42,
-            settings: { uiScale: 1.5, autostartEnabled: false },
+            settings: { uiScale: 1.5, autostartEnabled: false, breakPetMode: 'off' },
         }));
     });
 });

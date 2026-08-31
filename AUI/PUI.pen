@@ -478,16 +478,53 @@
                   ]
                 },
                 {
-                  "id": "i1Hs23",
-                  "type": "ref",
-                  "ref": "Frjkw",
-                  "name": "pomoRestDeskReminderMethodDropdown",
-                  "width": 140,
-                  "descendants": {
-                    "d5bpi": {
-                      "content": "蟑螂入侵"
+                  "type": "frame",
+                  "id": "lOIEH",
+                  "name": "pomoRestDeskReminderMethodActions",
+                  "gap": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "i1Hs23",
+                      "type": "ref",
+                      "ref": "Frjkw",
+                      "name": "pomoRestDeskReminderMethodDropdown",
+                      "width": 140,
+                      "descendants": {
+                        "d5bpi": {
+                          "content": "蟑螂入侵"
+                        }
+                      }
+                    },
+                    {
+                      "type": "frame",
+                      "id": "zIGf4",
+                      "name": "pomoRestDeskReminderPreviewButton",
+                      "fill": "#FFFFFF",
+                      "cornerRadius": 10,
+                      "stroke": "#E5E7EB",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
+                      "padding": [
+                        8,
+                        12
+                      ],
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "LiJeH",
+                          "name": "pomoRestDeskReminderPreviewText",
+                          "fill": "#D15F3D",
+                          "content": "预览",
+                          "fontFamily": "MaokenAssortedSans",
+                          "fontSize": 12,
+                          "fontWeight": "700"
+                        }
+                      ]
                     }
-                  }
+                  ]
                 }
               ]
             },
@@ -1496,9 +1533,9 @@
                     "mo62i": {
                       "flipX": false,
                       "flipY": false,
-                      "width": 48.10747947416144,
+                      "width": 47.799098195480916,
                       "height": 18,
-                      "x": 13.470094252765202,
+                      "x": 13.383747494734656,
                       "y": 21,
                       "textGrowth": "fixed-width-height",
                       "fontSize": 17
@@ -6305,15 +6342,6 @@
                         },
                         "q8xBm": {
                           "enabled": false
-                        },
-                        "i1Hs23": {
-                          "enabled": false
-                        },
-                        "i1Hs23/d5bpi": {
-                          "enabled": false
-                        },
-                        "i1Hs23/3P2uj": {
-                          "enabled": false
                         }
                       }
                     }
@@ -6423,7 +6451,7 @@
                       "id": "Sgupw",
                       "name": "State 3 Description",
                       "fill": "#2F7A46",
-                      "content": "展开提醒方式，下拉默认“蟑螂入侵”",
+                      "content": "展开提醒方式，可立即预览“蟑螂入侵”",
                       "fontFamily": "MaokenAssortedSans",
                       "fontSize": 12,
                       "fontWeight": "500"

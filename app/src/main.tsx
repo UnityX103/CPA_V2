@@ -6,14 +6,11 @@ import DevAlignApp from "./DevAlignApp";
 import InputCounterApp from "./InputCounterApp";
 import RemotePlayerCardApp from "./RemotePlayerCardApp";
 import VideoPlayerApp from "./VideoPlayerApp";
-import CockroachInvasionApp from "./CockroachInvasionApp";
 import "./styles/global.css";
 
 const which = new URLSearchParams(window.location.search).get("window");
 const Root = which === "settings"
     ? SettingsApp
-    : which === "cockroach-invasion"
-        ? CockroachInvasionApp
     : which === "video-player"
         ? VideoPlayerApp
     : which === "devalign"

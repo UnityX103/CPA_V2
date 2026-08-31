@@ -30,7 +30,7 @@ import type { CloudAccountData } from './domain/cloudAccountData';
 import { usePresenceMonitor, usePresenceStore } from './domain/presence';
 import { loadPresencePreferences } from './domain/presencePersistence';
 import { PresenceNotice } from './ui/PresenceNotice';
-import { useCockroachInvasionController } from './domain/cockroachInvasionController';
+import { useCockroachModuleController } from './domain/cockroachModuleController';
 
 const STARTUP_ACCOUNT_RESTORE_TIMEOUT_MS = 2500;
 
@@ -59,6 +59,7 @@ function buildStartupSettingsSnapshot(
             ? committedUiScale
             : persistedScale,
         autostartEnabled: confirmedAutostartEnabled,
+        breakPetMode: settings?.breakPetMode ?? initialSettings.breakPetMode,
     };
 
     return { snapshot, shouldApplyScale: !scaleChanged };
@@ -71,6 +72,7 @@ function getStartupSettingsState() {
         autostartEnabled,
         audioOutputDeviceId,
         soundVolume,
+        breakPetMode,
     } = useSettingsStore.getState();
     return {
         uiScale,
@@ -78,6 +80,7 @@ function getStartupSettingsState() {
         autostartEnabled,
         audioOutputDeviceId,
         soundVolume,
+        breakPetMode,
     };
 }
 
@@ -155,7 +158,7 @@ export default function App() {
     usePresenceMonitor({ enabled: localHydrated });
     useInputCounterWindowController();
     useRemotePlayerWindowController();
-    useCockroachInvasionController({ enabled: localHydrated });
+    useCockroachModuleController({ enabled: localHydrated });
     const uiScale = useSettingsStore((s) => s.uiScale);
     useCloudAccountSync({ enabled: localHydrated });
     useScaledWindowSize({
@@ -293,6 +296,7 @@ export default function App() {
                             ? { uiScale: snapshot.uiScale, committedUiScale: snapshot.uiScale }
                             : {}),
                         autostartEnabled: snapshot.autostartEnabled,
+                        breakPetMode: snapshot.breakPetMode,
                     });
                 }
 

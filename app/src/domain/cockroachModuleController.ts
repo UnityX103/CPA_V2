@@ -2,17 +2,12 @@ import { useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { usePomodoroStore } from './pomodoro';
 import { usePresenceStore } from './presence';
+import { useSettingsStore } from './settings';
 import {
     advanceCockroachInvasionTrigger,
     createCockroachInvasionTriggerState,
     type CockroachInvasionEligibility,
 } from './cockroachInvasion';
-
-export const COCKROACH_INVASION_ACTIVE_EVENT = 'cockroach-invasion:active';
-
-export interface CockroachInvasionActivation {
-    active: boolean;
-}
 
 interface ControllerRuntime {
     now: () => number;
@@ -27,26 +22,30 @@ const defaultRuntime: ControllerRuntime = {
     clearTimeout: (id) => window.clearTimeout(id),
     setActive: async (active) => {
         try {
-            await invoke('set_cockroach_invasion_active', { active });
+            await invoke(active ? 'launch_cockroach_module' : 'kill_all_cockroaches', active
+                ? { settings: null }
+                : undefined);
         } catch (error) {
-            console.warn('[cockroach-invasion] window activation failed', error);
+            console.warn(`[cockroach-module] ${active ? 'launch' : 'stop'} failed`, error);
         }
     },
 };
 
 function currentEligibility(): CockroachInvasionEligibility {
+    const settings = useSettingsStore.getState();
     const presence = usePresenceStore.getState();
     const pomodoro = usePomodoroStore.getState();
     return {
         cameraEnabled: presence.enabled,
-        reminderEnabled: presence.restDeskReminderEnabled
+        reminderEnabled: settings.breakPetMode === 'cockroachInvasion'
+            && presence.restDeskReminderEnabled
             && presence.restDeskReminderMode === 'cockroachInvasion',
         currentPhase: pomodoro.currentPhase,
         confirmedPresence: presence.confirmedPresence,
     };
 }
 
-export function startCockroachInvasionController(
+export function startCockroachModuleController(
     runtime: ControllerRuntime = defaultRuntime,
 ): () => void {
     let triggerState = createCockroachInvasionTriggerState();
@@ -78,25 +77,26 @@ export function startCockroachInvasionController(
         }
     };
 
-    const unsubscribePresence = usePresenceStore.subscribe(evaluate);
-    const unsubscribePomodoro = usePomodoroStore.subscribe(evaluate);
+    const subscriptions = [
+        useSettingsStore.subscribe(evaluate),
+        usePresenceStore.subscribe(evaluate),
+        usePomodoroStore.subscribe(evaluate),
+    ];
     evaluate();
 
     return () => {
         stopped = true;
         clearWakeTimer();
-        unsubscribePresence();
-        unsubscribePomodoro();
+        subscriptions.forEach((unsubscribe) => unsubscribe());
         void runtime.setActive(false);
     };
 }
 
-export function useCockroachInvasionController({ enabled }: { enabled: boolean }): void {
+export function useCockroachModuleController({ enabled }: { enabled: boolean }): void {
     useEffect(() => {
         if (!enabled) {
-            void defaultRuntime.setActive(false);
             return undefined;
         }
-        return startCockroachInvasionController();
+        return startCockroachModuleController();
     }, [enabled]);
 }

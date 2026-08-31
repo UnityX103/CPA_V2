@@ -35,6 +35,7 @@ beforeEach(() => {
         autostartEnabled: false,
         audioOutputDeviceId: null,
         soundVolume: 1,
+        breakPetMode: 'off',
     });
     usePomodoroStore.setState({
         focusDurationSeconds: 1500,
@@ -75,6 +76,7 @@ describe('SettingsPanel', () => {
 
         expect(screen.getByRole('button', { name: '番茄钟' })).toBeTruthy();
         expect(screen.getByRole('button', { name: '联机' })).toBeTruthy();
+        expect(screen.getByRole('button', { name: '宠物' })).toBeTruthy();
         expect(screen.getByRole('button', { name: '视频编辑' })).toBeTruthy();
         expect(screen.getByRole('button', { name: '全局' })).toBeTruthy();
     });
@@ -117,6 +119,71 @@ describe('SettingsPanel', () => {
 
         expect(screen.getByText('界面缩放')).toBeTruthy();
         expect(screen.getByText('开机自启动')).toBeTruthy();
+    });
+
+    it('shows the cockroach module panel only after cockroach invasion is selected', async () => {
+        invoke.mockImplementation((command: string) => {
+            if (command === 'cockroach_module_status') {
+                return Promise.resolve({
+                    installed: false,
+                    running: false,
+                    version: null,
+                    target: 'macos-arm64',
+                    message: '蟑螂模块尚未下载',
+                    settings: { maxCount: 30, babyGrowthMinutes: 10 },
+                });
+            }
+            return Promise.resolve(undefined);
+        });
+        render(<SettingsPanel />);
+
+        fireEvent.click(screen.getByRole('button', { name: '宠物' }));
+        expect(screen.queryByText('蟑螂模块需要单独下载')).toBeNull();
+
+        fireEvent.click(screen.getByRole('button', { name: '选择蟑螂入侵' }));
+        expect(await screen.findByText('蟑螂模块需要单独下载')).toBeTruthy();
+        expect(screen.getByRole('button', { name: '下载蟑螂模块' })).toBeTruthy();
+    });
+
+    it('exposes upstream cockroach settings, simulation, and kill-all controls', async () => {
+        const moduleStatus = {
+            installed: true,
+            running: false,
+            version: '1.1.0',
+            target: 'macos-arm64',
+            message: '蟑螂模块已下载',
+            settings: { maxCount: 30, babyGrowthMinutes: 10 },
+        };
+        invoke.mockImplementation((command: string) => {
+            if (command === 'cockroach_module_status') return Promise.resolve(moduleStatus);
+            if (command === 'launch_cockroach_module') {
+                return Promise.resolve({ ...moduleStatus, running: true });
+            }
+            if (command === 'kill_all_cockroaches') return Promise.resolve(moduleStatus);
+            return Promise.resolve(undefined);
+        });
+        useSettingsStore.setState({ activeTab: 'pet', breakPetMode: 'cockroachInvasion' });
+        render(<SettingsPanel />);
+
+        const maxCount = await screen.findByRole('spinbutton', { name: '最大蟑螂数量' });
+        const growth = screen.getByRole('spinbutton', { name: '幼虫成长时间' });
+        expect(maxCount.getAttribute('min')).toBe('1');
+        expect(maxCount.getAttribute('max')).toBe('99');
+        expect(growth.getAttribute('min')).toBe('1');
+        expect(growth.getAttribute('max')).toBe('60');
+
+        fireEvent.click(screen.getByRole('button', { name: '模拟蟑螂入侵' }));
+        await vi.waitFor(() => {
+            expect(invoke).toHaveBeenCalledWith('launch_cockroach_module', {
+                settings: { maxCount: 30, babyGrowthMinutes: 10 },
+            });
+        });
+        const killAll = screen.getByRole('button', { name: '杀死所有蟑螂' }) as HTMLButtonElement;
+        await vi.waitFor(() => expect(killAll.disabled).toBe(false));
+        fireEvent.click(killAll);
+        await vi.waitFor(() => {
+            expect(invoke).toHaveBeenCalledWith('kill_all_cockroaches');
+        });
     });
 
     it('selects the playback device and exposes a volume control in global settings', async () => {
@@ -284,6 +351,7 @@ describe('SettingsPanel', () => {
                 restDeskReminderEnabled: true,
                 restDeskReminderMode: 'cockroachInvasion',
             }));
+            expect(useSettingsStore.getState().breakPetMode).toBe('cockroachInvasion');
         });
     });
 

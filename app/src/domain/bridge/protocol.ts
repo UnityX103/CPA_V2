@@ -27,6 +27,7 @@ export interface BridgeSnapshot {
         autostartEnabled: boolean;
         audioOutputDeviceId: string | null;
         soundVolume: number;
+        breakPetMode: 'off' | 'cockroachInvasion';
         dangerousChange: DangerousChange | null;
     };
     pomodoro: {
@@ -78,6 +79,7 @@ export type DispatchPayload =
     | { v: typeof BRIDGE_VERSION; store: 'settings';   action: 'setAutostartEnabled'; args: [boolean] }
     | { v: typeof BRIDGE_VERSION; store: 'settings';   action: 'setAudioOutputDeviceId'; args: [string | null] }
     | { v: typeof BRIDGE_VERSION; store: 'settings';   action: 'setSoundVolume'; args: [number] }
+    | { v: typeof BRIDGE_VERSION; store: 'settings';   action: 'setBreakPetMode'; args: ['off' | 'cockroachInvasion'] }
     | { v: typeof BRIDGE_VERSION; store: 'settings';   action: 'applyDangerousChange' | 'revertDangerousChange'; args: [string] }
     | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'applySettings'; args: [number, number, number, boolean, boolean] }
     | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'setAutoPinAfterFocus'; args: [boolean] }

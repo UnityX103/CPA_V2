@@ -11,6 +11,7 @@ describe('bridge protocol', () => {
                 autostartEnabled: false,
                 audioOutputDeviceId: null,
                 soundVolume: 1,
+                breakPetMode: 'off',
                 dangerousChange: null,
             },
             pomodoro: {

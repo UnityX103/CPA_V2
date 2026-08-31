@@ -47,7 +47,7 @@ describe('cloud account sync', () => {
 
         expect(saveLocal).toHaveBeenCalled();
         expect(saveRemote).toHaveBeenCalledWith(expect.objectContaining({
-            settings: { uiScale: 1, autostartEnabled: true },
+            settings: { uiScale: 1, autostartEnabled: true, breakPetMode: 'off' },
         }), null);
     });
 

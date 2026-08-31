@@ -77,7 +77,7 @@ describe('App startup', () => {
             soundVolume: 0.55,
         })));
         expect(mocks.savePreferences).toHaveBeenCalledWith(expect.objectContaining({
-            settings: { uiScale: 1.25, autostartEnabled: true },
+            settings: { uiScale: 1.25, autostartEnabled: true, breakPetMode: 'off' },
         }));
     });
 

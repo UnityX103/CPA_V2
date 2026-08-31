@@ -79,6 +79,7 @@ export function applySnapshotToMirrors(snap: BridgeSnapshot): void {
         autostartEnabled: snap.settings.autostartEnabled,
         audioOutputDeviceId: snap.settings.audioOutputDeviceId,
         soundVolume: snap.settings.soundVolume,
+        breakPetMode: snap.settings.breakPetMode,
         dangerousChange: cloneDangerousChange(snap.settings.dangerousChange),
     });
     usePomodoroStore.setState({

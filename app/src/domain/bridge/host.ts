@@ -100,6 +100,7 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
             autostartEnabled: s.autostartEnabled,
             audioOutputDeviceId: s.audioOutputDeviceId,
             soundVolume: s.soundVolume,
+            breakPetMode: s.breakPetMode,
             dangerousChange: cloneDangerousChange(s.dangerousChange),
         },
         pomodoro: {
@@ -166,6 +167,7 @@ export async function applyDispatch(payload: DispatchPayload): Promise<void> {
                 case 'setAutostartEnabled': await s.setAutostartEnabled(...payload.args); return;
                 case 'setAudioOutputDeviceId': s.setAudioOutputDeviceId(...payload.args); return;
                 case 'setSoundVolume': s.setSoundVolume(...payload.args); return;
+                case 'setBreakPetMode': s.setBreakPetMode(...payload.args); return;
                 case 'applyDangerousChange': s.applyDangerousChange(...payload.args); return;
                 case 'revertDangerousChange': s.revertDangerousChange(...payload.args); return;
             }

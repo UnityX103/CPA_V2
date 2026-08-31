@@ -14,6 +14,7 @@ function snapshot(): BridgeSnapshot {
             autostartEnabled: true,
             audioOutputDeviceId: 'coreaudio:built-in-output',
             soundVolume: 0.7,
+            breakPetMode: 'cockroachInvasion',
             dangerousChange: null,
         },
         pomodoro: {

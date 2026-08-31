@@ -28,6 +28,7 @@ describe('settingsPersistence', () => {
             autostartEnabled: true,
             audioOutputDeviceId: 'coreaudio:external-dac',
             soundVolume: 0.45,
+            breakPetMode: 'off',
             [obsoleteAutoPinKey]: false,
         });
         const { loadPersistedSettings } = await import('./settingsPersistence');
@@ -37,6 +38,7 @@ describe('settingsPersistence', () => {
             autostartEnabled: true,
             audioOutputDeviceId: 'coreaudio:external-dac',
             soundVolume: 0.45,
+            breakPetMode: 'off',
         });
     });
 
@@ -49,6 +51,7 @@ describe('settingsPersistence', () => {
             autostartEnabled: false,
             audioOutputDeviceId: null,
             soundVolume: 1,
+            breakPetMode: 'off',
         });
     });
 
@@ -79,6 +82,7 @@ describe('settingsPersistence', () => {
             autostartEnabled: true,
             audioOutputDeviceId: 'wasapi:speakers',
             soundVolume: 0.8,
+            breakPetMode: 'cockroachInvasion',
         });
 
         expect(store.set).toHaveBeenCalledWith('settings', {
@@ -87,6 +91,7 @@ describe('settingsPersistence', () => {
             autostartEnabled: true,
             audioOutputDeviceId: 'wasapi:speakers',
             soundVolume: 0.8,
+            breakPetMode: 'cockroachInvasion',
         });
         expect(store.save).toHaveBeenCalledTimes(1);
     });

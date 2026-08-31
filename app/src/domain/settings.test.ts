@@ -40,6 +40,7 @@ describe('settings store', () => {
             autostartEnabled: true,
             audioOutputDeviceId: null,
             soundVolume: 1,
+            breakPetMode: 'off',
         });
     });
 
@@ -53,12 +54,14 @@ describe('settings store', () => {
         expect(store.getState()).toEqual(expect.objectContaining({
             audioOutputDeviceId: 'wasapi:speakers',
             soundVolume: 1,
+            breakPetMode: 'off',
         }));
         expect(save).toHaveBeenLastCalledWith({
             uiScale: 1,
             autostartEnabled: false,
             audioOutputDeviceId: 'wasapi:speakers',
             soundVolume: 1,
+            breakPetMode: 'off',
         });
     });
 
