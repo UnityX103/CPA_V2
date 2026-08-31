@@ -23,7 +23,28 @@ def load_pipeline():
     return module
 
 
+def load_build_runtime():
+    spec = importlib.util.spec_from_file_location(
+        "video_editor_build_runtime", ROOT / "scripts" / "build_runtime.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
+
+
 class VideoEditorModuleContractTests(unittest.TestCase):
+    def test_runtime_target_uses_python_architecture_on_windows_arm_host(self):
+        build_runtime = load_build_runtime()
+        self.assertEqual(
+            build_runtime.target_from_platform("Windows", "ARM64", "win-amd64"),
+            "windows-x86_64",
+        )
+        self.assertEqual(
+            build_runtime.target_from_platform("Darwin", "arm64", "macosx-14-arm64"),
+            "macos-arm64",
+        )
+
     def test_ui_keeps_screenshot_and_resolution_without_region_drawing(self):
         html = (ROOT / "video_editor_module" / "static" / "index.html").read_text(encoding="utf-8")
         javascript = (ROOT / "video_editor_module" / "static" / "app.js").read_text(encoding="utf-8")

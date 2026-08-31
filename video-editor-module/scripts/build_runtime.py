@@ -29,17 +29,24 @@ def interpreter_target(python: Path) -> str:
         [
             str(python),
             "-c",
-            "import json,platform; print(json.dumps([platform.system(),platform.machine()]))",
+            (
+                "import json,platform,sysconfig; "
+                "print(json.dumps([platform.system(),platform.machine(),sysconfig.get_platform()]))"
+            ),
         ],
         text=True,
     )
-    system, raw_machine = json.loads(output)
+    system, raw_machine, python_platform = json.loads(output)
+    return target_from_platform(system, raw_machine, python_platform)
+
+
+def target_from_platform(system: str, raw_machine: str, python_platform: str) -> str:
     machine = raw_machine.lower()
     if system == "Darwin" and machine in {"arm64", "aarch64"}:
         return "macos-arm64"
     if system == "Darwin" and machine in {"x86_64", "amd64"}:
         return "macos-x86_64"
-    if system == "Windows" and machine in {"x86_64", "amd64"}:
+    if system == "Windows" and python_platform.lower() == "win-amd64":
         return "windows-x86_64"
     return "unsupported"
 
