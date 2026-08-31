@@ -4,6 +4,7 @@ import unittest
 import zipfile
 from pathlib import Path
 import importlib.util
+from unittest import mock
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "package_module.py"
 SPEC = importlib.util.spec_from_file_location("package_module", SCRIPT)
@@ -37,17 +38,29 @@ class ContractTest(unittest.TestCase):
         for target, runtime_name, executable_path, entry_path in cases:
             with self.subTest(target=target), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
+                source = root / "source"
+                source.mkdir()
+                (source / "main.js").write_text(
+                    "const CPA_CONTROL_PROTOCOL_VERSION = 1; // --cpa-control-file=",
+                    encoding="utf-8",
+                )
                 runtime = root / runtime_name
                 entry = runtime / executable_path
                 entry.parent.mkdir(parents=True)
                 entry.write_text("runtime", encoding="utf-8")
-                archive = MODULE.package(
-                    runtime,
-                    entry_path,
-                    target,
-                    "1.1.0",
-                    root / "dist",
-                )
+                with mock.patch.object(
+                    MODULE.subprocess,
+                    "check_output",
+                    side_effect=[MODULE.UPSTREAM_COMMIT + "\n", "main.js\n"],
+                ):
+                    archive = MODULE.package(
+                        runtime,
+                        source,
+                        entry_path,
+                        target,
+                        "1.1.0",
+                        root / "dist",
+                    )
                 with zipfile.ZipFile(archive) as bundle:
                     manifest = json.loads(bundle.read("module.json"))
                     self.assertEqual(manifest["id"], "cpa-cockroach-electron")
@@ -60,6 +73,13 @@ class ContractTest(unittest.TestCase):
     def test_rejects_unsafe_entry(self):
         with self.assertRaises(ValueError):
             MODULE.validate_relative_entry("../outside")
+
+    def test_rejects_an_unpatched_upstream_source(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory)
+            (source / "main.js").write_text("upstream", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "control-file integration patch"):
+                MODULE.verify_patched_source(source)
 
 
 if __name__ == "__main__":

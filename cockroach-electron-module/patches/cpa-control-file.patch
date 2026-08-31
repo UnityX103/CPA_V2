@@ -1,0 +1,46 @@
+diff --git a/main.js b/main.js
+index 22acfd7..ef0ea94 100644
+--- a/main.js
++++ b/main.js
+@@ -11,0 +12,37 @@ let tray = null;
++const CPA_CONTROL_PROTOCOL_VERSION = 1;
++const cpaControlArg = process.argv.find((arg) => arg.startsWith('--cpa-control-file='));
++const cpaControlFile = cpaControlArg ? cpaControlArg.slice('--cpa-control-file='.length) : null;
++const cpaControlAckFile = cpaControlFile ? cpaControlFile.replace(/\.json$/, '.ack.json') : null;
++let cpaControlPollInterval = null;
++let cpaLastControlNonce = null;
++
++function startCpaControlFile() {
++  if (!cpaControlFile || !cpaControlAckFile) return;
++  cpaControlPollInterval = setInterval(() => {
++    try {
++      const command = JSON.parse(fs.readFileSync(cpaControlFile, 'utf8'));
++      if (command.v !== CPA_CONTROL_PROTOCOL_VERSION ||
++          typeof command.nonce !== 'string' ||
++          command.nonce === cpaLastControlNonce ||
++          command.command !== 'kill-all') return;
++      if (!overlayWindow || overlayWindow.isDestroyed() || overlayWindow.webContents.isLoading()) return;
++      overlayWindow.webContents.send('kill-all');
++      cpaLastControlNonce = command.nonce;
++      fs.writeFileSync(cpaControlAckFile, JSON.stringify({
++        v: CPA_CONTROL_PROTOCOL_VERSION,
++        nonce: command.nonce,
++        ok: true,
++      }));
++    } catch (error) {
++      if (error && error.code !== 'ENOENT') {
++        console.error('[cpa-control] command failed', error);
++      }
++    }
++  }, 50);
++}
++
++function stopCpaControlFile() {
++  if (cpaControlPollInterval) clearInterval(cpaControlPollInterval);
++  cpaControlPollInterval = null;
++}
++
+@@ -201,0 +239 @@ app.whenReady().then(() => {
++  startCpaControlFile();
+@@ -217,0 +256 @@ app.on('will-quit', () => {
++  stopCpaControlFile();

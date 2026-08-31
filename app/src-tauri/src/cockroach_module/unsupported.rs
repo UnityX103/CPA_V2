@@ -14,7 +14,3 @@ pub fn ensure_entry_executable(_path: &Path) -> Result<(), String> {
 }
 
 pub fn configure_child_command(_command: &mut Command) {}
-
-pub fn trigger_kill_all() -> Result<(), String> {
-    Err("当前平台不支持杀死所有快捷键".to_string())
-}

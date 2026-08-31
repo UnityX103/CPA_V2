@@ -7,16 +7,19 @@ import argparse
 import json
 import shutil
 import stat
+import subprocess
 import tempfile
 import zipfile
 from pathlib import Path, PurePosixPath
 
 MODULE_ID = "cpa-cockroach-electron"
+UPSTREAM_COMMIT = "a7d103d2818b40e12b8a39948e9ebf4c6085bfd3"
 CAPABILITIES = [
     "electron-vector-cockroach-v1",
     "max-count",
     "baby-growth-minutes",
     "process-lifecycle",
+    "process-control-file-v1",
 ]
 TARGETS = {"macos-arm64", "macos-x86_64", "windows-x86_64"}
 ROOT = Path(__file__).resolve().parents[1]
@@ -25,6 +28,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--runtime-dir", type=Path, required=True)
+    parser.add_argument("--source-dir", type=Path, required=True)
     parser.add_argument("--entry", required=True)
     parser.add_argument("--target", choices=sorted(TARGETS), required=True)
     parser.add_argument("--version", required=True)
@@ -39,7 +43,36 @@ def validate_relative_entry(entry: str) -> PurePosixPath:
     return value
 
 
-def package(runtime_dir: Path, entry: str, target: str, version: str, output_dir: Path) -> Path:
+def verify_patched_source(source_dir: Path) -> None:
+    source_dir = source_dir.resolve()
+    main_js = source_dir / "main.js"
+    if not main_js.is_file():
+        raise ValueError(f"upstream main.js does not exist: {main_js}")
+    contents = main_js.read_text(encoding="utf-8")
+    if "CPA_CONTROL_PROTOCOL_VERSION = 1" not in contents or "--cpa-control-file=" not in contents:
+        raise ValueError("upstream source is missing the CPA control-file integration patch")
+    commit = subprocess.check_output(
+        ["git", "-C", str(source_dir), "rev-parse", "HEAD"],
+        text=True,
+    ).strip()
+    if commit != UPSTREAM_COMMIT:
+        raise ValueError(f"upstream commit must be {UPSTREAM_COMMIT}, got {commit}")
+    changed = set(filter(None, subprocess.check_output(
+        ["git", "-C", str(source_dir), "diff", "--name-only"],
+        text=True,
+    ).splitlines()))
+    if changed != {"main.js"}:
+        raise ValueError(f"upstream worktree must contain only the reviewed main.js patch, got {sorted(changed)}")
+
+
+def package(
+    runtime_dir: Path,
+    source_dir: Path,
+    entry: str,
+    target: str,
+    version: str,
+    output_dir: Path,
+) -> Path:
     runtime_dir = runtime_dir.resolve()
     if not runtime_dir.is_dir():
         raise ValueError(f"runtime directory does not exist: {runtime_dir}")
@@ -48,6 +81,7 @@ def package(runtime_dir: Path, entry: str, target: str, version: str, output_dir
         raise ValueError("version contains unsupported characters")
     if target not in TARGETS:
         raise ValueError(f"unsupported target: {target}")
+    verify_patched_source(source_dir)
 
     output_dir.mkdir(parents=True, exist_ok=True)
     destination = output_dir / f"cockroach-module-{version}-{target}.zip"
@@ -70,7 +104,8 @@ def package(runtime_dir: Path, entry: str, target: str, version: str, output_dir
             "capabilities": CAPABILITIES,
             "upstream": {
                 "repository": "https://github.com/jo9900/CockroachPet-Public-Electron",
-                "commit": "a7d103d2818b40e12b8a39948e9ebf4c6085bfd3",
+                "commit": UPSTREAM_COMMIT,
+                "integrationPatch": "cpa-control-file-v1",
             },
         }
         (staging / "module.json").write_text(
@@ -86,7 +121,14 @@ def package(runtime_dir: Path, entry: str, target: str, version: str, output_dir
 
 def main() -> None:
     args = parse_args()
-    print(package(args.runtime_dir, args.entry, args.target, args.version, args.output_dir))
+    print(package(
+        args.runtime_dir,
+        args.source_dir,
+        args.entry,
+        args.target,
+        args.version,
+        args.output_dir,
+    ))
 
 
 if __name__ == "__main__":

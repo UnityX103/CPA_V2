@@ -16,6 +16,7 @@ git clone https://github.com/jo9900/CockroachPet-Public-Electron.git
 cd CockroachPet-Public-Electron
 git checkout a7d103d2818b40e12b8a39948e9ebf4c6085bfd3
 npm install
+git apply ../CPA_V2/cockroach-electron-module/patches/cpa-control-file.patch
 ```
 
 Build an unpacked, self-contained Electron directory for the target platform. Do not package an
@@ -28,6 +29,7 @@ Examples:
 npx electron-builder --mac --arm64 --dir
 python ../CPA_V2/cockroach-electron-module/scripts/package_module.py \
   --runtime-dir dist/mac-arm64/CockroachPet.app \
+  --source-dir . \
   --entry 'runtime/CockroachPet.app/Contents/MacOS/CockroachPet' \
   --target macos-arm64 --version 1.1.0 \
   --output-dir ../CPA_V2/cockroach-electron-module/dist
@@ -36,6 +38,7 @@ python ../CPA_V2/cockroach-electron-module/scripts/package_module.py \
 npx electron-builder --win --x64 --dir
 python ..\CPA_V2\cockroach-electron-module\scripts\package_module.py \
   --runtime-dir dist\win-unpacked \
+  --source-dir . \
   --entry 'runtime/win-unpacked/CockroachPet.exe' \
   --target windows-x86_64 --version 1.1.0 \
   --output-dir ..\CPA_V2\cockroach-electron-module\dist
@@ -43,7 +46,8 @@ python ..\CPA_V2\cockroach-electron-module\scripts\package_module.py \
 
 For macOS x86_64, build with `--x64 --dir` and use target `macos-x86_64`.
 
-The generated ZIP contains `module.json`, the unpacked runtime, and the upstream MIT license.
+The packager refuses unpinned or unpatched source trees. The generated ZIP contains `module.json`,
+the unpacked runtime, and the upstream MIT license.
 Publish the target ZIPs to a `UnityX103/CPA_V2` GitHub Release, create
 `cockroach-module-index.json` with each ZIP's HTTPS URL, exact byte size and SHA-256, then sign that
 index with the same minisign key used by the Tauri updater. Publish the Base64-wrapped signature as
@@ -60,8 +64,9 @@ CPA writes Electron Store's `config.json` under the module-specific `--user-data
 - `settings.babyGrowthMinutes`: 1–60, default 10;
 - `cockroaches`: reset to an empty list for each simulation.
 
-“模拟” starts the upstream executable. “杀死所有” sends the upstream `Cmd/Ctrl+K` global shortcut,
-so the live Electron process runs its own `manager.killAll()` behavior. Leaving the break phase,
-uninstalling the module, and exiting CPA terminate the tracked child process and clear persisted
-cockroaches. Saving settings while the module is active restarts that process once so the new values
-take effect immediately without desynchronizing the Pomodoro controller.
+“模拟” starts the upstream executable. The reviewed integration patch adds a module-private control
+file; “杀死所有” sends a nonce-bearing command to the tracked Electron process, which runs its own
+`manager.killAll()` behavior and writes an acknowledgement. Leaving the break phase, uninstalling the
+module, and exiting CPA terminate the tracked child process and clear persisted cockroaches. Saving
+settings while the module is active restarts that process once so the new values take effect
+immediately without desynchronizing the Pomodoro controller.

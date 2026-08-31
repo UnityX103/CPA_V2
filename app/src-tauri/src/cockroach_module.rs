@@ -6,8 +6,9 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Mutex;
-use std::time::Duration;
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use tauri::{Emitter, Manager};
 use tokio::io::AsyncWriteExt;
 use zip::ZipArchive;
@@ -34,9 +35,18 @@ const MAX_ARCHIVE_FILES: usize = 50_000;
 const MAX_INDEX_BYTES: usize = 1024 * 1024;
 const MAX_SIGNATURE_BYTES: usize = 16 * 1024;
 
-#[derive(Default)]
 pub struct CockroachModuleState {
     child: Mutex<Option<Child>>,
+    next_control_nonce: AtomicU64,
+}
+
+impl Default for CockroachModuleState {
+    fn default() -> Self {
+        Self {
+            child: Mutex::new(None),
+            next_control_nonce: AtomicU64::new(1),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
@@ -200,6 +210,7 @@ fn validate_manifest(
         "max-count",
         "baby-growth-minutes",
         "process-lifecycle",
+        "process-control-file-v1",
     ];
     if required.iter().any(|capability| {
         !manifest
@@ -387,6 +398,14 @@ fn module_data_dir(root: &Path) -> PathBuf {
 
 fn upstream_config_path(root: &Path) -> PathBuf {
     module_data_dir(root).join("config.json")
+}
+
+fn control_file_path(root: &Path) -> PathBuf {
+    module_data_dir(root).join("cpa-control.json")
+}
+
+fn control_ack_path(root: &Path) -> PathBuf {
+    module_data_dir(root).join("cpa-control.ack.json")
 }
 
 fn read_settings(root: &Path) -> CockroachModuleSettings {
@@ -735,6 +754,9 @@ fn start_child(
 ) -> Result<(), String> {
     let module_dir = root.join(&pointer.directory);
     let entry = module_dir.join(safe_relative_path(&manifest.entry)?);
+    let control_file = control_file_path(root);
+    let _ = fs::remove_file(&control_file);
+    let _ = fs::remove_file(control_ack_path(root));
     let mut command = Command::new(&entry);
     command
         .current_dir(&module_dir)
@@ -742,6 +764,7 @@ fn start_child(
             "--user-data-dir={}",
             module_data_dir(&root).display()
         ))
+        .arg(format!("--cpa-control-file={}", control_file.display()))
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::null());
@@ -785,8 +808,50 @@ pub fn kill_all_cockroaches(
     if !child_is_running(&state) {
         return Ok(cockroach_module_status(app, state));
     }
-    platform::trigger_kill_all()?;
+    let root = module_root(&app)?;
+    send_kill_all_command(&root, &state)?;
     Ok(cockroach_module_status(app, state))
+}
+
+fn send_kill_all_command(root: &Path, state: &CockroachModuleState) -> Result<(), String> {
+    let counter = state.next_control_nonce.fetch_add(1, Ordering::Relaxed);
+    let timestamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_nanos();
+    let nonce = format!("{}-{counter}-{timestamp}", std::process::id());
+    let command_path = control_file_path(root);
+    let ack_path = control_ack_path(root);
+    let temporary = command_path.with_extension("json.tmp");
+    let _ = fs::remove_file(&ack_path);
+    fs::write(
+        &temporary,
+        serde_json::to_vec(&serde_json::json!({
+            "v": 1,
+            "nonce": nonce,
+            "command": "kill-all",
+        }))
+        .map_err(|error| error.to_string())?,
+    )
+    .map_err(|error| format!("无法发送杀死所有命令：{error}"))?;
+    fs::rename(&temporary, &command_path)
+        .map_err(|error| format!("无法激活杀死所有命令：{error}"))?;
+
+    let started = Instant::now();
+    while started.elapsed() < Duration::from_secs(2) {
+        if let Ok(bytes) = fs::read(&ack_path) {
+            if let Ok(ack) = serde_json::from_slice::<serde_json::Value>(&bytes) {
+                if ack.get("v").and_then(serde_json::Value::as_u64) == Some(1)
+                    && ack.get("nonce").and_then(serde_json::Value::as_str) == Some(nonce.as_str())
+                    && ack.get("ok").and_then(serde_json::Value::as_bool) == Some(true)
+                {
+                    return Ok(());
+                }
+            }
+        }
+        std::thread::sleep(Duration::from_millis(25));
+    }
+    Err("蟑螂程序没有确认杀死所有命令".to_string())
 }
 
 #[tauri::command]
@@ -837,10 +902,11 @@ pub fn stop_for_exit(app: &tauri::AppHandle) {
 #[cfg(test)]
 mod tests {
     use super::{
-        module_public_key, runtime_target, safe_relative_path, validate_manifest,
-        validate_package_url, validate_release_version, validate_settings, validate_sha256_text,
-        verify_index_signature, write_upstream_config, CockroachModuleSettings, ModuleManifest,
-        MODULE_ID, MODULE_SCHEMA_VERSION,
+        module_public_key, runtime_target, safe_relative_path, send_kill_all_command,
+        validate_manifest, validate_package_url, validate_release_version, validate_settings,
+        validate_sha256_text, verify_index_signature, write_upstream_config,
+        CockroachModuleSettings, CockroachModuleState, ModuleManifest, MODULE_ID,
+        MODULE_SCHEMA_VERSION,
     };
 
     fn manifest() -> ModuleManifest {
@@ -855,6 +921,7 @@ mod tests {
                 "max-count".to_string(),
                 "baby-growth-minutes".to_string(),
                 "process-lifecycle".to_string(),
+                "process-control-file-v1".to_string(),
             ],
         }
     }
@@ -929,6 +996,45 @@ mod tests {
         assert_eq!(value["settings"]["maxCount"], 42);
         assert_eq!(value["settings"]["babyGrowthMinutes"], 6);
         assert_eq!(value["cockroaches"], serde_json::json!([]));
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn kill_all_control_waits_for_the_matching_process_acknowledgement() {
+        let root = std::env::temp_dir().join(format!(
+            "cpa-cockroach-control-test-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(root.join("data")).unwrap();
+        let root_for_process = root.clone();
+        let process = std::thread::spawn(move || {
+            let command_path = root_for_process.join("data/cpa-control.json");
+            let started = std::time::Instant::now();
+            while started.elapsed() < std::time::Duration::from_secs(2) {
+                if let Ok(bytes) = std::fs::read(&command_path) {
+                    let command: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+                    std::fs::write(
+                        root_for_process.join("data/cpa-control.ack.json"),
+                        serde_json::to_vec(&serde_json::json!({
+                            "v": 1,
+                            "nonce": command["nonce"],
+                            "ok": true,
+                        }))
+                        .unwrap(),
+                    )
+                    .unwrap();
+                    return;
+                }
+                std::thread::sleep(std::time::Duration::from_millis(5));
+            }
+            panic!("control command was not written");
+        });
+        send_kill_all_command(&root, &CockroachModuleState::default()).unwrap();
+        process.join().unwrap();
         std::fs::remove_dir_all(root).unwrap();
     }
 
