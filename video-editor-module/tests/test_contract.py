@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import importlib.util
+import hashlib
+import http.server
 import json
 import subprocess
 import sys
 import tempfile
+import threading
 import unittest
 from pathlib import Path
 
@@ -29,6 +32,17 @@ def load_build_runtime():
     )
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
+
+
+def load_packager():
+    spec = importlib.util.spec_from_file_location(
+        "video_editor_packager", ROOT / "scripts" / "package_module.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
 
@@ -62,6 +76,7 @@ class VideoEditorModuleContractTests(unittest.TestCase):
         self.assertIn("PPM-100", policy["components"]["birefnet"]["provenanceRisk"])
         self.assertIn("--enable-gpl", policy["components"]["ffmpeg"]["forbiddenConfigureFlags"])
         self.assertIn("hevc_videotoolbox", policy["components"]["ffmpeg"]["macosRequiredEncoders"])
+        self.assertIn("signed module index", policy["publicPackageAuthenticity"])
 
         build_script = (ROOT / "scripts" / "build_runtime.py").read_text(encoding="utf-8")
         self.assertIn("sam_policy['commit']", build_script)
@@ -90,6 +105,191 @@ class VideoEditorModuleContractTests(unittest.TestCase):
             set(release["packages"]),
             {"macos-arm64", "macos-x86_64", "windows-x86_64"},
         )
+        self.assertEqual(
+            release["packages"]["windows-x86_64"]["platformSignature"],
+            "unsigned-index-authenticated",
+        )
+        self.assertIn("ffmpegSourceSha256", release["ffmpeg"]["windows"])
+        self.assertIn("libvpxSourceSha256", release["ffmpeg"]["windows"])
+
+    def test_public_license_pack_requires_provenance_and_component_notices(self):
+        packager = load_packager()
+        distribution = packager.DISTRIBUTION_POLICIES["noncommercial-open-source"]
+        source_policy = json.loads((ROOT / "source-policy.json").read_text(encoding="utf-8"))
+        required_packages = packager.required_python_packages(ROOT, "macos-arm64")
+        source_manifest = load_build_runtime().source_manifest_document(
+            source_policy,
+            "macos-arm64",
+            "a" * 40,
+            "--enable-libvpx",
+            "CPython",
+            "3.14.7",
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            licenses = Path(temporary)
+            required = {
+                "NONCOMMERCIAL-NOTICE.md": "noncommercial",
+                "THIRD-PARTY-SOURCES.md": "sources",
+                "PYTHON-LICENSE.txt": "python",
+                "PYTHON-PACKAGE-LICENSES.json": json.dumps([
+                    {"Name": name, "Version": "1.0.0", "License": "test-license"}
+                    for name in sorted(required_packages)
+                ]),
+                "FFMPEG-LICENSE.txt": "lgpl",
+                "FFMPEG-CONFIGURATION.txt": "--enable-libvpx",
+                "LIBVPX-LICENSE.txt": "bsd",
+                "LIBVPX-PATENTS.txt": "patents",
+                "SOURCE-MANIFEST.json": json.dumps(source_manifest),
+            }
+            for name, contents in required.items():
+                (licenses / name).write_text(contents, encoding="utf-8")
+            manifest = packager.validate_license_pack(
+                licenses,
+                "macos-arm64",
+                distribution,
+                source_policy,
+                "--enable-libvpx",
+                required_packages,
+            )
+            self.assertEqual(manifest["target"], "macos-arm64")
+
+            (licenses / "LIBVPX-LICENSE.txt").unlink()
+            with self.assertRaisesRegex(SystemExit, "LIBVPX-LICENSE.txt"):
+                packager.validate_license_pack(
+                    licenses,
+                    "macos-arm64",
+                    distribution,
+                    source_policy,
+                    "--enable-libvpx",
+                    required_packages,
+                )
+
+            (licenses / "LIBVPX-LICENSE.txt").write_text("bsd", encoding="utf-8")
+            tampered = json.loads((licenses / "SOURCE-MANIFEST.json").read_text(encoding="utf-8"))
+            tampered["components"]["sam2"]["checkpointSha256"] = "0" * 64
+            (licenses / "SOURCE-MANIFEST.json").write_text(json.dumps(tampered), encoding="utf-8")
+            with self.assertRaisesRegex(SystemExit, "SAM2.checkpointSha256"):
+                packager.validate_license_pack(
+                    licenses,
+                    "macos-arm64",
+                    distribution,
+                    source_policy,
+                    "--enable-libvpx",
+                    required_packages,
+                )
+
+            tampered = json.loads((licenses / "PYTHON-PACKAGE-LICENSES.json").read_text())
+            tampered = [item for item in tampered if item["Name"] != "sam-2"]
+            (licenses / "PYTHON-PACKAGE-LICENSES.json").write_text(
+                json.dumps(tampered), encoding="utf-8"
+            )
+            (licenses / "SOURCE-MANIFEST.json").write_text(
+                json.dumps(source_manifest), encoding="utf-8"
+            )
+            with self.assertRaisesRegex(SystemExit, "sam-2"):
+                packager.validate_license_pack(
+                    licenses,
+                    "macos-arm64",
+                    distribution,
+                    source_policy,
+                    "--enable-libvpx",
+                    required_packages,
+                )
+
+    def test_noncommercial_windows_signature_policy_is_explicit(self):
+        packager = load_packager()
+        policy = packager.DISTRIBUTION_POLICIES["noncommercial-open-source"]
+        self.assertEqual(policy.windows_signature, "authenticode-or-signed-index")
+        script = (ROOT / "scripts" / "package_module.py").read_text(encoding="utf-8")
+        self.assertIn("unsigned-index-authenticated", script)
+        self.assertNotIn('if distribution == "noncommercial-open-source":\n            return', script)
+
+    def test_model_download_cache_survives_runtime_output_replacement(self):
+        script = (ROOT / "scripts" / "build_runtime.py").read_text(encoding="utf-8")
+        self.assertIn('model_cache = work / "model-cache"', script)
+        self.assertIn('headers={"Range": f"bytes={offset}-"}', script)
+        self.assertIn("shutil.copy2(sam_cached, sam_target)", script)
+
+    def test_model_download_resumes_a_partial_http_range(self):
+        build_runtime = load_build_runtime()
+        payload = (b"resume-model-download-" * 1024) + b"done"
+
+        class RangeHandler(http.server.BaseHTTPRequestHandler):
+            requested_ranges: list[str | None] = []
+
+            def do_GET(self):
+                range_header = self.headers.get("Range")
+                self.requested_ranges.append(range_header)
+                start = int(range_header.removeprefix("bytes=").removesuffix("-"))
+                self.send_response(206)
+                self.send_header("Content-Length", str(len(payload) - start))
+                self.send_header("Content-Range", f"bytes {start}-{len(payload) - 1}/{len(payload)}")
+                self.end_headers()
+                self.wfile.write(payload[start:])
+
+            def log_message(self, _format, *_args):
+                return
+
+        server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), RangeHandler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            with tempfile.TemporaryDirectory() as temporary:
+                target = Path(temporary) / "model.bin"
+                partial = target.with_suffix(".bin.download")
+                partial.write_bytes(payload[:128])
+                build_runtime.download(
+                    f"http://127.0.0.1:{server.server_port}/model.bin",
+                    target,
+                    hashlib.sha256(payload).hexdigest(),
+                )
+                self.assertEqual(target.read_bytes(), payload)
+                self.assertEqual(RangeHandler.requested_ranges, ["bytes=128-"])
+                self.assertFalse(partial.exists())
+        finally:
+            server.shutdown()
+            thread.join(timeout=2)
+            server.server_close()
+
+    def test_model_download_promotes_a_complete_partial_without_http(self):
+        build_runtime = load_build_runtime()
+        payload = b"already-complete-model"
+        with tempfile.TemporaryDirectory() as temporary:
+            target = Path(temporary) / "model.bin"
+            partial = target.with_suffix(".bin.download")
+            partial.write_bytes(payload)
+            build_runtime.download(
+                "http://127.0.0.1:1/must-not-be-requested",
+                target,
+                hashlib.sha256(payload).hexdigest(),
+            )
+            self.assertEqual(target.read_bytes(), payload)
+            self.assertFalse(partial.exists())
+
+    def test_release_runtime_source_commit_rejects_dirty_inputs(self):
+        build_runtime = load_build_runtime()
+        with tempfile.TemporaryDirectory() as temporary:
+            repository = Path(temporary)
+            subprocess.run(["git", "init", "-q"], cwd=repository, check=True)
+            subprocess.run(
+                ["git", "config", "user.email", "tests@example.invalid"],
+                cwd=repository,
+                check=True,
+            )
+            subprocess.run(
+                ["git", "config", "user.name", "Video Module Tests"],
+                cwd=repository,
+                check=True,
+            )
+            source = repository / "source.py"
+            source.write_text("clean = True\n", encoding="utf-8")
+            subprocess.run(["git", "add", "source.py"], cwd=repository, check=True)
+            subprocess.run(["git", "commit", "-q", "-m", "fixture"], cwd=repository, check=True)
+            self.assertRegex(build_runtime.clean_source_commit(repository), r"^[0-9a-f]{40}$")
+
+            source.write_text("clean = False\n", encoding="utf-8")
+            with self.assertRaisesRegex(SystemExit, "source is dirty"):
+                build_runtime.clean_source_commit(repository)
 
     def test_macos_preview_uses_hevc_alpha_while_download_stays_webm(self):
         pipeline = (ROOT / "video_editor_module" / "pipeline.py").read_text(encoding="utf-8")
@@ -120,6 +320,14 @@ class VideoEditorModuleContractTests(unittest.TestCase):
                         "url": f"https://github.com/example/{target}.zip",
                         "sha256": "a" * 64,
                         "size": 42,
+                        "distribution": "noncommercial-open-source",
+                        "platformSignature": (
+                            "unsigned-index-authenticated"
+                            if target == "windows-x86_64"
+                            else "ad-hoc"
+                        ),
+                        "packageAuthenticity": "tauri-minisign-index+sha256",
+                        "publicIndexSignatureRequired": True,
                         "releaseEligible": True,
                     }),
                     encoding="utf-8",
@@ -144,6 +352,11 @@ class VideoEditorModuleContractTests(unittest.TestCase):
                 "macos-arm64", "macos-x86_64", "windows-x86_64",
             })
             self.assertFalse(document["debugOnly"])
+            self.assertEqual(document["distribution"], "noncommercial-open-source")
+            self.assertEqual(
+                document["packages"]["windows-x86_64"]["platformSignature"],
+                "unsigned-index-authenticated",
+            )
 
             blocked = json.loads(package_paths[0].read_text(encoding="utf-8"))
             blocked["releaseEligible"] = False

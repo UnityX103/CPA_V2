@@ -6,6 +6,7 @@
   "nonCommercialOpenSourceReleaseAllowed": true,
   "commercialReleaseBlocker": "Replace BiRefNet-matting with a commercially cleared checkpoint or archive written upstream authorization covering PPM-100-derived training.",
   "nonCommercialReleaseTerms": "The downloadable module is published only for non-commercial open-source learning and research. Preserve component notices, cite BiRefNet and PPM-100, link CC BY-NC-SA 4.0, and identify modifications.",
+  "publicPackageAuthenticity": "Every public package must be referenced by SHA-256 from the Tauri Minisign-signed module index. Commercial Windows packages additionally require Authenticode. Non-commercial Windows packages may be unsigned at the OS layer only when recorded as unsigned-index-authenticated.",
   "components": {
     "sam2": {
       "repository": "https://github.com/facebookresearch/sam2",
@@ -25,20 +26,36 @@
       "provenanceRisk": "The official model card lists PPM-100; its annotated alpha mattes are CC BY-NC-SA 4.0."
     },
     "ffmpeg": {
-      "rule": "Release builds must not contain --enable-gpl or --enable-nonfree and must include exact source, configure line, hashes, and LGPL compliance materials.",
+      "rule": "Release builds must not contain --enable-gpl or --enable-nonfree. Each runtime archive must contain a validated source manifest, exact configure line, hashes, and LGPL compliance materials; corresponding source archives must be published in the same public release.",
       "macosSource": {
         "version": "8.1.2",
         "url": "https://ffmpeg.org/releases/ffmpeg-8.1.2.tar.xz",
         "sha256": "464beb5e7bf0c311e68b45ae2f04e9cc2af88851abb4082231742a74d97b524c",
+        "sourceAsset": "video-editor-module-ffmpeg-8.1.2-source.tar.xz",
         "libvpxVersion": "1.16.0",
         "libvpxUrl": "https://github.com/webmproject/libvpx/archive/refs/tags/v1.16.0.tar.gz",
-        "libvpxSha256": "7a479a3c66b9f5d5542a4c6a1b7d3768a983b1e5c14c60a9396edc9b649e015c"
+        "libvpxSha256": "7a479a3c66b9f5d5542a4c6a1b7d3768a983b1e5c14c60a9396edc9b649e015c",
+        "libvpxSourceAsset": "video-editor-module-libvpx-1.16.0-source.tar.gz"
       },
       "windowsBuild": {
         "provider": "BtbN/FFmpeg-Builds",
         "asset": "ffmpeg-n8.1.2-50-g1a748fe2cd-win64-lgpl-8.1.zip",
         "url": "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-08-31-13-27/ffmpeg-n8.1.2-50-g1a748fe2cd-win64-lgpl-8.1.zip",
-        "sha256": "f6274bbd9c247f9e90c1bbed066b03ed4a3907cece2fb91be6dd352393936365"
+        "sha256": "f6274bbd9c247f9e90c1bbed066b03ed4a3907cece2fb91be6dd352393936365",
+        "ffmpegCommit": "1a748fe2cd43e3ead22fafb1b5b7d77f153898a8",
+        "buildRepository": "https://github.com/BtbN/FFmpeg-Builds",
+        "buildCommit": "8267213e26c1031621e6e1210fe3aa4867214f6a",
+        "buildSourceUrl": "https://github.com/BtbN/FFmpeg-Builds/archive/refs/tags/autobuild-2026-08-31-13-27.zip",
+        "buildSourceSha256": "8f11967c4ceb8a8fd4986c47c6963f9546892a14702ef0a5bd703f578f4e054a",
+        "buildSourceAsset": "video-editor-module-btbn-ffmpeg-builds-autobuild-2026-08-31-13-27.zip",
+        "ffmpegSourceUrl": "https://github.com/FFmpeg/FFmpeg/archive/1a748fe2cd43e3ead22fafb1b5b7d77f153898a8.tar.gz",
+        "ffmpegSourceSha256": "519e42c103de98a34fc07c2a52c0d6d7b25031f2bd4e42d544bc409fe9fb6477",
+        "ffmpegSourceAsset": "video-editor-module-ffmpeg-1a748fe2cd-source.tar.gz",
+        "libvpxRepository": "https://chromium.googlesource.com/webm/libvpx",
+        "libvpxCommit": "9cc8e1c18024d6b64422ecb7fdd7a43c8e873908",
+        "libvpxSourceUrl": "https://chromium.googlesource.com/webm/libvpx/+archive/9cc8e1c18024d6b64422ecb7fdd7a43c8e873908.tar.gz",
+        "libvpxSourceSha256": "adacbdd41e05584f6779fc8025d3a2780543beee5dd19bdf07a87415b7ba0f03",
+        "libvpxSourceAsset": "video-editor-module-libvpx-9cc8e1c180-source.tar.gz"
       },
       "requiredEncoders": ["libvpx"],
       "macosRequiredEncoders": ["hevc_videotoolbox"],

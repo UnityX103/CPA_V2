@@ -18,11 +18,21 @@ python video-editor-module/scripts/build_runtime.py \
   --output /absolute/build/runtime
 ```
 
-Then package with `package_module.py`. A public package requires commercially
-cleared weights, Developer ID signing on macOS or valid Authenticode on Windows,
-and an LGPL-compatible FFmpeg. Assemble all three `.package.json` files using
-`build_index.py`, sign the resulting index, and publish the index, its `.sig`,
-and all archives in the same GitHub Release.
+Then package with `package_module.py`. Commercial public packages require
+commercially cleared weights, Developer ID signing on macOS, valid Authenticode
+on Windows, and an LGPL-compatible FFmpeg. Non-commercial public packages must
+preserve the non-commercial notices and complete source/license manifest. Their
+macOS executables require valid code signatures (ad-hoc is accepted); Windows
+executables may be unsigned, in which case the package records
+`unsigned-index-authenticated` and Windows can show SmartScreen. Every public
+package is authenticated by its SHA-256 in the Tauri Minisign-signed index.
+
+`package_module.py` refuses `releaseEligible=true` unless the license pack has
+the Python, FFmpeg, and libvpx notices, exact FFmpeg configuration, package
+license inventory, and a target-matching source manifest. Assemble all three
+`.package.json` files using `build_index.py`, sign the resulting index, and
+publish the index, its `.sig`, source archives, and all runtime archives in the
+same GitHub Release.
 
 The Tauri signer writes a Base64-wrapped Minisign document. Do not decode or
 rewrite the `.sig` before publishing; the host validates that exact format.

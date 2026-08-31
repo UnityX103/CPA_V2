@@ -4,6 +4,7 @@
   "distribution": "noncommercial-open-source",
   "release": "https://github.com/UnityX103/CPA_V2/releases/tag/v0.1.21",
   "sourceCommit": "f87d7618efc365d4f669195deaa33c6771a8a88a",
+  "packageAuthenticity": "Each package SHA-256 is authenticated by the Tauri Minisign-signed public module index.",
   "python": {
     "macosArm64": "CPython 3.14.7 arm64",
     "macosX86_64": {
@@ -25,21 +26,34 @@
     },
     "windows": {
       "asset": "ffmpeg-n8.1.2-50-g1a748fe2cd-win64-lgpl-8.1.zip",
-      "sha256": "f6274bbd9c247f9e90c1bbed066b03ed4a3907cece2fb91be6dd352393936365"
+      "sha256": "f6274bbd9c247f9e90c1bbed066b03ed4a3907cece2fb91be6dd352393936365",
+      "ffmpegCommit": "1a748fe2cd43e3ead22fafb1b5b7d77f153898a8",
+      "ffmpegSourceAsset": "video-editor-module-ffmpeg-1a748fe2cd-source.tar.gz",
+      "ffmpegSourceSha256": "519e42c103de98a34fc07c2a52c0d6d7b25031f2bd4e42d544bc409fe9fb6477",
+      "buildSourceAsset": "video-editor-module-btbn-ffmpeg-builds-autobuild-2026-08-31-13-27.zip",
+      "buildSourceSha256": "8f11967c4ceb8a8fd4986c47c6963f9546892a14702ef0a5bd703f578f4e054a",
+      "buildCommit": "8267213e26c1031621e6e1210fe3aa4867214f6a",
+      "libvpxCommit": "9cc8e1c18024d6b64422ecb7fdd7a43c8e873908",
+      "libvpxSourceAsset": "video-editor-module-libvpx-9cc8e1c180-source.tar.gz",
+      "libvpxSourceSha256": "adacbdd41e05584f6779fc8025d3a2780543beee5dd19bdf07a87415b7ba0f03"
     }
   },
   "packages": {
     "macos-arm64": {
-      "size": 1517551405,
-      "sha256": "4591ccb7c2d89f4e40e3dac273805de09278c47592f4142402aba49ea5ad0467"
+      "size": 1517562260,
+      "sha256": "fed38fdc2ec21778b9db6201840e851c7f6065ee11f76183e1e769375532322e",
+      "platformSignature": "ad-hoc"
     },
     "macos-x86_64": {
-      "size": 1630571451,
-      "sha256": "c007bdb20c37810ab63e38dad50b9b338adeeeb6fa10ea8b47ccd7a67fbb7d6e"
+      "size": 1630582655,
+      "sha256": "583e17ffca63d8e193e3a4b27cdeacdc29d0bc53f0e9478d85cf5105c15d51bf",
+      "platformSignature": "ad-hoc"
     },
     "windows-x86_64": {
-      "size": 1535547817,
-      "sha256": "e228e398933d408bd61b601ac771bc7511c0939922355b859caa3e9d33a8c28f"
+      "size": 1535566229,
+      "sha256": "4dd9c8e2a2ab7f07143e532e2784388c3a1478b89a0d4fd4f002f11a8ed5f205",
+      "platformSignature": "unsigned-index-authenticated",
+      "windowsWarning": "The executable is not Authenticode signed and may trigger Microsoft Defender SmartScreen."
     }
   }
 }

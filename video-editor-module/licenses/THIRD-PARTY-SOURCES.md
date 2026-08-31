@@ -11,4 +11,7 @@ Core components:
 - PPM-100 alpha annotations, CC BY-NC-SA 4.0: https://github.com/ZHKKKe/PPM
 - FFmpeg, LGPL-compatible build: https://ffmpeg.org/legal.html
 
-The runtime manifest contains exact source revisions and SHA-256 hashes.
+`SOURCE-MANIFEST.json` contains the target-specific source revisions, build
+configuration, and SHA-256 hashes. The public runtime archive repeats that
+document as `source-manifest.json`, while `runtime-manifest.json` records the
+platform-signature status and embeds the same provenance data.

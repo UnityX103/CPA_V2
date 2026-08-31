@@ -61,9 +61,22 @@ def run(
 
 def download(url: str, target: Path, expected_hash: str) -> None:
     target.parent.mkdir(parents=True, exist_ok=True)
+    if target.is_file() and digest(target) == expected_hash:
+        return
     temporary = target.with_suffix(target.suffix + ".download")
-    with urllib.request.urlopen(url, timeout=120) as response, temporary.open("wb") as output:
-        shutil.copyfileobj(response, output, length=1024 * 1024)
+    if temporary.is_file() and digest(temporary) == expected_hash:
+        temporary.replace(target)
+        return
+    offset = temporary.stat().st_size if temporary.is_file() else 0
+    request = urllib.request.Request(
+        url,
+        headers={"Range": f"bytes={offset}-"} if offset else {},
+    )
+    with urllib.request.urlopen(request, timeout=120) as response:
+        append = offset > 0 and getattr(response, "status", None) == 206
+        mode = "ab" if append else "wb"
+        with temporary.open(mode) as output:
+            shutil.copyfileobj(response, output, length=1024 * 1024)
     if digest(temporary) != expected_hash:
         temporary.unlink(missing_ok=True)
         raise SystemExit(f"download hash mismatch: {target.name}")
@@ -87,6 +100,7 @@ def main() -> None:
             f"runtime must be built natively: requested {args.target}, current interpreter is {detected}"
         )
     project_root = Path(__file__).resolve().parents[1]
+    source_commit = clean_source_commit(project_root)
     policy = json.loads((project_root / "source-policy.json").read_text(encoding="utf-8"))
     suffix = ".exe" if args.target == "windows-x86_64" else ""
     for name in [f"ffmpeg{suffix}", f"ffprobe{suffix}"]:
@@ -139,6 +153,7 @@ def main() -> None:
             ),
         )
 
+        model_cache = work / "model-cache"
         dist = work / "dist"
         build = work / "pyinstaller"
         run(
@@ -162,29 +177,36 @@ def main() -> None:
         media_dir = args.output / "bin"
         shutil.copytree(args.ffmpeg_dir, media_dir)
 
+        sam_cached = model_cache / "sam2" / sam_policy["checkpoint"]
+        download(sam_policy["checkpointUrl"], sam_cached, sam_policy["checkpointSha256"])
         sam_target = args.output / "models" / "sam2" / sam_policy["checkpoint"]
-        if not sam_target.is_file() or digest(sam_target) != sam_policy["checkpointSha256"]:
-            download(sam_policy["checkpointUrl"], sam_target, sam_policy["checkpointSha256"])
+        sam_target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(sam_cached, sam_target)
 
         biref_policy = policy["components"]["birefnet"]
+        biref_cached = model_cache / "birefnet"
         biref_target = args.output / "models" / "birefnet"
         script = (
             "from huggingface_hub import snapshot_download; "
             "snapshot_download(repo_id=sys.argv[1], revision=sys.argv[2], "
             "local_dir=sys.argv[3], local_dir_use_symlinks=False)"
         )
-        model = biref_target / "model.safetensors"
-        if not model.is_file() or digest(model) != biref_policy["modelSha256"]:
+        cached_model = biref_cached / "model.safetensors"
+        if not cached_model.is_file() or digest(cached_model) != biref_policy["modelSha256"]:
             run(
                 python,
                 "-c",
                 "import sys; " + script,
                 biref_policy["modelRepository"].removeprefix("https://huggingface.co/"),
                 biref_policy["modelRevision"],
-                biref_target,
+                biref_cached,
             )
+        model = biref_cached / "model.safetensors"
         if digest(model) != biref_policy["modelSha256"]:
             raise SystemExit("BiRefNet checkpoint hash mismatch")
+        if biref_target.exists():
+            shutil.rmtree(biref_target)
+        shutil.copytree(biref_cached, biref_target)
 
         if args.licenses_output.exists():
             shutil.rmtree(args.licenses_output)
@@ -209,6 +231,17 @@ def main() -> None:
             ffmpeg_license,
             encoding="utf-8",
         )
+        ffmpeg_configuration = subprocess.run(
+            [str(media_dir / f"ffmpeg{suffix}"), "-hide_banner", "-buildconf"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            check=True,
+        ).stdout
+        (args.licenses_output / "FFMPEG-CONFIGURATION.txt").write_text(
+            ffmpeg_configuration,
+            encoding="utf-8",
+        )
         python_license_script = (
             "from pathlib import Path; import sys; "
             "root=Path(sys.base_prefix); "
@@ -221,10 +254,139 @@ def main() -> None:
         ).strip()
         if python_license:
             shutil.copy2(python_license, args.licenses_output / "PYTHON-LICENSE.txt")
+        python_details = json.loads(subprocess.check_output(
+            [
+                str(python),
+                "-c",
+                (
+                    "import json,platform; "
+                    "print(json.dumps([platform.python_implementation(),platform.python_version()]))"
+                ),
+            ],
+            text=True,
+        ))
+        source_manifest = source_manifest_document(
+            policy,
+            args.target,
+            source_commit,
+            ffmpeg_configuration,
+            python_details[0],
+            python_details[1],
+        )
+        (args.licenses_output / "SOURCE-MANIFEST.json").write_text(
+            json.dumps(source_manifest, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
         print(args.output)
     finally:
         if temporary is not None:
             temporary.cleanup()
+
+
+def clean_source_commit(project_root: Path) -> str:
+    status = subprocess.run(
+        ["git", "status", "--porcelain", "--untracked-files=all", "--", "."],
+        cwd=project_root,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        check=True,
+    ).stdout
+    if status.strip():
+        raise SystemExit("video-editor-module source is dirty; commit or clean it before building")
+    commit = subprocess.check_output(
+        ["git", "rev-parse", "HEAD"], cwd=project_root, text=True
+    ).strip()
+    if len(commit) != 40:
+        raise SystemExit("unable to resolve a full source commit")
+    return commit
+
+
+def source_manifest_document(
+    policy: dict,
+    target: str,
+    source_commit: str,
+    ffmpeg_configuration: str,
+    python_implementation: str,
+    python_version: str,
+) -> dict:
+    components = policy["components"]
+    sam = components["sam2"]
+    birefnet = components["birefnet"]
+    ffmpeg_policy = components["ffmpeg"]
+    ffmpeg_source = (
+        ffmpeg_policy["windowsBuild"]
+        if target == "windows-x86_64"
+        else ffmpeg_policy["macosSource"]
+    )
+    if target == "windows-x86_64":
+        libvpx_source = {
+            "repository": ffmpeg_source["libvpxRepository"],
+            "commit": ffmpeg_source["libvpxCommit"],
+            "sourceUrl": ffmpeg_source["libvpxSourceUrl"],
+            "sourceSha256": ffmpeg_source["libvpxSourceSha256"],
+            "license": "BSD-3-Clause",
+        }
+        source_assets = [
+            {
+                "name": ffmpeg_source["buildSourceAsset"],
+                "sha256": ffmpeg_source["buildSourceSha256"],
+            },
+            {
+                "name": ffmpeg_source["ffmpegSourceAsset"],
+                "sha256": ffmpeg_source["ffmpegSourceSha256"],
+            },
+            {
+                "name": ffmpeg_source["libvpxSourceAsset"],
+                "sha256": ffmpeg_source["libvpxSourceSha256"],
+            },
+        ]
+    else:
+        libvpx_source = {
+            "version": ffmpeg_source["libvpxVersion"],
+            "url": ffmpeg_source["libvpxUrl"],
+            "sha256": ffmpeg_source["libvpxSha256"],
+            "license": "BSD-3-Clause",
+        }
+        source_assets = [
+            {"name": ffmpeg_source["sourceAsset"], "sha256": ffmpeg_source["sha256"]},
+            {
+                "name": ffmpeg_source["libvpxSourceAsset"],
+                "sha256": ffmpeg_source["libvpxSha256"],
+            },
+        ]
+    return {
+        "schemaVersion": 1,
+        "target": target,
+        "sourceCommit": source_commit,
+        "sourceAvailability": {"assets": source_assets},
+        "components": {
+            "sam2": {
+                "repository": sam["repository"],
+                "commit": sam["commit"],
+                "checkpointUrl": sam["checkpointUrl"],
+                "checkpointSha256": sam["checkpointSha256"],
+                "license": sam["license"],
+            },
+            "birefnet": {
+                "repository": birefnet["repository"],
+                "commit": birefnet["commit"],
+                "modelRepository": birefnet["modelRepository"],
+                "modelRevision": birefnet["modelRevision"],
+                "modelSha256": birefnet["modelSha256"],
+                "declaredLicense": birefnet["declaredLicense"],
+            },
+            "ffmpeg": {**ffmpeg_source, "configuration": ffmpeg_configuration},
+            "libvpx": libvpx_source,
+            "python": {
+                "implementation": python_implementation,
+                "version": python_version,
+                "sourceRepository": "https://github.com/python/cpython",
+                "sourceRevision": f"v{python_version}",
+                "license": "Python-2.0",
+            },
+        },
+    }
 
 
 if __name__ == "__main__":

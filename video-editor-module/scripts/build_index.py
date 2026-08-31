@@ -21,6 +21,7 @@ def main() -> None:
     if not VERSION_PATTERN.fullmatch(args.version) or ".." in args.version:
         raise SystemExit("invalid module version")
     packages = {}
+    distributions = set()
     for path in args.packages:
         document = json.loads(path.read_text(encoding="utf-8"))
         target = document.get("target")
@@ -32,18 +33,33 @@ def main() -> None:
             raise SystemExit(f"invalid package document: {path}")
         if not document.get("releaseEligible", False) and not args.allow_internal:
             raise SystemExit(f"package is not eligible for public release: {path}")
+        if not args.allow_internal:
+            if document.get("packageAuthenticity") != "tauri-minisign-index+sha256":
+                raise SystemExit(f"package lacks signed-index authenticity policy: {path}")
+            if not document.get("publicIndexSignatureRequired"):
+                raise SystemExit(f"package does not require a signed public index: {path}")
+        distribution = document.get("distribution")
+        platform_signature = document.get("platformSignature")
+        if not distribution or not platform_signature:
+            raise SystemExit(f"package lacks distribution/signature metadata: {path}")
+        distributions.add(distribution)
         packages[target] = {
             "url": document["url"],
             "sha256": document["sha256"],
             "size": document["size"],
+            "platformSignature": platform_signature,
         }
     missing = TARGETS - packages.keys()
     if missing:
         raise SystemExit(f"missing target packages: {', '.join(sorted(missing))}")
+    if len(distributions) != 1:
+        raise SystemExit("all target packages must use the same distribution policy")
     index = {
         "schemaVersion": 1,
         "version": args.version,
         "debugOnly": bool(args.allow_internal),
+        "distribution": distributions.pop(),
+        "packageAuthenticity": "tauri-minisign-index+sha256",
         "packages": packages,
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
