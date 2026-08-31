@@ -1,4 +1,5 @@
 import json
+import hashlib
 import tempfile
 import unittest
 import zipfile
@@ -40,19 +41,12 @@ class ContractTest(unittest.TestCase):
                 root = Path(directory)
                 source = root / "source"
                 source.mkdir()
-                (source / "main.js").write_text(
-                    "const CPA_CONTROL_PROTOCOL_VERSION = 1; // --cpa-control-file=",
-                    encoding="utf-8",
-                )
                 runtime = root / runtime_name
                 entry = runtime / executable_path
                 entry.parent.mkdir(parents=True)
                 entry.write_text("runtime", encoding="utf-8")
-                with mock.patch.object(
-                    MODULE.subprocess,
-                    "check_output",
-                    side_effect=[MODULE.UPSTREAM_COMMIT + "\n", "main.js\n"],
-                ):
+                with mock.patch.object(MODULE, "verify_patched_source"), \
+                        mock.patch.object(MODULE, "verify_packaged_runtime"):
                     archive = MODULE.package(
                         runtime,
                         source,
@@ -74,12 +68,61 @@ class ContractTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             MODULE.validate_relative_entry("../outside")
 
-    def test_rejects_an_unpatched_upstream_source(self):
+    def test_source_verifier_requires_the_exact_reviewed_adapter(self):
         with tempfile.TemporaryDirectory() as directory:
             source = Path(directory)
-            (source / "main.js").write_text("upstream", encoding="utf-8")
-            with self.assertRaisesRegex(ValueError, "control-file integration patch"):
+            main = source / "main.js"
+            overlay = source / "src/overlay/overlay.js"
+            overlay.parent.mkdir(parents=True)
+            main.write_text("reviewed-main", encoding="utf-8")
+            overlay.write_text("reviewed-overlay", encoding="utf-8")
+            hashes = {
+                "main.js": hashlib.sha256(b"reviewed-main").hexdigest(),
+                "src/overlay/overlay.js": hashlib.sha256(b"reviewed-overlay").hexdigest(),
+            }
+            with mock.patch.object(MODULE, "PATCHED_SOURCE_HASHES", hashes), \
+                    mock.patch.object(
+                        MODULE.subprocess,
+                        "check_output",
+                        side_effect=[
+                            MODULE.UPSTREAM_COMMIT + "\n",
+                            " M main.js\n M src/overlay/overlay.js\n",
+                            MODULE.UPSTREAM_COMMIT + "\n",
+                            " M main.js\n M src/overlay/overlay.js\n",
+                        ],
+                    ):
                 MODULE.verify_patched_source(source)
+                overlay.write_text("tampered", encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "does not match"):
+                    MODULE.verify_patched_source(source)
+
+    def test_runtime_verifier_reads_the_reviewed_files_from_app_asar(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "source"
+            runtime = source / "dist" / "mac-arm64" / "CockroachPet.app"
+            asar = runtime / "Contents/Resources/app.asar"
+            asar.parent.mkdir(parents=True)
+            asar.write_bytes(b"asar")
+            asar_script = source / "node_modules/@electron/asar/bin/asar.js"
+            asar_script.parent.mkdir(parents=True)
+            asar_script.write_text("asar", encoding="utf-8")
+            hashes = {
+                "main.js": hashlib.sha256(b"reviewed-main").hexdigest(),
+                "src/overlay/overlay.js": hashlib.sha256(b"reviewed-overlay").hexdigest(),
+            }
+
+            def extract(_args, *, check, stdout, stderr, text):
+                self.assertTrue(check and text)
+                extracted = Path(_args[-1])
+                (extracted / "src/overlay").mkdir(parents=True)
+                (extracted / "main.js").write_bytes(b"reviewed-main")
+                (extracted / "src/overlay/overlay.js").write_bytes(b"reviewed-overlay")
+                return mock.Mock(returncode=0)
+
+            with mock.patch.object(MODULE, "PATCHED_SOURCE_HASHES", hashes), \
+                    mock.patch.object(MODULE.shutil, "which", return_value="node"), \
+                    mock.patch.object(MODULE.subprocess, "run", side_effect=extract):
+                MODULE.verify_packaged_runtime(runtime, source, "macos-arm64")
 
 
 if __name__ == "__main__":

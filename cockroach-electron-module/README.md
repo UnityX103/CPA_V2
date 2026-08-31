@@ -16,7 +16,7 @@ git clone https://github.com/jo9900/CockroachPet-Public-Electron.git
 cd CockroachPet-Public-Electron
 git checkout a7d103d2818b40e12b8a39948e9ebf4c6085bfd3
 npm install
-git apply ../CPA_V2/cockroach-electron-module/patches/cpa-control-file.patch
+python ../CPA_V2/cockroach-electron-module/scripts/prepare_source.py --source-dir .
 ```
 
 Build an unpacked, self-contained Electron directory for the target platform. Do not package an
