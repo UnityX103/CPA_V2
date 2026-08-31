@@ -2,7 +2,7 @@
   "name": "app",
   "private": true,
   "description": "CPA_V2 desktop-pet pomodoro Tauri app with macOS x64/ARM64 and Windows x64 packages.",
-  "version": "0.1.20",
+  "version": "0.1.21",
   "type": "module",
   "scripts": {
     "dev": "vite",
