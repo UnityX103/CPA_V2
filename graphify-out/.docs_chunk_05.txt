@@ -1,0 +1,15 @@
+/Users/xpy/Desktop/NanZhai/CPA_V2/docs/superpowers/specs/2026-05-21-pomodoro-cloud-settings-design.md
+/Users/xpy/Desktop/NanZhai/CPA_V2/docs/superpowers/specs/2026-05-21-temporary-focus-windows-design.md
+/Users/xpy/Desktop/NanZhai/CPA_V2/docs/superpowers/specs/2026-05-22-checkin-editor-inherit-context-menu-design.md
+/Users/xpy/Desktop/NanZhai/CPA_V2/docs/superpowers/specs/2026-05-22-local-first-settings-sync-design.md
+/Users/xpy/Desktop/NanZhai/CPA_V2/docs/superpowers/specs/2026-05-22-mobile-companion-app-design.md
+/Users/xpy/Desktop/NanZhai/CPA_V2/docs/superpowers/specs/2026-05-22-offline-archive-and-window-layout-design.md
+/Users/xpy/Desktop/NanZhai/CPA_V2/docs/superpowers/specs/2026-05-23-checkin-global-toggle-design.md
+/Users/xpy/Desktop/NanZhai/CPA_V2/docs/superpowers/specs/2026-06-15-checkin-item-repeat-plan-design.md
+/Users/xpy/Desktop/NanZhai/CPA_V2/docs/superpowers/specs/2026-06-16-checkin-system-lifecycle-design.md
+/Users/xpy/Desktop/NanZhai/CPA_V2/docs/superpowers/specs/2026-06-16-settings-plan-panel-and-pet-removal-design.md
+/Users/xpy/Desktop/NanZhai/CPA_V2/docs/superpowers/specs/2026-06-17-dzdyi-count-cycle-pixel-sync-design.md
+/Users/xpy/Desktop/NanZhai/CPA_V2/docs/superpowers/specs/2026-06-17-todo-panel-design.md
+/Users/xpy/Desktop/NanZhai/CPA_V2/docs/superpowers/specs/2026-06-17-vzn4u-count-fields-audit-design.md
+/Users/xpy/Desktop/NanZhai/CPA_V2/docs/superpowers/specs/2026-06-23-focus-end-auto-pin-design.md
+/Users/xpy/Desktop/NanZhai/CPA_V2/docs/superpowers/specs/2026-08-14-camera-presence-automation-design.md

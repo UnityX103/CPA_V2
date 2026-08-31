@@ -1,0 +1,22 @@
+{
+  "name": "american-cockroach-crawl-in-place",
+  "species": "Periplaneta americana",
+  "spritesheet": "american-cockroach-crawl-centered-spritesheet.png",
+  "animation": "american-cockroach-crawl-centered.gif",
+  "framePattern": "frames-centered/cockroach-crawl-centered-%02d.png",
+  "frameCount": 8,
+  "columns": 4,
+  "rows": 2,
+  "frameWidth": 384,
+  "frameHeight": 512,
+  "frameDurationMs": 80,
+  "loop": true,
+  "translationPerFrame": [0, 0],
+  "fixedTorsoPivot": [192, 272],
+  "registrationTolerancePx": 0.5,
+  "gait": {
+    "type": "alternating-tripod",
+    "tripodA": ["leftFore", "rightMiddle", "leftHind"],
+    "tripodB": ["rightFore", "leftMiddle", "rightHind"]
+  }
+}
