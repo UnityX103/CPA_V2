@@ -12,6 +12,11 @@ SPEC = importlib.util.spec_from_file_location("package_module", SCRIPT)
 MODULE = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
 SPEC.loader.exec_module(MODULE)
+PREPARE_SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "prepare_source.py"
+PREPARE_SPEC = importlib.util.spec_from_file_location("prepare_source", PREPARE_SCRIPT)
+PREPARE = importlib.util.module_from_spec(PREPARE_SPEC)
+assert PREPARE_SPEC.loader is not None
+PREPARE_SPEC.loader.exec_module(PREPARE)
 
 
 class ContractTest(unittest.TestCase):
@@ -123,6 +128,28 @@ class ContractTest(unittest.TestCase):
                     mock.patch.object(MODULE.shutil, "which", return_value="node"), \
                     mock.patch.object(MODULE.subprocess, "run", side_effect=extract):
                 MODULE.verify_packaged_runtime(runtime, source, "macos-arm64")
+
+    def test_source_adapter_writes_canonical_lf_on_every_platform(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory)
+            overlay = source / "src/overlay/overlay.js"
+            overlay.parent.mkdir(parents=True)
+            (source / "main.js").write_bytes(
+                b"let tray = null;\r\n"
+                b"  startCursorPolling();\r\n  startHitTestPolling();\r\n"
+                b"app.on('will-quit', () => {\r\n  globalShortcut.unregisterAll();\r\n"
+            )
+            overlay.write_bytes(
+                b"ipcRenderer.on('kill-all', () => {\r\n  manager.killAll();\r\n});"
+            )
+            with mock.patch.object(
+                PREPARE.subprocess,
+                "check_output",
+                side_effect=[PREPARE.UPSTREAM_COMMIT + "\n", ""],
+            ):
+                PREPARE.prepare(source)
+            self.assertNotIn(b"\r\n", (source / "main.js").read_bytes())
+            self.assertNotIn(b"\r\n", overlay.read_bytes())
 
 
 if __name__ == "__main__":

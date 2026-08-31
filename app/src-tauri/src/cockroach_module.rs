@@ -834,6 +834,7 @@ fn send_kill_all_command(root: &Path, state: &CockroachModuleState) -> Result<()
         .map_err(|error| error.to_string())?,
     )
     .map_err(|error| format!("无法发送杀死所有命令：{error}"))?;
+    let _ = fs::remove_file(&command_path);
     fs::rename(&temporary, &command_path)
         .map_err(|error| format!("无法激活杀死所有命令：{error}"))?;
 
@@ -1013,27 +1014,40 @@ mod tests {
         let root_for_process = root.clone();
         let process = std::thread::spawn(move || {
             let command_path = root_for_process.join("data/cpa-control.json");
-            let started = std::time::Instant::now();
-            while started.elapsed() < std::time::Duration::from_secs(2) {
-                if let Ok(bytes) = std::fs::read(&command_path) {
-                    let command: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
-                    std::fs::write(
-                        root_for_process.join("data/cpa-control.ack.json"),
-                        serde_json::to_vec(&serde_json::json!({
-                            "v": 1,
-                            "nonce": command["nonce"],
-                            "ok": true,
-                        }))
-                        .unwrap(),
-                    )
-                    .unwrap();
-                    return;
+            let mut last_nonce = None;
+            for _ in 0..2 {
+                let started = std::time::Instant::now();
+                let mut acknowledged = false;
+                while started.elapsed() < std::time::Duration::from_secs(2) {
+                    if let Ok(bytes) = std::fs::read(&command_path) {
+                        let command: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+                        let nonce = command["nonce"].as_str().unwrap().to_string();
+                        if last_nonce.as_ref() == Some(&nonce) {
+                            std::thread::sleep(std::time::Duration::from_millis(5));
+                            continue;
+                        }
+                        std::fs::write(
+                            root_for_process.join("data/cpa-control.ack.json"),
+                            serde_json::to_vec(&serde_json::json!({
+                                "v": 1,
+                                "nonce": nonce,
+                                "ok": true,
+                            }))
+                            .unwrap(),
+                        )
+                        .unwrap();
+                        last_nonce = Some(nonce);
+                        acknowledged = true;
+                        break;
+                    }
+                    std::thread::sleep(std::time::Duration::from_millis(5));
                 }
-                std::thread::sleep(std::time::Duration::from_millis(5));
+                assert!(acknowledged, "control command was not written");
             }
-            panic!("control command was not written");
         });
-        send_kill_all_command(&root, &CockroachModuleState::default()).unwrap();
+        let state = CockroachModuleState::default();
+        send_kill_all_command(&root, &state).unwrap();
+        send_kill_all_command(&root, &state).unwrap();
         process.join().unwrap();
         std::fs::remove_dir_all(root).unwrap();
     }

@@ -104,8 +104,10 @@ def prepare(source_dir: Path) -> None:
         "});",
         "renderer kill-all handler",
     )
-    main_path.write_text(main, encoding="utf-8")
-    overlay_path.write_text(overlay, encoding="utf-8")
+    with main_path.open("w", encoding="utf-8", newline="\n") as destination:
+        destination.write(main)
+    with overlay_path.open("w", encoding="utf-8", newline="\n") as destination:
+        destination.write(overlay)
 
 
 def main() -> None:
