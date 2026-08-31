@@ -7,16 +7,22 @@ import {
 
 export type { PresenceAbsenceSensitivity } from './presencePolicy';
 
+export type RestDeskReminderMode = 'cockroachInvasion';
+
 export interface PresencePreferences {
     enabled: boolean;
     intervalSeconds: number;
     absenceSensitivity: PresenceAbsenceSensitivity;
+    restDeskReminderEnabled: boolean;
+    restDeskReminderMode: RestDeskReminderMode;
 }
 
 export const DEFAULT_PRESENCE_PREFERENCES: PresencePreferences = {
     enabled: false,
     intervalSeconds: 10,
     absenceSensitivity: DEFAULT_PRESENCE_ABSENCE_SENSITIVITY,
+    restDeskReminderEnabled: false,
+    restDeskReminderMode: 'cockroachInvasion',
 };
 
 export const MIN_PRESENCE_SECONDS = 5;
@@ -45,15 +51,18 @@ export function normalizePresencePreferences(value: unknown): PresencePreference
         return { ...DEFAULT_PRESENCE_PREFERENCES };
     }
     const persisted = value as Record<string, unknown>;
+    const enabled = typeof persisted.enabled === 'boolean'
+        ? persisted.enabled
+        : DEFAULT_PRESENCE_PREFERENCES.enabled;
     return {
-        enabled: typeof persisted.enabled === 'boolean'
-            ? persisted.enabled
-            : DEFAULT_PRESENCE_PREFERENCES.enabled,
+        enabled,
         intervalSeconds: normalizeSeconds(
             persisted.intervalSeconds,
             DEFAULT_PRESENCE_PREFERENCES.intervalSeconds,
         ),
         absenceSensitivity: normalizeAbsenceSensitivity(persisted.absenceSensitivity),
+        restDeskReminderEnabled: enabled && persisted.restDeskReminderEnabled === true,
+        restDeskReminderMode: 'cockroachInvasion',
     };
 }
 
@@ -69,7 +78,7 @@ export async function loadPresencePreferences(): Promise<PresencePreferences> {
             return { ...DEFAULT_PRESENCE_PREFERENCES };
         }
         const schemaVersion = (value as { schemaVersion?: unknown }).schemaVersion;
-        if (schemaVersion !== 1 && schemaVersion !== 2) {
+        if (schemaVersion !== 1 && schemaVersion !== 2 && schemaVersion !== 3) {
             return { ...DEFAULT_PRESENCE_PREFERENCES };
         }
         return normalizePresencePreferences(value);
@@ -83,7 +92,7 @@ export async function savePresencePreferences(preferences: PresencePreferences):
     try {
         const store = await openStore();
         await store.set(STORE_KEY, {
-            schemaVersion: 2,
+            schemaVersion: 3,
             ...normalizePresencePreferences(preferences),
         });
         await store.save();

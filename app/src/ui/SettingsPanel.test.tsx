@@ -230,4 +230,29 @@ describe('SettingsPanel', () => {
         });
     });
 
+    it('reveals the rest-at-desk reminder and its method only after their dependencies are enabled', async () => {
+        render(<SettingsPanel />);
+
+        expect(screen.queryByRole('button', { name: '休息未离开工位时的提醒' })).toBeNull();
+        expect(screen.queryByRole('combobox', { name: '提醒方式' })).toBeNull();
+
+        fireEvent.click(screen.getByRole('button', { name: '摄像头自动控制' }));
+        const reminder = screen.getByRole('button', { name: '休息未离开工位时的提醒' });
+        expect(reminder.getAttribute('aria-pressed')).toBe('false');
+        expect(screen.queryByRole('combobox', { name: '提醒方式' })).toBeNull();
+
+        fireEvent.click(reminder);
+        const method = screen.getByRole('combobox', { name: '提醒方式' }) as HTMLSelectElement;
+        expect(method.value).toBe('cockroachInvasion');
+        expect(screen.getByRole('option', { name: '蟑螂入侵' })).toBeTruthy();
+
+        fireEvent.click(screen.getByRole('button', { name: '应用' }));
+        await vi.waitFor(() => {
+            expect(usePresenceStore.getState()).toEqual(expect.objectContaining({
+                restDeskReminderEnabled: true,
+                restDeskReminderMode: 'cockroachInvasion',
+            }));
+        });
+    });
+
 });

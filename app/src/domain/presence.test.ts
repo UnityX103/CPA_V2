@@ -58,6 +58,8 @@ describe('presence settings updates', () => {
             enabled: true,
             intervalSeconds: 5,
             absenceSensitivity: 'strict',
+            restDeskReminderEnabled: false,
+            restDeskReminderMode: 'cockroachInvasion',
         });
 
         expect(presence.getState()).toMatchObject({
@@ -89,6 +91,8 @@ describe('presence settings updates', () => {
             enabled: true,
             intervalSeconds: 10,
             absenceSensitivity: 'balanced',
+            restDeskReminderEnabled: false,
+            restDeskReminderMode: 'cockroachInvasion',
         });
 
         expect(presence.getState()).toMatchObject({

@@ -31,6 +31,8 @@ beforeEach(() => {
         enabled: false,
         intervalSeconds: 60,
         absenceSensitivity: 'strict',
+        restDeskReminderEnabled: false,
+        restDeskReminderMode: 'cockroachInvasion',
         platform: 'macos',
         availability: 'disabled',
         confirmedPresence: 'unknown',
@@ -48,6 +50,8 @@ describe('bridge host', () => {
             enabled: false,
             intervalSeconds: 60,
             absenceSensitivity: 'strict',
+            restDeskReminderEnabled: false,
+            restDeskReminderMode: 'cockroachInvasion',
             availability: 'disabled',
         }));
     });
@@ -81,13 +85,21 @@ describe('bridge host', () => {
             v: BRIDGE_VERSION,
             store: 'presence',
             action: 'applySettings',
-            args: [{ enabled: true, intervalSeconds: 30, absenceSensitivity: 'balanced' }],
+            args: [{
+                enabled: true,
+                intervalSeconds: 30,
+                absenceSensitivity: 'balanced',
+                restDeskReminderEnabled: true,
+                restDeskReminderMode: 'cockroachInvasion',
+            }],
         });
 
         expect(applySettings).toHaveBeenCalledWith({
             enabled: true,
             intervalSeconds: 30,
             absenceSensitivity: 'balanced',
+            restDeskReminderEnabled: true,
+            restDeskReminderMode: 'cockroachInvasion',
         });
     });
 
@@ -104,6 +116,10 @@ describe('bridge host', () => {
         expect(presenceSig(usePresenceStore.getState())).not.toBe(presenceSig({
             ...usePresenceStore.getState(),
             absenceSensitivity: 'relaxed',
+        }));
+        expect(presenceSig(usePresenceStore.getState())).not.toBe(presenceSig({
+            ...usePresenceStore.getState(),
+            restDeskReminderEnabled: true,
         }));
     });
 });

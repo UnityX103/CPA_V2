@@ -95,6 +95,8 @@ export function applySnapshotToMirrors(snap: BridgeSnapshot): void {
         enabled: snap.presence.enabled,
         intervalSeconds: snap.presence.intervalSeconds,
         absenceSensitivity: snap.presence.absenceSensitivity,
+        restDeskReminderEnabled: snap.presence.restDeskReminderEnabled,
+        restDeskReminderMode: snap.presence.restDeskReminderMode,
         platform: snap.presence.platform,
         availability: snap.presence.availability,
         confirmedPresence: snap.presence.confirmedPresence,

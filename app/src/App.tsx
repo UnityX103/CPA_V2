@@ -30,6 +30,7 @@ import type { CloudAccountData } from './domain/cloudAccountData';
 import { usePresenceMonitor, usePresenceStore } from './domain/presence';
 import { loadPresencePreferences } from './domain/presencePersistence';
 import { PresenceNotice } from './ui/PresenceNotice';
+import { useCockroachInvasionController } from './domain/cockroachInvasionController';
 
 const STARTUP_ACCOUNT_RESTORE_TIMEOUT_MS = 2500;
 
@@ -154,6 +155,7 @@ export default function App() {
     usePresenceMonitor({ enabled: localHydrated });
     useInputCounterWindowController();
     useRemotePlayerWindowController();
+    useCockroachInvasionController({ enabled: localHydrated });
     const uiScale = useSettingsStore((s) => s.uiScale);
     useCloudAccountSync({ enabled: localHydrated });
     useScaledWindowSize({

@@ -37,6 +37,8 @@ function snapshot(): BridgeSnapshot {
             enabled: true,
             intervalSeconds: 30,
             absenceSensitivity: 'relaxed',
+            restDeskReminderEnabled: true,
+            restDeskReminderMode: 'cockroachInvasion',
             platform: 'macos',
             availability: 'ready',
             confirmedPresence: 'present',
@@ -109,6 +111,8 @@ describe('bridge client', () => {
             enabled: true,
             intervalSeconds: 30,
             absenceSensitivity: 'relaxed',
+            restDeskReminderEnabled: true,
+            restDeskReminderMode: 'cockroachInvasion',
             availability: 'ready',
             confirmedPresence: 'present',
         }));

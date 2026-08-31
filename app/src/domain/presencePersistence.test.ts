@@ -24,6 +24,8 @@ describe('presence persistence', () => {
             enabled: false,
             intervalSeconds: 10,
             absenceSensitivity: 'strict',
+            restDeskReminderEnabled: false,
+            restDeskReminderMode: 'cockroachInvasion',
         });
     });
 
@@ -39,24 +41,49 @@ describe('presence persistence', () => {
             enabled: true,
             intervalSeconds: 45,
             absenceSensitivity: 'strict',
+            restDeskReminderEnabled: false,
+            restDeskReminderMode: 'cockroachInvasion',
         });
     });
 
-    it('loads the disabled state and all three sensitivity levels from device-local v2 settings', async () => {
+    it('loads all four sensitivity levels from device-local v2 settings', async () => {
         for (const absenceSensitivity of ['off', 'strict', 'balanced', 'relaxed']) {
             storeData.set('presencePreferences', {
                 schemaVersion: 2,
                 enabled: true,
                 intervalSeconds: 10,
                 absenceSensitivity,
+                restDeskReminderEnabled: false,
+                restDeskReminderMode: 'cockroachInvasion',
             });
 
             await expect(persistence.loadPresencePreferences()).resolves.toEqual({
                 enabled: true,
                 intervalSeconds: 10,
                 absenceSensitivity,
+                restDeskReminderEnabled: false,
+                restDeskReminderMode: 'cockroachInvasion',
             });
         }
+    });
+
+    it('loads the enabled cockroach reminder from device-local v3 settings', async () => {
+        storeData.set('presencePreferences', {
+            schemaVersion: 3,
+            enabled: true,
+            intervalSeconds: 10,
+            absenceSensitivity: 'strict',
+            restDeskReminderEnabled: true,
+            restDeskReminderMode: 'cockroachInvasion',
+        });
+
+        await expect(persistence.loadPresencePreferences()).resolves.toEqual({
+            enabled: true,
+            intervalSeconds: 10,
+            absenceSensitivity: 'strict',
+            restDeskReminderEnabled: true,
+            restDeskReminderMode: 'cockroachInvasion',
+        });
     });
 
     it('accepts a five-second camera detection interval', async () => {
@@ -70,12 +97,14 @@ describe('presence persistence', () => {
             enabled: true,
             intervalSeconds: 5,
             absenceSensitivity: 'strict',
+            restDeskReminderEnabled: false,
+            restDeskReminderMode: 'cockroachInvasion',
         });
     });
 
     it('falls back for unsupported schemas', async () => {
         storeData.set('presencePreferences', {
-            schemaVersion: 3,
+            schemaVersion: 4,
             enabled: true,
             intervalSeconds: 30,
         });
@@ -83,21 +112,27 @@ describe('presence persistence', () => {
             enabled: false,
             intervalSeconds: 10,
             absenceSensitivity: 'strict',
+            restDeskReminderEnabled: false,
+            restDeskReminderMode: 'cockroachInvasion',
         });
     });
 
-    it('saves only device-local v2 settings', async () => {
+    it('saves only device-local v3 settings', async () => {
         await persistence.savePresencePreferences({
             enabled: true,
             intervalSeconds: 30,
             absenceSensitivity: 'relaxed',
+            restDeskReminderEnabled: true,
+            restDeskReminderMode: 'cockroachInvasion',
         });
 
         expect(storeData.get('presencePreferences')).toEqual({
-            schemaVersion: 2,
+            schemaVersion: 3,
             enabled: true,
             intervalSeconds: 30,
             absenceSensitivity: 'relaxed',
+            restDeskReminderEnabled: true,
+            restDeskReminderMode: 'cockroachInvasion',
         });
         expect(save).toHaveBeenCalledTimes(1);
     });

@@ -4,8 +4,8 @@
     {
       "type": "frame",
       "id": "gs1Tv",
-      "x": 2387,
-      "y": -54,
+      "x": 2393,
+      "y": -125,
       "name": "Pomodoro Settings Panel",
       "reusable": true,
       "width": 572,
@@ -393,6 +393,101 @@
                   "fontFamily": "MaokenAssortedSans",
                   "fontSize": 12,
                   "fontWeight": "700"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "qy90H",
+              "name": "pomoRestDeskReminder",
+              "context": "仅在摄像头自动控制开启时显示；默认关闭。",
+              "width": 572,
+              "fill": "#F6F7F8",
+              "cornerRadius": 16,
+              "padding": [
+                14,
+                16
+              ],
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "Y1VkpE",
+                  "name": "pomoRestDeskReminderLeft",
+                  "gap": 10,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "tu1Lw",
+                      "name": "pomoRestDeskReminderText",
+                      "fill": "#1A1A1A",
+                      "content": "休息未离开工位时的提醒",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 14,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "id": "d27Kk",
+                  "type": "ref",
+                  "ref": "NGo9f",
+                  "name": "pomoRestDeskReminderToggle",
+                  "fill": "#E5E7EB",
+                  "justifyContent": "start"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "BopDV",
+              "x": 0,
+              "y": 542,
+              "name": "pomoRestDeskReminderMethod",
+              "context": "仅在休息未离开工位提醒开启时显示。",
+              "enabled": false,
+              "width": 572,
+              "fill": "#F6F7F8",
+              "cornerRadius": 16,
+              "padding": [
+                14,
+                16
+              ],
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "dG74Q",
+                  "name": "pomoRestDeskReminderMethodLeft",
+                  "gap": 10,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "q8xBm",
+                      "name": "pomoRestDeskReminderMethodText",
+                      "fill": "#1A1A1A",
+                      "content": "提醒方式",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 14,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "id": "i1Hs23",
+                  "type": "ref",
+                  "ref": "Frjkw",
+                  "name": "pomoRestDeskReminderMethodDropdown",
+                  "width": 140,
+                  "descendants": {
+                    "d5bpi": {
+                      "content": "蟑螂入侵"
+                    }
+                  }
                 }
               ]
             },
@@ -1401,9 +1496,9 @@
                     "mo62i": {
                       "flipX": false,
                       "flipY": false,
-                      "width": 48.730223537281695,
+                      "width": 48.41785030947861,
                       "height": 18,
-                      "x": 13.644462590438875,
+                      "x": 13.55699808665401,
                       "y": 21,
                       "textGrowth": "fixed-width-height",
                       "fontSize": 17
@@ -6026,6 +6121,307 @@
                       "fill": "#C65D46"
                     }
                   }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "k9S94z",
+      "x": 3017,
+      "y": -125,
+      "name": "Pomodoro Reminder Instance States",
+      "width": 1804,
+      "fill": "#FFFDF9",
+      "cornerRadius": 24,
+      "layout": "vertical",
+      "gap": 20,
+      "padding": 24,
+      "children": [
+        {
+          "type": "text",
+          "id": "kMGkd",
+          "name": "Reminder States Title",
+          "fill": "#5B4636",
+          "content": "番茄钟提醒 · 实例状态对比",
+          "fontFamily": "MaokenAssortedSans",
+          "fontSize": 24,
+          "fontWeight": "700"
+        },
+        {
+          "type": "text",
+          "id": "p6y9Rj",
+          "name": "Reminder States Description",
+          "fill": "#6B7280",
+          "content": "以下三列均为 Pomodoro Settings Panel 的真实实例，分别覆盖摄像头与提醒的条件状态。",
+          "fontFamily": "MaokenAssortedSans",
+          "fontSize": 14,
+          "fontWeight": "500"
+        },
+        {
+          "type": "frame",
+          "id": "Rdjx2",
+          "name": "Reminder State Comparison",
+          "width": "fill_container",
+          "gap": 20,
+          "children": [
+            {
+              "type": "frame",
+              "id": "R9lWi",
+              "name": "State 1 Camera Off",
+              "width": 572,
+              "layout": "vertical",
+              "gap": 12,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "QO5nC",
+                  "name": "State 1 Header",
+                  "width": "fill_container",
+                  "fill": "#F6F7F8",
+                  "cornerRadius": 16,
+                  "layout": "vertical",
+                  "gap": 4,
+                  "padding": [
+                    14,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "RcUZJ",
+                      "name": "State 1 Title",
+                      "fill": "#1A1A1A",
+                      "content": "01 · 摄像头自动控制关闭",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 16,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "text",
+                      "id": "c7EoEV",
+                      "name": "State 1 Description",
+                      "fill": "#6B7280",
+                      "content": "提醒选项完全隐藏",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 12,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "LUFJc",
+                  "name": "State 1 Instance Viewport",
+                  "clip": true,
+                  "width": 572,
+                  "height": 472,
+                  "fill": "#FFFFFF",
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "id": "eMGCe",
+                      "type": "ref",
+                      "ref": "gs1Tv",
+                      "name": "Instance / Camera Off",
+                      "width": 572,
+                      "descendants": {
+                        "ley1X": {
+                          "fill": "#E5E7EB",
+                          "justifyContent": "start"
+                        },
+                        "jTQXM": {
+                          "enabled": false,
+                          "width": 572
+                        },
+                        "x3II3": {
+                          "enabled": false
+                        },
+                        "nVTsG": {
+                          "enabled": false
+                        },
+                        "qy90H": {
+                          "enabled": false,
+                          "width": 0,
+                          "height": 0
+                        },
+                        "Y1VkpE": {
+                          "enabled": false
+                        },
+                        "tu1Lw": {
+                          "enabled": false
+                        },
+                        "d27Kk": {
+                          "enabled": false
+                        },
+                        "d27Kk/hTGM9": {
+                          "enabled": false
+                        },
+                        "BopDV": {
+                          "enabled": false,
+                          "width": 0,
+                          "height": 0
+                        },
+                        "dG74Q": {
+                          "enabled": false
+                        },
+                        "q8xBm": {
+                          "enabled": false
+                        },
+                        "i1Hs23": {
+                          "enabled": false
+                        },
+                        "i1Hs23/d5bpi": {
+                          "enabled": false
+                        },
+                        "i1Hs23/3P2uj": {
+                          "enabled": false
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "icb8s",
+              "name": "State 2 Reminder Off",
+              "width": 572,
+              "layout": "vertical",
+              "gap": 12,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "CA7to",
+                  "name": "State 2 Header",
+                  "width": "fill_container",
+                  "fill": "#FFF4CC",
+                  "cornerRadius": 16,
+                  "layout": "vertical",
+                  "gap": 4,
+                  "padding": [
+                    14,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "iMxDd",
+                      "name": "State 2 Title",
+                      "fill": "#1A1A1A",
+                      "content": "02 · 摄像头开启，提醒关闭",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 16,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "text",
+                      "id": "ntnEz",
+                      "name": "State 2 Description",
+                      "fill": "#8A6414",
+                      "content": "默认状态：显示提醒开关，不显示提醒方式",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 12,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "pd0UI",
+                  "name": "State 2 Instance Viewport",
+                  "clip": true,
+                  "width": 572,
+                  "height": 552,
+                  "fill": "#FFFFFF",
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "id": "nLYEf",
+                      "type": "ref",
+                      "ref": "gs1Tv",
+                      "name": "Instance / Camera On Reminder Off",
+                      "width": 572
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "foCC8",
+              "name": "State 3 Reminder On",
+              "width": 572,
+              "layout": "vertical",
+              "gap": 12,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "h319p9",
+                  "name": "State 3 Header",
+                  "width": "fill_container",
+                  "fill": "#EAF8EF",
+                  "cornerRadius": 16,
+                  "layout": "vertical",
+                  "gap": 4,
+                  "padding": [
+                    14,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "wLJKP",
+                      "name": "State 3 Title",
+                      "fill": "#1A1A1A",
+                      "content": "03 · 摄像头开启，提醒开启",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 16,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Sgupw",
+                      "name": "State 3 Description",
+                      "fill": "#2F7A46",
+                      "content": "展开提醒方式，下拉默认“蟑螂入侵”",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 12,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "AUjfW",
+                  "name": "State 3 Instance Viewport",
+                  "clip": true,
+                  "width": 572,
+                  "height": 570,
+                  "fill": "#FFFFFF",
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "id": "T0niNU",
+                      "type": "ref",
+                      "ref": "gs1Tv",
+                      "name": "Instance / Camera On Reminder On",
+                      "width": 572,
+                      "descendants": {
+                        "d27Kk": {
+                          "fill": "#6366F1",
+                          "justifyContent": "end"
+                        },
+                        "BopDV": {
+                          "enabled": true
+                        }
+                      }
+                    }
+                  ]
                 }
               ]
             }

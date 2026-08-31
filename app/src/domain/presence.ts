@@ -20,7 +20,10 @@ import {
 
 export { PRESENCE_ABSENCE_POLICIES } from './presencePolicy';
 export type { PresenceAbsenceSensitivity } from './presencePolicy';
-export type { PresencePreferences } from './presencePersistence';
+export type {
+    PresencePreferences,
+    RestDeskReminderMode,
+} from './presencePersistence';
 
 export type PresencePlatform = 'macos' | 'windows' | 'other';
 export type PresenceAvailability =

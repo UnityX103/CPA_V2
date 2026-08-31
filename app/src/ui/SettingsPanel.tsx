@@ -48,6 +48,7 @@ import {
     usePresenceStore,
     type ConfirmedPresence,
     type PresenceAbsenceSensitivity,
+    type RestDeskReminderMode,
 } from '../domain/presence';
 import {
     MAX_PRESENCE_SECONDS,
@@ -191,6 +192,12 @@ function PomodoroTab({ onApplyStateChange }: {
     const [presenceEnabled, setPresenceEnabled] = useState(presence.enabled);
     const [presenceIntervalSeconds, setPresenceIntervalSeconds] = useState(presence.intervalSeconds);
     const [absenceSensitivity, setAbsenceSensitivity] = useState(presence.absenceSensitivity);
+    const [restDeskReminderEnabled, setRestDeskReminderEnabled] = useState(
+        presence.restDeskReminderEnabled,
+    );
+    const [restDeskReminderMode, setRestDeskReminderMode] = useState<RestDeskReminderMode>(
+        presence.restDeskReminderMode,
+    );
     const committedRef = useRef({
         focusDurationSeconds: pomo.focusDurationSeconds,
         breakDurationSeconds: pomo.breakDurationSeconds,
@@ -202,6 +209,8 @@ function PomodoroTab({ onApplyStateChange }: {
         presenceEnabled: presence.enabled,
         presenceIntervalSeconds: presence.intervalSeconds,
         absenceSensitivity: presence.absenceSensitivity,
+        restDeskReminderEnabled: presence.restDeskReminderEnabled,
+        restDeskReminderMode: presence.restDeskReminderMode,
     });
 
     useEffect(() => {
@@ -218,7 +227,9 @@ function PomodoroTab({ onApplyStateChange }: {
         const presenceDraftDirty =
             presenceEnabled !== previous.presenceEnabled
             || presenceIntervalSeconds !== previous.presenceIntervalSeconds
-            || absenceSensitivity !== previous.absenceSensitivity;
+            || absenceSensitivity !== previous.absenceSensitivity
+            || restDeskReminderEnabled !== previous.restDeskReminderEnabled
+            || restDeskReminderMode !== previous.restDeskReminderMode;
         if (!durationDraftDirty) {
             setFocusMin(Math.round(pomo.focusDurationSeconds / 60));
             setBreakMin(Math.round(pomo.breakDurationSeconds / 60));
@@ -244,6 +255,8 @@ function PomodoroTab({ onApplyStateChange }: {
             setPresenceEnabled(presence.enabled);
             setPresenceIntervalSeconds(presence.intervalSeconds);
             setAbsenceSensitivity(presence.absenceSensitivity);
+            setRestDeskReminderEnabled(presence.restDeskReminderEnabled);
+            setRestDeskReminderMode(presence.restDeskReminderMode);
         }
 
         committedRef.current = {
@@ -257,6 +270,8 @@ function PomodoroTab({ onApplyStateChange }: {
             presenceEnabled: presence.enabled,
             presenceIntervalSeconds: presence.intervalSeconds,
             absenceSensitivity: presence.absenceSensitivity,
+            restDeskReminderEnabled: presence.restDeskReminderEnabled,
+            restDeskReminderMode: presence.restDeskReminderMode,
         };
     }, [
         pomo.focusDurationSeconds,
@@ -276,6 +291,8 @@ function PomodoroTab({ onApplyStateChange }: {
         presence.enabled,
         presence.intervalSeconds,
         presence.absenceSensitivity,
+        presence.restDeskReminderEnabled,
+        presence.restDeskReminderMode,
         focusMin,
         breakMin,
         autoStartBreak,
@@ -286,6 +303,8 @@ function PomodoroTab({ onApplyStateChange }: {
         presenceEnabled,
         presenceIntervalSeconds,
         absenceSensitivity,
+        restDeskReminderEnabled,
+        restDeskReminderMode,
     ]);
 
     const dirty =
@@ -298,7 +317,9 @@ function PomodoroTab({ onApplyStateChange }: {
         !samePomodoroEndSounds(endSounds, pomo.endSounds) ||
         presenceEnabled !== presence.enabled ||
         presenceIntervalSeconds !== presence.intervalSeconds ||
-        absenceSensitivity !== presence.absenceSensitivity;
+        absenceSensitivity !== presence.absenceSensitivity ||
+        restDeskReminderEnabled !== presence.restDeskReminderEnabled ||
+        restDeskReminderMode !== presence.restDeskReminderMode;
     const hasMissingCustomVideo =
         endActionMode === 'playVideo' &&
         endActionVideo.sourceKind === 'custom' &&
@@ -324,7 +345,9 @@ function PomodoroTab({ onApplyStateChange }: {
         const presenceChanged =
             presenceEnabled !== presence.enabled
             || presenceIntervalSeconds !== presence.intervalSeconds
-            || absenceSensitivity !== presence.absenceSensitivity;
+            || absenceSensitivity !== presence.absenceSensitivity
+            || restDeskReminderEnabled !== presence.restDeskReminderEnabled
+            || restDeskReminderMode !== presence.restDeskReminderMode;
 
         if (durationChanged) {
             pomo.applySettings(focusSeconds, breakSeconds, pomo.totalRounds, true, autoStartBreak);
@@ -349,6 +372,8 @@ function PomodoroTab({ onApplyStateChange }: {
                 enabled: presenceEnabled,
                 intervalSeconds: presenceIntervalSeconds,
                 absenceSensitivity,
+                restDeskReminderEnabled,
+                restDeskReminderMode,
             })).catch((error) => {
                 console.warn('[settings] failed to apply presence settings', error);
             });
@@ -367,6 +392,8 @@ function PomodoroTab({ onApplyStateChange }: {
         presenceEnabled,
         presenceIntervalSeconds,
         absenceSensitivity,
+        restDeskReminderEnabled,
+        restDeskReminderMode,
     ]);
 
     useEffect(() => {
@@ -473,7 +500,10 @@ function PomodoroTab({ onApplyStateChange }: {
                             <span className="pomo-row-label">摄像头自动控制</span>
                             <Toggle
                                 checked={presenceEnabled}
-                                onChange={setPresenceEnabled}
+                                onChange={(enabled) => {
+                                    setPresenceEnabled(enabled);
+                                    if (!enabled) setRestDeskReminderEnabled(false);
+                                }}
                                 ariaLabel="摄像头自动控制"
                             />
                         </div>
@@ -520,6 +550,33 @@ function PomodoroTab({ onApplyStateChange }: {
                             <span className="pomo-row-label">工位状态</span>
                             <span className="pomo-row-value">{confirmedPresenceText(presence.confirmedPresence)}</span>
                         </div>
+
+                        {presenceEnabled && (
+                            <div className="card pomo-row">
+                                <span className="pomo-row-label">休息未离开工位时的提醒</span>
+                                <Toggle
+                                    checked={restDeskReminderEnabled}
+                                    onChange={setRestDeskReminderEnabled}
+                                    ariaLabel="休息未离开工位时的提醒"
+                                />
+                            </div>
+                        )}
+
+                        {presenceEnabled && restDeskReminderEnabled && (
+                            <div className="card pomo-row">
+                                <span className="pomo-row-label">提醒方式</span>
+                                <select
+                                    className="dropdown dropdown-fit"
+                                    aria-label="提醒方式"
+                                    value={restDeskReminderMode}
+                                    onChange={(event) => setRestDeskReminderMode(
+                                        event.currentTarget.value as RestDeskReminderMode,
+                                    )}
+                                >
+                                    <option value="cockroachInvasion">蟑螂入侵</option>
+                                </select>
+                            </div>
+                        )}
 
                         {/* pomoAutoStartBreak fnZ59: 结束提示音下方 → Toggle */}
                         <div className="card pomo-row">

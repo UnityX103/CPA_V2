@@ -116,6 +116,8 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
             enabled: presence.enabled,
             intervalSeconds: presence.intervalSeconds,
             absenceSensitivity: presence.absenceSensitivity,
+            restDeskReminderEnabled: presence.restDeskReminderEnabled,
+            restDeskReminderMode: presence.restDeskReminderMode,
             platform: presence.platform,
             availability: presence.availability,
             confirmedPresence: presence.confirmedPresence,
@@ -331,6 +333,8 @@ export function presenceSig(s: {
     enabled: boolean;
     intervalSeconds: number;
     absenceSensitivity: PresenceAbsenceSensitivity;
+    restDeskReminderEnabled: boolean;
+    restDeskReminderMode: string;
     platform: string;
     availability: string;
     confirmedPresence: string;
@@ -341,6 +345,8 @@ export function presenceSig(s: {
         s.enabled,
         s.intervalSeconds,
         s.absenceSensitivity,
+        s.restDeskReminderEnabled,
+        s.restDeskReminderMode,
         s.platform,
         s.availability,
         s.confirmedPresence,

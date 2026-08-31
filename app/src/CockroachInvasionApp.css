@@ -1,0 +1,46 @@
+html,
+body,
+#root {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: transparent !important;
+}
+
+.cockroach-invasion-root {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    background: transparent;
+}
+
+.cockroach-hit-target {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.cockroach-animation {
+    width: 126px;
+    height: 168px;
+    display: block;
+    object-fit: contain;
+    pointer-events: none;
+    transform-origin: center;
+    transition: transform 160ms linear, filter 120ms ease;
+    will-change: transform;
+}
+
+.cockroach-animation.is-fleeing {
+    filter: drop-shadow(0 0 8px rgba(209, 95, 61, 0.55));
+}

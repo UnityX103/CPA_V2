@@ -85,6 +85,24 @@ struct VideoScreenRect {
     height: f64,
 }
 
+#[derive(Debug, Serialize, Clone, Copy)]
+#[serde(rename_all = "camelCase")]
+struct CockroachScreenRect {
+    x: i32,
+    y: i32,
+    width: u32,
+    height: u32,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct CockroachWindowContext {
+    screens: Vec<CockroachScreenRect>,
+    width: u32,
+    height: u32,
+    scale_factor: f64,
+}
+
 #[derive(Debug, Clone, Copy)]
 struct MatchRect {
     x: f64,
@@ -221,6 +239,7 @@ const SETTINGS_MIN_W: f64 = 360.0;
 const SETTINGS_MIN_H: f64 = 320.0;
 const INPUT_COUNTER_W: f64 = 128.0;
 const INPUT_COUNTER_H: f64 = 84.0;
+const COCKROACH_INVASION_SIZE: f64 = 180.0;
 
 /// 计算设置窗口在主窗口所在 monitor 的中心位置（物理像素）。
 /// 多显示器下保证设置窗弹在用户当前屏，而非系统主屏。
@@ -334,6 +353,101 @@ fn build_input_counter_window_hidden(
     });
 
     Ok(w)
+}
+
+fn build_cockroach_invasion_window_hidden(
+    app: &tauri::AppHandle,
+) -> Result<tauri::WebviewWindow, tauri::Error> {
+    let url = WebviewUrl::App("index.html?window=cockroach-invasion".into());
+    let window = WebviewWindowBuilder::new(app, "cockroach-invasion", url)
+        .title("蟑螂入侵")
+        .inner_size(COCKROACH_INVASION_SIZE, COCKROACH_INVASION_SIZE)
+        .resizable(false)
+        .transparent(true)
+        .decorations(false)
+        .shadow(false)
+        .skip_taskbar(true)
+        .focusable(false)
+        .always_on_top(true)
+        .visible(false)
+        .build()?;
+    window_helpers::install_first_mouse_only(&window);
+    if let Err(error) = window_helpers::set_always_on_top_native(&window, true) {
+        eprintln!("[cockroach-invasion] native always-on-top setup failed: {error}");
+    }
+
+    let window_for_hide = window.clone();
+    window.on_window_event(move |event| {
+        if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+            api.prevent_close();
+            let _ = window_for_hide.hide();
+        }
+    });
+
+    Ok(window)
+}
+
+fn cockroach_invasion_window(app: &tauri::AppHandle) -> Result<tauri::WebviewWindow, String> {
+    app.get_webview_window("cockroach-invasion")
+        .ok_or_else(|| "cockroach invasion window not found".to_string())
+}
+
+#[tauri::command]
+fn cockroach_invasion_window_context(
+    app: tauri::AppHandle,
+) -> Result<CockroachWindowContext, String> {
+    let window = cockroach_invasion_window(&app)?;
+    let size = window.outer_size().map_err(|error| error.to_string())?;
+    let scale_factor = window.scale_factor().map_err(|error| error.to_string())?;
+    let screens = app
+        .available_monitors()
+        .map_err(|error| error.to_string())?
+        .into_iter()
+        .map(|monitor| {
+            let work_area = monitor.work_area();
+            CockroachScreenRect {
+                x: work_area.position.x,
+                y: work_area.position.y,
+                width: work_area.size.width,
+                height: work_area.size.height,
+            }
+        })
+        .collect();
+    Ok(CockroachWindowContext {
+        screens,
+        width: size.width,
+        height: size.height,
+        scale_factor,
+    })
+}
+
+#[tauri::command]
+fn move_cockroach_invasion_window(app: tauri::AppHandle, x: i32, y: i32) -> Result<(), String> {
+    cockroach_invasion_window(&app)?
+        .set_position(PhysicalPosition::new(x, y))
+        .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+fn show_cockroach_invasion_window(app: tauri::AppHandle) -> Result<(), String> {
+    let window = cockroach_invasion_window(&app)?;
+    window_helpers::set_always_on_top_native(&window, true)?;
+    window.show().map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+fn set_cockroach_invasion_active(app: tauri::AppHandle, active: bool) -> Result<(), String> {
+    let window = cockroach_invasion_window(&app)?;
+    window
+        .emit(
+            "cockroach-invasion:active",
+            serde_json::json!({ "active": active }),
+        )
+        .map_err(|error| error.to_string())?;
+    if !active {
+        window.hide().map_err(|error| error.to_string())?;
+    }
+    Ok(())
 }
 
 fn install_main_window_exit_on_close(app: tauri::AppHandle) {
@@ -471,6 +585,9 @@ pub fn run() {
             }
             if let Err(e) = build_input_counter_window_hidden(app.handle()) {
                 eprintln!("[setup] build_input_counter_window_hidden failed: {e}");
+            }
+            if let Err(e) = build_cockroach_invasion_window_hidden(app.handle()) {
+                eprintln!("[setup] build_cockroach_invasion_window_hidden failed: {e}");
             }
             install_main_window_exit_on_close(app.handle().clone());
             // Focus restorer: 主窗口拖/resize 末尾把 key 还回 settings (若可见)。
@@ -618,6 +735,10 @@ pub fn run() {
             show_input_counter_window,
             hide_input_counter_window,
             resize_input_counter_window,
+            cockroach_invasion_window_context,
+            move_cockroach_invasion_window,
+            show_cockroach_invasion_window,
+            set_cockroach_invasion_active,
             focus_app_window,
             resize_scaled_window,
             accessibility::accessibility_status,
