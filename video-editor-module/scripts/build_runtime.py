@@ -209,6 +209,18 @@ def main() -> None:
             ffmpeg_license,
             encoding="utf-8",
         )
+        python_license_script = (
+            "from pathlib import Path; import sys; "
+            "root=Path(sys.base_prefix); "
+            "items=[root/'LICENSE.txt',root/'LICENSE',root.parent/'LICENSE']; "
+            "print(next((str(p) for p in items if p.is_file()),''))"
+        )
+        python_license = subprocess.check_output(
+            [str(python), "-c", python_license_script],
+            text=True,
+        ).strip()
+        if python_license:
+            shutil.copy2(python_license, args.licenses_output / "PYTHON-LICENSE.txt")
         print(args.output)
     finally:
         if temporary is not None:

@@ -80,6 +80,17 @@ class VideoEditorModuleContractTests(unittest.TestCase):
         self.assertIn("PPM-100", notice)
         self.assertIn("CC BY-NC-SA 4.0", notice)
 
+        release = json.loads(
+            (ROOT / "RELEASE_MANIFEST_1.0.0-noncommercial.1.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertEqual(release["distribution"], "noncommercial-open-source")
+        self.assertEqual(
+            set(release["packages"]),
+            {"macos-arm64", "macos-x86_64", "windows-x86_64"},
+        )
+
     def test_macos_preview_uses_hevc_alpha_while_download_stays_webm(self):
         pipeline = (ROOT / "video_editor_module" / "pipeline.py").read_text(encoding="utf-8")
         server = (ROOT / "video_editor_module" / "server.py").read_text(encoding="utf-8")

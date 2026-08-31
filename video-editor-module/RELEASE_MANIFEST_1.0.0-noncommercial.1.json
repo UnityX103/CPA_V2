@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "moduleVersion": "1.0.0-noncommercial.1",
+  "distribution": "noncommercial-open-source",
+  "release": "https://github.com/UnityX103/CPA_V2/releases/tag/v0.1.21",
+  "sourceCommit": "f87d7618efc365d4f669195deaa33c6771a8a88a",
+  "python": {
+    "macosArm64": "CPython 3.14.7 arm64",
+    "macosX86_64": {
+      "asset": "cpython-3.12.14+20260825-x86_64-apple-darwin-install_only.tar.gz",
+      "sha256": "65da7bc373ea36cb7e413f2a20bcced9eeb7e5a83fa554ce9f6ec79abb8d7e31"
+    },
+    "windowsX86_64": {
+      "asset": "cpython-3.14.7+20260825-x86_64-pc-windows-msvc-install_only.tar.gz",
+      "sha256": "a8a93fcf897f4c6ea4d120cf4a7ee4f98779d33a432a65b1af36a589c2f3d36c"
+    }
+  },
+  "ffmpeg": {
+    "macos": {
+      "version": "8.1.2",
+      "sourceSha256": "464beb5e7bf0c311e68b45ae2f04e9cc2af88851abb4082231742a74d97b524c",
+      "libvpxVersion": "1.16.0",
+      "libvpxSourceSha256": "7a479a3c66b9f5d5542a4c6a1b7d3768a983b1e5c14c60a9396edc9b649e015c",
+      "configure": "--enable-libvpx --enable-zlib --enable-videotoolbox --enable-audiotoolbox --enable-static --disable-shared --disable-doc --disable-debug --disable-ffplay --disable-network --disable-autodetect"
+    },
+    "windows": {
+      "asset": "ffmpeg-n8.1.2-50-g1a748fe2cd-win64-lgpl-8.1.zip",
+      "sha256": "f6274bbd9c247f9e90c1bbed066b03ed4a3907cece2fb91be6dd352393936365"
+    }
+  },
+  "packages": {
+    "macos-arm64": {
+      "size": 1517551405,
+      "sha256": "4591ccb7c2d89f4e40e3dac273805de09278c47592f4142402aba49ea5ad0467"
+    },
+    "macos-x86_64": {
+      "size": 1630571451,
+      "sha256": "c007bdb20c37810ab63e38dad50b9b338adeeeb6fa10ea8b47ccd7a67fbb7d6e"
+    },
+    "windows-x86_64": {
+      "size": 1535547817,
+      "sha256": "e228e398933d408bd61b601ac771bc7511c0939922355b859caa3e9d33a8c28f"
+    }
+  }
+}

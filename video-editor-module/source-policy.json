@@ -26,6 +26,20 @@
     },
     "ffmpeg": {
       "rule": "Release builds must not contain --enable-gpl or --enable-nonfree and must include exact source, configure line, hashes, and LGPL compliance materials.",
+      "macosSource": {
+        "version": "8.1.2",
+        "url": "https://ffmpeg.org/releases/ffmpeg-8.1.2.tar.xz",
+        "sha256": "464beb5e7bf0c311e68b45ae2f04e9cc2af88851abb4082231742a74d97b524c",
+        "libvpxVersion": "1.16.0",
+        "libvpxUrl": "https://github.com/webmproject/libvpx/archive/refs/tags/v1.16.0.tar.gz",
+        "libvpxSha256": "7a479a3c66b9f5d5542a4c6a1b7d3768a983b1e5c14c60a9396edc9b649e015c"
+      },
+      "windowsBuild": {
+        "provider": "BtbN/FFmpeg-Builds",
+        "asset": "ffmpeg-n8.1.2-50-g1a748fe2cd-win64-lgpl-8.1.zip",
+        "url": "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-08-31-13-27/ffmpeg-n8.1.2-50-g1a748fe2cd-win64-lgpl-8.1.zip",
+        "sha256": "f6274bbd9c247f9e90c1bbed066b03ed4a3907cece2fb91be6dd352393936365"
+      },
       "requiredEncoders": ["libvpx"],
       "macosRequiredEncoders": ["hevc_videotoolbox"],
       "forbiddenConfigureFlags": ["--enable-gpl", "--enable-nonfree"]
