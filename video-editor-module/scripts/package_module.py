@@ -15,6 +15,7 @@ from pathlib import Path
 
 
 TARGETS = {"macos-arm64", "macos-x86_64", "windows-x86_64"}
+DISTRIBUTIONS = {"commercial", "noncommercial-open-source", "internal-poc"}
 CAPABILITIES = [
     "sam2-birefnet-v1",
     "screenshot",
@@ -40,6 +41,7 @@ def main() -> None:
     parser.add_argument("--licenses", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--release-url", required=True)
+    parser.add_argument("--distribution", choices=sorted(DISTRIBUTIONS), default="commercial")
     parser.add_argument("--allow-uncleared-birefnet", action="store_true")
     parser.add_argument("--allow-unsigned-runtime", action="store_true")
     args = parser.parse_args()
@@ -48,13 +50,29 @@ def main() -> None:
 
     project_root = Path(__file__).resolve().parents[1]
     policy = json.loads((project_root / "source-policy.json").read_text(encoding="utf-8"))
-    if not policy["commercialReleaseAllowed"] and not args.allow_uncleared_birefnet:
+    distribution = "internal-poc" if args.allow_uncleared_birefnet else args.distribution
+    allowed = {
+        "commercial": policy["commercialReleaseAllowed"],
+        "noncommercial-open-source": policy["nonCommercialOpenSourceReleaseAllowed"],
+        "internal-poc": True,
+    }[distribution]
+    if not allowed:
         raise SystemExit(policy["commercialReleaseBlocker"])
-    if args.allow_unsigned_runtime and not args.allow_uncleared_birefnet:
+    if args.allow_unsigned_runtime and distribution != "internal-poc":
         raise SystemExit("unsigned runtimes are allowed only for explicitly internal PoC packages")
-    validate_runtime(args.runtime, args.target, policy, args.allow_unsigned_runtime)
+    validate_runtime(
+        args.runtime,
+        args.target,
+        policy,
+        args.allow_unsigned_runtime,
+        distribution,
+    )
     if not args.licenses.is_dir() or not any(args.licenses.iterdir()):
         raise SystemExit("license pack is empty")
+    if distribution == "noncommercial-open-source" and not (
+        args.licenses / "NONCOMMERCIAL-NOTICE.md"
+    ).is_file():
+        raise SystemExit("non-commercial release is missing NONCOMMERCIAL-NOTICE.md")
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     archive_name = f"video-editor-module-{args.version}-{args.target}.zip"
@@ -70,6 +88,7 @@ def main() -> None:
             "target": args.target,
             "entry": entry_path(args.target),
             "capabilities": CAPABILITIES,
+            "distribution": distribution,
         }
         (staging / "module.json").write_text(
             json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8"
@@ -79,6 +98,7 @@ def main() -> None:
             "target": args.target,
             "pipeline": policy["pipeline"],
             "commercialReleaseAllowed": policy["commercialReleaseAllowed"],
+            "distribution": distribution,
             "unsignedInternalRuntime": args.allow_unsigned_runtime,
             "files": tree_hashes(staging / "runtime"),
         }
@@ -90,12 +110,11 @@ def main() -> None:
     package = {
         "target": args.target,
         "version": args.version,
+        "distribution": distribution,
         "url": args.release_url.rstrip("/") + "/" + archive_name,
         "sha256": sha256(archive_path),
         "size": archive_path.stat().st_size,
-        "releaseEligible": bool(
-            policy["commercialReleaseAllowed"] and not args.allow_unsigned_runtime
-        ),
+        "releaseEligible": bool(allowed and distribution != "internal-poc"),
     }
     (archive_path.with_suffix(".package.json")).write_text(
         json.dumps(package, ensure_ascii=False, indent=2), encoding="utf-8"
@@ -109,7 +128,13 @@ def entry_path(target: str) -> str:
     return f"runtime/video-editor-module{suffix}"
 
 
-def validate_runtime(runtime: Path, target: str, policy: dict, allow_unsigned: bool) -> None:
+def validate_runtime(
+    runtime: Path,
+    target: str,
+    policy: dict,
+    allow_unsigned: bool,
+    distribution: str,
+) -> None:
     entry = runtime / Path(entry_path(target)).name
     ffmpeg = runtime / "bin" / ("ffmpeg.exe" if target == "windows-x86_64" else "ffmpeg")
     ffprobe = runtime / "bin" / ("ffprobe.exe" if target == "windows-x86_64" else "ffprobe")
@@ -123,7 +148,7 @@ def validate_runtime(runtime: Path, target: str, policy: dict, allow_unsigned: b
     if sha256(biref) != policy["components"]["birefnet"]["modelSha256"]:
         raise SystemExit("BiRefNet checkpoint hash mismatch")
     if not allow_unsigned:
-        validate_platform_signature(entry, target)
+        validate_platform_signature(entry, target, distribution)
     buildconf = subprocess.run(
         [str(ffmpeg), "-hide_banner", "-buildconf"],
         stdout=subprocess.PIPE,
@@ -149,7 +174,7 @@ def validate_runtime(runtime: Path, target: str, policy: dict, allow_unsigned: b
             raise SystemExit(f"FFmpeg is missing {encoder}")
 
 
-def validate_platform_signature(entry: Path, target: str) -> None:
+def validate_platform_signature(entry: Path, target: str, distribution: str) -> None:
     if target.startswith("macos-"):
         if sys.platform != "darwin":
             raise SystemExit("macOS runtime signatures must be verified on macOS")
@@ -166,10 +191,12 @@ def validate_platform_signature(entry: Path, target: str) -> None:
             stderr=subprocess.STDOUT,
             text=True,
         ).stdout
-        if "Authority=Developer ID Application:" not in details:
+        if distribution == "commercial" and "Authority=Developer ID Application:" not in details:
             raise SystemExit("macOS runtime is not Developer ID signed")
         return
     if target == "windows-x86_64":
+        if distribution == "noncommercial-open-source":
+            return
         if os.name != "nt":
             raise SystemExit("Windows runtime signatures must be verified on Windows")
         script = (

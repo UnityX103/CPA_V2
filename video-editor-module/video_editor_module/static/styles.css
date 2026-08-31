@@ -13,6 +13,8 @@ button, input, select { font: inherit; }
 .editor-head { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 .editor-head h1 { margin: 0 0 5px; font-size: 23px; }
 .editor-head p { margin: 0; color: #8b7462; font-size: 13px; }
+.noncommercial-notice { display: flex; align-items: center; gap: 10px; padding: 10px 13px; border: 1px solid #f3d28b; border-radius: 12px; background: #fff7d9; color: #8a6d00; font-size: 11px; }
+.noncommercial-notice strong { white-space: nowrap; }
 
 .workspace { display: grid; grid-template-columns: minmax(0, 1fr) 310px; gap: 18px; min-height: 0; }
 .preview-column, .controls-column { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
@@ -48,6 +50,7 @@ button, input, select { font: inherit; }
 .hidden { display: none; }
 
 @media (max-width: 900px) {
+  .noncommercial-notice { align-items: flex-start; flex-direction: column; gap: 4px; }
   .workspace { grid-template-columns: 1fr; }
   .controls-column { display: grid; grid-template-columns: 1fr 1fr; }
   .pipeline-card { grid-column: 1 / -1; }

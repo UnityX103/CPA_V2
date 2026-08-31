@@ -221,7 +221,14 @@ def _run_birefnet(frame_paths: list[Path], output_dir: Path, root: Path, progres
     from torchvision import transforms
     from transformers import AutoModelForImageSegmentation
 
-    device = torch.device("mps" if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu")
+    use_mps = (
+        platform.system() == "Darwin"
+        and platform.machine().lower() in {"arm64", "aarch64"}
+        and torch.backends.mps.is_available()
+    )
+    device = torch.device(
+        "mps" if use_mps else "cuda" if torch.cuda.is_available() else "cpu"
+    )
     dtype = torch.float16 if device.type in {"mps", "cuda"} else torch.float32
     model_dir = root / "models" / "birefnet"
     model = AutoModelForImageSegmentation.from_pretrained(

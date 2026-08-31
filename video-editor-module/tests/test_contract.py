@@ -34,15 +34,30 @@ class VideoEditorModuleContractTests(unittest.TestCase):
         for removed in ["裁剪工具", "画笔剔除", "crop-box", "brush-overlay"]:
             self.assertNotIn(removed, html + javascript)
 
-    def test_source_policy_blocks_commercial_package_until_weight_is_cleared(self):
+    def test_source_policy_allows_only_noncommercial_open_source_release(self):
         policy = json.loads((ROOT / "source-policy.json").read_text(encoding="utf-8"))
         self.assertFalse(policy["commercialReleaseAllowed"])
+        self.assertTrue(policy["nonCommercialOpenSourceReleaseAllowed"])
         self.assertIn("PPM-100", policy["components"]["birefnet"]["provenanceRisk"])
         self.assertIn("--enable-gpl", policy["components"]["ffmpeg"]["forbiddenConfigureFlags"])
         self.assertIn("hevc_videotoolbox", policy["components"]["ffmpeg"]["macosRequiredEncoders"])
 
-        requirements = (ROOT / "requirements.lock.txt").read_text(encoding="utf-8")
-        self.assertIn(policy["components"]["sam2"]["commit"], requirements)
+        build_script = (ROOT / "scripts" / "build_runtime.py").read_text(encoding="utf-8")
+        self.assertIn("sam_policy['commit']", build_script)
+        self.assertTrue((ROOT / "requirements.macos-x86_64.lock.txt").is_file())
+
+        html = (ROOT / "video_editor_module" / "static" / "index.html").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("仅限非商业开源学习与研究", html)
+        self.assertIn("CC BY-NC-SA 4.0", html)
+
+        notice = (ROOT / "licenses" / "NONCOMMERCIAL-NOTICE.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("BiRefNet-matting", notice)
+        self.assertIn("PPM-100", notice)
+        self.assertIn("CC BY-NC-SA 4.0", notice)
 
     def test_macos_preview_uses_hevc_alpha_while_download_stays_webm(self):
         pipeline = (ROOT / "video_editor_module" / "pipeline.py").read_text(encoding="utf-8")
@@ -52,6 +67,7 @@ class VideoEditorModuleContractTests(unittest.TestCase):
         self.assertIn('if parsed.path == "/api/preview"', server)
         self.assertIn("api(previewUrl)", javascript)
         self.assertIn("downloadOutput.href = outputUrl", javascript)
+        self.assertIn('platform.machine().lower() in {"arm64", "aarch64"}', pipeline)
 
     def test_resolution_is_even_bounded_and_preserves_aspect_when_one_axis_is_automatic(self):
         pipeline = load_pipeline()

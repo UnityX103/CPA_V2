@@ -6,7 +6,7 @@ project_root = Path(SPECPATH).resolve()
 datas = [(str(project_root / "video_editor_module" / "static"), "video_editor_module/static")]
 binaries = []
 hiddenimports = []
-for package in ["sam2", "transformers", "timm", "kornia", "iopath", "hydra"]:
+for package in ["sam2", "timm", "kornia", "iopath", "hydra"]:
     package_datas, package_binaries, package_hidden = collect_all(package)
     datas += package_datas
     binaries += package_binaries

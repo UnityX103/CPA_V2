@@ -3,7 +3,9 @@
   "moduleId": "cpa-video-editor",
   "pipeline": "sam2-birefnet-v1",
   "commercialReleaseAllowed": false,
+  "nonCommercialOpenSourceReleaseAllowed": true,
   "commercialReleaseBlocker": "Replace BiRefNet-matting with a commercially cleared checkpoint or archive written upstream authorization covering PPM-100-derived training.",
+  "nonCommercialReleaseTerms": "The downloadable module is published only for non-commercial open-source learning and research. Preserve component notices, cite BiRefNet and PPM-100, link CC BY-NC-SA 4.0, and identify modifications.",
   "components": {
     "sam2": {
       "repository": "https://github.com/facebookresearch/sam2",

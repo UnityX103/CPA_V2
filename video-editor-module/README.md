@@ -42,10 +42,11 @@ overflow, or SHA-256 mismatch.
 
 `source-policy.json` records a blocking provenance issue: the upstream
 BiRefNet-matting model card is MIT, but lists PPM-100 as training data and the
-PPM-100 alpha annotations are CC BY-NC-SA 4.0. Internal PoC packages may be
-built explicitly; a public/commercial package must replace the checkpoint with
-a commercially cleared weight or archive written authorization from the
-upstream author.
+PPM-100 alpha annotations are CC BY-NC-SA 4.0. This project publishes the
+downloadable module only for non-commercial open-source learning and research,
+with attribution and modification notices in `licenses/`. A commercial package
+must replace the checkpoint with a commercially cleared weight or archive
+written authorization from the upstream author.
 
 Do not bundle the developer machine's Homebrew FFmpeg. It is a GPL build. Use
 an audited minimal LGPL-compatible build with libvpx, or a native media path.
@@ -68,6 +69,10 @@ python -m unittest discover -s video-editor-module/tests
 
 Use `scripts/package_module.py` to assemble a prepared frozen runtime into the
 archive consumed by CPA_V2's settings-panel downloader.
+
+For the public learning release pass
+`--distribution noncommercial-open-source --licenses licenses`. Commercial
+mode remains fail-closed.
 
 `scripts/build_runtime.py` builds that runtime natively for exactly one target,
 pins SAM2 to the audited Git commit, verifies both model hashes, and copies an
