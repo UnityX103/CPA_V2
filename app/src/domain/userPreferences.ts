@@ -9,7 +9,7 @@ import type {
     PomodoroEndActionVideo,
     PomodoroState,
 } from './pomodoro';
-import type { PersistedSettingsSnapshot, SettingsState } from './settings';
+import type { BreakPetMode, PersistedSettingsSnapshot, SettingsState } from './settings';
 import type { AppUpdateSnapshot } from './appUpdate';
 import {
     clonePomodoroEndSounds,
@@ -41,7 +41,7 @@ export interface UserPreferencesSnapshot {
     settings: {
         uiScale: number;
         autostartEnabled: boolean;
-        breakPetMode?: 'off' | 'cockroachInvasion';
+        breakPetMode?: BreakPetMode;
     };
     appUpdate: {
         autoUpdateEnabled: boolean;

@@ -1,4 +1,5 @@
 import { load } from '@tauri-apps/plugin-store';
+import type { BreakPetMode } from './settings';
 
 const STORE_PATH = 'settings.json';
 const STORE_KEY = 'settings';
@@ -8,7 +9,7 @@ export interface PersistedSettings {
     autostartEnabled: boolean;
     audioOutputDeviceId: string | null;
     soundVolume: number;
-    breakPetMode: 'off' | 'cockroachInvasion';
+    breakPetMode: BreakPetMode;
 }
 
 interface PersistedSettingsV1 {
@@ -17,7 +18,7 @@ interface PersistedSettingsV1 {
     autostartEnabled?: boolean;
     audioOutputDeviceId?: string | null;
     soundVolume?: number;
-    breakPetMode?: 'off' | 'cockroachInvasion';
+    breakPetMode?: BreakPetMode;
 }
 
 const obsoleteActiveTitleKey = 'showActiveApp' + 'WindowTitle';

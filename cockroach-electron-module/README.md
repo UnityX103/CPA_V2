@@ -60,5 +60,8 @@ CPA writes Electron Store's `config.json` under the module-specific `--user-data
 - `settings.babyGrowthMinutes`: 1–60, default 10;
 - `cockroaches`: reset to an empty list for each simulation.
 
-“模拟” starts the upstream executable. “杀死所有”, leaving the break phase, uninstalling the module,
-and exiting CPA terminate the tracked child process and clear persisted cockroaches.
+“模拟” starts the upstream executable. “杀死所有” sends the upstream `Cmd/Ctrl+K` global shortcut,
+so the live Electron process runs its own `manager.killAll()` behavior. Leaving the break phase,
+uninstalling the module, and exiting CPA terminate the tracked child process and clear persisted
+cockroaches. Saving settings while the module is active restarts that process once so the new values
+take effect immediately without desynchronizing the Pomodoro controller.

@@ -62,7 +62,7 @@ function buildStartupSettingsSnapshot(
         breakPetMode: settings?.breakPetMode ?? initialSettings.breakPetMode,
     };
 
-    return { snapshot, shouldApplyScale: !scaleChanged };
+    return snapshot;
 }
 
 function getStartupSettingsState() {
@@ -286,18 +286,12 @@ export default function App() {
                         },
                     });
                 } else {
-                    const { snapshot, shouldApplyScale } = buildStartupSettingsSnapshot(
+                    const snapshot = buildStartupSettingsSnapshot(
                         legacySettings,
                         initialSettings,
                         startupAutostartEnabled,
                     );
-                    useSettingsStore.setState({
-                        ...(shouldApplyScale
-                            ? { uiScale: snapshot.uiScale, committedUiScale: snapshot.uiScale }
-                            : {}),
-                        autostartEnabled: snapshot.autostartEnabled,
-                        breakPetMode: snapshot.breakPetMode,
-                    });
+                    useSettingsStore.getState().hydrateSettings(snapshot);
                 }
 
                 const savedSnapshot = await saveLocalSnapshot(stores);

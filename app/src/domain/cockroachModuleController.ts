@@ -22,7 +22,7 @@ const defaultRuntime: ControllerRuntime = {
     clearTimeout: (id) => window.clearTimeout(id),
     setActive: async (active) => {
         try {
-            await invoke(active ? 'launch_cockroach_module' : 'kill_all_cockroaches', active
+            await invoke(active ? 'launch_cockroach_module' : 'stop_cockroach_module', active
                 ? { settings: null }
                 : undefined);
         } catch (error) {

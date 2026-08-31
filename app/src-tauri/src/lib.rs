@@ -650,6 +650,7 @@ pub fn run() {
             cockroach_module::launch_cockroach_module,
             cockroach_module::save_cockroach_module_settings,
             cockroach_module::kill_all_cockroaches,
+            cockroach_module::stop_cockroach_module,
             cockroach_module::uninstall_cockroach_module,
         ])
         .build(tauri::generate_context!())

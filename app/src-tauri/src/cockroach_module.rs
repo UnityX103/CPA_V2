@@ -12,6 +12,16 @@ use tauri::{Emitter, Manager};
 use tokio::io::AsyncWriteExt;
 use zip::ZipArchive;
 
+#[cfg(target_os = "macos")]
+#[path = "cockroach_module/macos.rs"]
+mod platform;
+#[cfg(target_os = "windows")]
+#[path = "cockroach_module/windows.rs"]
+mod platform;
+#[cfg(not(any(target_os = "macos", target_os = "windows")))]
+#[path = "cockroach_module/unsupported.rs"]
+mod platform;
+
 const MODULE_ID: &str = "cpa-cockroach-electron";
 const MODULE_SCHEMA_VERSION: u32 = 1;
 const INDEX_SCHEMA_VERSION: u32 = 1;
@@ -103,26 +113,7 @@ struct ModuleManifest {
 }
 
 fn runtime_target() -> &'static str {
-    #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
-    {
-        "macos-arm64"
-    }
-    #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
-    {
-        "macos-x86_64"
-    }
-    #[cfg(all(target_os = "windows", target_arch = "x86_64"))]
-    {
-        "windows-x86_64"
-    }
-    #[cfg(not(any(
-        all(target_os = "macos", target_arch = "aarch64"),
-        all(target_os = "macos", target_arch = "x86_64"),
-        all(target_os = "windows", target_arch = "x86_64")
-    )))]
-    {
-        "unsupported"
-    }
+    platform::runtime_target()
 }
 
 fn index_url() -> String {
@@ -682,12 +673,7 @@ fn install_archive(
             fs::File::create(&output).map_err(|error| format!("无法写入模块文件：{error}"))?;
         std::io::copy(&mut entry, &mut target_file)
             .map_err(|error| format!("无法解压模块文件：{error}"))?;
-        #[cfg(unix)]
-        if let Some(mode) = entry.unix_mode() {
-            use std::os::unix::fs::PermissionsExt;
-            fs::set_permissions(&output, fs::Permissions::from_mode(mode & 0o777))
-                .map_err(|error| format!("无法恢复模块文件权限：{error}"))?;
-        }
+        platform::restore_archive_permissions(&output, entry.unix_mode())?;
     }
     let manifest: ModuleManifest = serde_json::from_slice(
         &fs::read(staging.join("module.json")).map_err(|error| format!("模块清单缺失：{error}"))?,
@@ -698,12 +684,7 @@ fn install_archive(
     if !entry.is_file() {
         return Err("模块启动文件缺失".to_string());
     }
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        fs::set_permissions(&entry, fs::Permissions::from_mode(0o755))
-            .map_err(|error| format!("无法设置模块启动权限：{error}"))?;
-    }
+    platform::ensure_entry_executable(&entry)?;
     let directory = format!("{version}-{target}");
     let installed_dir = root.join(&directory);
     if installed_dir.exists() {
@@ -742,8 +723,17 @@ pub fn launch_cockroach_module(
     validate_settings(&settings)?;
     stop_child(&state);
     write_upstream_config(&root, &settings, true)?;
+    start_child(&root, &pointer, &manifest, &state)?;
+    Ok(cockroach_module_status(app, state))
+}
 
-    let module_dir = root.join(pointer.directory);
+fn start_child(
+    root: &Path,
+    pointer: &InstalledPointer,
+    manifest: &ModuleManifest,
+    state: &CockroachModuleState,
+) -> Result<(), String> {
+    let module_dir = root.join(&pointer.directory);
     let entry = module_dir.join(safe_relative_path(&manifest.entry)?);
     let mut command = Command::new(&entry);
     command
@@ -755,11 +745,7 @@ pub fn launch_cockroach_module(
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::null());
-    #[cfg(target_os = "windows")]
-    {
-        use std::os::windows::process::CommandExt;
-        command.creation_flags(0x08000000);
-    }
+    platform::configure_child_command(&mut command);
     let child = command
         .spawn()
         .map_err(|error| format!("无法启动蟑螂模块：{error}"))?;
@@ -767,7 +753,7 @@ pub fn launch_cockroach_module(
         .child
         .lock()
         .map_err(|_| "蟑螂模块进程状态不可用".to_string())? = Some(child);
-    Ok(cockroach_module_status(app, state))
+    Ok(())
 }
 
 #[tauri::command]
@@ -777,13 +763,34 @@ pub fn save_cockroach_module_settings(
     settings: CockroachModuleSettings,
 ) -> Result<CockroachModuleStatus, String> {
     let root = module_root(&app)?;
-    stop_child(&state);
-    write_upstream_config(&root, &settings, false)?;
+    let was_running = child_is_running(&state);
+    if was_running {
+        stop_child(&state);
+    }
+    write_upstream_config(&root, &settings, was_running)?;
+    if was_running {
+        let Some((pointer, manifest)) = read_installed_manifest(&root)? else {
+            return Err("请先下载蟑螂模块".to_string());
+        };
+        start_child(&root, &pointer, &manifest, &state)?;
+    }
     Ok(cockroach_module_status(app, state))
 }
 
 #[tauri::command]
 pub fn kill_all_cockroaches(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, CockroachModuleState>,
+) -> Result<CockroachModuleStatus, String> {
+    if !child_is_running(&state) {
+        return Ok(cockroach_module_status(app, state));
+    }
+    platform::trigger_kill_all()?;
+    Ok(cockroach_module_status(app, state))
+}
+
+#[tauri::command]
+pub fn stop_cockroach_module(
     app: tauri::AppHandle,
     state: tauri::State<'_, CockroachModuleState>,
 ) -> Result<CockroachModuleStatus, String> {
