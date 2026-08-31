@@ -163,7 +163,8 @@ def main() -> None:
         shutil.copytree(args.ffmpeg_dir, media_dir)
 
         sam_target = args.output / "models" / "sam2" / sam_policy["checkpoint"]
-        download(sam_policy["checkpointUrl"], sam_target, sam_policy["checkpointSha256"])
+        if not sam_target.is_file() or digest(sam_target) != sam_policy["checkpointSha256"]:
+            download(sam_policy["checkpointUrl"], sam_target, sam_policy["checkpointSha256"])
 
         biref_policy = policy["components"]["birefnet"]
         biref_target = args.output / "models" / "birefnet"
@@ -172,15 +173,16 @@ def main() -> None:
             "snapshot_download(repo_id=sys.argv[1], revision=sys.argv[2], "
             "local_dir=sys.argv[3], local_dir_use_symlinks=False)"
         )
-        run(
-            python,
-            "-c",
-            "import sys; " + script,
-            biref_policy["modelRepository"].removeprefix("https://huggingface.co/"),
-            biref_policy["modelRevision"],
-            biref_target,
-        )
         model = biref_target / "model.safetensors"
+        if not model.is_file() or digest(model) != biref_policy["modelSha256"]:
+            run(
+                python,
+                "-c",
+                "import sys; " + script,
+                biref_policy["modelRepository"].removeprefix("https://huggingface.co/"),
+                biref_policy["modelRevision"],
+                biref_target,
+            )
         if digest(model) != biref_policy["modelSha256"]:
             raise SystemExit("BiRefNet checkpoint hash mismatch")
 
