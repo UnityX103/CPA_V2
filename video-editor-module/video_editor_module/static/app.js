@@ -47,7 +47,6 @@ const parameterBindings = [
 let uploadId = '';
 let sourceProbe = null;
 let sourceObjectUrl = '';
-let resultObjectUrl = '';
 let subjectMode = 'auto';
 let subjectPoint = null;
 
@@ -272,19 +271,18 @@ async function pollJob(id) {
     if (job.status === 'complete') {
       const outputUrl = `/api/output?id=${id}&token=${encodeURIComponent(token)}`;
       const previewUrl = `/api/preview?id=${id}&token=${encodeURIComponent(token)}`;
-      if (resultObjectUrl) URL.revokeObjectURL(resultObjectUrl);
-      const blob = await api(previewUrl).then((response) => response.blob());
-      resultObjectUrl = URL.createObjectURL(blob);
-      resultVideo.src = resultObjectUrl;
+      const previewDownloadUrl = `${previewUrl}&download=1`;
+      resultVideo.src = previewUrl;
       const appliedParameters = job.settings?.mattingParameters || {};
       const defaults = Object.entries(appliedParameters).every(
         ([key, value]) => value === DEFAULT_MATTING_PARAMETERS[key],
       ) && Object.keys(appliedParameters).length === Object.keys(DEFAULT_MATTING_PARAMETERS).length;
       resultMeta.textContent = `${widthInput.value} × ${heightInput.value} · VP9 Alpha WebM · ${defaults ? '默认参数' : '自定义参数'}`;
       downloadOutput.href = outputUrl;
+      downloadOutput.download = `pet-transparent-${id}.webm`;
       downloadOutput.classList.remove('disabled');
       downloadOutput.setAttribute('aria-disabled', 'false');
-      downloadPreview.href = previewUrl;
+      downloadPreview.href = previewDownloadUrl;
       downloadPreview.classList.remove('disabled');
       downloadPreview.setAttribute('aria-disabled', 'false');
       setBusy(false);

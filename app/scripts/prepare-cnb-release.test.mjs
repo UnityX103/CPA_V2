@@ -51,6 +51,37 @@ describe('CNB release manifest preparation', () => {
         });
     });
 
+    it('rewrites every layered module component and keeps GitHub as a mirror', () => {
+        const artifact = (name, marker, releaseTag = 'v0.1.23') => ({
+            version: '1.0.0',
+            url: `https://github.com/UnityX103/CPA_V2/releases/download/${releaseTag}/${name}.zip`,
+            sha256: marker.repeat(64),
+            size: 42,
+        });
+        const result = transformModuleIndex(
+            {
+                schemaVersion: 2,
+                version: '1.3.0',
+                logic: { ...artifact('logic', 'a'), version: '1.3.0' },
+                models: artifact('models', 'b'),
+                engines: {
+                    'macos-arm64': artifact('engine-arm64', 'c', 'v0.1.22'),
+                    'macos-x86_64': artifact('engine-x64', 'd'),
+                    'windows-x86_64': artifact('engine-windows', 'e'),
+                },
+            },
+            { repo, tag },
+        );
+        for (const entry of [result.logic, result.models, ...Object.values(result.engines)]) {
+            expect(entry.url).toMatch(/^https:\/\/cnb\.cool\//);
+            expect(entry.mirrors).toHaveLength(1);
+            expect(entry.mirrors[0]).toMatch(/^https:\/\/github\.com\//);
+        }
+        expect(result.logic.version).toBe('1.3.0');
+        expect(result.models.version).toBe('1.0.0');
+        expect(result.engines['macos-arm64'].url).toContain('/download/v0.1.22/');
+    });
+
     it('provides stable tagged and latest URLs', () => {
         expect(cnbTaggedAssetUrl(repo, tag, 'latest.json')).toContain('/download/v0.1.23/latest.json');
         expect(cnbLatestAssetUrl(repo, 'latest.json')).toBe(

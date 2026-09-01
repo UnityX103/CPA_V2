@@ -10,6 +10,7 @@ import sys
 import tempfile
 import threading
 import unittest
+import zipfile
 from pathlib import Path
 
 
@@ -48,7 +49,207 @@ def load_packager():
     return module
 
 
+def load_layer_packager():
+    scripts = ROOT / "scripts"
+    sys.path.insert(0, str(scripts))
+    try:
+        spec = importlib.util.spec_from_file_location(
+            "video_editor_layer_packager", scripts / "package_layers.py"
+        )
+        module = importlib.util.module_from_spec(spec)
+        assert spec.loader is not None
+        spec.loader.exec_module(module)
+        return module
+    finally:
+        sys.path.remove(str(scripts))
+
+
 class VideoEditorModuleContractTests(unittest.TestCase):
+    def test_layered_host_loads_business_code_from_an_external_directory(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            package = root / "video_editor_module"
+            package.mkdir()
+            (package / "__init__.py").write_text("", encoding="utf-8")
+            (package / "__main__.py").write_text(
+                "import json,os,sys\n"
+                "open(os.environ['HOST_RESULT'], 'w').write(json.dumps(sys.argv[1:]))\n",
+                encoding="utf-8",
+            )
+            result = root / "result.json"
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "video_editor_host.py"),
+                    "--logic-root",
+                    str(root),
+                    "--serve",
+                    "--port",
+                    "18771",
+                ],
+                env={**dict(__import__("os").environ), "HOST_RESULT": str(result)},
+                check=True,
+            )
+            self.assertEqual(
+                json.loads(result.read_text(encoding="utf-8")),
+                ["--serve", "--port", "18771"],
+            )
+
+    def test_external_model_root_overrides_the_legacy_runtime_layout(self):
+        pipeline = load_pipeline()
+        os_module = __import__("os")
+        previous = os_module.environ.get("CPA_VIDEO_EDITOR_MODEL_ROOT")
+        try:
+            os_module.environ["CPA_VIDEO_EDITOR_MODEL_ROOT"] = "/tmp/cpa-model-layer"
+            self.assertEqual(
+                pipeline.model_root(Path("/tmp/legacy-runtime")),
+                Path("/tmp/cpa-model-layer").resolve(),
+            )
+        finally:
+            if previous is None:
+                os_module.environ.pop("CPA_VIDEO_EDITOR_MODEL_ROOT", None)
+            else:
+                os_module.environ["CPA_VIDEO_EDITOR_MODEL_ROOT"] = previous
+        self.assertEqual(
+            pipeline.model_root(Path("/tmp/legacy-runtime")),
+            Path("/tmp/legacy-runtime/models"),
+        )
+
+    def test_logic_package_is_independent_from_runtime_and_models(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary)
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "package_layers.py"),
+                    "logic",
+                    "--version",
+                    "1.3.0-noncommercial.1",
+                    "--source",
+                    str(ROOT / "video_editor_module"),
+                    "--licenses",
+                    str(ROOT / "licenses"),
+                    "--output-dir",
+                    str(output),
+                    "--release-url",
+                    "https://github.com/UnityX103/CPA_V2/releases/download/v0.1.25",
+                    "--distribution",
+                    "noncommercial-open-source",
+                ],
+                check=True,
+                stdout=subprocess.PIPE,
+            )
+            archive = output / "video-editor-logic-1.3.0-noncommercial.1.zip"
+            metadata = json.loads(
+                archive.with_suffix(".component.json").read_text(encoding="utf-8")
+            )
+            with zipfile.ZipFile(archive) as package:
+                names = set(package.namelist())
+                manifest = json.loads(package.read("module.json"))
+            self.assertEqual(metadata["component"], "logic")
+            self.assertEqual(metadata["engineAbi"], "cpa-video-engine-1")
+            self.assertEqual(metadata["modelSet"], "sam2-baseplus-birefnet-1")
+            self.assertEqual(len(metadata["manifestSha256"]), 64)
+            self.assertIn("module.json", names)
+            self.assertIn("video_editor_module/__main__.py", names)
+            self.assertFalse(any(name.startswith("runtime/") for name in names))
+            self.assertFalse(any(name.startswith("models/") for name in names))
+            self.assertIn(
+                "video_editor_module/__main__.py",
+                {item["path"] for item in manifest["files"]},
+            )
+
+    def test_models_package_requires_pinned_source_provenance(self):
+        packager = load_layer_packager()
+        policy = json.loads((ROOT / "source-policy.json").read_text(encoding="utf-8"))
+        with tempfile.TemporaryDirectory() as temporary:
+            licenses = Path(temporary)
+            for name in ["NONCOMMERCIAL-NOTICE.md", "THIRD-PARTY-SOURCES.md"]:
+                (licenses / name).write_text("fixture", encoding="utf-8")
+            with self.assertRaisesRegex(SystemExit, "SOURCE-MANIFEST.json"):
+                packager.validate_models_license_pack(
+                    licenses, policy, "noncommercial-open-source"
+                )
+
+    def test_layered_index_versions_each_component_independently(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            documents = []
+            for component, target, version, marker in [
+                ("logic", None, "1.3.0", "a"),
+                ("models", None, "1.0.0", "b"),
+                ("engine", "macos-arm64", "1.0.0", "c"),
+                ("engine", "macos-x86_64", "1.0.0", "d"),
+                ("engine", "windows-x86_64", "1.0.0", "e"),
+            ]:
+                path = root / f"{component}-{target or 'common'}.component.json"
+                document = {
+                    "component": component,
+                    "version": version,
+                    "url": f"https://github.com/UnityX103/CPA_V2/releases/download/v2/{path.stem}.zip",
+                    "sha256": marker * 64,
+                    "manifestSha256": marker * 64,
+                    "size": 42,
+                    "distribution": "noncommercial-open-source",
+                    "packageAuthenticity": "tauri-minisign-index+sha256",
+                    "publicIndexSignatureRequired": True,
+                    "releaseEligible": True,
+                }
+                if target:
+                    document["target"] = target
+                    document["platformSignature"] = "ad-hoc"
+                    document["engineAbi"] = "cpa-video-engine-1"
+                elif component == "models":
+                    document["modelSet"] = "sam2-baseplus-birefnet-1"
+                else:
+                    document["engineAbi"] = "cpa-video-engine-1"
+                    document["modelSet"] = "sam2-baseplus-birefnet-1"
+                path.write_text(json.dumps(document), encoding="utf-8")
+                documents.append(path)
+            output = root / "video-editor-module-index.json"
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "build_layered_index.py"),
+                    "--version",
+                    "1.3.0",
+                    "--output",
+                    str(output),
+                    *(str(path) for path in documents),
+                ],
+                check=True,
+                stdout=subprocess.PIPE,
+            )
+            index = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(index["schemaVersion"], 2)
+            self.assertEqual(index["logic"]["version"], "1.3.0")
+            self.assertEqual(index["models"]["version"], "1.0.0")
+            self.assertEqual(index["logic"]["engineAbi"], "cpa-video-engine-1")
+            self.assertEqual(index["logic"]["modelSet"], "sam2-baseplus-birefnet-1")
+            self.assertEqual(
+                set(index["engines"]),
+                {"macos-arm64", "macos-x86_64", "windows-x86_64"},
+            )
+
+            incompatible = json.loads(documents[-1].read_text(encoding="utf-8"))
+            incompatible["engineAbi"] = "cpa-video-engine-2"
+            documents[-1].write_text(json.dumps(incompatible), encoding="utf-8")
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "build_layered_index.py"),
+                    "--version",
+                    "1.3.0",
+                    "--output",
+                    str(output),
+                    *(str(path) for path in documents),
+                ],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn(b"engineAbi", result.stderr)
+
     def test_runtime_target_uses_python_architecture_on_windows_arm_host(self):
         build_runtime = load_build_runtime()
         self.assertEqual(
@@ -253,6 +454,10 @@ class VideoEditorModuleContractTests(unittest.TestCase):
         self.assertIn('model_cache = work / "model-cache"', script)
         self.assertIn('headers={"Range": f"bytes={offset}-"}', script)
         self.assertIn("shutil.copy2(sam_cached, sam_target)", script)
+        self.assertIn('choices=["legacy", "layered"]', script)
+        self.assertIn('project_root / "video_editor_host.spec"', script)
+        host_spec = (ROOT / "video_editor_host.spec").read_text(encoding="utf-8")
+        self.assertNotIn("video_editor_module/static", host_spec)
 
     def test_model_download_resumes_a_partial_http_range(self):
         build_runtime = load_build_runtime()
@@ -338,13 +543,20 @@ class VideoEditorModuleContractTests(unittest.TestCase):
     def test_macos_preview_uses_hevc_alpha_while_download_stays_webm(self):
         pipeline = (ROOT / "video_editor_module" / "pipeline.py").read_text(encoding="utf-8")
         server = (ROOT / "video_editor_module" / "server.py").read_text(encoding="utf-8")
+        html = (ROOT / "video_editor_module" / "static" / "index.html").read_text(encoding="utf-8")
         javascript = (ROOT / "video_editor_module" / "static" / "app.js").read_text(encoding="utf-8")
         self.assertIn("hevc_videotoolbox", pipeline)
         self.assertIn('"libvpx-vp9", "-i", str(source)', pipeline)
         self.assertIn('if parsed.path == "/api/preview"', server)
-        self.assertIn("api(previewUrl)", javascript)
+        self.assertIn('first_query(parsed, "download") == "1"', server)
+        self.assertIn("resultVideo.src = previewUrl", javascript)
+        self.assertNotIn("resultObjectUrl", javascript)
         self.assertIn("downloadOutput.href = outputUrl", javascript)
-        self.assertIn("downloadPreview.href = previewUrl", javascript)
+        self.assertIn("downloadPreview.href = previewDownloadUrl", javascript)
+        self.assertIn("const previewDownloadUrl", javascript)
+        self.assertIn("downloadOutput.download = `pet-transparent-${id}.webm`", javascript)
+        self.assertRegex(html, r'<a id="download-output"[^>]*\bdownload\b')
+        self.assertRegex(html, r'<a id="download-preview"[^>]*\bdownload\b')
         self.assertIn("job.settings?.mattingParameters", javascript)
         self.assertIn('"settings": self.settings', server)
         self.assertIn('"version": __version__', server)
@@ -357,6 +569,7 @@ class VideoEditorModuleContractTests(unittest.TestCase):
         self.assertIn('"-row-mt", "1"', pipeline)
         self.assertIn("maskedmerge", pipeline)
         self.assertIn("gt(val,16)", pipeline)
+        self.assertIn("format=rgb24[mask]", pipeline)
         self.assertNotIn('"-c:v", "libvpx", "-deadline", "good"', pipeline)
 
         html = (ROOT / "video_editor_module" / "static" / "index.html").read_text(

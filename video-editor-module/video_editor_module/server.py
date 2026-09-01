@@ -133,6 +133,7 @@ def handler_for(context: ModuleContext):
                 return
             if parsed.path == "/api/preview":
                 job_id = first_query(parsed, "id")
+                download = first_query(parsed, "download") == "1"
                 with context.lock:
                     job = context.jobs.get(job_id)
                 if job is None or job.status != "complete":
@@ -142,13 +143,13 @@ def handler_for(context: ModuleContext):
                     self._file(
                         job.preview_path,
                         "video/quicktime",
-                        f"pet-transparent-preview-{job.id}.mov",
+                        f"pet-transparent-preview-{job.id}.mov" if download else None,
                     )
                 elif job.output_path.is_file():
                     self._file(
                         job.output_path,
                         "video/webm",
-                        f"pet-transparent-preview-{job.id}.webm",
+                        f"pet-transparent-preview-{job.id}.webm" if download else None,
                     )
                 else:
                     self._json(HTTPStatus.NOT_FOUND, {"error": "preview not ready"})

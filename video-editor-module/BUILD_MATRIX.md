@@ -1,7 +1,8 @@
 # Video editor module build matrix
 
-All release archives are native, thin, self-contained runtimes. A target is not
-added to the signed public index until its row passes the golden-video smoke test.
+Engine archives are native and thin; model weights and business/UI are common
+components. A target is not added to the signed public index until its engine
+row passes the golden-video smoke test.
 
 | Target | Native build | Golden MP4 → alpha WebM | Host install/launch | Release status |
 |---|---:|---:|---:|---|
@@ -13,12 +14,14 @@ Build each row on its matching architecture:
 
 ```bash
 python video-editor-module/scripts/build_runtime.py \
+  --layout layered \
   --target macos-arm64 \
   --ffmpeg-dir /absolute/audited-ffmpeg/bin \
   --output /absolute/build/runtime
 ```
 
-Then package with `package_module.py`. Commercial public packages require
+Then package changed components with `package_layers.py` and assemble them with
+`build_layered_index.py`. Commercial public packages require
 commercially cleared weights, Developer ID signing on macOS, valid Authenticode
 on Windows, and an LGPL-compatible FFmpeg. Non-commercial public packages must
 preserve the non-commercial notices and complete source/license manifest. Their
@@ -27,12 +30,15 @@ executables may be unsigned, in which case the package records
 `unsigned-index-authenticated` and Windows can show SmartScreen. Every public
 package is authenticated by its SHA-256 in the Tauri Minisign-signed index.
 
-`package_module.py` refuses `releaseEligible=true` unless the license pack has
+The layered engine packager refuses `releaseEligible=true` unless the license pack has
 the Python, FFmpeg, and libvpx notices, exact FFmpeg configuration, package
-license inventory, and a target-matching source manifest. Assemble all three
-`.package.json` files using `build_index.py`, sign the resulting index, and
-publish the index, its `.sig`, source archives, and all runtime archives in the
-same GitHub Release.
+license inventory, and a target-matching source manifest. The models packager
+requires pinned SAM2/BiRefNet provenance, while the logic packager requires the
+non-commercial notice and third-party source inventory. Assemble all three
+`.component.json` metadata. Reuse unchanged engine/model documents from their
+original tagged releases, build a new lightweight logic document, sign the
+resulting schema-v2 index, and publish only changed component archives. The
+legacy `package_module.py`/`build_index.py` path remains for v1 reproduction.
 
 The Tauri signer writes a Base64-wrapped Minisign document. Do not decode or
 rewrite the `.sig` before publishing; the host validates that exact format.

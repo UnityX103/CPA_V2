@@ -51,6 +51,12 @@ printf 'source "%s/cpa-v2-release/release-secret-paths.env"\n' "$(pwd)" \
 
 From the repo root in `CPA_V2`:
 
+### Downloadable video module: layered artifacts
+
+New video-editor releases use module-index schema v2 and independently version shared models, each platform engine, and lightweight business/UI code. Do not copy unchanged large components into a new Release; indexes may reference their original release tags. The host keeps schema-v1 compatibility for installed users, but new releases default to v2.
+
+Before building or publishing video-module artifacts, read [references/video-module-layered.md](references/video-module-layered.md). It defines rebuild boundaries, commands, cross-release component reuse, provider-specific signing, and public download gates.
+
 1. Confirm the tree and auth:
    ```bash
    git status --short --branch
@@ -298,8 +304,8 @@ CNB_TOKEN="$CNB_TOKEN" npm run release:cnb:sync -- \
 `CNB_TOKEN` must have repository and Release read/write permissions. The local
 CNB CLI can use `cnb login`; release automation may instead load a CNB access
 token from the ignored credential pack. Never print the token. CNB Release
-attachments accept files up to 64 GiB, so the self-contained video runtimes do
-not need splitting. Use `ttl=0` (the sync script default) so public release
+attachments accept files up to 64 GiB, so individual video-module components do
+not need transport-level splitting. Use `ttl=0` (the sync script default) so public release
 assets do not expire.
 
 Validate the public mirror before publishing GitHub Latest:
@@ -310,7 +316,7 @@ curl -fsSL \
   | jq -e '.platforms["darwin-aarch64"] and .platforms["darwin-x86_64"] and .platforms["windows-x86_64-nsis"] and .platforms["windows-x86_64"]'
 curl -fsSL \
   https://cnb.cool/nanzhaigame-xpy/CPA_V2/-/releases/latest/download/video-editor-module-index.json \
-  | jq -e '.packages["macos-arm64"] and .packages["macos-x86_64"] and .packages["windows-x86_64"]'
+  | jq -e 'if .schemaVersion == 2 then .logic and .models and .engines["macos-arm64"] and .engines["macos-x86_64"] and .engines["windows-x86_64"] else .packages["macos-arm64"] and .packages["macos-x86_64"] and .packages["windows-x86_64"] end'
 ```
 
 If CNB mirroring fails, keep the GitHub Release as a draft. There is no
@@ -325,7 +331,7 @@ Before reporting a release complete, all of these must be true:
 - `origin` and `cnb` resolve the release branch and tag to the same commit.
 - The CNB Release is not a draft, is Latest, and contains every expected asset.
 - CNB `latest.json` contains all four updater platform keys and only CNB binary URLs.
-- The CNB module index and `.sig` match, each CNB package URL is present, and its signed `mirrors` list contains the corresponding GitHub URL.
+- The CNB module index and `.sig` match; every v2 logic/models/engine URL (or legacy v1 package URL) is present, and its signed `mirrors` list contains the corresponding GitHub URL.
 - Anonymous Range requests succeed for every large CNB video-module package.
 - The GitHub Release is not a draft, is Latest, and contains every expected asset.
 - GitHub `latest.json` and its provider-specific signed module index pass the existing online gates.

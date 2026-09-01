@@ -25,6 +25,15 @@ function assetNameFromUrl(value) {
     return name;
 }
 
+function releaseTagFromUrl(value) {
+    const url = new URL(value);
+    const segments = url.pathname.split('/').filter(Boolean).map(decodeURIComponent);
+    const download = segments.lastIndexOf('download');
+    const tag = download >= 0 ? segments[download + 1] : undefined;
+    assertSafeTag(tag ?? '');
+    return tag;
+}
+
 export function cnbTaggedAssetUrl(repo, tag, assetName) {
     assertSafeRepo(repo);
     assertSafeTag(tag);
@@ -67,22 +76,42 @@ export function transformUpdaterManifest(manifest, { repo, tag }) {
 }
 
 export function transformModuleIndex(index, { repo, tag }) {
+    const transformArtifact = (entry, label) => {
+        if (!entry?.url || !entry?.sha256 || !entry?.size) {
+            throw new Error(`Incomplete video module package: ${label}`);
+        }
+        const mirrors = [entry.url, ...(entry.mirrors ?? [])].filter(
+            (url, position, values) => url && values.indexOf(url) === position,
+        );
+        return {
+            ...entry,
+            url: cnbTaggedAssetUrl(repo, releaseTagFromUrl(entry.url), assetNameFromUrl(entry.url)),
+            mirrors,
+        };
+    };
+    if (index.schemaVersion === 2) {
+        if (!index.logic || !index.models) {
+            throw new Error('Layered video module index is missing logic or models');
+        }
+        const engines = Object.fromEntries(
+            Object.entries(index.engines ?? {}).map(([target, entry]) => [
+                target,
+                transformArtifact(entry, `engine ${target}`),
+            ]),
+        );
+        if (Object.keys(engines).length === 0) {
+            throw new Error('Layered video module index has no engines');
+        }
+        return {
+            ...index,
+            logic: transformArtifact(index.logic, 'logic'),
+            models: transformArtifact(index.models, 'models'),
+            engines,
+        };
+    }
     const packages = Object.fromEntries(
         Object.entries(index.packages ?? {}).map(([target, entry]) => {
-            if (!entry?.url || !entry?.sha256 || !entry?.size) {
-                throw new Error(`Incomplete video module package: ${target}`);
-            }
-            const mirrors = [entry.url, ...(entry.mirrors ?? [])].filter(
-                (url, position, values) => url && values.indexOf(url) === position,
-            );
-            return [
-                target,
-                {
-                    ...entry,
-                    url: cnbTaggedAssetUrl(repo, tag, assetNameFromUrl(entry.url)),
-                    mirrors,
-                },
-            ];
+            return [target, transformArtifact(entry, target)];
         }),
     );
     if (Object.keys(packages).length === 0) {

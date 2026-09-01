@@ -196,6 +196,13 @@ def runtime_root() -> Path:
     return Path(__file__).resolve().parents[2] / "runtime-dev"
 
 
+def model_root(root: Path | None = None) -> Path:
+    configured = os.environ.get("CPA_VIDEO_EDITOR_MODEL_ROOT")
+    if configured:
+        return Path(configured).resolve()
+    return (root or runtime_root()) / "models"
+
+
 def executable(root: Path, name: str) -> Path:
     suffix = ".exe" if os.name == "nt" else ""
     candidate = root / "bin" / f"{name}{suffix}"
@@ -236,6 +243,7 @@ def probe_video(path: Path, root: Path | None = None) -> VideoProbe:
 
 def process_video(settings: ProcessSettings, progress: Progress) -> Path:
     root = runtime_root()
+    models = model_root(root)
     probe = probe_video(settings.input_path, root)
     width, height = normalize_resolution(
         probe.width,
@@ -273,7 +281,7 @@ def process_video(settings: ProcessSettings, progress: Progress) -> Path:
             raise RuntimeError("视频片段至少需要两帧")
 
         progress(8, "正在运行 BiRefNet 毛发抠图")
-        alpha_paths = _run_birefnet(frame_paths, biref_masks, root, progress)
+        alpha_paths = _run_birefnet(frame_paths, biref_masks, models, progress)
         point_seed = resolve_point_seed(
             settings.subject_selection,
             start_seconds=start,
@@ -298,7 +306,7 @@ def process_video(settings: ProcessSettings, progress: Progress) -> Path:
             alpha_paths[seed_index],
             seed_index,
             sam_masks,
-            root,
+            models,
             progress,
             seed_point=seed_point,
             seed_threshold=settings.matting_parameters.seed_threshold,
@@ -365,7 +373,7 @@ def _decode_frames(
     )
 
 
-def _run_birefnet(frame_paths: list[Path], output_dir: Path, root: Path, progress: Progress) -> list[Path]:
+def _run_birefnet(frame_paths: list[Path], output_dir: Path, models: Path, progress: Progress) -> list[Path]:
     import numpy as np
     import torch
     from PIL import Image
@@ -381,7 +389,7 @@ def _run_birefnet(frame_paths: list[Path], output_dir: Path, root: Path, progres
         "mps" if use_mps else "cuda" if torch.cuda.is_available() else "cpu"
     )
     dtype = torch.float16 if device.type in {"mps", "cuda"} else torch.float32
-    model_dir = root / "models" / "birefnet"
+    model_dir = models / "birefnet"
     model = AutoModelForImageSegmentation.from_pretrained(
         str(model_dir), trust_remote_code=True, local_files_only=True,
     ).to(device=device, dtype=dtype).eval()
@@ -430,7 +438,7 @@ def _run_sam2(
     seed_alpha_path: Path,
     seed_index: int,
     output_dir: Path,
-    root: Path,
+    models: Path,
     progress: Progress,
     seed_point: tuple[float, float] | None = None,
     seed_threshold: float = 0.5,
@@ -443,7 +451,7 @@ def _run_sam2(
     # MPS produced corrupted checker/noise masks in the project golden clip.
     # Fail closed to CPU on macOS until a separately validated backend ships.
     device = torch.device("cuda" if torch.cuda.is_available() and platform.system() == "Windows" else "cpu")
-    checkpoint = root / "models" / "sam2" / "sam2.1_hiera_base_plus.pt"
+    checkpoint = models / "sam2" / "sam2.1_hiera_base_plus.pt"
     predictor = build_sam2_video_predictor(
         "configs/sam2.1/sam2.1_hiera_b+.yaml",
         str(checkpoint),
@@ -507,7 +515,7 @@ def _encode_webm(frames: Path, masks: Path, output: Path, frame_rate: float, roo
         "[0:v]format=rgb24,split[color][blacksrc];"
         "[blacksrc]lutrgb=r=0:g=0:b=0[black];"
         "[1:v]format=gray,split[alpha][masksrc];"
-        "[masksrc]lut=y='if(gt(val,16),255,0)'[mask];"
+        "[masksrc]lut=y='if(gt(val,16),255,0)',format=rgb24[mask];"
         "[black][color][mask]maskedmerge[visible];"
         "[visible][alpha]alphamerge,format=yuva420p[out]"
     )

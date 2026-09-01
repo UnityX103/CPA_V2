@@ -91,6 +91,7 @@ def main() -> None:
     parser.add_argument("--licenses-output", type=Path, required=True)
     parser.add_argument("--python", type=Path, default=Path(sys.executable))
     parser.add_argument("--work-dir", type=Path)
+    parser.add_argument("--layout", choices=["legacy", "layered"], default="legacy")
     args = parser.parse_args()
 
     args.python = args.python.resolve()
@@ -131,6 +132,11 @@ def main() -> None:
         sam_environment = dict(os.environ)
         sam_environment["SAM2_BUILD_CUDA"] = "0"
         sam_environment["SAM2_BUILD_ALLOW_ERRORS"] = "0"
+        specification = (
+            project_root / "video_editor_host.spec"
+            if args.layout == "layered"
+            else project_root / "video_editor_module.spec"
+        )
         run(
             python,
             "-m",
@@ -166,10 +172,12 @@ def main() -> None:
             dist,
             "--workpath",
             build,
-            project_root / "video_editor_module.spec",
+            specification,
             cwd=project_root,
         )
-        frozen = dist / "video-editor-module"
+        frozen = dist / (
+            "video-editor-engine" if args.layout == "layered" else "video-editor-module"
+        )
         if args.output.exists():
             shutil.rmtree(args.output)
         shutil.copytree(frozen, args.output)
@@ -177,36 +185,8 @@ def main() -> None:
         media_dir = args.output / "bin"
         shutil.copytree(args.ffmpeg_dir, media_dir)
 
-        sam_cached = model_cache / "sam2" / sam_policy["checkpoint"]
-        download(sam_policy["checkpointUrl"], sam_cached, sam_policy["checkpointSha256"])
-        sam_target = args.output / "models" / "sam2" / sam_policy["checkpoint"]
-        sam_target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(sam_cached, sam_target)
-
-        biref_policy = policy["components"]["birefnet"]
-        biref_cached = model_cache / "birefnet"
-        biref_target = args.output / "models" / "birefnet"
-        script = (
-            "from huggingface_hub import snapshot_download; "
-            "snapshot_download(repo_id=sys.argv[1], revision=sys.argv[2], "
-            "local_dir=sys.argv[3], local_dir_use_symlinks=False)"
-        )
-        cached_model = biref_cached / "model.safetensors"
-        if not cached_model.is_file() or digest(cached_model) != biref_policy["modelSha256"]:
-            run(
-                python,
-                "-c",
-                "import sys; " + script,
-                biref_policy["modelRepository"].removeprefix("https://huggingface.co/"),
-                biref_policy["modelRevision"],
-                biref_cached,
-            )
-        model = biref_cached / "model.safetensors"
-        if digest(model) != biref_policy["modelSha256"]:
-            raise SystemExit("BiRefNet checkpoint hash mismatch")
-        if biref_target.exists():
-            shutil.rmtree(biref_target)
-        shutil.copytree(biref_cached, biref_target)
+        if args.layout == "legacy":
+            prepare_models(project_root, policy, model_cache, args.output / "models", python)
 
         if args.licenses_output.exists():
             shutil.rmtree(args.licenses_output)
@@ -300,6 +280,46 @@ def clean_source_commit(project_root: Path) -> str:
     if len(commit) != 40:
         raise SystemExit("unable to resolve a full source commit")
     return commit
+
+
+def prepare_models(
+    project_root: Path,
+    policy: dict,
+    model_cache: Path,
+    output: Path,
+    python: Path,
+) -> None:
+    sam_policy = policy["components"]["sam2"]
+    sam_cached = model_cache / "sam2" / sam_policy["checkpoint"]
+    download(sam_policy["checkpointUrl"], sam_cached, sam_policy["checkpointSha256"])
+    sam_target = output / "sam2" / sam_policy["checkpoint"]
+    sam_target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(sam_cached, sam_target)
+
+    biref_policy = policy["components"]["birefnet"]
+    biref_cached = model_cache / "birefnet"
+    biref_target = output / "birefnet"
+    script = (
+        "from huggingface_hub import snapshot_download; "
+        "snapshot_download(repo_id=sys.argv[1], revision=sys.argv[2], "
+        "local_dir=sys.argv[3], local_dir_use_symlinks=False)"
+    )
+    cached_model = biref_cached / "model.safetensors"
+    if not cached_model.is_file() or digest(cached_model) != biref_policy["modelSha256"]:
+        run(
+            python,
+            "-c",
+            "import sys; " + script,
+            biref_policy["modelRepository"].removeprefix("https://huggingface.co/"),
+            biref_policy["modelRevision"],
+            biref_cached,
+        )
+    model = biref_cached / "model.safetensors"
+    if digest(model) != biref_policy["modelSha256"]:
+        raise SystemExit("BiRefNet checkpoint hash mismatch")
+    if biref_target.exists():
+        shutil.rmtree(biref_target)
+    shutil.copytree(biref_cached, biref_target)
 
 
 def source_manifest_document(
