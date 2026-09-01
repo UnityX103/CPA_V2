@@ -109,6 +109,7 @@ describe('SettingsPanel', () => {
 
         fireEvent.click(screen.getByRole('button', { name: '下载视频编辑模板' }));
         await screen.findByRole('button', { name: '打开视频编辑器' });
+        expect(screen.getByRole('button', { name: '更新视频编辑模板' })).toBeTruthy();
         expect(invoke).toHaveBeenCalledWith('download_video_editor_module');
     });
 

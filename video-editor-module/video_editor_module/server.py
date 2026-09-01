@@ -15,7 +15,13 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-from .pipeline import ProcessSettings, probe_video, process_video
+from .pipeline import (
+    MattingParameters,
+    ProcessSettings,
+    SubjectSelection,
+    probe_video,
+    process_video,
+)
 
 
 MAX_UPLOAD_BYTES = 2 * 1024 * 1024 * 1024
@@ -184,6 +190,12 @@ def handler_for(context: ModuleContext):
                 end = float(payload.get("endSeconds", 0))
                 width = int(payload.get("outputWidth", 0))
                 height = int(payload.get("outputHeight", 0))
+                subject_selection = SubjectSelection.from_mapping(
+                    payload.get("subjectSelection")
+                )
+                matting_parameters = MattingParameters.from_mapping(
+                    payload.get("mattingParameters")
+                )
             except (KeyError, TypeError, ValueError, json.JSONDecodeError) as error:
                 self._json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
                 return
@@ -203,7 +215,16 @@ def handler_for(context: ModuleContext):
                     {"error": "another video job is already running"},
                 )
                 return
-            settings = ProcessSettings(source, job.output_path, start, end, width, height)
+            settings = ProcessSettings(
+                source,
+                job.output_path,
+                start,
+                end,
+                width,
+                height,
+                subject_selection,
+                matting_parameters,
+            )
             threading.Thread(target=run_job, args=(job, settings), daemon=True).start()
             self._json(HTTPStatus.ACCEPTED, {"id": job_id})
 

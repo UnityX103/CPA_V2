@@ -51,12 +51,6 @@ DISTRIBUTION_POLICIES = {
     ),
 }
 DISTRIBUTIONS = set(DISTRIBUTION_POLICIES)
-CAPABILITIES = [
-    "sam2-birefnet-v1",
-    "screenshot",
-    "output-resolution",
-    "vp8-alpha-webm",
-]
 VERSION_PATTERN = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9.+-]{0,62}[A-Za-z0-9])?$")
 PACKAGE_NAME_SEPARATOR = re.compile(r"[-_.]+")
 
@@ -86,6 +80,9 @@ def main() -> None:
 
     project_root = Path(__file__).resolve().parents[1]
     policy = json.loads((project_root / "source-policy.json").read_text(encoding="utf-8"))
+    contract = json.loads((project_root / "module-contract.json").read_text(encoding="utf-8"))
+    if policy["pipeline"] != contract["pipeline"]:
+        raise SystemExit("module contract and source policy pipeline mismatch")
     distribution = "internal-poc" if args.allow_uncleared_birefnet else args.distribution
     distribution_policy = DISTRIBUTION_POLICIES[distribution]
     allowed = (
@@ -122,12 +119,12 @@ def main() -> None:
         shutil.copytree(args.licenses, staging / "licenses")
         shutil.copy2(args.licenses / "SOURCE-MANIFEST.json", staging / "source-manifest.json")
         manifest = {
-            "schemaVersion": 1,
-            "id": "cpa-video-editor",
+            "schemaVersion": contract["schemaVersion"],
+            "id": contract["id"],
             "version": args.version,
             "target": args.target,
             "entry": entry_path(args.target),
-            "capabilities": CAPABILITIES,
+            "capabilities": contract["capabilities"],
             "distribution": distribution,
         }
         (staging / "module.json").write_text(
@@ -136,7 +133,7 @@ def main() -> None:
         runtime_manifest = {
             "schemaVersion": 1,
             "target": args.target,
-            "pipeline": policy["pipeline"],
+            "pipeline": contract["pipeline"],
             "commercialReleaseAllowed": policy["commercialReleaseAllowed"],
             "distribution": distribution,
             "platformSignature": platform_signature,

@@ -8,15 +8,18 @@ and launcher contract.
 The module implements the selected fourth pipeline:
 
 1. BiRefNet-matting generates animal-friendly soft alpha for every frame.
-2. SAM 2.1 Hiera Base+ propagates one automatically selected subject mask in
-   both directions.
+2. SAM 2.1 Hiera Base+ propagates either an automatically selected mask or a
+   user-selected positive point in both directions.
 3. A broad support-band fusion keeps the SAM object identity while preserving
    BiRefNet fur and motion blur.
 4. A bundled, license-reviewed FFmpeg/libvpx build exports VP8 Alpha WebM.
 
 The downloaded UI retains video preview, current-frame screenshot, trim time,
-output-resolution controls, transparent-result preview, and export. It has no
-crop-box drawing, eraser brush, or other region drawing tool.
+output-resolution controls, transparent-result preview, and export. Automatic
+subject selection remains the default; users may opt into point selection and
+adjust the background cutoff, seed/core thresholds, support radius, and feather
+sigma. The defaults preserve the original pipeline exactly. It has no crop-box
+drawing, eraser brush, or other region drawing tool.
 
 ## Package contract
 
@@ -33,10 +36,12 @@ licenses/...
 runtime-manifest.json
 ```
 
-`module.json` declares `sam2-birefnet-v1`, `screenshot`,
-`output-resolution`, and `vp8-alpha-webm`. The host rejects archives without
-all four capabilities, path traversal, symlinks, target mismatches, size
-overflow, or SHA-256 mismatch.
+`module-contract.json` is the source of truth shared by the packager and host.
+The generated `module.json` declares `sam2-birefnet-v1`, `screenshot`,
+`output-resolution`, `vp8-alpha-webm`, `subject-point-selection`, and
+`matting-parameters-v1`. The host rejects archives without all required
+capabilities, path traversal, symlinks, target mismatches, size overflow, or
+SHA-256 mismatch.
 
 ## Commercial release gate
 

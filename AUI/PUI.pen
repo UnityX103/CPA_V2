@@ -1533,9 +1533,9 @@
                     "mo62i": {
                       "flipX": false,
                       "flipY": false,
-                      "width": 47.799098195480916,
+                      "width": 47.49269371986886,
                       "height": 18,
-                      "x": 13.383747494734656,
+                      "x": 13.29795424156328,
                       "y": 21,
                       "textGrowth": "fixed-width-height",
                       "fontSize": 17
@@ -1560,7 +1560,7 @@
                       "descendants": {
                         "oNDTH": {
                           "content": "开始",
-                          "x": 26.75,
+                          "x": 26.25,
                           "y": 7
                         }
                       }
@@ -1572,11 +1572,11 @@
                       "name": "skipBtn",
                       "width": "fill_container",
                       "height": "fit_content",
-                      "y": 34,
+                      "y": 39,
                       "descendants": {
                         "zgOkx": {
                           "content": "跳过",
-                          "x": 26.75,
+                          "x": 26.25,
                           "y": 7
                         }
                       }
@@ -3983,7 +3983,7 @@
           "ref": "bfMCZ",
           "name": "Unsaved Changes Dialog",
           "x": 32,
-          "y": 2309,
+          "y": 2573,
           "descendants": {
             "D1pHM": {
               "content": "有未保存的更改"
@@ -4375,7 +4375,7 @@
           "width": "fill_container",
           "height": "fit_content",
           "x": 0,
-          "y": 378,
+          "y": 415,
           "enabled": true
         }
       }
@@ -6683,7 +6683,7 @@
                   "fill": "#374151",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "保留  当前帧截图 · 输出分辨率 · 时间范围 · 透明预览与导出",
+                  "content": "保留  截图 · 分辨率 · 自动/点选主体 · 抠图参数 · 透明预览与导出",
                   "fontFamily": "MaokenAssortedSans",
                   "fontSize": 12,
                   "fontWeight": "600"
@@ -6725,7 +6725,7 @@
       "y": 1751,
       "name": "Video Editor Settings / Installed",
       "width": 572,
-      "height": 324,
+      "height": 342,
       "fill": "#FFFFFF00",
       "layout": "vertical",
       "gap": 16,
@@ -6803,7 +6803,7 @@
           "id": "BbQU3",
           "name": "Video Editor Settings / Installed Ready Card",
           "width": "fill_container",
-          "height": 146,
+          "height": 164,
           "fill": "#F0FDF4",
           "cornerRadius": 16,
           "stroke": "#BBF7D0",
@@ -6826,7 +6826,7 @@
                   "id": "GfFQl",
                   "name": "Video Editor Settings / Installed Card Title",
                   "fill": "#1A1A1A",
-                  "content": "视频编辑模板 1.0.0",
+                  "content": "视频编辑模板 1.1.0",
                   "fontFamily": "MaokenAssortedSans",
                   "fontSize": 14,
                   "fontWeight": "700"
@@ -6838,7 +6838,7 @@
                   "fill": "#6B7280",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "完整编辑界面、模型、AI worker 与媒体工具位于应用数据目录，可单独升级或删除。",
+                  "content": "支持自动/点选主体与可调抠图参数；模块可独立升级或删除。",
                   "fontFamily": "MaokenAssortedSans",
                   "fontSize": 12,
                   "fontWeight": "500"
@@ -6851,13 +6851,15 @@
               "name": "Video Editor Settings / Installed Action Row",
               "width": "fill_container",
               "height": 38,
-              "gap": 8,
+              "layout": "none",
               "children": [
                 {
                   "type": "frame",
                   "id": "CIYnF",
+                  "x": 0,
+                  "y": 0,
                   "name": "Video Editor Settings / Installed Open Button",
-                  "width": "fill_container",
+                  "width": 170,
                   "height": 38,
                   "fill": "#D15F3D",
                   "cornerRadius": 12,
@@ -6879,8 +6881,10 @@
                 {
                   "type": "frame",
                   "id": "DXAJj",
+                  "x": 370,
+                  "y": 0,
                   "name": "Video Editor Settings / Installed Remove Button",
-                  "width": "fill_container",
+                  "width": 168,
                   "height": 38,
                   "fill": "#FFFFFF",
                   "cornerRadius": 12,
@@ -6899,6 +6903,34 @@
                       "fontFamily": "MaokenAssortedSans",
                       "fontSize": 13,
                       "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "IX4Hx",
+                  "x": 185,
+                  "y": 0,
+                  "name": "Video Editor Settings / Installed Update Button",
+                  "width": 170,
+                  "height": 38,
+                  "fill": "#FFF1EA",
+                  "cornerRadius": 12,
+                  "stroke": "#E89A78",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Z7VrQ",
+                      "name": "Video Editor Settings / Installed Open Label",
+                      "fill": "#D15F3D",
+                      "content": "更新模板",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 13,
+                      "fontWeight": "700"
                     }
                   ]
                 }
@@ -6932,7 +6964,7 @@
                   "fill": "#374151",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "保留  当前帧截图 · 输出分辨率 · 时间范围 · 透明预览与导出",
+                  "content": "保留  截图 · 分辨率 · 自动/点选主体 · 抠图参数 · 透明预览与导出",
                   "fontFamily": "MaokenAssortedSans",
                   "fontSize": 12,
                   "fontWeight": "600"
@@ -6976,7 +7008,7 @@
       "reusable": true,
       "clip": true,
       "width": 1100,
-      "height": 760,
+      "height": 1050,
       "fill": "#F7F3EF",
       "cornerRadius": 20,
       "layout": "vertical",
@@ -7081,7 +7113,7 @@
                       "id": "z45B3H",
                       "name": "Video Editor Version",
                       "fill": "#15803D",
-                      "content": "模块已下载 · v1.0.0",
+                      "content": "模块已下载 · v1.1.0",
                       "fontFamily": "MaokenAssortedSans",
                       "fontSize": 11,
                       "fontWeight": "700"
@@ -7120,7 +7152,7 @@
           "id": "xSxWs",
           "name": "Video Editor Workspace",
           "width": "fill_container",
-          "height": 628,
+          "height": 918,
           "gap": 16,
           "children": [
             {
@@ -7128,7 +7160,7 @@
               "id": "UcgY3",
               "name": "Video Editor Source Panel",
               "width": 510,
-              "height": 628,
+              "height": 918,
               "fill": "#FFFFFF",
               "cornerRadius": 16,
               "layout": "vertical",
@@ -7281,6 +7313,180 @@
                       "fontFamily": "MaokenAssortedSans",
                       "fontSize": 12,
                       "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "qY5E7",
+                  "name": "Subject Selection Card",
+                  "width": "fill_container",
+                  "height": 112,
+                  "fill": "#F6F7F8",
+                  "cornerRadius": 12,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "padding": 12,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "dTlxL",
+                      "name": "Subject Selection Header",
+                      "width": "fill_container",
+                      "height": 18,
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "w6mD1",
+                          "name": "Subject Selection Title",
+                          "fill": "#374151",
+                          "content": "主体选择",
+                          "fontFamily": "MaokenAssortedSans",
+                          "fontSize": 12,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "oHB5M",
+                          "name": "Automatic Selection Badge",
+                          "fill": "#DCFCE7",
+                          "cornerRadius": 999,
+                          "padding": [
+                            4,
+                            8
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "ntwYS",
+                              "name": "Automatic Selection Badge Label",
+                              "fill": "#15803D",
+                              "content": "默认自动",
+                              "fontFamily": "MaokenAssortedSans",
+                              "fontSize": 9,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "xTj9S",
+                      "name": "Subject Selection Modes",
+                      "width": "fill_container",
+                      "height": 32,
+                      "gap": 6,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "Y8oEvh",
+                          "name": "Automatic Subject Mode",
+                          "width": "fill_container",
+                          "height": 32,
+                          "fill": "#FFF1EA",
+                          "cornerRadius": 9,
+                          "stroke": "#E89A78",
+                          "strokeWidth": 1,
+                          "strokeAlignment": "inner",
+                          "gap": 6,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "g0HcRw",
+                              "name": "Automatic Subject Icon",
+                              "width": 14,
+                              "height": 14,
+                              "icon": "sparkles",
+                              "library": "lucide",
+                              "fill": "#D15F3D"
+                            },
+                            {
+                              "type": "text",
+                              "id": "q5qb2",
+                              "name": "Automatic Subject Label",
+                              "fill": "#D15F3D",
+                              "content": "自动选择",
+                              "fontFamily": "MaokenAssortedSans",
+                              "fontSize": 11,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "s9w4Yo",
+                          "name": "Point Subject Mode",
+                          "width": "fill_container",
+                          "height": 32,
+                          "fill": "#FFFFFF",
+                          "cornerRadius": 9,
+                          "stroke": "#E5E7EB",
+                          "strokeWidth": 1,
+                          "strokeAlignment": "inner",
+                          "gap": 6,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "RG76V",
+                              "name": "Point Subject Icon",
+                              "width": 14,
+                              "height": 14,
+                              "icon": "crosshair",
+                              "library": "lucide",
+                              "fill": "#6B7280"
+                            },
+                            {
+                              "type": "text",
+                              "id": "HXw3G",
+                              "name": "Point Subject Label",
+                              "fill": "#6B7280",
+                              "content": "点选主体",
+                              "fontFamily": "MaokenAssortedSans",
+                              "fontSize": 11,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "br8r5",
+                      "name": "Point Selection Hint",
+                      "width": "fill_container",
+                      "height": 22,
+                      "gap": 6,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "eRYiB",
+                          "name": "Point Selection Hint Icon",
+                          "width": 13,
+                          "height": 13,
+                          "icon": "mouse-pointer-click",
+                          "library": "lucide",
+                          "fill": "#9CA3AF"
+                        },
+                        {
+                          "type": "text",
+                          "id": "z7rje",
+                          "name": "Point Selection Hint Text",
+                          "fill": "#9CA3AF",
+                          "content": "切换后，在当前帧点击目标动物",
+                          "fontFamily": "MaokenAssortedSans",
+                          "fontSize": 10,
+                          "fontWeight": "500"
+                        }
+                      ]
                     }
                   ]
                 },
@@ -7599,6 +7805,402 @@
                 },
                 {
                   "type": "frame",
+                  "id": "kzdRV",
+                  "name": "Matting Parameters Card",
+                  "width": "fill_container",
+                  "height": 226,
+                  "fill": "#F6F7F8",
+                  "cornerRadius": 12,
+                  "layout": "vertical",
+                  "gap": 6,
+                  "padding": 12,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "TZ2TF",
+                      "name": "Matting Parameters Header",
+                      "width": "fill_container",
+                      "height": 20,
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "uZmyT",
+                          "name": "Matting Parameters Title",
+                          "fill": "#374151",
+                          "content": "抠图参数",
+                          "fontFamily": "MaokenAssortedSans",
+                          "fontSize": 12,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "vGXpG",
+                          "name": "Reset Matting Parameters Button",
+                          "fill": "#FFF1EA",
+                          "cornerRadius": 999,
+                          "stroke": "#E89A78",
+                          "strokeWidth": 1,
+                          "strokeAlignment": "inner",
+                          "padding": [
+                            4,
+                            8
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "rXKeF",
+                              "name": "Reset Matting Parameters Label",
+                              "fill": "#D15F3D",
+                              "content": "恢复默认",
+                              "fontFamily": "MaokenAssortedSans",
+                              "fontSize": 9,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "UwDxA",
+                      "name": "背景清理阈值 Parameter Row",
+                      "width": "fill_container",
+                      "height": 30,
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "P1pNX6",
+                          "name": "背景清理阈值 Label",
+                          "fill": "#6B7280",
+                          "textGrowth": "fixed-width",
+                          "width": 104,
+                          "content": "背景清理阈值",
+                          "fontFamily": "MaokenAssortedSans",
+                          "fontSize": 10,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "IykhR",
+                          "name": "背景清理阈值 Slider Track",
+                          "width": "fill_container",
+                          "height": 6,
+                          "fill": "#E5E7EB",
+                          "cornerRadius": 999
+                        },
+                        {
+                          "type": "frame",
+                          "id": "MI7y3",
+                          "name": "背景清理阈值 Value Input",
+                          "width": 58,
+                          "height": 26,
+                          "fill": "#FFFFFF",
+                          "cornerRadius": 8,
+                          "stroke": "#E5E7EB",
+                          "strokeWidth": 1,
+                          "strokeAlignment": "inner",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "OZkh1",
+                              "name": "背景清理阈值 Value",
+                              "fill": "#374151",
+                              "content": "0.00",
+                              "fontFamily": "MaokenAssortedSans",
+                              "fontSize": 10,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "WVQFw",
+                      "name": "Seed 阈值 Parameter Row",
+                      "width": "fill_container",
+                      "height": 30,
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "QOT8B",
+                          "name": "Seed 阈值 Label",
+                          "fill": "#6B7280",
+                          "textGrowth": "fixed-width",
+                          "width": 104,
+                          "content": "Seed 阈值",
+                          "fontFamily": "MaokenAssortedSans",
+                          "fontSize": 10,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "qRGdk",
+                          "name": "Seed 阈值 Slider Track",
+                          "width": "fill_container",
+                          "height": 6,
+                          "fill": "#E5E7EB",
+                          "cornerRadius": 999,
+                          "children": [
+                            {
+                              "type": "rectangle",
+                              "cornerRadius": 999,
+                              "id": "kmC3s",
+                              "name": "Seed 阈值 Slider Fill",
+                              "fill": "#D15F3D",
+                              "width": 50,
+                              "height": 6
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "o176P5",
+                          "name": "Seed 阈值 Value Input",
+                          "width": 58,
+                          "height": 26,
+                          "fill": "#FFFFFF",
+                          "cornerRadius": 8,
+                          "stroke": "#E5E7EB",
+                          "strokeWidth": 1,
+                          "strokeAlignment": "inner",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "VHScE",
+                              "name": "Seed 阈值 Value",
+                              "fill": "#374151",
+                              "content": "0.50",
+                              "fontFamily": "MaokenAssortedSans",
+                              "fontSize": 10,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Jn7ef",
+                      "name": "核心阈值 Parameter Row",
+                      "width": "fill_container",
+                      "height": 30,
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "Q3ubSa",
+                          "name": "核心阈值 Label",
+                          "fill": "#6B7280",
+                          "textGrowth": "fixed-width",
+                          "width": 104,
+                          "content": "核心阈值",
+                          "fontFamily": "MaokenAssortedSans",
+                          "fontSize": 10,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "FQBBG",
+                          "name": "核心阈值 Slider Track",
+                          "width": "fill_container",
+                          "height": 6,
+                          "fill": "#E5E7EB",
+                          "cornerRadius": 999,
+                          "children": [
+                            {
+                              "type": "rectangle",
+                              "cornerRadius": 999,
+                              "id": "vAWrw",
+                              "name": "核心阈值 Slider Fill",
+                              "fill": "#D15F3D",
+                              "width": 35,
+                              "height": 6
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "vXR25",
+                          "name": "核心阈值 Value Input",
+                          "width": 58,
+                          "height": 26,
+                          "fill": "#FFFFFF",
+                          "cornerRadius": 8,
+                          "stroke": "#E5E7EB",
+                          "strokeWidth": 1,
+                          "strokeAlignment": "inner",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "EtqXb",
+                              "name": "核心阈值 Value",
+                              "fill": "#374151",
+                              "content": "0.35",
+                              "fontFamily": "MaokenAssortedSans",
+                              "fontSize": 10,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "yoA3C",
+                      "name": "支持带半径 Parameter Row",
+                      "width": "fill_container",
+                      "height": 30,
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "Mg8l9",
+                          "name": "支持带半径 Label",
+                          "fill": "#6B7280",
+                          "textGrowth": "fixed-width",
+                          "width": 104,
+                          "content": "支持带半径",
+                          "fontFamily": "MaokenAssortedSans",
+                          "fontSize": 10,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "XOxGX",
+                          "name": "支持带半径 Slider Track",
+                          "width": "fill_container",
+                          "height": 6,
+                          "fill": "#E5E7EB",
+                          "cornerRadius": 999,
+                          "children": [
+                            {
+                              "type": "rectangle",
+                              "cornerRadius": 999,
+                              "id": "f5JmG6",
+                              "name": "支持带半径 Slider Fill",
+                              "fill": "#D15F3D",
+                              "width": 30,
+                              "height": 6
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "yMvOL",
+                          "name": "支持带半径 Value Input",
+                          "width": 58,
+                          "height": 26,
+                          "fill": "#FFFFFF",
+                          "cornerRadius": 8,
+                          "stroke": "#E5E7EB",
+                          "strokeWidth": 1,
+                          "strokeAlignment": "inner",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "O46qjI",
+                              "name": "支持带半径 Value",
+                              "fill": "#374151",
+                              "content": "30 px",
+                              "fontFamily": "MaokenAssortedSans",
+                              "fontSize": 10,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "T8PZ6x",
+                      "name": "羽化强度 Parameter Row",
+                      "width": "fill_container",
+                      "height": 30,
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "w6lZex",
+                          "name": "羽化强度 Label",
+                          "fill": "#6B7280",
+                          "textGrowth": "fixed-width",
+                          "width": 104,
+                          "content": "羽化强度",
+                          "fontFamily": "MaokenAssortedSans",
+                          "fontSize": 10,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "dGZiB",
+                          "name": "羽化强度 Slider Track",
+                          "width": "fill_container",
+                          "height": 6,
+                          "fill": "#E5E7EB",
+                          "cornerRadius": 999,
+                          "children": [
+                            {
+                              "type": "rectangle",
+                              "cornerRadius": 999,
+                              "id": "Sqfyt",
+                              "name": "羽化强度 Slider Fill",
+                              "fill": "#D15F3D",
+                              "width": 25,
+                              "height": 6
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "w21qo",
+                          "name": "羽化强度 Value Input",
+                          "width": 58,
+                          "height": 26,
+                          "fill": "#FFFFFF",
+                          "cornerRadius": 8,
+                          "stroke": "#E5E7EB",
+                          "strokeWidth": 1,
+                          "strokeAlignment": "inner",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "bmE7o",
+                              "name": "羽化强度 Value",
+                              "fill": "#374151",
+                              "content": "5.0",
+                              "fontFamily": "MaokenAssortedSans",
+                              "fontSize": 10,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
                   "id": "yyhAH",
                   "name": "Generate Transparent Video Button",
                   "width": "fill_container",
@@ -7638,7 +8240,7 @@
               "id": "HztN3",
               "name": "Video Editor Result Panel",
               "width": "fill_container",
-              "height": 628,
+              "height": 918,
               "fill": "#FFFFFF",
               "cornerRadius": 16,
               "layout": "vertical",
@@ -7694,7 +8296,7 @@
                   "id": "MtKbS",
                   "name": "Transparent Result Preview",
                   "width": "fill_container",
-                  "height": 356,
+                  "height": 590,
                   "fill": "#E9E4DE",
                   "cornerRadius": 14,
                   "layout": "vertical",

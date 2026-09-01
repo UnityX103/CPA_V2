@@ -14,7 +14,7 @@ import './VideoEditorModuleTab.css';
 export function VideoEditorModuleTab() {
     const [status, setStatus] = useState<VideoEditorModuleStatus | null>(null);
     const [progress, setProgress] = useState<VideoEditorModuleProgress | null>(null);
-    const [busy, setBusy] = useState<'download' | 'launch' | 'uninstall' | null>(null);
+    const [busy, setBusy] = useState<'download' | 'update' | 'launch' | 'uninstall' | null>(null);
     const [error, setError] = useState('');
 
     useEffect(() => {
@@ -35,8 +35,8 @@ export function VideoEditorModuleTab() {
         };
     }, []);
 
-    const download = async () => {
-        setBusy('download');
+    const installLatest = async (kind: 'download' | 'update') => {
+        setBusy(kind);
         setError('');
         try {
             setStatus(await downloadVideoEditorModule());
@@ -46,6 +46,8 @@ export function VideoEditorModuleTab() {
             setBusy(null);
         }
     };
+
+    const download = () => installLatest('download');
 
     const launch = async () => {
         setBusy('launch');
@@ -58,6 +60,8 @@ export function VideoEditorModuleTab() {
             setBusy(null);
         }
     };
+
+    const update = () => installLatest('update');
 
     const uninstall = async () => {
         setBusy('uninstall');
@@ -80,7 +84,7 @@ export function VideoEditorModuleTab() {
                     <div>
                         <h3 className="card-title video-module-title">AI 视频编辑器</h3>
                         <p className="video-module-description">
-                            使用 SAM 2.1 跟踪主体，并由 BiRefNet 恢复毛发软边，生成当前软件可用的透明 WebM。
+                            使用 SAM 2.1 跟踪主体，并由 BiRefNet 恢复毛发软边；支持自动/点选主体和可调抠图参数。
                         </p>
                     </div>
                     <span className={`video-module-badge ${installed ? 'installed' : ''}`}>
@@ -132,6 +136,15 @@ export function VideoEditorModuleTab() {
                             <button
                                 type="button"
                                 className="btn btn-secondary"
+                                aria-label="更新视频编辑模板"
+                                disabled={busy !== null}
+                                onClick={() => { void update(); }}
+                            >
+                                {busy === 'update' ? '更新中…' : '更新模板'}
+                            </button>
+                            <button
+                                type="button"
+                                className="btn btn-secondary"
                                 aria-label="删除视频编辑模板"
                                 disabled={busy !== null}
                                 onClick={() => { void uninstall(); }}
@@ -139,11 +152,12 @@ export function VideoEditorModuleTab() {
                                 {busy === 'uninstall' ? '删除中…' : '删除模板'}
                             </button>
                         </div>
+                        {progress && busy === 'update' ? <ModuleProgress progress={progress} /> : null}
                     </section>
                 )}
 
                 <section className="card video-module-boundary-card">
-                    <span>模板内保留：当前帧截图、输出分辨率、时间范围、透明成品预览与导出。</span>
+                    <span>模板内保留：当前帧截图、输出分辨率、时间范围、自动/点选主体、抠图参数、透明成品预览与导出。</span>
                     <span>模板内移除：裁剪框拖拽、画笔剔除和任何区域绘制工具。</span>
                 </section>
                 {error ? <div className="video-module-error" role="alert">{error}</div> : null}

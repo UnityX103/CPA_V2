@@ -70,6 +70,20 @@ class VideoEditorModuleContractTests(unittest.TestCase):
         self.assertIn("endInput.value = String(duration);", javascript)
         self.assertIn("widthInput.value = sourceProbe.width;", javascript)
         self.assertIn("heightInput.value = sourceProbe.height;", javascript)
+        for control in [
+            "subject-mode-auto",
+            "subject-mode-point",
+            "subject-marker",
+            "background-cutoff",
+            "seed-threshold",
+            "core-threshold",
+            "support-radius",
+            "feather-sigma",
+            "reset-matting-parameters",
+        ]:
+            self.assertIn(control, html + javascript)
+        self.assertIn("subjectSelection", javascript)
+        self.assertIn("mattingParameters", javascript)
         for removed in ["裁剪工具", "画笔剔除", "crop-box", "brush-overlay"]:
             self.assertNotIn(removed, html + javascript)
 
@@ -81,6 +95,10 @@ class VideoEditorModuleContractTests(unittest.TestCase):
         self.assertIn("--enable-gpl", policy["components"]["ffmpeg"]["forbiddenConfigureFlags"])
         self.assertIn("hevc_videotoolbox", policy["components"]["ffmpeg"]["macosRequiredEncoders"])
         self.assertIn("signed module index", policy["publicPackageAuthenticity"])
+        contract = json.loads((ROOT / "module-contract.json").read_text(encoding="utf-8"))
+        self.assertEqual(contract["pipeline"], policy["pipeline"])
+        self.assertIn("subject-point-selection", contract["capabilities"])
+        self.assertIn("matting-parameters-v1", contract["capabilities"])
 
         build_script = (ROOT / "scripts" / "build_runtime.py").read_text(encoding="utf-8")
         self.assertIn("sam_policy['commit']", build_script)
@@ -310,6 +328,74 @@ class VideoEditorModuleContractTests(unittest.TestCase):
         self.assertEqual(pipeline.normalize_resolution(1008, 720, 720, 0), (720, 514))
         self.assertEqual(pipeline.normalize_resolution(1008, 720, 0, 720), (1008, 720))
         self.assertEqual(pipeline.normalize_resolution(1008, 720, 5001, 5001), (4096, 4096))
+
+    def test_matting_parameter_defaults_match_the_existing_pipeline(self):
+        pipeline = load_pipeline()
+        parameters = pipeline.MattingParameters.from_mapping({})
+        self.assertEqual(parameters.background_cutoff, 0.0)
+        self.assertEqual(parameters.seed_threshold, 0.5)
+        self.assertEqual(parameters.core_threshold, 0.35)
+        self.assertEqual(parameters.support_radius, 30)
+        self.assertEqual(parameters.feather_sigma, 5.0)
+
+        custom = pipeline.MattingParameters.from_mapping({
+            "backgroundCutoff": 0.08,
+            "seedThreshold": 0.6,
+            "coreThreshold": 0.45,
+            "supportRadius": 18,
+            "featherSigma": 3.5,
+        })
+        self.assertEqual(custom.background_cutoff, 0.08)
+        self.assertEqual(custom.seed_threshold, 0.6)
+        self.assertEqual(custom.core_threshold, 0.45)
+        self.assertEqual(custom.support_radius, 18)
+        self.assertEqual(custom.feather_sigma, 3.5)
+
+        with self.assertRaisesRegex(ValueError, "backgroundCutoff"):
+            pipeline.MattingParameters.from_mapping({"backgroundCutoff": 0.75})
+        with self.assertRaisesRegex(ValueError, "supportRadius"):
+            pipeline.MattingParameters.from_mapping({"supportRadius": 101})
+        with self.assertRaisesRegex(ValueError, "必须是对象"):
+            pipeline.MattingParameters.from_mapping([])
+
+    def test_manual_subject_point_maps_to_the_selected_video_frame(self):
+        pipeline = load_pipeline()
+        pipeline_source = (ROOT / "video_editor_module" / "pipeline.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn('fps={frame_rate:.8f}', pipeline_source)
+        self.assertEqual(pipeline.SubjectSelection.from_mapping(None).mode, "auto")
+        selection = pipeline.SubjectSelection.from_mapping({
+            "mode": "point",
+            "x": 0.25,
+            "y": 0.75,
+            "timeSeconds": 2.0,
+        })
+        seed = pipeline.resolve_point_seed(
+            selection,
+            start_seconds=1.0,
+            end_seconds=4.0,
+            frame_rate=30.0,
+            frame_count=100,
+            width=1008,
+            height=720,
+        )
+        self.assertEqual(seed[0], 30)
+        self.assertAlmostEqual(seed[1][0], 251.75)
+        self.assertAlmostEqual(seed[1][1], 539.25)
+
+        with self.assertRaisesRegex(ValueError, "点选主体"):
+            pipeline.SubjectSelection.from_mapping({"mode": "point", "x": 1.2, "y": 0.5})
+        with self.assertRaisesRegex(ValueError, "时间范围"):
+            pipeline.resolve_point_seed(
+                selection,
+                start_seconds=2.5,
+                end_seconds=4.0,
+                frame_rate=30.0,
+                frame_count=100,
+                width=1008,
+                height=720,
+            )
 
     def test_release_index_requires_every_supported_target(self):
         with tempfile.TemporaryDirectory() as temporary:

@@ -1,7 +1,12 @@
 const token = new URLSearchParams(location.search).get('token') || '';
 const fileInput = document.querySelector('#video-file');
 const sourceVideo = document.querySelector('#source-video');
+const sourceStage = sourceVideo.closest('.video-stage');
 const resultVideo = document.querySelector('#result-video');
+const subjectAutoButton = document.querySelector('#subject-mode-auto');
+const subjectPointButton = document.querySelector('#subject-mode-point');
+const subjectMarker = document.querySelector('#subject-marker');
+const subjectSelectionStatus = document.querySelector('#subject-selection-status');
 const screenshotButton = document.querySelector('#screenshot-button');
 const processButton = document.querySelector('#process-button');
 const startInput = document.querySelector('#start-seconds');
@@ -16,11 +21,46 @@ const progressFill = document.querySelector('#progress-fill');
 const progressText = document.querySelector('#progress-text');
 const errorPanel = document.querySelector('#error-panel');
 const downloadOutput = document.querySelector('#download-output');
+const resetMattingParametersButton = document.querySelector('#reset-matting-parameters');
+
+const DEFAULT_MATTING_PARAMETERS = Object.freeze({
+  backgroundCutoff: 0,
+  seedThreshold: 0.5,
+  coreThreshold: 0.35,
+  supportRadius: 30,
+  featherSigma: 5,
+});
+const parameterBindings = [
+  ['backgroundCutoff', '#background-cutoff', '#background-cutoff-value'],
+  ['seedThreshold', '#seed-threshold', '#seed-threshold-value'],
+  ['coreThreshold', '#core-threshold', '#core-threshold-value'],
+  ['supportRadius', '#support-radius', '#support-radius-value'],
+  ['featherSigma', '#feather-sigma', '#feather-sigma-value'],
+].map(([key, rangeSelector, numberSelector]) => ({
+  key,
+  range: document.querySelector(rangeSelector),
+  number: document.querySelector(numberSelector),
+}));
 
 let uploadId = '';
 let sourceProbe = null;
 let sourceObjectUrl = '';
 let resultObjectUrl = '';
+let subjectMode = 'auto';
+let subjectPoint = null;
+
+for (const binding of parameterBindings) {
+  binding.range.addEventListener('input', () => { binding.number.value = binding.range.value; });
+  binding.number.addEventListener('input', () => {
+    if (binding.number.value !== '') binding.range.value = binding.number.value;
+  });
+}
+resetMattingParametersButton.addEventListener('click', resetMattingParameters);
+subjectAutoButton.addEventListener('click', () => setSubjectMode('auto'));
+subjectPointButton.addEventListener('click', () => setSubjectMode('point'));
+sourceVideo.addEventListener('click', selectSubjectPoint);
+resetMattingParameters();
+setSubjectMode('auto');
 
 async function api(path, options = {}) {
   const headers = new Headers(options.headers || {});
@@ -38,6 +78,8 @@ fileInput.addEventListener('change', async () => {
   const file = fileInput.files?.[0];
   if (!file) return;
   resetError();
+  subjectPoint = null;
+  setSubjectMode('auto');
   processButton.disabled = true;
   screenshotButton.disabled = true;
   if (sourceObjectUrl) URL.revokeObjectURL(sourceObjectUrl);
@@ -65,6 +107,79 @@ fileInput.addEventListener('change', async () => {
 presetInput.addEventListener('change', () => applyResolutionPreset(presetInput.value));
 widthInput.addEventListener('input', () => { presetInput.value = 'custom'; });
 heightInput.addEventListener('input', () => { presetInput.value = 'custom'; });
+
+function setSubjectMode(mode) {
+  subjectMode = mode;
+  const automatic = mode === 'auto';
+  subjectAutoButton.classList.toggle('active', automatic);
+  subjectPointButton.classList.toggle('active', !automatic);
+  subjectAutoButton.setAttribute('aria-pressed', String(automatic));
+  subjectPointButton.setAttribute('aria-pressed', String(!automatic));
+  sourceStage.classList.toggle('point-selection-active', !automatic);
+  subjectMarker.classList.toggle('hidden', automatic || !subjectPoint);
+  if (automatic) {
+    subjectSelectionStatus.textContent = '自动选择清晰主体帧，无需手动操作。';
+  } else if (subjectPoint) {
+    subjectSelectionStatus.textContent = `已在 ${subjectPoint.timeSeconds.toFixed(3)} 秒点选主体；再次点击可调整。`;
+  } else {
+    subjectSelectionStatus.textContent = '请暂停在清晰画面，并点击目标动物。';
+  }
+}
+
+function selectSubjectPoint(event) {
+  if (subjectMode !== 'point' || !sourceVideo.videoWidth || !sourceVideo.videoHeight) return;
+  const bounds = sourceVideo.getBoundingClientRect();
+  const videoAspect = sourceVideo.videoWidth / sourceVideo.videoHeight;
+  const elementAspect = bounds.width / bounds.height;
+  let contentWidth = bounds.width;
+  let contentHeight = bounds.height;
+  let offsetX = 0;
+  let offsetY = 0;
+  if (elementAspect > videoAspect) {
+    contentWidth = bounds.height * videoAspect;
+    offsetX = (bounds.width - contentWidth) / 2;
+  } else {
+    contentHeight = bounds.width / videoAspect;
+    offsetY = (bounds.height - contentHeight) / 2;
+  }
+  const localX = event.clientX - bounds.left - offsetX;
+  const localY = event.clientY - bounds.top - offsetY;
+  if (localX < 0 || localY < 0 || localX > contentWidth || localY > contentHeight) return;
+  subjectPoint = {
+    x: localX / contentWidth,
+    y: localY / contentHeight,
+    timeSeconds: sourceVideo.currentTime,
+    markerX: (offsetX + localX) / bounds.width,
+    markerY: (offsetY + localY) / bounds.height,
+  };
+  subjectMarker.style.left = `${subjectPoint.markerX * 100}%`;
+  subjectMarker.style.top = `${subjectPoint.markerY * 100}%`;
+  subjectMarker.classList.remove('hidden');
+  setSubjectMode('point');
+}
+
+function resetMattingParameters() {
+  for (const binding of parameterBindings) {
+    const value = DEFAULT_MATTING_PARAMETERS[binding.key];
+    binding.range.value = String(value);
+    binding.number.value = String(value);
+  }
+}
+
+function readMattingParameters() {
+  return Object.fromEntries(parameterBindings.map((binding) => [binding.key, Number(binding.number.value)]));
+}
+
+function readSubjectSelection() {
+  if (subjectMode === 'auto') return { mode: 'auto' };
+  if (!subjectPoint) throw new Error('请先在源视频当前帧点击要保留的动物');
+  return {
+    mode: 'point',
+    x: subjectPoint.x,
+    y: subjectPoint.y,
+    timeSeconds: subjectPoint.timeSeconds,
+  };
+}
 
 function applySourceDefaults() {
   const duration = Number(sourceProbe.durationSeconds);
@@ -124,6 +239,8 @@ processButton.addEventListener('click', async () => {
         endSeconds: Number(endInput.value),
         outputWidth: even(Number(widthInput.value) || sourceProbe.width),
         outputHeight: even(Number(heightInput.value) || sourceProbe.height),
+        subjectSelection: readSubjectSelection(),
+        mattingParameters: readMattingParameters(),
       }),
     }).then((response) => response.json());
     await pollJob(job.id);
@@ -166,6 +283,13 @@ function setBusy(busy) {
   heightInput.disabled = busy;
   startInput.disabled = busy;
   endInput.disabled = busy;
+  subjectAutoButton.disabled = busy;
+  subjectPointButton.disabled = busy;
+  resetMattingParametersButton.disabled = busy;
+  for (const binding of parameterBindings) {
+    binding.range.disabled = busy;
+    binding.number.disabled = busy;
+  }
 }
 
 function resetError() {

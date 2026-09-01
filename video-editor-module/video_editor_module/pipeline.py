@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 import platform
 import shutil
 import subprocess
 import sys
 import tempfile
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Callable
 
@@ -24,6 +25,63 @@ class VideoProbe:
 
 
 @dataclass(frozen=True)
+class MattingParameters:
+    background_cutoff: float = 0.0
+    seed_threshold: float = 0.5
+    core_threshold: float = 0.35
+    support_radius: int = 30
+    feather_sigma: float = 5.0
+
+    @classmethod
+    def from_mapping(cls, value) -> "MattingParameters":
+        document = {} if value is None else value
+        if not isinstance(document, dict):
+            raise ValueError("mattingParameters 必须是对象")
+        background_cutoff = bounded_float(document, "backgroundCutoff", 0.0, 0.0, 0.5)
+        seed_threshold = bounded_float(document, "seedThreshold", 0.5, 0.05, 0.95)
+        core_threshold = bounded_float(document, "coreThreshold", 0.35, 0.0, 0.95)
+        support_radius = bounded_int(document, "supportRadius", 30, 0, 100)
+        feather_sigma = bounded_float(document, "featherSigma", 5.0, 0.0, 20.0)
+        return cls(
+            background_cutoff=background_cutoff,
+            seed_threshold=seed_threshold,
+            core_threshold=core_threshold,
+            support_radius=support_radius,
+            feather_sigma=feather_sigma,
+        )
+
+
+@dataclass(frozen=True)
+class SubjectSelection:
+    mode: str = "auto"
+    x: float = 0.5
+    y: float = 0.5
+    time_seconds: float = 0.0
+
+    @classmethod
+    def from_mapping(cls, value) -> "SubjectSelection":
+        document = {} if value is None else value
+        if not isinstance(document, dict):
+            raise ValueError("subjectSelection 必须是对象")
+        mode = str(document.get("mode", "auto"))
+        if mode == "auto":
+            return cls()
+        if mode != "point":
+            raise ValueError("主体选择模式无效")
+        try:
+            x = float(document["x"])
+            y = float(document["y"])
+            time_seconds = float(document.get("timeSeconds", 0.0))
+        except (KeyError, TypeError, ValueError) as error:
+            raise ValueError("点选主体参数无效") from error
+        if not all(math.isfinite(item) for item in (x, y, time_seconds)):
+            raise ValueError("点选主体参数无效")
+        if not (0.0 <= x <= 1.0 and 0.0 <= y <= 1.0 and time_seconds >= 0.0):
+            raise ValueError("点选主体坐标或时间超出范围")
+        return cls(mode="point", x=x, y=y, time_seconds=time_seconds)
+
+
+@dataclass(frozen=True)
 class ProcessSettings:
     input_path: Path
     output_path: Path
@@ -31,6 +89,31 @@ class ProcessSettings:
     end_seconds: float
     output_width: int
     output_height: int
+    subject_selection: SubjectSelection = field(default_factory=SubjectSelection)
+    matting_parameters: MattingParameters = field(default_factory=MattingParameters)
+
+
+def bounded_float(document: dict, key: str, default: float, minimum: float, maximum: float) -> float:
+    try:
+        value = float(document.get(key, default))
+    except (TypeError, ValueError) as error:
+        raise ValueError(f"{key} 必须是数字") from error
+    if not math.isfinite(value) or not minimum <= value <= maximum:
+        raise ValueError(f"{key} 必须在 {minimum} 到 {maximum} 之间")
+    return value
+
+
+def bounded_int(document: dict, key: str, default: int, minimum: int, maximum: int) -> int:
+    raw = document.get(key, default)
+    if isinstance(raw, bool):
+        raise ValueError(f"{key} 必须是整数")
+    try:
+        value = int(raw)
+    except (TypeError, ValueError) as error:
+        raise ValueError(f"{key} 必须是整数") from error
+    if value != raw or not minimum <= value <= maximum:
+        raise ValueError(f"{key} 必须是 {minimum} 到 {maximum} 之间的整数")
+    return value
 
 
 def normalize_resolution(
@@ -54,21 +137,54 @@ def normalize_resolution(
     return width, height
 
 
-def fuse_alpha_arrays(alpha, tracked_mask):
+def fuse_alpha_arrays(alpha, tracked_mask, parameters: MattingParameters | None = None):
     import cv2
     import numpy as np
 
+    parameters = parameters or MattingParameters()
     alpha = np.asarray(alpha, dtype=np.float32)
     tracked = (np.asarray(tracked_mask) >= 0.5).astype(np.uint8)
     if alpha.shape != tracked.shape:
         raise ValueError("alpha 与跟踪蒙版尺寸不一致")
     core = cv2.erode(tracked, np.ones((9, 9), np.uint8), iterations=1).astype(bool)
-    outer = cv2.dilate(tracked, np.ones((61, 61), np.uint8), iterations=1).astype(np.float32)
-    outer = cv2.GaussianBlur(outer, (0, 0), sigmaX=5.0, sigmaY=5.0)
+    support_size = parameters.support_radius * 2 + 1
+    outer = cv2.dilate(
+        tracked,
+        np.ones((support_size, support_size), np.uint8),
+        iterations=1,
+    ).astype(np.float32)
+    if parameters.feather_sigma > 0:
+        outer = cv2.GaussianBlur(
+            outer,
+            (0, 0),
+            sigmaX=parameters.feather_sigma,
+            sigmaY=parameters.feather_sigma,
+        )
     fused = np.clip(alpha, 0.0, 1.0) * np.clip(outer, 0.0, 1.0)
-    confident_core = core & (alpha >= 0.35)
+    confident_core = core & (alpha >= parameters.core_threshold)
     fused[confident_core] = np.maximum(fused[confident_core], 0.97)
+    if parameters.background_cutoff > 0:
+        fused[fused < parameters.background_cutoff] = 0.0
     return np.clip(fused, 0.0, 1.0)
+
+
+def resolve_point_seed(
+    selection: SubjectSelection,
+    *,
+    start_seconds: float,
+    end_seconds: float,
+    frame_rate: float,
+    frame_count: int,
+    width: int,
+    height: int,
+) -> tuple[int, tuple[float, float]] | None:
+    if selection.mode == "auto":
+        return None
+    if not start_seconds <= selection.time_seconds <= end_seconds:
+        raise ValueError("点选主体所在帧不在当前时间范围内")
+    frame_index = round((selection.time_seconds - start_seconds) * frame_rate)
+    frame_index = max(0, min(frame_count - 1, frame_index))
+    return frame_index, (selection.x * (width - 1), selection.y * (height - 1))
 
 
 def runtime_root() -> Path:
@@ -149,6 +265,7 @@ def process_video(settings: ProcessSettings, progress: Progress) -> Path:
             end - start,
             width,
             height,
+            probe.frame_rate,
             root,
         )
         frame_paths = sorted(frames.glob("*.png"))
@@ -157,13 +274,44 @@ def process_video(settings: ProcessSettings, progress: Progress) -> Path:
 
         progress(8, "正在运行 BiRefNet 毛发抠图")
         alpha_paths = _run_birefnet(frame_paths, biref_masks, root, progress)
-        seed_index = _choose_seed_frame(alpha_paths)
+        point_seed = resolve_point_seed(
+            settings.subject_selection,
+            start_seconds=start,
+            end_seconds=end,
+            frame_rate=probe.frame_rate,
+            frame_count=len(frame_paths),
+            width=width,
+            height=height,
+        )
+        if point_seed is None:
+            seed_index = _choose_seed_frame(
+                alpha_paths,
+                settings.matting_parameters.seed_threshold,
+            )
+            seed_point = None
+        else:
+            seed_index, seed_point = point_seed
 
         progress(52, "正在使用 SAM 2.1 双向跟踪主体")
-        _run_sam2(sam_frames, alpha_paths[seed_index], seed_index, sam_masks, root, progress)
+        _run_sam2(
+            sam_frames,
+            alpha_paths[seed_index],
+            seed_index,
+            sam_masks,
+            root,
+            progress,
+            seed_point=seed_point,
+            seed_threshold=settings.matting_parameters.seed_threshold,
+        )
 
         progress(87, "正在融合时序身份与毛发 alpha")
-        _fuse_masks(alpha_paths, sam_masks, fused_masks, progress)
+        _fuse_masks(
+            alpha_paths,
+            sam_masks,
+            fused_masks,
+            progress,
+            settings.matting_parameters,
+        )
 
         progress(94, "正在编码透明 WebM")
         settings.output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -184,6 +332,8 @@ def process_video(settings: ProcessSettings, progress: Progress) -> Path:
             end,
             seed_index,
             len(frame_paths),
+            settings.subject_selection,
+            settings.matting_parameters,
         )
         progress(100, "透明视频已生成")
         return settings.output_path
@@ -199,13 +349,14 @@ def _decode_frames(
     duration: float,
     width: int,
     height: int,
+    frame_rate: float,
     root: Path,
 ) -> None:
     ffmpeg = executable(root, "ffmpeg")
     common = [
         str(ffmpeg), "-hide_banner", "-loglevel", "error", "-y",
         "-ss", f"{start:.6f}", "-t", f"{duration:.6f}", "-i", str(source),
-        "-an", "-vf", f"scale={width}:{height}:flags=lanczos",
+        "-an", "-vf", f"fps={frame_rate:.8f},scale={width}:{height}:flags=lanczos",
     ]
     subprocess.run(common + [str(frames / "%06d.png")], check=True)
     subprocess.run(
@@ -259,14 +410,14 @@ def _run_birefnet(frame_paths: list[Path], output_dir: Path, root: Path, progres
     return outputs
 
 
-def _choose_seed_frame(alpha_paths: list[Path]) -> int:
+def _choose_seed_frame(alpha_paths: list[Path], seed_threshold: float = 0.5) -> int:
     import numpy as np
     from PIL import Image
 
     candidates: list[tuple[float, int]] = []
     for index, path in enumerate(alpha_paths):
         alpha = np.asarray(Image.open(path).convert("L"), dtype=np.uint8)
-        coverage = float((alpha >= 128).mean())
+        coverage = float((alpha >= round(seed_threshold * 255)).mean())
         if 0.01 <= coverage <= 0.90:
             candidates.append((coverage, index))
     if not candidates:
@@ -281,6 +432,8 @@ def _run_sam2(
     output_dir: Path,
     root: Path,
     progress: Progress,
+    seed_point: tuple[float, float] | None = None,
+    seed_threshold: float = 0.5,
 ) -> None:
     import numpy as np
     import torch
@@ -302,8 +455,20 @@ def _run_sam2(
         offload_video_to_cpu=True,
         offload_state_to_cpu=device.type == "cpu",
     )
-    seed = np.asarray(Image.open(seed_alpha_path).convert("L")) >= 128
-    predictor.add_new_mask(state, frame_idx=seed_index, obj_id=1, mask=seed)
+    if seed_point is None:
+        seed = (
+            np.asarray(Image.open(seed_alpha_path).convert("L"))
+            >= round(seed_threshold * 255)
+        )
+        predictor.add_new_mask(state, frame_idx=seed_index, obj_id=1, mask=seed)
+    else:
+        predictor.add_new_points_or_box(
+            state,
+            frame_idx=seed_index,
+            obj_id=1,
+            points=np.asarray([seed_point], dtype=np.float32),
+            labels=np.asarray([1], dtype=np.int32),
+        )
     frame_count = len(list(sam_frames.glob("*.jpg")))
     completed = 0
     for reverse in (False, True):
@@ -318,14 +483,20 @@ def _run_sam2(
             progress(52 + int(33 * min(completed, frame_count) / frame_count), "正在使用 SAM 2.1 双向跟踪主体")
 
 
-def _fuse_masks(alpha_paths: list[Path], sam_dir: Path, output_dir: Path, progress: Progress) -> None:
+def _fuse_masks(
+    alpha_paths: list[Path],
+    sam_dir: Path,
+    output_dir: Path,
+    progress: Progress,
+    parameters: MattingParameters,
+) -> None:
     import cv2
     import numpy as np
 
     for index, alpha_path in enumerate(alpha_paths, start=1):
         alpha = cv2.imread(str(alpha_path), cv2.IMREAD_GRAYSCALE).astype(np.float32) / 255.0
         tracked = cv2.imread(str(sam_dir / alpha_path.name), cv2.IMREAD_GRAYSCALE).astype(np.float32) / 255.0
-        fused = fuse_alpha_arrays(alpha, tracked)
+        fused = fuse_alpha_arrays(alpha, tracked, parameters)
         cv2.imwrite(str(output_dir / alpha_path.name), np.round(fused * 255).astype(np.uint8))
         progress(87 + int(6 * index / len(alpha_paths)), "正在融合时序身份与毛发 alpha")
 
@@ -362,6 +533,8 @@ def _write_metadata(
     end: float,
     seed_index: int,
     frame_count: int,
+    subject_selection: SubjectSelection,
+    matting_parameters: MattingParameters,
 ) -> None:
     metadata = {
         "schemaVersion": 1,
@@ -371,5 +544,7 @@ def _write_metadata(
         "seedFrame": seed_index,
         "frameCount": frame_count,
         "alphaMode": "straight",
+        "subjectSelection": asdict(subject_selection),
+        "mattingParameters": asdict(matting_parameters),
     }
     output.with_suffix(".json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")

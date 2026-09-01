@@ -37,6 +37,7 @@
           </div>
           <div class="video-stage">
             <video id="source-video" controls muted playsinline></video>
+            <span id="subject-marker" class="subject-marker hidden" aria-hidden="true"></span>
           </div>
         </article>
 
@@ -55,6 +56,18 @@
       </div>
 
       <aside class="controls-column">
+        <article class="card control-card subject-control-card">
+          <div class="control-heading">
+            <h2>主体选择</h2>
+            <span class="default-badge">默认自动</span>
+          </div>
+          <div class="subject-mode-grid">
+            <button id="subject-mode-auto" class="subject-mode active" type="button" aria-pressed="true">自动选择</button>
+            <button id="subject-mode-point" class="subject-mode" type="button" aria-pressed="false">点选主体</button>
+          </div>
+          <p id="subject-selection-status" class="subject-status">自动选择清晰主体帧，无需手动操作。</p>
+        </article>
+
         <article class="card control-card">
           <h2>时间范围</h2>
           <label>开始秒数<input id="start-seconds" type="number" min="0" step="0.1" value="0" /></label>
@@ -78,11 +91,39 @@
           <p>输出始终使用固定完整画布；不提供裁剪框或区域绘制。</p>
         </article>
 
+        <article class="card control-card parameter-card">
+          <div class="control-heading">
+            <h2>抠图参数</h2>
+            <button id="reset-matting-parameters" class="inline-reset" type="button">恢复默认</button>
+          </div>
+          <p>默认值与当前算法完全一致；提高背景清理阈值可减少虚影。</p>
+          <div class="parameter-row">
+            <label for="background-cutoff">背景清理阈值 <span>0–0.5</span></label>
+            <div class="parameter-inputs"><input id="background-cutoff" type="range" min="0" max="0.5" step="0.01" value="0" /><input id="background-cutoff-value" type="number" min="0" max="0.5" step="0.01" value="0" /></div>
+          </div>
+          <div class="parameter-row">
+            <label for="seed-threshold">Seed 阈值 <span>0.05–0.95</span></label>
+            <div class="parameter-inputs"><input id="seed-threshold" type="range" min="0.05" max="0.95" step="0.01" value="0.5" /><input id="seed-threshold-value" type="number" min="0.05" max="0.95" step="0.01" value="0.5" /></div>
+          </div>
+          <div class="parameter-row">
+            <label for="core-threshold">核心阈值 <span>0–0.95</span></label>
+            <div class="parameter-inputs"><input id="core-threshold" type="range" min="0" max="0.95" step="0.01" value="0.35" /><input id="core-threshold-value" type="number" min="0" max="0.95" step="0.01" value="0.35" /></div>
+          </div>
+          <div class="parameter-row">
+            <label for="support-radius">支持带半径 <span>0–100 px</span></label>
+            <div class="parameter-inputs"><input id="support-radius" type="range" min="0" max="100" step="1" value="30" /><input id="support-radius-value" type="number" min="0" max="100" step="1" value="30" /></div>
+          </div>
+          <div class="parameter-row">
+            <label for="feather-sigma">羽化强度 <span>0–20</span></label>
+            <div class="parameter-inputs"><input id="feather-sigma" type="range" min="0" max="20" step="0.5" value="5" /><input id="feather-sigma-value" type="number" min="0" max="20" step="0.5" value="5" /></div>
+          </div>
+        </article>
+
         <article class="card pipeline-card">
           <h2>处理流程</h2>
           <ol>
             <li>BiRefNet 生成逐帧动物 soft alpha</li>
-            <li>自动选择清晰主体帧</li>
+            <li>自动选择清晰主体帧，或使用用户点选</li>
             <li>SAM 2.1 前后双向跟踪</li>
             <li>融合并编码 VP8 Alpha WebM</li>
           </ol>

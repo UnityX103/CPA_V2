@@ -14,9 +14,9 @@ use tauri::{Emitter, Manager, WebviewUrl, WebviewWindowBuilder};
 use tokio::io::AsyncWriteExt;
 use zip::ZipArchive;
 
-const MODULE_ID: &str = "cpa-video-editor";
-const MODULE_SCHEMA_VERSION: u32 = 1;
 const INDEX_SCHEMA_VERSION: u32 = 1;
+const MODULE_CONTRACT_JSON: &str =
+    include_str!("../../../video-editor-module/module-contract.json");
 const DEFAULT_INDEX_URL: &str =
     "https://github.com/UnityX103/CPA_V2/releases/latest/download/video-editor-module-index.json";
 const MODULE_PROGRESS_EVENT: &str = "video-editor-module-progress";
@@ -84,6 +84,19 @@ struct ModuleManifest {
     target: String,
     entry: String,
     capabilities: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ModuleContract {
+    schema_version: u32,
+    id: String,
+    capabilities: Vec<String>,
+}
+
+fn module_contract() -> Result<ModuleContract, String> {
+    serde_json::from_str(MODULE_CONTRACT_JSON)
+        .map_err(|error| format!("视频编辑模块能力合同无效：{error}"))
 }
 
 fn runtime_target() -> &'static str {
@@ -180,22 +193,17 @@ fn validate_manifest(
     expected_version: &str,
     expected_target: &str,
 ) -> Result<(), String> {
-    if manifest.schema_version != MODULE_SCHEMA_VERSION {
+    let contract = module_contract()?;
+    if manifest.schema_version != contract.schema_version {
         return Err("视频编辑模块清单版本不兼容".to_string());
     }
-    if manifest.id != MODULE_ID {
+    if manifest.id != contract.id {
         return Err("下载包不是 CPA 视频编辑模块".to_string());
     }
     if manifest.version != expected_version || manifest.target != expected_target {
         return Err("视频编辑模块版本或平台与当前安装包不匹配".to_string());
     }
-    let required = [
-        "sam2-birefnet-v1",
-        "screenshot",
-        "output-resolution",
-        "vp8-alpha-webm",
-    ];
-    if required.iter().any(|capability| {
+    if contract.capabilities.iter().any(|capability| {
         !manifest
             .capabilities
             .iter()
@@ -394,6 +402,7 @@ pub fn video_editor_module_status(app: tauri::AppHandle) -> VideoEditorModuleSta
 #[tauri::command]
 pub async fn download_video_editor_module(
     app: tauri::AppHandle,
+    state: tauri::State<'_, VideoEditorModuleState>,
 ) -> Result<VideoEditorModuleStatus, String> {
     let target = runtime_target();
     if target == "unsupported" {
@@ -427,6 +436,23 @@ pub async fn download_video_editor_module(
         return Err("正式应用不能安装内部测试视频编辑模块".to_string());
     }
     validate_release_version(&index.version)?;
+    let root = module_root(&app)?;
+    if let Ok(Some((pointer, _))) = read_installed_manifest(&root) {
+        if pointer.version == index.version {
+            return Ok(VideoEditorModuleStatus {
+                installed: true,
+                version: Some(pointer.version),
+                target: target.to_string(),
+                message: "视频编辑模块已是最新版本".to_string(),
+            });
+        }
+    }
+    ensure_module_idle_for_update(&state)?;
+    if let Some(window) = app.get_webview_window("video-editor-module") {
+        window
+            .close()
+            .map_err(|error| format!("无法关闭正在打开的视频编辑窗口：{error}"))?;
+    }
     let package = index
         .packages
         .get(target)
@@ -438,7 +464,6 @@ pub async fn download_video_editor_module(
     }
     validate_sha256_text(&package.sha256)?;
 
-    let root = module_root(&app)?;
     fs::create_dir_all(&root).map_err(|error| format!("无法创建视频编辑模块目录：{error}"))?;
     let archive_path = root.join(format!(".download-{}-{target}.zip", index.version));
     let response = client
@@ -488,6 +513,11 @@ pub async fn download_video_editor_module(
     if actual_hash != package.sha256.to_ascii_lowercase() {
         let _ = tokio::fs::remove_file(&archive_path).await;
         return Err("视频编辑模块 SHA-256 校验失败".to_string());
+    }
+
+    if let Err(error) = ensure_module_idle_for_update(&state) {
+        let _ = tokio::fs::remove_file(&archive_path).await;
+        return Err(error);
     }
 
     emit_progress(
@@ -792,6 +822,30 @@ fn stop_child(state: &VideoEditorModuleState) {
     }
 }
 
+fn child_is_running(state: &VideoEditorModuleState) -> bool {
+    let Ok(mut guard) = state.child.lock() else {
+        return true;
+    };
+    let Some(child) = guard.as_mut() else {
+        return false;
+    };
+    match child.try_wait() {
+        Ok(None) => true,
+        Ok(Some(_)) => {
+            guard.take();
+            false
+        }
+        Err(_) => true,
+    }
+}
+
+fn ensure_module_idle_for_update(state: &VideoEditorModuleState) -> Result<(), String> {
+    if child_is_running(state) {
+        return Err("请先关闭视频编辑器并等待当前处理任务结束，再更新模板".to_string());
+    }
+    Ok(())
+}
+
 pub fn stop_for_exit(app: &tauri::AppHandle) {
     let state = app.state::<VideoEditorModuleState>();
     stop_child(&state);
@@ -819,31 +873,47 @@ pub fn bundled_tool_path(app: &tauri::AppHandle, tool: &str) -> Option<PathBuf> 
 #[cfg(test)]
 mod tests {
     use super::{
-        install_archive, module_public_key, read_installed_manifest, runtime_target,
-        safe_relative_path, validate_manifest, validate_package_url, validate_release_version,
-        validate_sha256_text, verify_index_signature, ModuleManifest, MODULE_ID,
-        MODULE_SCHEMA_VERSION,
+        ensure_module_idle_for_update, install_archive, module_contract, module_public_key,
+        read_installed_manifest, runtime_target, safe_relative_path, stop_child, validate_manifest,
+        validate_package_url, validate_release_version, validate_sha256_text,
+        verify_index_signature, ModuleManifest, VideoEditorModuleState,
     };
 
     fn manifest() -> ModuleManifest {
+        let contract = module_contract().expect("read module contract");
         ModuleManifest {
-            schema_version: MODULE_SCHEMA_VERSION,
-            id: MODULE_ID.to_string(),
+            schema_version: contract.schema_version,
+            id: contract.id,
             version: "1.0.0".to_string(),
             target: runtime_target().to_string(),
             entry: "runtime/video-editor-module".to_string(),
-            capabilities: vec![
-                "sam2-birefnet-v1".to_string(),
-                "screenshot".to_string(),
-                "output-resolution".to_string(),
-                "vp8-alpha-webm".to_string(),
-            ],
+            capabilities: contract.capabilities,
         }
     }
 
     #[test]
     fn accepts_the_expected_module_contract() {
         validate_manifest(&manifest(), "1.0.0", runtime_target()).unwrap();
+    }
+
+    #[test]
+    fn update_requires_the_video_worker_to_be_closed() {
+        let state = VideoEditorModuleState::default();
+        #[cfg(unix)]
+        let child = std::process::Command::new("sh")
+            .args(["-c", "sleep 5"])
+            .spawn()
+            .expect("spawn test worker");
+        #[cfg(windows)]
+        let child = std::process::Command::new("cmd")
+            .args(["/C", "ping -n 6 127.0.0.1 >NUL"])
+            .spawn()
+            .expect("spawn test worker");
+        *state.child.lock().expect("lock child state") = Some(child);
+
+        assert!(ensure_module_idle_for_update(&state).is_err());
+        stop_child(&state);
+        assert!(ensure_module_idle_for_update(&state).is_ok());
     }
 
     #[cfg(unix)]
@@ -853,6 +923,8 @@ mod tests {
         use std::os::unix::fs::PermissionsExt;
         use std::time::{SystemTime, UNIX_EPOCH};
         use zip::write::SimpleFileOptions;
+
+        let contract = module_contract().expect("read module contract");
 
         let unique = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -889,17 +961,12 @@ mod tests {
         archive
             .write_all(
                 serde_json::to_string(&serde_json::json!({
-                    "schemaVersion": MODULE_SCHEMA_VERSION,
-                    "id": MODULE_ID,
+                    "schemaVersion": contract.schema_version,
+                    "id": contract.id,
                     "version": "1.0.0",
                     "target": runtime_target(),
                     "entry": "runtime/video-editor-module",
-                    "capabilities": [
-                        "sam2-birefnet-v1",
-                        "screenshot",
-                        "output-resolution",
-                        "vp8-alpha-webm"
-                    ]
+                    "capabilities": contract.capabilities,
                 }))
                 .expect("serialize manifest")
                 .as_bytes(),

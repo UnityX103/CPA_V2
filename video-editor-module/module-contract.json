@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "cpa-video-editor",
+  "pipeline": "sam2-birefnet-v1",
+  "capabilities": [
+    "sam2-birefnet-v1",
+    "screenshot",
+    "output-resolution",
+    "vp8-alpha-webm",
+    "subject-point-selection",
+    "matting-parameters-v1"
+  ]
+}
