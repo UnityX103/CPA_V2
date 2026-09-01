@@ -12,7 +12,7 @@ The module implements the selected fourth pipeline:
    user-selected positive point in both directions.
 3. A broad support-band fusion keeps the SAM object identity while preserving
    BiRefNet fur and motion blur.
-4. A bundled, license-reviewed FFmpeg/libvpx build exports VP8 Alpha WebM.
+4. A bundled, license-reviewed FFmpeg/libvpx build exports high-quality VP9 Alpha WebM.
 
 The downloaded UI retains video preview, current-frame screenshot, trim time,
 output-resolution controls, transparent-result preview, and export. Automatic
@@ -38,7 +38,7 @@ runtime-manifest.json
 
 `module-contract.json` is the source of truth shared by the packager and host.
 The generated `module.json` declares `sam2-birefnet-v1`, `screenshot`,
-`output-resolution`, `vp8-alpha-webm`, `subject-point-selection`, and
+`output-resolution`, `vp9-alpha-webm`, `masked-transparent-rgb-v1`, `subject-point-selection`, and
 `matting-parameters-v1`. The host rejects archives without all required
 capabilities, path traversal, symlinks, target mismatches, size overflow, or
 SHA-256 mismatch.

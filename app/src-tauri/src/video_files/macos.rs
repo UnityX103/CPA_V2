@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use tauri::Manager;
 
-const ALPHA_CACHE_VERSION: u8 = 2;
+const ALPHA_CACHE_VERSION: u8 = 3;
 
 pub(super) fn prepare_playable_path(
     app: &tauri::AppHandle,
@@ -54,20 +54,22 @@ fn run_ffmpeg_alpha_transcode(
 
     let mut last_error = None;
     for ffmpeg in candidates {
-        match Command::new(&ffmpeg)
-            .args(ffmpeg_alpha_transcode_arguments(source, target))
-            .output()
-        {
-            Ok(output) if output.status.success() => return Ok(()),
-            Ok(output) => {
-                let detail = String::from_utf8_lossy(&output.stderr).trim().to_string();
-                last_error = Some(if detail.is_empty() {
-                    format!("退出状态：{}", output.status)
-                } else {
-                    detail
-                });
+        for decoder in ["libvpx-vp9", "libvpx"] {
+            match Command::new(&ffmpeg)
+                .args(ffmpeg_alpha_transcode_arguments(source, target, decoder))
+                .output()
+            {
+                Ok(output) if output.status.success() => return Ok(()),
+                Ok(output) => {
+                    let detail = String::from_utf8_lossy(&output.stderr).trim().to_string();
+                    last_error = Some(if detail.is_empty() {
+                        format!("退出状态：{}", output.status)
+                    } else {
+                        detail
+                    });
+                }
+                Err(error) => last_error = Some(error.to_string()),
             }
-            Err(error) => last_error = Some(error.to_string()),
         }
     }
 
@@ -77,14 +79,18 @@ fn run_ffmpeg_alpha_transcode(
     ))
 }
 
-fn ffmpeg_alpha_transcode_arguments(source: &Path, target: &Path) -> Vec<std::ffi::OsString> {
+fn ffmpeg_alpha_transcode_arguments(
+    source: &Path,
+    target: &Path,
+    decoder: &str,
+) -> Vec<std::ffi::OsString> {
     vec![
         "-hide_banner".into(),
         "-loglevel".into(),
         "error".into(),
         "-y".into(),
         "-c:v".into(),
-        "libvpx".into(),
+        decoder.into(),
         "-i".into(),
         source.as_os_str().to_owned(),
         "-an".into(),
@@ -155,4 +161,25 @@ fn cached_alpha_video_is_fresh(source: &Path, target: &Path) -> bool {
         return false;
     };
     target_modified >= source_modified
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{alpha_cache_filename, ffmpeg_alpha_transcode_arguments};
+    use std::path::Path;
+
+    #[test]
+    fn alpha_transcode_supports_vp9_and_vp8_sources() {
+        let source = Path::new("/tmp/input.webm");
+        let target = Path::new("/tmp/output.mov");
+        let vp9 = ffmpeg_alpha_transcode_arguments(source, target, "libvpx-vp9");
+        let vp8 = ffmpeg_alpha_transcode_arguments(source, target, "libvpx");
+        assert!(vp9.windows(2).any(|pair| pair == ["-c:v", "libvpx-vp9"]));
+        assert!(vp8.windows(2).any(|pair| pair == ["-c:v", "libvpx"]));
+    }
+
+    #[test]
+    fn decoder_change_invalidates_old_alpha_cache() {
+        assert!(alpha_cache_filename(Path::new("/tmp/input.webm")).contains("-v3-"));
+    }
 }

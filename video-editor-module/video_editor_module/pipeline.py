@@ -503,13 +503,21 @@ def _fuse_masks(
 
 def _encode_webm(frames: Path, masks: Path, output: Path, frame_rate: float, root: Path) -> None:
     ffmpeg = executable(root, "ffmpeg")
+    filter_graph = (
+        "[0:v]format=rgb24,split[color][blacksrc];"
+        "[blacksrc]lutrgb=r=0:g=0:b=0[black];"
+        "[1:v]format=gray,split[alpha][masksrc];"
+        "[masksrc]lut=y='if(gt(val,16),255,0)'[mask];"
+        "[black][color][mask]maskedmerge[visible];"
+        "[visible][alpha]alphamerge,format=yuva420p[out]"
+    )
     subprocess.run([
         str(ffmpeg), "-hide_banner", "-loglevel", "error", "-y",
         "-framerate", f"{frame_rate:.8f}", "-start_number", "1", "-i", str(frames / "%06d.png"),
         "-framerate", f"{frame_rate:.8f}", "-start_number", "1", "-i", str(masks / "%06d.png"),
-        "-filter_complex", "[0:v]format=rgba[color];[1:v]format=gray[alpha];[color][alpha]alphamerge,format=yuva420p[out]",
-        "-map", "[out]", "-an", "-c:v", "libvpx", "-deadline", "good", "-cpu-used", "4",
-        "-crf", "18", "-b:v", "0", "-auto-alt-ref", "0",
+        "-filter_complex", filter_graph,
+        "-map", "[out]", "-an", "-c:v", "libvpx-vp9", "-deadline", "good", "-cpu-used", "1",
+        "-crf", "18", "-b:v", "0", "-auto-alt-ref", "0", "-row-mt", "1",
         "-metadata:s:v:0", "alpha_mode=1", str(output),
     ], check=True)
 
@@ -518,7 +526,7 @@ def _encode_macos_preview(source: Path, output: Path, root: Path) -> None:
     ffmpeg = executable(root, "ffmpeg")
     subprocess.run([
         str(ffmpeg), "-hide_banner", "-loglevel", "error", "-y",
-        "-c:v", "libvpx", "-i", str(source), "-an", "-vf", "format=bgra",
+        "-c:v", "libvpx-vp9", "-i", str(source), "-an", "-vf", "format=bgra",
         "-c:v", "hevc_videotoolbox", "-allow_sw", "1", "-alpha_quality", "1",
         "-tag:v", "hvc1", "-movflags", "+faststart", "-f", "mov", str(output),
     ], check=True)
@@ -544,6 +552,7 @@ def _write_metadata(
         "seedFrame": seed_index,
         "frameCount": frame_count,
         "alphaMode": "straight",
+        "videoCodec": "vp9",
         "subjectSelection": asdict(subject_selection),
         "mattingParameters": asdict(matting_parameters),
     }

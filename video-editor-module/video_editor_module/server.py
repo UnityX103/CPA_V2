@@ -9,7 +9,7 @@ import shutil
 import tempfile
 import threading
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -22,6 +22,7 @@ from .pipeline import (
     probe_video,
     process_video,
 )
+from . import __version__
 
 
 MAX_UPLOAD_BYTES = 2 * 1024 * 1024 * 1024
@@ -38,6 +39,7 @@ class Job:
     percent: int = 0
     message: str = "等待处理"
     error: str = ""
+    settings: dict[str, object] = field(default_factory=dict)
     lock: threading.Lock = field(default_factory=threading.Lock)
 
     def snapshot(self) -> dict[str, object]:
@@ -49,6 +51,7 @@ class Job:
                 "message": self.message,
                 "error": self.error,
                 "ready": self.status == "complete" and self.output_path.is_file(),
+                "settings": self.settings,
             }
 
 
@@ -86,7 +89,12 @@ def handler_for(context: ModuleContext):
                 self._json(HTTPStatus.UNAUTHORIZED, {"error": "unauthorized"})
                 return
             if parsed.path == "/api/health":
-                self._json(HTTPStatus.OK, {"ok": True})
+                self._json(HTTPStatus.OK, {
+                    "ok": True,
+                    "version": __version__,
+                    "pipeline": "sam2-birefnet-v1",
+                    "videoCodec": "vp9",
+                })
                 return
             if parsed.path == "/api/probe":
                 upload_id = first_query(parsed, "id")
@@ -131,9 +139,17 @@ def handler_for(context: ModuleContext):
                     self._json(HTTPStatus.NOT_FOUND, {"error": "preview not ready"})
                     return
                 if job.preview_path.is_file():
-                    self._file(job.preview_path, "video/quicktime")
+                    self._file(
+                        job.preview_path,
+                        "video/quicktime",
+                        f"pet-transparent-preview-{job.id}.mov",
+                    )
                 elif job.output_path.is_file():
-                    self._file(job.output_path, "video/webm")
+                    self._file(
+                        job.output_path,
+                        "video/webm",
+                        f"pet-transparent-preview-{job.id}.webm",
+                    )
                 else:
                     self._json(HTTPStatus.NOT_FOUND, {"error": "preview not ready"})
                 return
@@ -201,7 +217,27 @@ def handler_for(context: ModuleContext):
                 return
             job_id = uuid.uuid4().hex
             output_path = context.outputs / f"{job_id}.webm"
-            job = Job(job_id, source, output_path, output_path.with_suffix(".preview.mov"))
+            parsed_settings = {
+                "startSeconds": start,
+                "endSeconds": end,
+                "outputWidth": width,
+                "outputHeight": height,
+                "subjectSelection": asdict(subject_selection),
+                "mattingParameters": {
+                    "backgroundCutoff": matting_parameters.background_cutoff,
+                    "seedThreshold": matting_parameters.seed_threshold,
+                    "coreThreshold": matting_parameters.core_threshold,
+                    "supportRadius": matting_parameters.support_radius,
+                    "featherSigma": matting_parameters.feather_sigma,
+                },
+            }
+            job = Job(
+                job_id,
+                source,
+                output_path,
+                output_path.with_suffix(".preview.mov"),
+                settings=parsed_settings,
+            )
             with context.lock:
                 busy = any(
                     existing.snapshot()["status"] in {"queued", "processing"}

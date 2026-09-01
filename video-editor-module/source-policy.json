@@ -57,7 +57,7 @@
         "libvpxSourceSha256": "adacbdd41e05584f6779fc8025d3a2780543beee5dd19bdf07a87415b7ba0f03",
         "libvpxSourceAsset": "video-editor-module-libvpx-9cc8e1c180-source.tar.gz"
       },
-      "requiredEncoders": ["libvpx"],
+      "requiredEncoders": ["libvpx", "libvpx-vp9"],
       "macosRequiredEncoders": ["hevc_videotoolbox"],
       "forbiddenConfigureFlags": ["--enable-gpl", "--enable-nonfree"]
     }

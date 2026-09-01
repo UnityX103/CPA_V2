@@ -16,11 +16,13 @@ const heightInput = document.querySelector('#output-height');
 const presetInput = document.querySelector('#resolution-preset');
 const sourceMeta = document.querySelector('#source-meta');
 const resultMeta = document.querySelector('#result-meta');
+const moduleVersion = document.querySelector('#module-version');
 const progressPanel = document.querySelector('#progress-panel');
 const progressFill = document.querySelector('#progress-fill');
 const progressText = document.querySelector('#progress-text');
 const errorPanel = document.querySelector('#error-panel');
 const downloadOutput = document.querySelector('#download-output');
+const downloadPreview = document.querySelector('#download-preview');
 const resetMattingParametersButton = document.querySelector('#reset-matting-parameters');
 
 const DEFAULT_MATTING_PARAMETERS = Object.freeze({
@@ -61,6 +63,16 @@ subjectPointButton.addEventListener('click', () => setSubjectMode('point'));
 sourceVideo.addEventListener('click', selectSubjectPoint);
 resetMattingParameters();
 setSubjectMode('auto');
+loadModuleVersion();
+
+async function loadModuleVersion() {
+  try {
+    const health = await api('/api/health').then((response) => response.json());
+    moduleVersion.textContent = `模块 v${health.version} · ${health.videoCodec.toUpperCase()}`;
+  } catch {
+    moduleVersion.textContent = '模块版本不可用';
+  }
+}
 
 async function api(path, options = {}) {
   const headers = new Headers(options.headers || {});
@@ -264,10 +276,17 @@ async function pollJob(id) {
       const blob = await api(previewUrl).then((response) => response.blob());
       resultObjectUrl = URL.createObjectURL(blob);
       resultVideo.src = resultObjectUrl;
-      resultMeta.textContent = `${widthInput.value} × ${heightInput.value} · VP8 Alpha WebM`;
+      const appliedParameters = job.settings?.mattingParameters || {};
+      const defaults = Object.entries(appliedParameters).every(
+        ([key, value]) => value === DEFAULT_MATTING_PARAMETERS[key],
+      ) && Object.keys(appliedParameters).length === Object.keys(DEFAULT_MATTING_PARAMETERS).length;
+      resultMeta.textContent = `${widthInput.value} × ${heightInput.value} · VP9 Alpha WebM · ${defaults ? '默认参数' : '自定义参数'}`;
       downloadOutput.href = outputUrl;
       downloadOutput.classList.remove('disabled');
       downloadOutput.setAttribute('aria-disabled', 'false');
+      downloadPreview.href = previewUrl;
+      downloadPreview.classList.remove('disabled');
+      downloadPreview.setAttribute('aria-disabled', 'false');
       setBusy(false);
       return;
     }

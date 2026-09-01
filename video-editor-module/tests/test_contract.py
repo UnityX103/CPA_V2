@@ -4,6 +4,7 @@ import importlib.util
 import hashlib
 import http.server
 import json
+import re
 import subprocess
 import sys
 import tempfile
@@ -94,11 +95,14 @@ class VideoEditorModuleContractTests(unittest.TestCase):
         self.assertIn("PPM-100", policy["components"]["birefnet"]["provenanceRisk"])
         self.assertIn("--enable-gpl", policy["components"]["ffmpeg"]["forbiddenConfigureFlags"])
         self.assertIn("hevc_videotoolbox", policy["components"]["ffmpeg"]["macosRequiredEncoders"])
+        self.assertIn("libvpx-vp9", policy["components"]["ffmpeg"]["requiredEncoders"])
         self.assertIn("signed module index", policy["publicPackageAuthenticity"])
         contract = json.loads((ROOT / "module-contract.json").read_text(encoding="utf-8"))
         self.assertEqual(contract["pipeline"], policy["pipeline"])
         self.assertIn("subject-point-selection", contract["capabilities"])
         self.assertIn("matting-parameters-v1", contract["capabilities"])
+        self.assertIn("vp9-alpha-webm", contract["capabilities"])
+        self.assertIn("masked-transparent-rgb-v1", contract["capabilities"])
 
         build_script = (ROOT / "scripts" / "build_runtime.py").read_text(encoding="utf-8")
         self.assertIn("sam_policy['commit']", build_script)
@@ -336,10 +340,33 @@ class VideoEditorModuleContractTests(unittest.TestCase):
         server = (ROOT / "video_editor_module" / "server.py").read_text(encoding="utf-8")
         javascript = (ROOT / "video_editor_module" / "static" / "app.js").read_text(encoding="utf-8")
         self.assertIn("hevc_videotoolbox", pipeline)
+        self.assertIn('"libvpx-vp9", "-i", str(source)', pipeline)
         self.assertIn('if parsed.path == "/api/preview"', server)
         self.assertIn("api(previewUrl)", javascript)
         self.assertIn("downloadOutput.href = outputUrl", javascript)
+        self.assertIn("downloadPreview.href = previewUrl", javascript)
+        self.assertIn("job.settings?.mattingParameters", javascript)
+        self.assertIn('"settings": self.settings', server)
+        self.assertIn('"version": __version__', server)
         self.assertIn('platform.machine().lower() in {"arm64", "aarch64"}', pipeline)
+
+    def test_webm_encoder_uses_high_quality_vp9_and_clears_hidden_background_rgb(self):
+        pipeline = (ROOT / "video_editor_module" / "pipeline.py").read_text(encoding="utf-8")
+        self.assertIn('"-c:v", "libvpx-vp9"', pipeline)
+        self.assertIn('"-crf", "18"', pipeline)
+        self.assertIn('"-row-mt", "1"', pipeline)
+        self.assertIn("maskedmerge", pipeline)
+        self.assertIn("gt(val,16)", pipeline)
+        self.assertNotIn('"-c:v", "libvpx", "-deadline", "good"', pipeline)
+
+        html = (ROOT / "video_editor_module" / "static" / "index.html").read_text(
+            encoding="utf-8"
+        )
+        javascript = (ROOT / "video_editor_module" / "static" / "app.js").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("VP9 Alpha WebM", html + javascript)
+        self.assertIn('id="download-preview"', html)
 
     def test_resolution_is_even_bounded_and_preserves_aspect_when_one_axis_is_automatic(self):
         pipeline = load_pipeline()
@@ -355,6 +382,27 @@ class VideoEditorModuleContractTests(unittest.TestCase):
         self.assertEqual(parameters.core_threshold, 0.35)
         self.assertEqual(parameters.support_radius, 30)
         self.assertEqual(parameters.feather_sigma, 5.0)
+
+        javascript = (ROOT / "video_editor_module" / "static" / "app.js").read_text(
+            encoding="utf-8"
+        )
+        match = re.search(
+            r"DEFAULT_MATTING_PARAMETERS = Object\.freeze\(\{(?P<body>.*?)\}\);",
+            javascript,
+            re.DOTALL,
+        )
+        self.assertIsNotNone(match)
+        ui_defaults = {
+            key: float(value)
+            for key, value in re.findall(r"(\w+):\s*([0-9.]+)", match.group("body"))
+        }
+        self.assertEqual(ui_defaults, {
+            "backgroundCutoff": parameters.background_cutoff,
+            "seedThreshold": parameters.seed_threshold,
+            "coreThreshold": parameters.core_threshold,
+            "supportRadius": float(parameters.support_radius),
+            "featherSigma": parameters.feather_sigma,
+        })
 
         custom = pipeline.MattingParameters.from_mapping({
             "backgroundCutoff": 0.08,

@@ -6,7 +6,8 @@
     "sam2-birefnet-v1",
     "screenshot",
     "output-resolution",
-    "vp8-alpha-webm",
+    "vp9-alpha-webm",
+    "masked-transparent-rgb-v1",
     "subject-point-selection",
     "matting-parameters-v1"
   ]

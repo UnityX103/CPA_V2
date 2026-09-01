@@ -21,6 +21,7 @@ button, input, select { font: inherit; }
 .card { border: 1px solid #eadccf; border-radius: 18px; padding: 15px; background: rgba(255, 255, 255, .92); box-shadow: 0 12px 28px rgba(92, 63, 42, .08); }
 .card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
 .card-head > div { display: flex; flex-direction: column; gap: 4px; }
+.card-head > .result-downloads { flex-direction: row; flex-wrap: wrap; justify-content: flex-end; }
 .card-head strong, .control-card h2, .pipeline-card h2 { color: #49372b; }
 .card-head span { color: #8b7462; font-size: 11px; }
 
