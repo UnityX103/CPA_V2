@@ -17,8 +17,10 @@ use zip::ZipArchive;
 const INDEX_SCHEMA_VERSION: u32 = 1;
 const MODULE_CONTRACT_JSON: &str =
     include_str!("../../../video-editor-module/module-contract.json");
-const DEFAULT_INDEX_URL: &str =
-    "https://github.com/UnityX103/CPA_V2/releases/latest/download/video-editor-module-index.json";
+const DEFAULT_INDEX_URLS: [&str; 2] = [
+    "https://cnb.cool/nanzhaigame-xpy/CPA_V2/-/releases/latest/download/video-editor-module-index.json",
+    "https://github.com/UnityX103/CPA_V2/releases/latest/download/video-editor-module-index.json",
+];
 const MODULE_PROGRESS_EVENT: &str = "video-editor-module-progress";
 const MAX_ARCHIVE_BYTES: u64 = 8 * 1024 * 1024 * 1024;
 const MAX_EXTRACTED_BYTES: u64 = 16 * 1024 * 1024 * 1024;
@@ -63,6 +65,8 @@ struct ModuleIndex {
 #[serde(rename_all = "camelCase")]
 struct ModulePackage {
     url: String,
+    #[serde(default)]
+    mirrors: Vec<String>,
     sha256: String,
     size: u64,
 }
@@ -122,16 +126,20 @@ fn runtime_target() -> &'static str {
     }
 }
 
-fn index_url() -> String {
+fn index_urls() -> Vec<String> {
     #[cfg(debug_assertions)]
     if let Ok(url) = std::env::var("CPA_VIDEO_EDITOR_MODULE_INDEX_URL") {
         if !url.trim().is_empty() {
-            return url;
+            return vec![url];
         }
     }
-    option_env!("CPA_VIDEO_EDITOR_MODULE_INDEX_URL")
-        .unwrap_or(DEFAULT_INDEX_URL)
-        .to_string()
+    if let Some(url) = option_env!("CPA_VIDEO_EDITOR_MODULE_INDEX_URL") {
+        return vec![url.to_string()];
+    }
+    DEFAULT_INDEX_URLS
+        .iter()
+        .map(|url| (*url).to_string())
+        .collect()
 }
 
 fn module_root(app: &tauri::AppHandle) -> Result<PathBuf, String> {
@@ -234,26 +242,34 @@ fn safe_relative_path(value: &str) -> Result<PathBuf, String> {
 
 fn validate_package_url(value: &str) -> Result<(), String> {
     let url = reqwest::Url::parse(value).map_err(|_| "视频编辑模块下载地址无效".to_string())?;
-    if url.scheme() != "https"
-        || url.host_str() != Some("github.com")
-        || !url
+    let github = url.host_str() == Some("github.com")
+        && url
             .path()
-            .starts_with("/UnityX103/CPA_V2/releases/download/")
-    {
-        #[cfg(debug_assertions)]
-        if matches!(url.scheme(), "http" | "https") && url.host_str() == Some("127.0.0.1") {
-            return Ok(());
-        }
-        return Err("视频编辑模块下载地址不在允许的发布源中".to_string());
+            .starts_with("/UnityX103/CPA_V2/releases/download/");
+    let cnb = url.host_str() == Some("cnb.cool")
+        && url
+            .path()
+            .starts_with("/nanzhaigame-xpy/CPA_V2/-/releases/download/");
+    if url.scheme() == "https" && (github || cnb) {
+        return Ok(());
     }
-    Ok(())
+    #[cfg(debug_assertions)]
+    if matches!(url.scheme(), "http" | "https") && url.host_str() == Some("127.0.0.1") {
+        return Ok(());
+    }
+    Err("视频编辑模块下载地址不在允许的发布源中".to_string())
 }
 
 fn validate_index_url(value: &str) -> Result<(), String> {
     let url = reqwest::Url::parse(value).map_err(|_| "视频编辑模块索引地址无效".to_string())?;
+    let github = url.host_str() == Some("github.com")
+        && url.path().starts_with("/UnityX103/CPA_V2/releases/");
+    let cnb = url.host_str() == Some("cnb.cool")
+        && url
+            .path()
+            .starts_with("/nanzhaigame-xpy/CPA_V2/-/releases/");
     if url.scheme() == "https"
-        && url.host_str() == Some("github.com")
-        && url.path().starts_with("/UnityX103/CPA_V2/releases/")
+        && (github || cnb)
         && url.path().ends_with("/video-editor-module-index.json")
     {
         return Ok(());
@@ -318,6 +334,118 @@ async fn download_small_document(
         document.extend_from_slice(&chunk);
     }
     Ok(document)
+}
+
+async fn download_verified_index(client: &reqwest::Client) -> Result<Vec<u8>, String> {
+    let mut failures = Vec::new();
+    for index_url in index_urls() {
+        let result = async {
+            validate_index_url(&index_url)?;
+            let index_bytes =
+                download_small_document(client, &index_url, MAX_INDEX_BYTES, "视频编辑模块索引")
+                    .await?;
+            let signature_bytes = download_small_document(
+                client,
+                &format!("{index_url}.sig"),
+                MAX_SIGNATURE_BYTES,
+                "视频编辑模块索引签名",
+            )
+            .await?;
+            verify_index_signature(&index_bytes, &signature_bytes)?;
+            Ok::<Vec<u8>, String>(index_bytes)
+        }
+        .await;
+        match result {
+            Ok(index) => return Ok(index),
+            Err(error) => failures.push(error),
+        }
+    }
+    Err(format!(
+        "无法从发布镜像获取视频编辑模块：{}",
+        failures.join("；")
+    ))
+}
+
+async fn download_package_archive(
+    client: &reqwest::Client,
+    app: &tauri::AppHandle,
+    package: &ModulePackage,
+    archive_path: &Path,
+) -> Result<(u64, Option<u64>), String> {
+    let mut failures = Vec::new();
+    let urls = std::iter::once(&package.url).chain(package.mirrors.iter());
+    for (position, url) in urls.enumerate() {
+        if let Err(error) = validate_package_url(url) {
+            failures.push(error);
+            continue;
+        }
+        if position > 0 {
+            emit_progress(app, "download", 0, Some(package.size), "正在切换备用下载源");
+        }
+        let result = async {
+            let response = client
+                .get(url)
+                .send()
+                .await
+                .map_err(|error| format!("视频编辑模块下载失败：{error}"))?
+                .error_for_status()
+                .map_err(|error| format!("视频编辑模块下载请求失败：{error}"))?;
+            let content_length = response.content_length().or(Some(package.size));
+            if content_length.is_some_and(|length| length > package.size) {
+                return Err("视频编辑模块响应大小超过清单大小".to_string());
+            }
+            let mut stream = response.bytes_stream();
+            let mut file = tokio::fs::File::create(archive_path)
+                .await
+                .map_err(|error| format!("无法创建视频编辑模块下载文件：{error}"))?;
+            let mut hasher = Sha256::new();
+            let mut downloaded = 0_u64;
+            while let Some(chunk) = stream.next().await {
+                let chunk = chunk.map_err(|error| format!("视频编辑模块下载中断：{error}"))?;
+                downloaded = downloaded
+                    .checked_add(chunk.len() as u64)
+                    .ok_or_else(|| "视频编辑模块下载大小溢出".to_string())?;
+                if downloaded > MAX_ARCHIVE_BYTES || downloaded > package.size {
+                    return Err("视频编辑模块下载超过清单大小".to_string());
+                }
+                hasher.update(&chunk);
+                file.write_all(&chunk)
+                    .await
+                    .map_err(|error| format!("无法保存视频编辑模块：{error}"))?;
+                emit_progress(
+                    app,
+                    "download",
+                    downloaded,
+                    content_length,
+                    "正在下载视频编辑模块",
+                );
+            }
+            file.flush()
+                .await
+                .map_err(|error| format!("无法写入视频编辑模块：{error}"))?;
+            drop(file);
+            if downloaded != package.size {
+                return Err("视频编辑模块下载大小与清单不一致".to_string());
+            }
+            let actual_hash = format!("{:x}", hasher.finalize());
+            if actual_hash != package.sha256.to_ascii_lowercase() {
+                return Err("视频编辑模块 SHA-256 校验失败".to_string());
+            }
+            Ok::<(u64, Option<u64>), String>((downloaded, content_length))
+        }
+        .await;
+        match result {
+            Ok(download) => return Ok(download),
+            Err(error) => {
+                let _ = tokio::fs::remove_file(archive_path).await;
+                failures.push(error);
+            }
+        }
+    }
+    Err(format!(
+        "所有视频编辑模块下载源均不可用：{}",
+        failures.join("；")
+    ))
 }
 
 fn module_public_key() -> Result<PublicKey, String> {
@@ -414,19 +542,7 @@ pub async fn download_video_editor_module(
         .timeout(Duration::from_secs(60 * 60))
         .build()
         .map_err(|error| format!("无法创建下载客户端：{error}"))?;
-    let index_url = index_url();
-    validate_index_url(&index_url)?;
-    let index_bytes =
-        download_small_document(&client, &index_url, MAX_INDEX_BYTES, "视频编辑模块索引").await?;
-    let signature_url = format!("{index_url}.sig");
-    let signature_bytes = download_small_document(
-        &client,
-        &signature_url,
-        MAX_SIGNATURE_BYTES,
-        "视频编辑模块索引签名",
-    )
-    .await?;
-    verify_index_signature(&index_bytes, &signature_bytes)?;
+    let index_bytes = download_verified_index(&client).await?;
     let index: ModuleIndex = serde_json::from_slice(&index_bytes)
         .map_err(|error| format!("无法解析视频编辑模块清单：{error}"))?;
     if index.schema_version != INDEX_SCHEMA_VERSION {
@@ -459,6 +575,9 @@ pub async fn download_video_editor_module(
         .cloned()
         .ok_or_else(|| format!("当前发布尚未提供 {target} 视频编辑模块"))?;
     validate_package_url(&package.url)?;
+    for mirror in &package.mirrors {
+        validate_package_url(mirror)?;
+    }
     if package.size == 0 || package.size > MAX_ARCHIVE_BYTES {
         return Err("视频编辑模块下载大小无效".to_string());
     }
@@ -466,54 +585,8 @@ pub async fn download_video_editor_module(
 
     fs::create_dir_all(&root).map_err(|error| format!("无法创建视频编辑模块目录：{error}"))?;
     let archive_path = root.join(format!(".download-{}-{target}.zip", index.version));
-    let response = client
-        .get(&package.url)
-        .send()
-        .await
-        .map_err(|error| format!("视频编辑模块下载失败：{error}"))?
-        .error_for_status()
-        .map_err(|error| format!("视频编辑模块下载请求失败：{error}"))?;
-    let content_length = response.content_length().or(Some(package.size));
-    let mut stream = response.bytes_stream();
-    let mut file = tokio::fs::File::create(&archive_path)
-        .await
-        .map_err(|error| format!("无法创建视频编辑模块下载文件：{error}"))?;
-    let mut hasher = Sha256::new();
-    let mut downloaded = 0_u64;
-    while let Some(chunk) = stream.next().await {
-        let chunk = chunk.map_err(|error| format!("视频编辑模块下载中断：{error}"))?;
-        downloaded = downloaded
-            .checked_add(chunk.len() as u64)
-            .ok_or_else(|| "视频编辑模块下载大小溢出".to_string())?;
-        if downloaded > MAX_ARCHIVE_BYTES || downloaded > package.size {
-            let _ = tokio::fs::remove_file(&archive_path).await;
-            return Err("视频编辑模块下载超过清单大小".to_string());
-        }
-        hasher.update(&chunk);
-        file.write_all(&chunk)
-            .await
-            .map_err(|error| format!("无法保存视频编辑模块：{error}"))?;
-        emit_progress(
-            &app,
-            "download",
-            downloaded,
-            content_length,
-            "正在下载视频编辑模块",
-        );
-    }
-    file.flush()
-        .await
-        .map_err(|error| format!("无法写入视频编辑模块：{error}"))?;
-    drop(file);
-    if downloaded != package.size {
-        let _ = tokio::fs::remove_file(&archive_path).await;
-        return Err("视频编辑模块下载大小与清单不一致".to_string());
-    }
-    let actual_hash = format!("{:x}", hasher.finalize());
-    if actual_hash != package.sha256.to_ascii_lowercase() {
-        let _ = tokio::fs::remove_file(&archive_path).await;
-        return Err("视频编辑模块 SHA-256 校验失败".to_string());
-    }
+    let (downloaded, content_length) =
+        download_package_archive(&client, &app, &package, &archive_path).await?;
 
     if let Err(error) = ensure_module_idle_for_update(&state) {
         let _ = tokio::fs::remove_file(&archive_path).await;
@@ -873,10 +946,10 @@ pub fn bundled_tool_path(app: &tauri::AppHandle, tool: &str) -> Option<PathBuf> 
 #[cfg(test)]
 mod tests {
     use super::{
-        ensure_module_idle_for_update, install_archive, module_contract, module_public_key,
-        read_installed_manifest, runtime_target, safe_relative_path, stop_child, validate_manifest,
-        validate_package_url, validate_release_version, validate_sha256_text,
-        verify_index_signature, ModuleManifest, VideoEditorModuleState,
+        ensure_module_idle_for_update, index_urls, install_archive, module_contract,
+        module_public_key, read_installed_manifest, runtime_target, safe_relative_path, stop_child,
+        validate_index_url, validate_manifest, validate_package_url, validate_release_version,
+        validate_sha256_text, verify_index_signature, ModuleManifest, VideoEditorModuleState,
     };
 
     fn manifest() -> ModuleManifest {
@@ -1023,7 +1096,32 @@ mod tests {
             "https://github.com/UnityX103/CPA_V2/releases/download/video-editor-v1/module.zip"
         )
         .is_ok());
+        assert!(validate_package_url(
+            "https://cnb.cool/nanzhaigame-xpy/CPA_V2/-/releases/download/v0.1.23/module.zip"
+        )
+        .is_ok());
+        assert!(validate_package_url(
+            "https://cnb.cool/another/repo/-/releases/download/v0.1.23/module.zip"
+        )
+        .is_err());
         assert!(validate_package_url("https://example.com/module.zip").is_err());
+    }
+
+    #[test]
+    fn module_index_prefers_cnb_and_allows_github_fallback() {
+        let urls = index_urls();
+        assert!(urls
+            .first()
+            .is_some_and(|url| url.starts_with("https://cnb.cool/")));
+        assert!(validate_index_url(&urls[0]).is_ok());
+        assert!(validate_index_url(
+            "https://github.com/UnityX103/CPA_V2/releases/latest/download/video-editor-module-index.json"
+        )
+        .is_ok());
+        assert!(validate_index_url(
+            "https://cnb.cool/another/repo/-/releases/latest/download/video-editor-module-index.json"
+        )
+        .is_err());
     }
 
     #[test]

@@ -220,6 +220,86 @@ When `prlctl` is available, check `prlctl list -a` before treating Windows as un
    }
    ```
 
+## CNB Mirror Release Flow
+
+Every public release is mirrored to `nanzhaigame-xpy/CPA_V2` on CNB. GitHub
+remains the source repository, but clients prefer CNB downloads and fall back to
+GitHub. If the local clone does not have the second remote, add it once:
+
+```bash
+git remote add cnb https://cnb.cool/nanzhaigame-xpy/CPA_V2.git
+```
+
+Before creating releases, push the same commit and all release tags to both
+providers. Never force-push the mirror:
+
+```bash
+git push origin main --tags
+git push cnb main --tags
+```
+
+Prepare CNB-specific manifests after the final GitHub `latest.json` and video
+module index exist. The updater binary signatures remain valid because only the
+manifest URLs change. The video module index itself is signed, so it must be
+signed again after rewriting its package URLs:
+
+```bash
+cd app
+npm run release:cnb:prepare -- \
+  --latest /absolute/release-stage/latest.json \
+  --module-index /absolute/release-stage/video-editor-module-index.json \
+  --out-dir /absolute/release-stage/cnb \
+  --tag v<version> \
+  --repo nanzhaigame-xpy/CPA_V2
+
+source ~/.config/cpa-v2-release/release-secret-paths.env
+TAURI_SIGNING_PRIVATE_KEY_PASSWORD="$(cat "$CPA_UPDATER_PASSWORD_PATH")" \
+  npm run tauri -- signer sign -f "$CPA_UPDATER_PRIVATE_KEY_PATH" \
+  /absolute/release-stage/cnb/video-editor-module-index.json
+```
+
+Publish the CNB Release with `release:cnb:sync`, passing every ordinary asset
+plus the CNB-specific `latest.json`, module index, and module-index signature as
+repeatable `--asset` arguments. The script uploads packages first, the signed
+module index next, and `latest.json` last; it verifies CNB's remote size and
+hash after every upload and only then marks the Release as Latest:
+
+```bash
+CNB_TOKEN="$CNB_TOKEN" npm run release:cnb:sync -- \
+  --repo nanzhaigame-xpy/CPA_V2 \
+  --tag v<version> \
+  --target <release-commit> \
+  --title "CPA_V2 v<version>" \
+  --notes-file /absolute/release-notes.md \
+  --asset /absolute/path/to/first-asset \
+  --asset /absolute/release-stage/cnb/video-editor-module-index.json.sig \
+  --asset /absolute/release-stage/cnb/video-editor-module-index.json \
+  --asset /absolute/release-stage/cnb/latest.json
+```
+
+`CNB_TOKEN` must have repository and Release read/write permissions. The local
+CNB CLI can use `cnb login`; release automation may instead load a CNB access
+token from the ignored credential pack. Never print the token. CNB Release
+attachments accept files up to 64 GiB, so the self-contained video runtimes do
+not need splitting. Use `ttl=0` (the sync script default) so public release
+assets do not expire.
+
+Validate the public mirror before publishing GitHub Latest:
+
+```bash
+curl -fsSL \
+  https://cnb.cool/nanzhaigame-xpy/CPA_V2/-/releases/latest/download/latest.json \
+  | jq -e '.platforms["darwin-aarch64"] and .platforms["darwin-x86_64"] and .platforms["windows-x86_64-nsis"] and .platforms["windows-x86_64"]'
+curl -fsSL \
+  https://cnb.cool/nanzhaigame-xpy/CPA_V2/-/releases/latest/download/video-editor-module-index.json \
+  | jq -e '.packages["macos-arm64"] and .packages["macos-x86_64"] and .packages["windows-x86_64"]'
+```
+
+If CNB mirroring fails, keep the GitHub Release as a draft unless the user
+explicitly approves a GitHub-only exception. Do not upload one provider's
+rewritten video-module index to the other provider: their URLs differ and each
+index has its own Minisign signature.
+
 ## Important Gotchas
 
 - Current updater endpoint is GitHub Releases:

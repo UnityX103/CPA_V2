@@ -3,6 +3,9 @@
   "moduleVersion": "1.1.0-noncommercial.1",
   "distribution": "noncommercial-open-source",
   "release": "https://github.com/UnityX103/CPA_V2/releases/tag/v0.1.23",
+  "releaseMirrors": [
+    "https://cnb.cool/nanzhaigame-xpy/CPA_V2/-/releases/tag/v0.1.23"
+  ],
   "sourceCommit": "a8a1683a3073bc50663a69794e7fb9ce676b6300",
   "packageAuthenticity": "Each package SHA-256 is authenticated by the Tauri Minisign-signed public module index.",
   "capabilities": [

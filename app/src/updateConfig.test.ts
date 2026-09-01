@@ -38,11 +38,12 @@ describe('updater configuration', () => {
         expect(cargoPackageVersion(cargo)).toBe(conf.version);
     });
 
-    it('creates signed updater artifacts and points at the GitHub Releases manifest', () => {
+    it('creates signed updater artifacts and prefers CNB with GitHub fallback', () => {
         const conf = readJson(tauriConfPath);
         expect(conf.bundle?.createUpdaterArtifacts).toBe(true);
         expect(conf.bundle?.macOS?.signingIdentity).toBe('-');
         expect(conf.plugins?.updater?.endpoints).toEqual([
+            'https://cnb.cool/nanzhaigame-xpy/CPA_V2/-/releases/latest/download/latest.json',
             'https://github.com/UnityX103/CPA_V2/releases/latest/download/latest.json',
         ]);
         expect(conf.plugins?.updater?.pubkey).toEqual(expect.any(String));

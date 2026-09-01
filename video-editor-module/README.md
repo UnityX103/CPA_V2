@@ -112,3 +112,7 @@ see `licenses/NONCOMMERCIAL-NOTICE.md` and
 `RELEASE_MANIFEST_1.1.0-noncommercial.1.json`. Version 1.1.0 keeps automatic
 subject selection as the default and adds optional point selection plus
 adjustable matting thresholds.
+
+Mainland China mirror: `https://cnb.cool/nanzhaigame-xpy/CPA_V2/-/releases/tag/v0.1.23`.
+The CNB-signed module index uses CNB package URLs first and keeps the matching
+GitHub Release assets as authenticated fallback mirrors.

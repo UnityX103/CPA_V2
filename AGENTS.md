@@ -42,8 +42,11 @@ CPA_V2/
 - Single test file: `cd Server && node --test test/protocol.test.js`
 
 ### Updater release publishing
-- The updater endpoint is `https://github.com/UnityX103/CPA_V2/releases/latest/download/latest.json`.
-- Publish generated files from `app/release-updates/` as GitHub Release assets on `UnityX103/CPA_V2`; do not use `updates.nanzhaigame.cn` for new releases.
+- Updater endpoints are ordered CNB first, GitHub second: `https://cnb.cool/nanzhaigame-xpy/CPA_V2/-/releases/latest/download/latest.json`, then `https://github.com/UnityX103/CPA_V2/releases/latest/download/latest.json`. Tauri only tries the second endpoint when the first returns a non-2xx response.
+- The GitHub source repository is mirrored to `https://cnb.cool/nanzhaigame-xpy/CPA_V2`. Every release must push the same branch/tag and publish matching assets to both remotes; do not publish GitHub Latest until the CNB mirror has passed its public download checks.
+- Publish generated files from `app/release-updates/` as GitHub Release assets on `UnityX103/CPA_V2` and CNB Release assets on `nanzhaigame-xpy/CPA_V2`; do not use `updates.nanzhaigame.cn` for new releases.
+- Generate provider-specific manifests with `app/scripts/prepare-cnb-release.mjs`. Updater binary signatures are reusable, but the CNB video-module index must be re-signed after its package URLs are rewritten. CNB indexes carry GitHub package URLs as signed mirrors.
+- Use `app/scripts/sync-cnb-release.mjs` for CNB asset uploads. It uploads `latest.json` last, verifies every remote size/hash, and only then marks the CNB Release as Latest.
 - GitHub credentials are not stored in this repo. Use `gh auth status` before publishing, and keep release keys inside the ignored `cpa-v2-release/` credential pack.
 - Do not publish macOS packages built with `--no-sign`. The repo defaults to ad-hoc macOS signing (`bundle.macOS.signingIdentity = "-"`) as a minimum resource-seal fix, but polished public downloads require Developer ID signing plus Apple notarization.
 - macOS updater publishing supports both `darwin-x86_64` and `darwin-aarch64`; publish only keys whose matching thin package was built and verified. Windows updater publishing remains x64 / x86_64 only.
