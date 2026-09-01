@@ -320,6 +320,13 @@ def source_manifest_document(
         else ffmpeg_policy["macosSource"]
     )
     if target == "windows-x86_64":
+        ffmpeg_component = {
+            **ffmpeg_source,
+            "commit": ffmpeg_source["ffmpegCommit"],
+            "sourceUrl": ffmpeg_source["ffmpegSourceUrl"],
+            "sourceSha256": ffmpeg_source["ffmpegSourceSha256"],
+            "configuration": ffmpeg_configuration,
+        }
         libvpx_source = {
             "repository": ffmpeg_source["libvpxRepository"],
             "commit": ffmpeg_source["libvpxCommit"],
@@ -342,6 +349,7 @@ def source_manifest_document(
             },
         ]
     else:
+        ffmpeg_component = {**ffmpeg_source, "configuration": ffmpeg_configuration}
         libvpx_source = {
             "version": ffmpeg_source["libvpxVersion"],
             "url": ffmpeg_source["libvpxUrl"],
@@ -376,7 +384,7 @@ def source_manifest_document(
                 "modelSha256": birefnet["modelSha256"],
                 "declaredLicense": birefnet["declaredLicense"],
             },
-            "ffmpeg": {**ffmpeg_source, "configuration": ffmpeg_configuration},
+            "ffmpeg": ffmpeg_component,
             "libvpx": libvpx_source,
             "python": {
                 "implementation": python_implementation,

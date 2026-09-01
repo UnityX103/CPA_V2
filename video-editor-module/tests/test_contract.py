@@ -218,6 +218,24 @@ class VideoEditorModuleContractTests(unittest.TestCase):
                     required_packages,
                 )
 
+    def test_windows_source_manifest_uses_packager_field_names(self):
+        build_runtime = load_build_runtime()
+        source_policy = json.loads((ROOT / "source-policy.json").read_text(encoding="utf-8"))
+        manifest = build_runtime.source_manifest_document(
+            source_policy,
+            "windows-x86_64",
+            "a" * 40,
+            "configuration",
+            "CPython",
+            "3.14.7",
+        )
+        windows = source_policy["components"]["ffmpeg"]["windowsBuild"]
+        self.assertEqual(manifest["components"]["ffmpeg"]["commit"], windows["ffmpegCommit"])
+        self.assertEqual(
+            manifest["components"]["ffmpeg"]["sourceSha256"],
+            windows["ffmpegSourceSha256"],
+        )
+
     def test_noncommercial_windows_signature_policy_is_explicit(self):
         packager = load_packager()
         policy = packager.DISTRIBUTION_POLICIES["noncommercial-open-source"]
