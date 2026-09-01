@@ -105,8 +105,10 @@ exactly as generated rather than decoding or rewriting it.
 
 ## Published learning module
 
-`1.0.0-noncommercial.1` is published on CPA_V2 `v0.1.21` for macOS ARM64,
+`1.1.0-noncommercial.1` is published on CPA_V2 `v0.1.23` for macOS ARM64,
 macOS x86_64, and Windows x86_64. The signed index is
 `video-editor-module-index.json`. This release is explicitly non-commercial;
 see `licenses/NONCOMMERCIAL-NOTICE.md` and
-`RELEASE_MANIFEST_1.0.0-noncommercial.1.json`.
+`RELEASE_MANIFEST_1.1.0-noncommercial.1.json`. Version 1.1.0 keeps automatic
+subject selection as the default and adds optional point selection plus
+adjustable matting thresholds.

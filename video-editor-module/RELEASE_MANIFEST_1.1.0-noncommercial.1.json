@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "moduleVersion": "1.1.0-noncommercial.1",
+  "distribution": "noncommercial-open-source",
+  "release": "https://github.com/UnityX103/CPA_V2/releases/tag/v0.1.23",
+  "sourceCommit": "a8a1683a3073bc50663a69794e7fb9ce676b6300",
+  "packageAuthenticity": "Each package SHA-256 is authenticated by the Tauri Minisign-signed public module index.",
+  "capabilities": [
+    "sam2-birefnet-v1",
+    "screenshot",
+    "output-resolution",
+    "vp8-alpha-webm",
+    "subject-point-selection",
+    "matting-parameters-v1"
+  ],
+  "python": {
+    "macosArm64": "CPython 3.14.7 arm64",
+    "macosX86_64": {
+      "asset": "cpython-3.12.14+20260825-x86_64-apple-darwin-install_only.tar.gz",
+      "sha256": "65da7bc373ea36cb7e413f2a20bcced9eeb7e5a83fa554ce9f6ec79abb8d7e31"
+    },
+    "windowsX86_64": {
+      "asset": "cpython-3.14.7+20260825-x86_64-pc-windows-msvc-install_only.tar.gz",
+      "sha256": "a8a93fcf897f4c6ea4d120cf4a7ee4f98779d33a432a65b1af36a589c2f3d36c"
+    }
+  },
+  "ffmpeg": {
+    "macos": {
+      "version": "8.1.2",
+      "sourceSha256": "464beb5e7bf0c311e68b45ae2f04e9cc2af88851abb4082231742a74d97b524c",
+      "libvpxVersion": "1.16.0",
+      "libvpxSourceSha256": "7a479a3c66b9f5d5542a4c6a1b7d3768a983b1e5c14c60a9396edc9b649e015c",
+      "configure": "--enable-libvpx --enable-zlib --enable-videotoolbox --enable-audiotoolbox --enable-static --disable-shared --disable-doc --disable-debug --disable-ffplay --disable-network --disable-autodetect"
+    },
+    "windows": {
+      "asset": "ffmpeg-n8.1.2-50-g1a748fe2cd-win64-lgpl-8.1.zip",
+      "sha256": "f6274bbd9c247f9e90c1bbed066b03ed4a3907cece2fb91be6dd352393936365",
+      "ffmpegCommit": "1a748fe2cd43e3ead22fafb1b5b7d77f153898a8",
+      "ffmpegSourceAsset": "video-editor-module-ffmpeg-1a748fe2cd-source.tar.gz",
+      "ffmpegSourceSha256": "519e42c103de98a34fc07c2a52c0d6d7b25031f2bd4e42d544bc409fe9fb6477",
+      "buildSourceAsset": "video-editor-module-btbn-ffmpeg-builds-autobuild-2026-08-31-13-27.zip",
+      "buildSourceSha256": "8f11967c4ceb8a8fd4986c47c6963f9546892a14702ef0a5bd703f578f4e054a",
+      "buildCommit": "8267213e26c1031621e6e1210fe3aa4867214f6a",
+      "libvpxCommit": "9cc8e1c18024d6b64422ecb7fdd7a43c8e873908",
+      "libvpxSourceAsset": "video-editor-module-libvpx-9cc8e1c180-source.tar.gz",
+      "libvpxSourceSha256": "adacbdd41e05584f6779fc8025d3a2780543beee5dd19bdf07a87415b7ba0f03"
+    }
+  },
+  "packages": {
+    "macos-arm64": {
+      "size": 1517565187,
+      "sha256": "97b79dd7b8582393bd3c5c73863b82b12013b4578ed38252cde4c8caa690e3e1",
+      "platformSignature": "ad-hoc"
+    },
+    "macos-x86_64": {
+      "size": 1630588839,
+      "sha256": "fc5d8e426d828c7b22c2f18467ea6bd5355cf73589a0aa6d693dc37151ad5eca",
+      "platformSignature": "ad-hoc"
+    },
+    "windows-x86_64": {
+      "size": 1535574972,
+      "sha256": "72b76cefcbdb12d319c938a0e357bb6736bbffd331121724c7ce835026b9cc51",
+      "platformSignature": "unsigned-index-authenticated",
+      "windowsWarning": "The executable is not Authenticode signed and may trigger Microsoft Defender SmartScreen."
+    }
+  }
+}

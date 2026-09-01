@@ -37,6 +37,8 @@ same GitHub Release.
 The Tauri signer writes a Base64-wrapped Minisign document. Do not decode or
 rewrite the `.sig` before publishing; the host validates that exact format.
 
-Published module: `1.0.0-noncommercial.1` on CPA_V2 release `v0.1.21`.
+Published module: `1.1.0-noncommercial.1` on CPA_V2 release `v0.1.23`.
 All three packages use the same SAM2 and BiRefNet hashes. macOS ARM64 uses MPS
 for BiRefNet and CPU for SAM2; macOS x86_64 and Windows x86_64 use CPU fallback.
+The default matting parameters preserve the 1.0.0 output behavior; users can
+optionally select a subject point and tune the five exposed thresholds.
