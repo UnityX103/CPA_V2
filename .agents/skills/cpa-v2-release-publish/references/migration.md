@@ -32,18 +32,26 @@ GITHUB_SSH_KEY_PATH              GitHub SSH private key for git push
 REMOTE_NANZHAI_SSH_KEY_PATH      Legacy SSH private key for 139.159.233.218, not used for new releases
 ```
 
-Also restore `gh auth login`; the GitHub token is stored by GitHub CLI/keychain and should not be copied as plaintext.
+Also restore `gh auth login` and `cnb login`; both tokens are stored by their
+CLI/keychain integrations and should not be copied as plaintext. Add the CNB
+mirror remote if it is missing:
+
+```bash
+git remote add cnb https://cnb.cool/nanzhaigame-xpy/CPA_V2.git
+```
 
 ## New Machine Checklist
 
-1. Install Node, npm, Rust stable, Tauri prerequisites, GitHub CLI, Xcode command line tools.
+1. Install Node, npm, Rust stable, Tauri prerequisites, GitHub CLI, CNB CLI, and Xcode command line tools.
 2. Copy `cpa-v2-release/` into the CPA_V2 repo root on the new machine.
 3. Set `chmod 700 cpa-v2-release` and `chmod 600` for private keys and password files.
 4. Update `RUST_TOOLCHAIN_BIN` if the Rust toolchain path differs.
 5. Confirm:
    ```bash
    gh auth status
+   cnb status
    ssh -T git@github.com
+   git remote get-url cnb
    .agents/skills/cpa-v2-release-publish/scripts/check-release-dependencies.sh
    ```
 6. In `CPA_V2/app`, run focused updater tests before publishing.

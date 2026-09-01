@@ -38,13 +38,32 @@ check_cmd() {
   fi
 }
 
+failed=0
+expected_cnb_repo="nanzhaigame-xpy/CPA_V2"
+expected_primary_endpoint="https://cnb.cool/nanzhaigame-xpy/CPA_V2/-/releases/latest/download/latest.json"
+expected_fallback_endpoint="https://github.com/UnityX103/CPA_V2/releases/latest/download/latest.json"
+
 echo "config=$CONFIG"
 echo "repo=${CPA_V2_REPO:-UNSET}"
 echo "github_repo=${GITHUB_REPO:-UNSET}"
+echo "cnb_repo=${CNB_REPO:-UNSET}"
 echo "release_endpoint=${CPA_UPDATER_ENDPOINT:-UNSET}"
+echo "fallback_endpoint=${CPA_UPDATER_FALLBACK_ENDPOINT:-UNSET}"
 echo
 
-failed=0
+if [[ "${CNB_REPO:-}" != "$expected_cnb_repo" ]]; then
+  printf '%-34s expected=%s actual=%s\n' "cnb repo config" "$expected_cnb_repo" "${CNB_REPO:-UNSET}"
+  failed=1
+fi
+if [[ "${CPA_UPDATER_ENDPOINT:-}" != "$expected_primary_endpoint" ]]; then
+  printf '%-34s expected CNB primary\n' "updater endpoint config"
+  failed=1
+fi
+if [[ "${CPA_UPDATER_FALLBACK_ENDPOINT:-}" != "$expected_fallback_endpoint" ]]; then
+  printf '%-34s expected GitHub fallback\n' "updater fallback config"
+  failed=1
+fi
+
 check_file "updater private key" "${CPA_UPDATER_PRIVATE_KEY_PATH:-}" || failed=1
 check_file "updater password file" "${CPA_UPDATER_PASSWORD_PATH:-}" || failed=1
 check_file "updater public key" "${CPA_UPDATER_PUBLIC_KEY_PATH:-}" || failed=1
@@ -54,6 +73,7 @@ echo
 
 check_cmd git || failed=1
 check_cmd gh || failed=1
+check_cmd cnb || failed=1
 check_cmd npm || failed=1
 check_cmd curl || failed=1
 check_cmd jq || failed=1
@@ -91,6 +111,30 @@ fi
 
 if command -v gh >/dev/null 2>&1; then
   gh auth status || failed=1
+fi
+
+if command -v cnb >/dev/null 2>&1; then
+  cnb status || failed=1
+  if [[ -n "${CNB_REPO:-}" ]]; then
+    cnb_status="$(cnb repositories get-by-id --repo "$CNB_REPO" --verbose 2>/dev/null | jq -r '.status // 0' || echo 0)"
+    if [[ "$cnb_status" == "200" ]]; then
+      printf '%-34s %s\n' "cnb repository access" "OK"
+    else
+      printf '%-34s status=%s\n' "cnb repository access" "$cnb_status"
+      failed=1
+    fi
+  fi
+fi
+
+if [[ -n "${CPA_V2_REPO:-}" && -d "${CPA_V2_REPO:-}/.git" ]]; then
+  cnb_remote="$(git -C "$CPA_V2_REPO" remote get-url cnb 2>/dev/null || true)"
+  expected_cnb_remote="https://cnb.cool/${CNB_REPO:-$expected_cnb_repo}.git"
+  if [[ "$cnb_remote" == "$expected_cnb_remote" ]]; then
+    printf '%-34s %s\n' "cnb git remote" "OK"
+  else
+    printf '%-34s expected=%s actual=%s\n' "cnb git remote" "$expected_cnb_remote" "${cnb_remote:-MISSING}"
+    failed=1
+  fi
 fi
 
 if [[ -n "${GITHUB_SSH_KEY_PATH:-}" && -f "${GITHUB_SSH_KEY_PATH:-}" ]]; then

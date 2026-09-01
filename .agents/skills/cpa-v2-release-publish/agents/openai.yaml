@@ -1,4 +1,4 @@
 interface:
   display_name: "CPA_V2 Release"
-  short_description: "Package and publish CPA_V2 updates"
-  default_prompt: "Use $cpa-v2-release-publish to package CPA_V2, publish GitHub Release updater assets, or migrate release key paths to another machine."
+  short_description: "Publish synchronized GitHub and CNB updates"
+  default_prompt: "Use $cpa-v2-release-publish to package CPA_V2, publish matching GitHub and CNB Release updater assets, or migrate release key paths to another machine."

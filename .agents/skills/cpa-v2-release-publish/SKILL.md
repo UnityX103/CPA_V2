@@ -1,6 +1,6 @@
 ---
 name: cpa-v2-release-publish
-description: Use when packaging CPA_V2, publishing Tauri updater artifacts to GitHub Releases, using an available Parallels Windows VM for Windows x64 release builds, checking macOS DMG/Gatekeeper issues, or migrating CPA_V2 release keys to another computer.
+description: Use when packaging CPA_V2, publishing synchronized Tauri updater artifacts to GitHub and CNB Releases, using an available Parallels Windows VM for Windows x64 release builds, checking macOS DMG/Gatekeeper issues, or migrating CPA_V2 release keys to another computer.
 ---
 
 # CPA_V2 Release Publish
@@ -10,6 +10,15 @@ description: Use when packaging CPA_V2, publishing Tauri updater artifacts to Gi
 Treat release signing keys, GitHub tokens, Apple credentials, and SSH private keys as local secrets. Never print, paste, commit, or upload secret contents. Keep the self-contained credential pack in the repo root at:
 
 Every public macOS updater release must ship two separate thin builds: `x86_64-apple-darwin` and `aarch64-apple-darwin`. Never publish a Universal binary, and never publish `latest.json` with only one macOS architecture. By default, a public Latest release must also include Windows x86_64 NSIS and all four updater keys. Keep the release as a draft until the Windows flow is complete. Publishing macOS-only requires explicit user approval. Windows ARM64 remains out of scope unless explicitly requested.
+
+Every release is a mandatory two-provider transaction: GitHub
+`UnityX103/CPA_V2` and CNB `nanzhaigame-xpy/CPA_V2` must receive the same source
+commit, tag, release notes, and corresponding provider-specific assets. A
+release is not complete until CNB is public, marked Latest, and anonymously
+downloadable, then GitHub is published as Latest and both providers pass the
+online gate. Do not publish a GitHub-only or CNB-only release. If either
+provider fails, leave any still-draft release unpublished and report the
+blocker.
 
 ```bash
 cpa-v2-release/
@@ -46,11 +55,14 @@ From the repo root in `CPA_V2`:
    ```bash
    git status --short --branch
    gh auth status
+   cnb status
+   git remote get-url cnb
    ```
 2. Verify updater config:
    ```bash
    cd app
-   npx vitest run src/updateConfig.test.ts scripts/prepare-updater-release.test.mjs
+   npx vitest run src/updateConfig.test.ts scripts/prepare-updater-release.test.mjs \
+     scripts/prepare-cnb-release.test.mjs scripts/sync-cnb-release.test.mjs
    ```
 3. Build both thin macOS targets locally. Tauri `build` requires the private-key content in `TAURI_SIGNING_PRIVATE_KEY`; it does not consume `TAURI_SIGNING_PRIVATE_KEY_PATH`. Clear the path variable so newer signer versions do not receive conflicting arguments:
    ```bash
@@ -126,7 +138,8 @@ From the repo root in `CPA_V2`:
    gh release upload "v<version>" "$release_stage/latest.json#latest.json" \
      --repo UnityX103/CPA_V2 --clobber
    ```
-   Only when the user explicitly approves a macOS-only release may this draft be published now with `gh release edit "v<version>" --draft=false --latest`.
+   A macOS-only exception still requires a matching CNB Release. Run the CNB
+   mirror flow and its public gate before publishing this GitHub draft.
 8. For an explicitly approved macOS-only release, re-run the same gate against the public endpoint and verify every asset returns HTTP 200. The Apple Silicon fallback assertion is mandatory because Tauri may first try `darwin-aarch64-app` and then `darwin-aarch64`:
    ```bash
    curl -fsSL -o "$release_stage/online-latest.json" \
@@ -166,7 +179,7 @@ When `prlctl` is available, check `prlctl list -a` before treating Windows as un
    cd app
    npm.cmd test -- src/updateConfig.test.ts scripts/prepare-updater-release.test.mjs
    ```
-3. Upload package files to GitHub Release `v<version>`, then upload the merged `latest.json` last. The manifest must preserve both `darwin-x86_64` and `darwin-aarch64` entries and include both Windows platform keys:
+3. Upload package files to GitHub Release `v<version>`, then upload the merged `latest.json` last, but keep the GitHub Release as a draft. The manifest must preserve both `darwin-x86_64` and `darwin-aarch64` entries and include both Windows platform keys:
    ```powershell
    function Assert-UpdaterPlatforms($latest) {
      if ($latest.version -ne '<version>') {
@@ -194,9 +207,14 @@ When `prlctl` is available, check `prlctl list -a` before treating Windows as un
    gh release upload v<version> app\release-updates\stable\<version>\CPA_V2_<version>_x64-setup.exe#CPA_V2_<version>_x64-setup.exe --repo UnityX103/CPA_V2 --clobber
    gh release upload v<version> app\release-updates\stable\<version>\CPA_V2_<version>_x64-setup.exe.sig#CPA_V2_<version>_x64-setup.exe.sig --repo UnityX103/CPA_V2 --clobber
    gh release upload v<version> app\release-updates\stable\latest.json#latest.json --repo UnityX103/CPA_V2 --clobber
+   ```
+4. Return to the host, run the complete CNB Mirror Release Flow below, and
+   verify its public `latest.json`, signed module index, and large package URLs.
+   Only after CNB passes may GitHub be published:
+   ```bash
    gh release edit v<version> --repo UnityX103/CPA_V2 --draft=false --latest
    ```
-4. Download the public `latest.json`, repeat the four-platform assertion against that downloaded object, and verify GitHub Release assets:
+5. Download the public `latest.json`, repeat the four-platform assertion against that downloaded object, and verify GitHub Release assets:
    ```powershell
    $onlineLatestPath = Join-Path ([System.IO.Path]::GetTempPath()) 'cpa-v2-online-latest.json'
    curl.exe -fsSL -o $onlineLatestPath https://github.com/UnityX103/CPA_V2/releases/latest/download/latest.json
@@ -295,15 +313,27 @@ curl -fsSL \
   | jq -e '.packages["macos-arm64"] and .packages["macos-x86_64"] and .packages["windows-x86_64"]'
 ```
 
-If CNB mirroring fails, keep the GitHub Release as a draft unless the user
-explicitly approves a GitHub-only exception. Do not upload one provider's
-rewritten video-module index to the other provider: their URLs differ and each
-index has its own Minisign signature.
+If CNB mirroring fails, keep the GitHub Release as a draft. There is no
+GitHub-only release exception. Do not upload one provider's rewritten
+video-module index to the other provider: their URLs differ and each index has
+its own Minisign signature.
+
+### Mandatory completion gate
+
+Before reporting a release complete, all of these must be true:
+
+- `origin` and `cnb` resolve the release branch and tag to the same commit.
+- The CNB Release is not a draft, is Latest, and contains every expected asset.
+- CNB `latest.json` contains all four updater platform keys and only CNB binary URLs.
+- The CNB module index and `.sig` match, each CNB package URL is present, and its signed `mirrors` list contains the corresponding GitHub URL.
+- Anonymous Range requests succeed for every large CNB video-module package.
+- The GitHub Release is not a draft, is Latest, and contains every expected asset.
+- GitHub `latest.json` and its provider-specific signed module index pass the existing online gates.
 
 ## Important Gotchas
 
-- Current updater endpoint is GitHub Releases:
-  `https://github.com/UnityX103/CPA_V2/releases/latest/download/latest.json`
+- Current updater endpoints are CNB first and GitHub fallback:
+  `https://cnb.cool/nanzhaigame-xpy/CPA_V2/-/releases/latest/download/latest.json`, then `https://github.com/UnityX103/CPA_V2/releases/latest/download/latest.json`.
 - Do not use `updates.nanzhaigame.cn` for new releases. It is a legacy endpoint kept only for old diagnostics.
 - GitHub normalizes non-ASCII asset names. Use ASCII release asset names for updater artifacts and DMGs, including `app.tar.gz`, `app-aarch64.tar.gz`, `CPA_V2_<version>_x64.dmg`, and `CPA_V2_<version>_arm64.dmg`.
 - macOS public releases are always two thin artifacts. `darwin-x86_64` uses `app.tar.gz`; `darwin-aarch64` uses `app-aarch64.tar.gz`. A single-architecture manifest is a release-blocking error.
@@ -312,7 +342,7 @@ index has its own Minisign signature.
 - The default ad-hoc signature is only a fallback. Without Developer ID + notarization, users may still need to approve the app in Privacy & Security. A polished public macOS release requires installing a Developer ID Application certificate and setting notarization credentials (`APPLE_API_KEY`/`APPLE_API_ISSUER`/`APPLE_API_KEY_PATH`, or the Apple ID flow) before rebuilding.
 - If a downloaded DMG installs an app that macOS says is damaged, check with `hdiutil verify`, `codesign --verify --deep --strict`, `spctl --assess`, and `syspolicy_check distribution`. If `syspolicy_check` reports `Notary Ticket Missing`, the remaining blocker is Apple notarization, not the Tauri updater signature.
 - Windows releases must be built on Windows and then merged into `latest.json`; do not overwrite the existing macOS platform entry.
-- A normal cross-platform release stays draft after macOS upload. Only the Windows flow publishes it after all four updater platform entries pass validation. macOS-only publication is an explicit exception requiring user approval.
+- A normal cross-platform GitHub release stays draft after macOS and Windows upload. Only the CNB flow may unlock GitHub publication after both providers have all four updater platform entries. macOS-only publication is an explicit platform exception requiring user approval, but it still must be mirrored to CNB.
 - The macOS release gate must inspect every Mach-O file in both `.app` bundles with `lipo`. The x64 bundle may contain only `x86_64`, the ARM bundle only `arm64`; any fat/Universal or mislabeled Mach-O blocks publication.
 - On Windows, the Bash inventory helper may be unavailable. Do the equivalent checks in PowerShell: `git status --short --branch`, `gh auth status`, release artifact existence, and updater tests.
 - Upload `latest.json` last so clients never see metadata for package files that are still transferring.
