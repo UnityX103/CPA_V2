@@ -53,9 +53,7 @@ fileInput.addEventListener('change', async () => {
     uploadId = upload.id;
     sourceProbe = await api(`/api/probe?id=${uploadId}`).then((response) => response.json());
     sourceMeta.textContent = `${sourceProbe.width} × ${sourceProbe.height} · ${sourceProbe.durationSeconds.toFixed(2)} 秒 · ${sourceProbe.frameRate.toFixed(2)} FPS`;
-    startInput.value = '0';
-    endInput.value = sourceProbe.durationSeconds.toFixed(3);
-    applyResolutionPreset('original');
+    applySourceDefaults();
     processButton.disabled = false;
     screenshotButton.disabled = false;
   } catch (error) {
@@ -67,6 +65,15 @@ fileInput.addEventListener('change', async () => {
 presetInput.addEventListener('change', () => applyResolutionPreset(presetInput.value));
 widthInput.addEventListener('input', () => { presetInput.value = 'custom'; });
 heightInput.addEventListener('input', () => { presetInput.value = 'custom'; });
+
+function applySourceDefaults() {
+  const duration = Number(sourceProbe.durationSeconds);
+  startInput.value = '0';
+  startInput.max = String(duration);
+  endInput.value = String(duration);
+  endInput.max = String(duration);
+  applyResolutionPreset('original');
+}
 
 function applyResolutionPreset(preset) {
   if (!sourceProbe) return;

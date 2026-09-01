@@ -66,6 +66,10 @@ class VideoEditorModuleContractTests(unittest.TestCase):
         self.assertIn("输出分辨率", html)
         self.assertIn("resolution-preset", html)
         self.assertIn("toBlob", javascript)
+        self.assertIn("applySourceDefaults();", javascript)
+        self.assertIn("endInput.value = String(duration);", javascript)
+        self.assertIn("widthInput.value = sourceProbe.width;", javascript)
+        self.assertIn("heightInput.value = sourceProbe.height;", javascript)
         for removed in ["裁剪工具", "画笔剔除", "crop-box", "brush-overlay"]:
             self.assertNotIn(removed, html + javascript)
 

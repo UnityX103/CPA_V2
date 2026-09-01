@@ -171,6 +171,7 @@ fn read_installed_manifest(
     if !directory.join(entry).is_file() {
         return Err("视频编辑模块启动文件缺失，请重新下载".to_string());
     }
+    ensure_runtime_executables(&directory, &manifest)?;
     Ok(Some((pointer, manifest)))
 }
 
@@ -573,6 +574,8 @@ fn install_archive(
             fs::File::create(&output).map_err(|error| format!("无法写入模块文件：{error}"))?;
         std::io::copy(&mut entry, &mut target_file)
             .map_err(|error| format!("无法解压模块文件：{error}"))?;
+        drop(target_file);
+        restore_archive_permissions(&output, entry.unix_mode())?;
     }
     let manifest: ModuleManifest = serde_json::from_slice(
         &fs::read(staging.join("module.json")).map_err(|error| format!("模块清单缺失：{error}"))?,
@@ -610,6 +613,59 @@ fn install_archive(
     .map_err(|error| format!("无法保存模块状态：{error}"))?;
     fs::rename(&temporary_pointer, pointer_path(root))
         .map_err(|error| format!("无法激活视频编辑模块：{error}"))?;
+    Ok(())
+}
+
+#[cfg(unix)]
+fn restore_archive_permissions(path: &Path, archived_mode: Option<u32>) -> Result<(), String> {
+    use std::os::unix::fs::PermissionsExt;
+
+    let Some(mode) = archived_mode else {
+        return Ok(());
+    };
+    fs::set_permissions(path, fs::Permissions::from_mode(mode & 0o777))
+        .map_err(|error| format!("无法恢复模块文件权限：{error}"))
+}
+
+#[cfg(not(unix))]
+fn restore_archive_permissions(_path: &Path, _archived_mode: Option<u32>) -> Result<(), String> {
+    Ok(())
+}
+
+#[cfg(unix)]
+fn ensure_runtime_executables(
+    installed_directory: &Path,
+    manifest: &ModuleManifest,
+) -> Result<(), String> {
+    use std::os::unix::fs::PermissionsExt;
+
+    let entry = safe_relative_path(&manifest.entry)?;
+    for relative in [
+        entry,
+        PathBuf::from("runtime/bin/ffmpeg"),
+        PathBuf::from("runtime/bin/ffprobe"),
+    ] {
+        let path = installed_directory.join(relative);
+        if !path.is_file() {
+            continue;
+        }
+        let permissions = fs::metadata(&path)
+            .map_err(|error| format!("无法读取模块程序权限：{error}"))?
+            .permissions();
+        let mode = permissions.mode();
+        if mode & 0o111 == 0 {
+            fs::set_permissions(&path, fs::Permissions::from_mode(mode | 0o111))
+                .map_err(|error| format!("无法修复模块程序权限：{error}"))?;
+        }
+    }
+    Ok(())
+}
+
+#[cfg(not(unix))]
+fn ensure_runtime_executables(
+    _installed_directory: &Path,
+    _manifest: &ModuleManifest,
+) -> Result<(), String> {
     Ok(())
 }
 
@@ -763,9 +819,10 @@ pub fn bundled_tool_path(app: &tauri::AppHandle, tool: &str) -> Option<PathBuf> 
 #[cfg(test)]
 mod tests {
     use super::{
-        module_public_key, runtime_target, safe_relative_path, validate_manifest,
-        validate_package_url, validate_release_version, validate_sha256_text,
-        verify_index_signature, ModuleManifest, MODULE_ID, MODULE_SCHEMA_VERSION,
+        install_archive, module_public_key, read_installed_manifest, runtime_target,
+        safe_relative_path, validate_manifest, validate_package_url, validate_release_version,
+        validate_sha256_text, verify_index_signature, ModuleManifest, MODULE_ID,
+        MODULE_SCHEMA_VERSION,
     };
 
     fn manifest() -> ModuleManifest {
@@ -787,6 +844,99 @@ mod tests {
     #[test]
     fn accepts_the_expected_module_contract() {
         validate_manifest(&manifest(), "1.0.0", runtime_target()).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn install_archive_preserves_ffmpeg_tool_execution_permissions() {
+        use std::io::Write;
+        use std::os::unix::fs::PermissionsExt;
+        use std::time::{SystemTime, UNIX_EPOCH};
+        use zip::write::SimpleFileOptions;
+
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("clock after epoch")
+            .as_nanos();
+        let fixture = std::env::temp_dir().join(format!(
+            "cpa-video-editor-permissions-{}-{unique}",
+            std::process::id()
+        ));
+        let root = fixture.join("modules");
+        let archive_path = fixture.join("module.zip");
+        std::fs::create_dir_all(&fixture).expect("create fixture root");
+        let archive_file = std::fs::File::create(&archive_path).expect("create fixture archive");
+        let mut archive = zip::ZipWriter::new(archive_file);
+        let file_options = SimpleFileOptions::default().unix_permissions(0o755);
+        archive
+            .start_file("runtime/video-editor-module", file_options)
+            .expect("add module entry");
+        archive.write_all(b"module").expect("write module entry");
+        archive
+            .start_file("runtime/bin/ffmpeg", file_options)
+            .expect("add ffmpeg");
+        archive.write_all(b"ffmpeg").expect("write ffmpeg");
+        archive
+            .start_file("runtime/bin/ffprobe", file_options)
+            .expect("add ffprobe");
+        archive.write_all(b"ffprobe").expect("write ffprobe");
+        archive
+            .start_file(
+                "module.json",
+                SimpleFileOptions::default().unix_permissions(0o644),
+            )
+            .expect("add manifest");
+        archive
+            .write_all(
+                serde_json::to_string(&serde_json::json!({
+                    "schemaVersion": MODULE_SCHEMA_VERSION,
+                    "id": MODULE_ID,
+                    "version": "1.0.0",
+                    "target": runtime_target(),
+                    "entry": "runtime/video-editor-module",
+                    "capabilities": [
+                        "sam2-birefnet-v1",
+                        "screenshot",
+                        "output-resolution",
+                        "vp8-alpha-webm"
+                    ]
+                }))
+                .expect("serialize manifest")
+                .as_bytes(),
+            )
+            .expect("write manifest");
+        archive.finish().expect("finish fixture archive");
+
+        install_archive(&root, &archive_path, "1.0.0", runtime_target())
+            .expect("install fixture archive");
+        let installed = root.join(format!("1.0.0-{}", runtime_target()));
+        for tool in ["ffmpeg", "ffprobe"] {
+            let mode = std::fs::metadata(installed.join("runtime/bin").join(tool))
+                .expect("read installed tool")
+                .permissions()
+                .mode();
+            assert_ne!(mode & 0o111, 0, "{tool} lost its executable mode");
+        }
+
+        let entry = installed.join("runtime/video-editor-module");
+        let ffmpeg = installed.join("runtime/bin/ffmpeg");
+        let ffprobe = installed.join("runtime/bin/ffprobe");
+        for executable in [&entry, &ffmpeg, &ffprobe] {
+            std::fs::set_permissions(executable, std::fs::Permissions::from_mode(0o644))
+                .expect("simulate legacy broken install");
+        }
+        read_installed_manifest(&root)
+            .expect("repair legacy install")
+            .expect("installed module remains available");
+        for executable in [&entry, &ffmpeg, &ffprobe] {
+            let mode = std::fs::metadata(executable)
+                .expect("read repaired executable")
+                .permissions()
+                .mode();
+            assert_ne!(mode & 0o111, 0, "legacy executable was not repaired");
+        }
+
+        std::fs::remove_dir_all(&fixture).expect("remove fixture root");
     }
 
     #[test]
