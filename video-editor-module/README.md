@@ -149,6 +149,12 @@ FFmpeg, libvpx, and source-manifest gate.
 
 ## Published learning module
 
+`1.3.0-noncommercial.1` is published on CPA_V2 `v0.1.26` as the first schema-v2
+layered release. Shared model weights, native engines, and lightweight business/UI
+logic are versioned independently. Version 1.3.0 fixes the frozen v1.2.0 encoder's
+grayscale `maskedmerge` negotiation by requiring an RGB mask, and routes both
+download actions through the Tauri save dialog instead of navigating the preview.
+
 `1.2.0-noncommercial.1` is published on CPA_V2 `v0.1.24` for macOS ARM64,
 macOS x86_64, and Windows x86_64. The signed index is
 `video-editor-module-index.json`. This release is explicitly non-commercial;
@@ -157,7 +163,7 @@ see `licenses/NONCOMMERCIAL-NOTICE.md` and
 VP9 alpha video, masks hidden background RGB for alpha-ignorant players, and
 reports the exact backend-applied defaults in the UI.
 
-Mainland China mirror: `https://cnb.cool/nanzhaigame-xpy/CPA_V2/-/releases/tag/v0.1.24`.
+Mainland China mirror: `https://cnb.cool/nanzhaigame-xpy/CPA_V2/-/releases/tag/v0.1.26`.
 The CNB-signed module index uses CNB component URLs first and keeps matching
 GitHub Release assets as authenticated fallback mirrors. Reused components keep
 their original release tag on both providers.

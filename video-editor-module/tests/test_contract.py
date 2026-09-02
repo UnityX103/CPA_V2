@@ -133,7 +133,7 @@ class VideoEditorModuleContractTests(unittest.TestCase):
                     "--output-dir",
                     str(output),
                     "--release-url",
-                    "https://github.com/UnityX103/CPA_V2/releases/download/v0.1.25",
+                    "https://github.com/UnityX103/CPA_V2/releases/download/v0.1.26",
                     "--distribution",
                     "noncommercial-open-source",
                 ],
