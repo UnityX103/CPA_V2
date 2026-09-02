@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { basename } from 'node:path';
 import {
     cnbApiUrl,
     orderedAssetPaths,
@@ -15,7 +16,7 @@ describe('CNB release synchronization', () => {
             '/tmp/video-editor-module-index.json',
             '/tmp/module.zip',
             '/tmp/video-editor-module-index.json.sig',
-        ]).map((path) => path.split('/').at(-1));
+        ]).map((path) => basename(path));
         expect(result).toEqual([
             'module.zip',
             'cockroach-module-index.json.sig',
