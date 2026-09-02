@@ -1390,15 +1390,504 @@
     {
       "type": "frame",
       "id": "v2ZgA",
-      "x": 1741,
-      "y": 1588,
+      "x": 4396,
+      "y": 1325,
       "name": "Pet Settings Panel",
       "reusable": true,
-      "width": "fill_container(572)",
-      "height": "fit_content(70)",
+      "width": 572,
       "fill": "#FFFFFF00",
       "layout": "vertical",
-      "gap": 16
+      "gap": 12,
+      "children": [
+        {
+          "type": "frame",
+          "id": "CYkWu",
+          "name": "Pet Selector Card",
+          "width": "fill_container",
+          "fill": "#F6F7F8",
+          "cornerRadius": 16,
+          "layout": "vertical",
+          "gap": 14,
+          "padding": 16,
+          "children": [
+            {
+              "type": "frame",
+              "id": "W5qxp",
+              "name": "Selector Copy",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 6,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "rizKQ",
+                  "name": "Selector Title",
+                  "fill": "#5B4636",
+                  "content": "休息宠物",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 14,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "zgi0q",
+                  "name": "Selector Description",
+                  "fill": "#9E8E80",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "进入休息提醒条件后自动启动，休息结束时自动退出。",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "wExFp",
+              "name": "Pet Options",
+              "width": "fill_container",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "Ufn1f",
+                  "name": "Option Off",
+                  "width": "fill_container",
+                  "height": 48,
+                  "fill": "#FFFFFF",
+                  "cornerRadius": 14,
+                  "stroke": "#EADED6",
+                  "strokeWidth": 1,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "lKDrP",
+                      "name": "Option Off Label",
+                      "fill": "#5B4636",
+                      "content": "关闭",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 13,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "SObo9",
+                  "name": "Option Cockroach Selected",
+                  "width": "fill_container",
+                  "height": 48,
+                  "fill": "#F1EDFF",
+                  "cornerRadius": 14,
+                  "stroke": "#7C5CFC",
+                  "strokeWidth": 1,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "ORPgq",
+                      "name": "Option Cockroach Label",
+                      "fill": "#5B3ED0",
+                      "content": "蟑螂入侵",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 13,
+                      "fontWeight": "700"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "lzhBg",
+          "x": 0,
+          "y": 0,
+          "name": "Cockroach Module Not Downloaded",
+          "enabled": false,
+          "width": "fill_container(0)",
+          "fill": "#F6F7F8",
+          "cornerRadius": 16,
+          "layout": "vertical",
+          "gap": 12,
+          "padding": 16,
+          "children": [
+            {
+              "type": "frame",
+              "id": "ei4SP",
+              "name": "Download Heading",
+              "width": "fill_container",
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "L8Bwg",
+                  "name": "Download Copy",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 5,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "VqOv7",
+                      "name": "Download Title",
+                      "fill": "#5B4636",
+                      "content": "蟑螂模块需要单独下载",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 13,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "text",
+                      "id": "YdHq9",
+                      "name": "Download Description",
+                      "fill": "#9E8E80",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "默认安装包不包含 Electron 运行时和蟑螂程序。",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "dSgC1",
+                  "name": "Not Downloaded Badge",
+                  "fill": "#FFF4CC",
+                  "cornerRadius": 999,
+                  "padding": [
+                    5,
+                    9
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "TwSWY",
+                      "name": "Not Downloaded Badge Label",
+                      "fill": "#8A6D00",
+                      "content": "未下载",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 11,
+                      "fontWeight": "700"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "f9feX",
+              "name": "Download Module Button",
+              "fill": "#7C5CFC",
+              "cornerRadius": 10,
+              "padding": [
+                9,
+                14
+              ],
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "TBbIF",
+                  "name": "Download Module Label",
+                  "fill": "#FFFFFF",
+                  "content": "下载模块",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 12,
+                  "fontWeight": "700"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "xByet",
+          "name": "Cockroach Module Installed",
+          "width": "fill_container",
+          "fill": "#F6F7F8",
+          "cornerRadius": 16,
+          "layout": "vertical",
+          "gap": 12,
+          "padding": 16,
+          "children": [
+            {
+              "type": "frame",
+              "id": "n7Jta",
+              "name": "Installed Heading",
+              "width": "fill_container",
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "ioFyY",
+                  "name": "Installed Copy",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 5,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "EVpde",
+                      "name": "Installed Title",
+                      "fill": "#5B4636",
+                      "content": "蟑螂入侵模块",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 13,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "text",
+                      "id": "w3mco7",
+                      "name": "Installed Description",
+                      "fill": "#9E8E80",
+                      "content": "CockroachPet-Public-Electron · 独立进程",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "VqnFN",
+                  "name": "Installed Badge",
+                  "fill": "#DCFCE7",
+                  "cornerRadius": 999,
+                  "padding": [
+                    5,
+                    9
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "eVA1F",
+                      "name": "Installed Badge Label",
+                      "fill": "#166534",
+                      "content": "已下载",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 11,
+                      "fontWeight": "700"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "M6dy0r",
+              "name": "Upstream Settings",
+              "width": "fill_container",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "fGf7v",
+                  "name": "Maximum Count",
+                  "width": "fill_container",
+                  "fill": "#FFFFFF",
+                  "cornerRadius": 12,
+                  "padding": [
+                    10,
+                    12
+                  ],
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "ixvss",
+                      "name": "Maximum Count Label",
+                      "fill": "#5B4636",
+                      "content": "最大蟑螂数量",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "qQEmV",
+                      "name": "Maximum Count Value",
+                      "fill": "#5B4636",
+                      "content": "30",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 12,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "ddGTI",
+                  "name": "Baby Growth",
+                  "width": "fill_container",
+                  "fill": "#FFFFFF",
+                  "cornerRadius": 12,
+                  "padding": [
+                    10,
+                    12
+                  ],
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "w1rpga",
+                      "name": "Baby Growth Label",
+                      "fill": "#5B4636",
+                      "content": "幼虫成长时间",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "nHRaF",
+                      "name": "Baby Growth Value",
+                      "fill": "#5B4636",
+                      "content": "10 分钟",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 12,
+                      "fontWeight": "700"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "VJbOi",
+              "name": "Cockroach Actions",
+              "width": "fill_container",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "Q0hZbC",
+                  "name": "Save Settings",
+                  "width": "fill_container",
+                  "fill": "#FFFFFF",
+                  "cornerRadius": 10,
+                  "stroke": "#EADED6",
+                  "strokeWidth": 1,
+                  "padding": [
+                    9,
+                    10
+                  ],
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "jYsBb",
+                      "name": "Save Settings Label",
+                      "fill": "#5B4636",
+                      "content": "保存设置",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 11,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "vghNM",
+                  "name": "Simulate Invasion",
+                  "width": "fill_container",
+                  "fill": "#7C5CFC",
+                  "cornerRadius": 10,
+                  "stroke": "#EADED6",
+                  "strokeWidth": 1,
+                  "padding": [
+                    9,
+                    10
+                  ],
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "To7rZ",
+                      "name": "Simulate Invasion Label",
+                      "fill": "#FFFFFF",
+                      "content": "模拟",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 11,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "pEpeB",
+                  "name": "Kill All",
+                  "width": "fill_container",
+                  "fill": "#FFF1F2",
+                  "cornerRadius": 10,
+                  "stroke": "#FECACA",
+                  "strokeWidth": 1,
+                  "padding": [
+                    9,
+                    10
+                  ],
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "T5gvxK",
+                      "name": "Kill All Label",
+                      "fill": "#B42318",
+                      "content": "杀死所有",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 11,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "fwvpZ",
+                  "name": "Delete Module",
+                  "width": "fill_container",
+                  "fill": "#FFFFFF",
+                  "cornerRadius": 10,
+                  "stroke": "#EADED6",
+                  "strokeWidth": 1,
+                  "padding": [
+                    9,
+                    10
+                  ],
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "SgFXn",
+                      "name": "Delete Module Label",
+                      "fill": "#5B4636",
+                      "content": "删除模块",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 11,
+                      "fontWeight": "700"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
     },
     {
       "type": "frame",
@@ -1560,7 +2049,7 @@
                       "descendants": {
                         "oNDTH": {
                           "content": "开始",
-                          "x": 26.25,
+                          "x": 26.75,
                           "y": 7
                         }
                       }
@@ -1572,11 +2061,11 @@
                       "name": "skipBtn",
                       "width": "fill_container",
                       "height": "fit_content",
-                      "y": 39,
+                      "y": 34,
                       "descendants": {
                         "zgOkx": {
                           "content": "跳过",
-                          "x": 26.25,
+                          "x": 26.75,
                           "y": 7
                         }
                       }
@@ -3983,7 +4472,7 @@
           "ref": "bfMCZ",
           "name": "Unsaved Changes Dialog",
           "x": 32,
-          "y": 2573,
+          "y": 2309,
           "descendants": {
             "D1pHM": {
               "content": "有未保存的更改"
@@ -4375,7 +4864,7 @@
           "width": "fill_container",
           "height": "fit_content",
           "x": 0,
-          "y": 415,
+          "y": 378,
           "enabled": true
         }
       }
@@ -4513,6 +5002,28 @@
                       "name": "lbl2",
                       "fill": "#9E8E80",
                       "content": "联机",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 13,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "n54wN",
+                  "name": "tab-pet",
+                  "width": "fill_container",
+                  "padding": [
+                    10,
+                    14
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "cUtVU",
+                      "name": "lbl-pet",
+                      "fill": "#9E8E80",
+                      "content": "宠物",
                       "fontFamily": "MaokenAssortedSans",
                       "fontSize": 13,
                       "fontWeight": "500"
@@ -4969,6 +5480,18 @@
                   "x": 0,
                   "y": 0,
                   "padding": 16
+                },
+                {
+                  "id": "A8dW6",
+                  "type": "ref",
+                  "ref": "v2ZgA",
+                  "name": "petContentArea",
+                  "enabled": false,
+                  "width": 349,
+                  "height": 318,
+                  "layoutPosition": "absolute",
+                  "x": 0,
+                  "y": 0
                 }
               ]
             }
@@ -5708,7 +6231,7 @@
       "type": "frame",
       "id": "HnSHL",
       "x": 1741,
-      "y": 1751,
+      "y": 1980,
       "name": "Global Settings Panel",
       "width": 572,
       "height": 661,
@@ -6880,11 +7403,39 @@
                 },
                 {
                   "type": "frame",
+                  "id": "PHo5u",
+                  "x": 185,
+                  "y": 0,
+                  "name": "Video Editor Settings / Installed Update Button",
+                  "width": 170,
+                  "height": 38,
+                  "fill": "#FFF1EA",
+                  "cornerRadius": 12,
+                  "stroke": "#E89A78",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "TdTOH",
+                      "name": "Video Editor Settings / Installed Open Label",
+                      "fill": "#D15F3D",
+                      "content": "更新模板",
+                      "fontFamily": "MaokenAssortedSans",
+                      "fontSize": 13,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
                   "id": "DXAJj",
-                  "x": 370,
+                  "x": 360,
                   "y": 0,
                   "name": "Video Editor Settings / Installed Remove Button",
-                  "width": 168,
+                  "width": 170,
                   "height": 38,
                   "fill": "#FFFFFF",
                   "cornerRadius": 12,
@@ -6905,34 +7456,35 @@
                       "fontWeight": "600"
                     }
                   ]
-                },
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "wDEdx",
+              "x": 182.66666666666666,
+              "y": 0,
+              "name": "Video Editor Settings / Installed Update Button",
+              "enabled": false,
+              "width": 0,
+              "height": 0,
+              "fill": "#FFF1EA",
+              "cornerRadius": 12,
+              "stroke": "#E89A78",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
                 {
-                  "type": "frame",
-                  "id": "IX4Hx",
-                  "x": 185,
-                  "y": 0,
-                  "name": "Video Editor Settings / Installed Update Button",
-                  "width": 170,
-                  "height": 38,
-                  "fill": "#FFF1EA",
-                  "cornerRadius": 12,
-                  "stroke": "#E89A78",
-                  "strokeWidth": 1,
-                  "strokeAlignment": "inner",
-                  "justifyContent": "center",
-                  "alignItems": "center",
-                  "children": [
-                    {
-                      "type": "text",
-                      "id": "Z7VrQ",
-                      "name": "Video Editor Settings / Installed Open Label",
-                      "fill": "#D15F3D",
-                      "content": "更新模板",
-                      "fontFamily": "MaokenAssortedSans",
-                      "fontSize": 13,
-                      "fontWeight": "700"
-                    }
-                  ]
+                  "type": "text",
+                  "id": "d2Fg6t",
+                  "name": "Video Editor Settings / Installed Update Label",
+                  "fill": "#D15F3D",
+                  "content": "更新模板",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 13,
+                  "fontWeight": "700"
                 }
               ]
             }
@@ -7318,7 +7870,7 @@
                 },
                 {
                   "type": "frame",
-                  "id": "qY5E7",
+                  "id": "tgGFo",
                   "name": "Subject Selection Card",
                   "width": "fill_container",
                   "height": 112,
@@ -7330,7 +7882,7 @@
                   "children": [
                     {
                       "type": "frame",
-                      "id": "dTlxL",
+                      "id": "z9O9m",
                       "name": "Subject Selection Header",
                       "width": "fill_container",
                       "height": 18,
@@ -7339,7 +7891,7 @@
                       "children": [
                         {
                           "type": "text",
-                          "id": "w6mD1",
+                          "id": "LYc8F",
                           "name": "Subject Selection Title",
                           "fill": "#374151",
                           "content": "主体选择",
@@ -7349,7 +7901,7 @@
                         },
                         {
                           "type": "frame",
-                          "id": "oHB5M",
+                          "id": "G54sC",
                           "name": "Automatic Selection Badge",
                           "fill": "#DCFCE7",
                           "cornerRadius": 999,
@@ -7361,7 +7913,7 @@
                           "children": [
                             {
                               "type": "text",
-                              "id": "ntwYS",
+                              "id": "wRYEd",
                               "name": "Automatic Selection Badge Label",
                               "fill": "#15803D",
                               "content": "默认自动",
@@ -7375,7 +7927,7 @@
                     },
                     {
                       "type": "frame",
-                      "id": "xTj9S",
+                      "id": "X2oVqV",
                       "name": "Subject Selection Modes",
                       "width": "fill_container",
                       "height": 32,
@@ -7383,7 +7935,7 @@
                       "children": [
                         {
                           "type": "frame",
-                          "id": "Y8oEvh",
+                          "id": "clTad",
                           "name": "Automatic Subject Mode",
                           "width": "fill_container",
                           "height": 32,
@@ -7398,7 +7950,7 @@
                           "children": [
                             {
                               "type": "icon",
-                              "id": "g0HcRw",
+                              "id": "V3CHSc",
                               "name": "Automatic Subject Icon",
                               "width": 14,
                               "height": 14,
@@ -7408,7 +7960,7 @@
                             },
                             {
                               "type": "text",
-                              "id": "q5qb2",
+                              "id": "a7OxH",
                               "name": "Automatic Subject Label",
                               "fill": "#D15F3D",
                               "content": "自动选择",
@@ -7420,7 +7972,7 @@
                         },
                         {
                           "type": "frame",
-                          "id": "s9w4Yo",
+                          "id": "AuEgS",
                           "name": "Point Subject Mode",
                           "width": "fill_container",
                           "height": 32,
@@ -7435,7 +7987,7 @@
                           "children": [
                             {
                               "type": "icon",
-                              "id": "RG76V",
+                              "id": "IYdiO",
                               "name": "Point Subject Icon",
                               "width": 14,
                               "height": 14,
@@ -7445,7 +7997,7 @@
                             },
                             {
                               "type": "text",
-                              "id": "HXw3G",
+                              "id": "pFbPG",
                               "name": "Point Subject Label",
                               "fill": "#6B7280",
                               "content": "点选主体",
@@ -7459,7 +8011,7 @@
                     },
                     {
                       "type": "frame",
-                      "id": "br8r5",
+                      "id": "ENyjv",
                       "name": "Point Selection Hint",
                       "width": "fill_container",
                       "height": 22,
@@ -7468,7 +8020,7 @@
                       "children": [
                         {
                           "type": "icon",
-                          "id": "eRYiB",
+                          "id": "Vss3l",
                           "name": "Point Selection Hint Icon",
                           "width": 13,
                           "height": 13,
@@ -7478,7 +8030,7 @@
                         },
                         {
                           "type": "text",
-                          "id": "z7rje",
+                          "id": "H5c4c",
                           "name": "Point Selection Hint Text",
                           "fill": "#9CA3AF",
                           "content": "切换后，在当前帧点击目标动物",
@@ -7805,7 +8357,7 @@
                 },
                 {
                   "type": "frame",
-                  "id": "kzdRV",
+                  "id": "SD6ST",
                   "name": "Matting Parameters Card",
                   "width": "fill_container",
                   "height": 226,
@@ -7817,7 +8369,7 @@
                   "children": [
                     {
                       "type": "frame",
-                      "id": "TZ2TF",
+                      "id": "beg5R",
                       "name": "Matting Parameters Header",
                       "width": "fill_container",
                       "height": 20,
@@ -7826,7 +8378,7 @@
                       "children": [
                         {
                           "type": "text",
-                          "id": "uZmyT",
+                          "id": "tb99K",
                           "name": "Matting Parameters Title",
                           "fill": "#374151",
                           "content": "抠图参数",
@@ -7836,7 +8388,7 @@
                         },
                         {
                           "type": "frame",
-                          "id": "vGXpG",
+                          "id": "PwF6n",
                           "name": "Reset Matting Parameters Button",
                           "fill": "#FFF1EA",
                           "cornerRadius": 999,
@@ -7851,7 +8403,7 @@
                           "children": [
                             {
                               "type": "text",
-                              "id": "rXKeF",
+                              "id": "S4xYJ",
                               "name": "Reset Matting Parameters Label",
                               "fill": "#D15F3D",
                               "content": "恢复默认",
@@ -7865,7 +8417,7 @@
                     },
                     {
                       "type": "frame",
-                      "id": "UwDxA",
+                      "id": "EedLk",
                       "name": "背景清理阈值 Parameter Row",
                       "width": "fill_container",
                       "height": 30,
@@ -7874,7 +8426,7 @@
                       "children": [
                         {
                           "type": "text",
-                          "id": "P1pNX6",
+                          "id": "tvMfw",
                           "name": "背景清理阈值 Label",
                           "fill": "#6B7280",
                           "textGrowth": "fixed-width",
@@ -7886,7 +8438,7 @@
                         },
                         {
                           "type": "frame",
-                          "id": "IykhR",
+                          "id": "w7sg4",
                           "name": "背景清理阈值 Slider Track",
                           "width": "fill_container",
                           "height": 6,
@@ -7895,7 +8447,7 @@
                         },
                         {
                           "type": "frame",
-                          "id": "MI7y3",
+                          "id": "sNMqT",
                           "name": "背景清理阈值 Value Input",
                           "width": 58,
                           "height": 26,
@@ -7909,7 +8461,7 @@
                           "children": [
                             {
                               "type": "text",
-                              "id": "OZkh1",
+                              "id": "Ruf3t",
                               "name": "背景清理阈值 Value",
                               "fill": "#374151",
                               "content": "0.00",
@@ -7923,7 +8475,7 @@
                     },
                     {
                       "type": "frame",
-                      "id": "WVQFw",
+                      "id": "LB5jf",
                       "name": "Seed 阈值 Parameter Row",
                       "width": "fill_container",
                       "height": 30,
@@ -7932,7 +8484,7 @@
                       "children": [
                         {
                           "type": "text",
-                          "id": "QOT8B",
+                          "id": "WFFEL",
                           "name": "Seed 阈值 Label",
                           "fill": "#6B7280",
                           "textGrowth": "fixed-width",
@@ -7944,7 +8496,7 @@
                         },
                         {
                           "type": "frame",
-                          "id": "qRGdk",
+                          "id": "sW8em",
                           "name": "Seed 阈值 Slider Track",
                           "width": "fill_container",
                           "height": 6,
@@ -7954,7 +8506,7 @@
                             {
                               "type": "rectangle",
                               "cornerRadius": 999,
-                              "id": "kmC3s",
+                              "id": "ixSi0",
                               "name": "Seed 阈值 Slider Fill",
                               "fill": "#D15F3D",
                               "width": 50,
@@ -7964,7 +8516,7 @@
                         },
                         {
                           "type": "frame",
-                          "id": "o176P5",
+                          "id": "ZDfP7",
                           "name": "Seed 阈值 Value Input",
                           "width": 58,
                           "height": 26,
@@ -7978,7 +8530,7 @@
                           "children": [
                             {
                               "type": "text",
-                              "id": "VHScE",
+                              "id": "X4E83",
                               "name": "Seed 阈值 Value",
                               "fill": "#374151",
                               "content": "0.50",
@@ -7992,7 +8544,7 @@
                     },
                     {
                       "type": "frame",
-                      "id": "Jn7ef",
+                      "id": "oWtA3",
                       "name": "核心阈值 Parameter Row",
                       "width": "fill_container",
                       "height": 30,
@@ -8001,7 +8553,7 @@
                       "children": [
                         {
                           "type": "text",
-                          "id": "Q3ubSa",
+                          "id": "eoJQY",
                           "name": "核心阈值 Label",
                           "fill": "#6B7280",
                           "textGrowth": "fixed-width",
@@ -8013,7 +8565,7 @@
                         },
                         {
                           "type": "frame",
-                          "id": "FQBBG",
+                          "id": "nn30H",
                           "name": "核心阈值 Slider Track",
                           "width": "fill_container",
                           "height": 6,
@@ -8023,7 +8575,7 @@
                             {
                               "type": "rectangle",
                               "cornerRadius": 999,
-                              "id": "vAWrw",
+                              "id": "OHIiy",
                               "name": "核心阈值 Slider Fill",
                               "fill": "#D15F3D",
                               "width": 35,
@@ -8033,7 +8585,7 @@
                         },
                         {
                           "type": "frame",
-                          "id": "vXR25",
+                          "id": "P2KrO",
                           "name": "核心阈值 Value Input",
                           "width": 58,
                           "height": 26,
@@ -8047,7 +8599,7 @@
                           "children": [
                             {
                               "type": "text",
-                              "id": "EtqXb",
+                              "id": "njbfQ",
                               "name": "核心阈值 Value",
                               "fill": "#374151",
                               "content": "0.35",
@@ -8061,7 +8613,7 @@
                     },
                     {
                       "type": "frame",
-                      "id": "yoA3C",
+                      "id": "F7l0Dw",
                       "name": "支持带半径 Parameter Row",
                       "width": "fill_container",
                       "height": 30,
@@ -8070,7 +8622,7 @@
                       "children": [
                         {
                           "type": "text",
-                          "id": "Mg8l9",
+                          "id": "FgqUI",
                           "name": "支持带半径 Label",
                           "fill": "#6B7280",
                           "textGrowth": "fixed-width",
@@ -8082,7 +8634,7 @@
                         },
                         {
                           "type": "frame",
-                          "id": "XOxGX",
+                          "id": "yV2VT",
                           "name": "支持带半径 Slider Track",
                           "width": "fill_container",
                           "height": 6,
@@ -8092,7 +8644,7 @@
                             {
                               "type": "rectangle",
                               "cornerRadius": 999,
-                              "id": "f5JmG6",
+                              "id": "xuBEo",
                               "name": "支持带半径 Slider Fill",
                               "fill": "#D15F3D",
                               "width": 30,
@@ -8102,7 +8654,7 @@
                         },
                         {
                           "type": "frame",
-                          "id": "yMvOL",
+                          "id": "j2aUw",
                           "name": "支持带半径 Value Input",
                           "width": 58,
                           "height": 26,
@@ -8116,7 +8668,7 @@
                           "children": [
                             {
                               "type": "text",
-                              "id": "O46qjI",
+                              "id": "X1R96u",
                               "name": "支持带半径 Value",
                               "fill": "#374151",
                               "content": "30 px",
@@ -8130,7 +8682,7 @@
                     },
                     {
                       "type": "frame",
-                      "id": "T8PZ6x",
+                      "id": "V9oVbu",
                       "name": "羽化强度 Parameter Row",
                       "width": "fill_container",
                       "height": 30,
@@ -8139,7 +8691,7 @@
                       "children": [
                         {
                           "type": "text",
-                          "id": "w6lZex",
+                          "id": "fbnAX",
                           "name": "羽化强度 Label",
                           "fill": "#6B7280",
                           "textGrowth": "fixed-width",
@@ -8151,7 +8703,7 @@
                         },
                         {
                           "type": "frame",
-                          "id": "dGZiB",
+                          "id": "VwXj9",
                           "name": "羽化强度 Slider Track",
                           "width": "fill_container",
                           "height": 6,
@@ -8161,7 +8713,7 @@
                             {
                               "type": "rectangle",
                               "cornerRadius": 999,
-                              "id": "Sqfyt",
+                              "id": "j0nfi",
                               "name": "羽化强度 Slider Fill",
                               "fill": "#D15F3D",
                               "width": 25,
@@ -8171,7 +8723,7 @@
                         },
                         {
                           "type": "frame",
-                          "id": "w21qo",
+                          "id": "KJJeI",
                           "name": "羽化强度 Value Input",
                           "width": 58,
                           "height": 26,
@@ -8185,7 +8737,7 @@
                           "children": [
                             {
                               "type": "text",
-                              "id": "bmE7o",
+                              "id": "debg6",
                               "name": "羽化强度 Value",
                               "fill": "#374151",
                               "content": "5.0",
@@ -8484,6 +9036,140 @@
                   ]
                 }
               ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "k5lrkc",
+      "x": 4396,
+      "y": 1716,
+      "name": "Pet Settings States",
+      "width": 1800,
+      "height": 420,
+      "fill": "#FCFAFA",
+      "gap": 28,
+      "padding": [
+        24,
+        14
+      ],
+      "children": [
+        {
+          "type": "frame",
+          "id": "ugoDf",
+          "name": "Pet State Off",
+          "width": 572,
+          "layout": "vertical",
+          "gap": 12,
+          "children": [
+            {
+              "type": "text",
+              "id": "bjpMC",
+              "name": "Pet State Off Label",
+              "fill": "#5B4636",
+              "content": "状态 1 · 关闭",
+              "fontFamily": "MaokenAssortedSans",
+              "fontSize": 14,
+              "fontWeight": "700"
+            },
+            {
+              "id": "lWbXK",
+              "type": "ref",
+              "ref": "v2ZgA",
+              "name": "Pet Settings Off Instance",
+              "width": 572,
+              "x": 0,
+              "y": 26,
+              "descendants": {
+                "Ufn1f": {
+                  "fill": "#F1EDFF",
+                  "stroke": "#7C5CFC"
+                },
+                "lKDrP": {
+                  "fill": "#5B3ED0"
+                },
+                "SObo9": {
+                  "fill": "#FFFFFF",
+                  "stroke": "#EADED6"
+                },
+                "ORPgq": {
+                  "fill": "#5B4636"
+                },
+                "lzhBg": {
+                  "enabled": false
+                },
+                "xByet": {
+                  "enabled": false
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "cSXRW",
+          "name": "Pet State Not Downloaded",
+          "width": 572,
+          "layout": "vertical",
+          "gap": 12,
+          "children": [
+            {
+              "type": "text",
+              "id": "zjDt7",
+              "name": "Pet State Not Downloaded Label",
+              "fill": "#5B4636",
+              "content": "状态 2 · 蟑螂入侵 / 未下载",
+              "fontFamily": "MaokenAssortedSans",
+              "fontSize": 14,
+              "fontWeight": "700"
+            },
+            {
+              "id": "B7JbMX",
+              "type": "ref",
+              "ref": "v2ZgA",
+              "name": "Pet Settings Download Instance",
+              "width": 572,
+              "x": 0,
+              "y": 26,
+              "descendants": {
+                "lzhBg": {
+                  "enabled": true
+                },
+                "xByet": {
+                  "enabled": false
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "uhPJh",
+          "name": "Pet State Installed",
+          "width": 572,
+          "layout": "vertical",
+          "gap": 12,
+          "children": [
+            {
+              "type": "text",
+              "id": "qcLbL",
+              "name": "Pet State Installed Label",
+              "fill": "#5B4636",
+              "content": "状态 3 · 蟑螂入侵 / 已安装",
+              "fontFamily": "MaokenAssortedSans",
+              "fontSize": 14,
+              "fontWeight": "700"
+            },
+            {
+              "id": "ljlKk",
+              "type": "ref",
+              "ref": "v2ZgA",
+              "name": "Pet Settings Installed Instance",
+              "width": 572,
+              "x": 0,
+              "y": 26
             }
           ]
         }

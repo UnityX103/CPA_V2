@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { usePomodoroStore } from '../domain/pomodoro';
 import { useSettingsStore } from '../domain/settings';
@@ -6,11 +6,12 @@ import { usePresenceStore } from '../domain/presence';
 import { SettingsPanel } from './SettingsPanel';
 
 const invoke = vi.hoisted(() => vi.fn());
+const listen = vi.hoisted(() => vi.fn());
 const open = vi.hoisted(() => vi.fn());
 const message = vi.hoisted(() => vi.fn());
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke }));
-vi.mock('@tauri-apps/api/event', () => ({ listen: vi.fn(async () => () => {}) }));
+vi.mock('@tauri-apps/api/event', () => ({ listen }));
 vi.mock('@tauri-apps/api/window', () => ({
     getCurrentWindow: () => ({ startDragging: vi.fn(async () => {}) }),
 }));
@@ -26,6 +27,7 @@ beforeEach(() => {
         }
         return Promise.resolve(undefined);
     });
+    listen.mockReset().mockResolvedValue(() => {});
     open.mockReset().mockResolvedValue(null);
     message.mockReset().mockResolvedValue(undefined);
     useSettingsStore.setState({
@@ -111,6 +113,71 @@ describe('SettingsPanel', () => {
         await screen.findByRole('button', { name: '打开视频编辑器' });
         expect(screen.getByRole('button', { name: '更新视频编辑模板' })).toBeTruthy();
         expect(invoke).toHaveBeenCalledWith('download_video_editor_module');
+    });
+
+    it('keeps video module download progress when switching settings tabs', async () => {
+        const notInstalled = {
+            installed: false,
+            version: null,
+            target: 'macos-arm64',
+            message: '视频编辑模块尚未下载',
+        };
+        let finishDownload!: (status: typeof notInstalled) => void;
+        const pendingDownload = new Promise<typeof notInstalled>((resolve) => {
+            finishDownload = resolve;
+        });
+        let progressListener: ((event: { payload: {
+            stage: 'download';
+            downloadedBytes: number;
+            totalBytes: number;
+            message: string;
+        } }) => void) | undefined;
+
+        listen.mockImplementation(async (eventName: string, listener: typeof progressListener) => {
+            if (eventName === 'video-editor-module-progress') progressListener = listener;
+            return () => {};
+        });
+        invoke.mockImplementation((command: string) => {
+            if (command === 'video_editor_module_status') return Promise.resolve(notInstalled);
+            if (command === 'download_video_editor_module') return pendingDownload;
+            return Promise.resolve(undefined);
+        });
+
+        render(<SettingsPanel />);
+        fireEvent.click(screen.getByRole('button', { name: '视频编辑' }));
+        const download = await screen.findByRole('button', { name: '下载视频编辑模板' });
+        fireEvent.click(download);
+        await vi.waitFor(() => {
+            expect(invoke.mock.calls.filter(([command]) => (
+                command === 'download_video_editor_module'
+            ))).toHaveLength(1);
+        });
+
+        act(() => {
+            progressListener?.({
+                payload: {
+                    stage: 'download',
+                    downloadedBytes: 25,
+                    totalBytes: 100,
+                    message: '正在下载视频编辑模块',
+                },
+            });
+        });
+        expect(await screen.findByText('正在下载视频编辑模块 · 25%')).toBeTruthy();
+
+        fireEvent.click(screen.getByRole('button', { name: '全局' }));
+        fireEvent.click(screen.getByRole('button', { name: '视频编辑' }));
+
+        expect(await screen.findByText('正在下载视频编辑模块 · 25%')).toBeTruthy();
+        const restoredDownload = screen.getByRole('button', { name: '下载视频编辑模板' }) as HTMLButtonElement;
+        expect(restoredDownload.disabled).toBe(true);
+        expect(restoredDownload.textContent).toBe('下载中…');
+        fireEvent.click(restoredDownload);
+        expect(invoke.mock.calls.filter(([command]) => (
+            command === 'download_video_editor_module'
+        ))).toHaveLength(1);
+
+        finishDownload({ ...notInstalled, installed: true, version: '1.3.0' });
     });
 
     it('opens the global settings surface', () => {
