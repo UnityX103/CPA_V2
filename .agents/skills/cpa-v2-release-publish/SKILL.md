@@ -7,7 +7,19 @@ description: Use when packaging CPA_V2, publishing synchronized Tauri updater ar
 
 ## Core Rule
 
-Treat release signing keys, GitHub tokens, Apple credentials, and SSH private keys as local secrets. Never print, paste, commit, or upload secret contents. Keep the self-contained credential pack in the repo root at:
+Treat release signing keys, GitHub/CNB tokens, Apple credentials, and SSH private keys as local secrets. Never print, paste, commit, or upload secret contents. The authoritative release configuration lives outside the repository at:
+
+```bash
+~/.config/cpa-v2-release/release-secret-paths.env
+```
+
+Store the CNB Release OpenAPI token separately at:
+
+```bash
+~/.config/cpa-v2-release/cnb-release-token
+```
+
+Both files must be mode `600`. `release-secret-paths.env` should expose `CNB_TOKEN_FILE` and load `CNB_TOKEN` from that file. Never store the CNB token in `cpa-v2-release/` or any other project directory. GitHub SSH keys and updater keys may remain in their established user-level paths referenced by the config.
 
 Every public macOS updater release must ship two separate thin builds: `x86_64-apple-darwin` and `aarch64-apple-darwin`. Never publish a Universal binary, and never publish `latest.json` with only one macOS architecture. By default, a public Latest release must also include Windows x86_64 NSIS and all four updater keys. Keep the release as a draft until the Windows flow is complete. Publishing macOS-only requires explicit user approval. Windows ARM64 remains out of scope unless explicitly requested.
 
@@ -20,15 +32,7 @@ online gate. Do not publish a GitHub-only or CNB-only release. If either
 provider fails, leave any still-draft release unpublished and report the
 blocker.
 
-```bash
-cpa-v2-release/
-```
-
-This directory is ignored by Git and should contain `release-secret-paths.env` plus the key files it references. The global config can be a tiny shim that sources the repo-local config:
-
-```bash
-~/.config/cpa-v2-release/release-secret-paths.env
-```
+The ignored repo-local `cpa-v2-release/` directory is for release staging and generated artifacts only, not credentials.
 
 Run the inventory helper before release or migration:
 
@@ -40,11 +44,17 @@ If the local secret config is missing, copy the template first:
 
 ```bash
 mkdir -p ~/.config/cpa-v2-release
-mkdir -p cpa-v2-release
 cp .agents/skills/cpa-v2-release-publish/assets/release-secret-paths.env.example \
-  cpa-v2-release/release-secret-paths.env
-printf 'source "%s/cpa-v2-release/release-secret-paths.env"\n' "$(pwd)" \
-  > ~/.config/cpa-v2-release/release-secret-paths.env
+  ~/.config/cpa-v2-release/release-secret-paths.env
+chmod 600 ~/.config/cpa-v2-release/release-secret-paths.env
+install -m 600 /dev/null ~/.config/cpa-v2-release/cnb-release-token
+```
+
+Write the CNB token into `cnb-release-token` without echoing it, then configure:
+
+```bash
+CNB_TOKEN_FILE="$HOME/.config/cpa-v2-release/cnb-release-token"
+export CNB_TOKEN="$(cat "$CNB_TOKEN_FILE")"
 ```
 
 ## Release Flow
@@ -302,7 +312,8 @@ module index next, and `latest.json` last; it verifies CNB's remote size and
 hash after every upload and only then marks the Release as Latest:
 
 ```bash
-CNB_TOKEN="$CNB_TOKEN" npm run release:cnb:sync -- \
+source ~/.config/cpa-v2-release/release-secret-paths.env
+npm run release:cnb:sync -- \
   --repo nanzhaigame-xpy/CPA_V2 \
   --tag v<version> \
   --target <release-commit> \
@@ -316,9 +327,9 @@ CNB_TOKEN="$CNB_TOKEN" npm run release:cnb:sync -- \
   --asset /absolute/release-stage/cnb/latest.json
 ```
 
-`CNB_TOKEN` must have repository and Release read/write permissions. The local
-CNB CLI can use `cnb login`; release automation may instead load a CNB access
-token from the ignored credential pack. Never print the token. CNB Release
+`CNB_TOKEN` must include `repo-release:rw` for the target repository. Load it
+only from `~/.config/cpa-v2-release/cnb-release-token` through the user-level
+config above; `cnb login` alone may not grant Release scope. Never print the token. CNB Release
 attachments accept files up to 64 GiB, so individual video-module components do
 not need transport-level splitting. Use `ttl=0` (the sync script default) so public release
 assets do not expire.

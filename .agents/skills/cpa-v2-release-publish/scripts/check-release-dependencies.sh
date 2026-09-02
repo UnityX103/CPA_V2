@@ -68,6 +68,13 @@ check_file "updater private key" "${CPA_UPDATER_PRIVATE_KEY_PATH:-}" || failed=1
 check_file "updater password file" "${CPA_UPDATER_PASSWORD_PATH:-}" || failed=1
 check_file "updater public key" "${CPA_UPDATER_PUBLIC_KEY_PATH:-}" || failed=1
 check_file "github ssh key" "${GITHUB_SSH_KEY_PATH:-}" || failed=1
+check_file "CNB release token" "${CNB_TOKEN_FILE:-}" || failed=1
+if [[ -z "${CNB_TOKEN:-}" ]]; then
+  printf '%-34s %s\n' "CNB_TOKEN loaded" "EMPTY"
+  failed=1
+else
+  printf '%-34s %s\n' "CNB_TOKEN loaded" "OK"
+fi
 check_file "legacy nanzhai ssh key" "${REMOTE_NANZHAI_SSH_KEY_PATH:-}" || true
 echo
 
