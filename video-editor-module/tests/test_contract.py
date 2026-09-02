@@ -5,6 +5,7 @@ import hashlib
 import http.server
 import json
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -132,7 +133,7 @@ class VideoEditorModuleContractTests(unittest.TestCase):
                     "--output-dir",
                     str(output),
                     "--release-url",
-                    "https://github.com/UnityX103/CPA_V2/releases/download/v0.1.25",
+                    "https://github.com/UnityX103/CPA_V2/releases/download/v0.1.26",
                     "--distribution",
                     "noncommercial-open-source",
                 ],
@@ -580,6 +581,84 @@ class VideoEditorModuleContractTests(unittest.TestCase):
         )
         self.assertIn("VP9 Alpha WebM", html + javascript)
         self.assertIn('id="download-preview"', html)
+
+    def test_webm_encoder_preserves_visible_rgb_color(self):
+        ffmpeg = shutil.which("ffmpeg")
+        if ffmpeg is None:
+            self.skipTest("ffmpeg is required for the VP9 color regression")
+
+        pipeline = load_pipeline()
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            frames = root / "frames"
+            masks = root / "masks"
+            runtime = root / "runtime"
+            frames.mkdir()
+            masks.mkdir()
+            (runtime / "bin").mkdir(parents=True)
+            (runtime / "bin" / "ffmpeg").symlink_to(ffmpeg)
+
+            subprocess.run(
+                [
+                    ffmpeg,
+                    "-hide_banner",
+                    "-loglevel",
+                    "error",
+                    "-f",
+                    "lavfi",
+                    "-i",
+                    "color=c=0xd06020:s=64x64:r=1",
+                    "-frames:v",
+                    "1",
+                    str(frames / "000001.png"),
+                ],
+                check=True,
+            )
+            subprocess.run(
+                [
+                    ffmpeg,
+                    "-hide_banner",
+                    "-loglevel",
+                    "error",
+                    "-f",
+                    "lavfi",
+                    "-i",
+                    "color=c=white:s=64x64:r=1",
+                    "-frames:v",
+                    "1",
+                    str(masks / "000001.png"),
+                ],
+                check=True,
+            )
+
+            output = root / "colored.webm"
+            pipeline._encode_webm(frames, masks, output, 1.0, runtime)
+            decoded = subprocess.run(
+                [
+                    ffmpeg,
+                    "-hide_banner",
+                    "-loglevel",
+                    "error",
+                    "-c:v",
+                    "vp9",
+                    "-i",
+                    str(output),
+                    "-frames:v",
+                    "1",
+                    "-pix_fmt",
+                    "rgb24",
+                    "-f",
+                    "rawvideo",
+                    "-",
+                ],
+                check=True,
+                stdout=subprocess.PIPE,
+            ).stdout
+            pixels = [decoded[index : index + 3] for index in range(0, len(decoded), 3)]
+            mean_chroma = sum(max(pixel) - min(pixel) for pixel in pixels) / len(pixels)
+            exact_gray_ratio = sum(pixel[0] == pixel[1] == pixel[2] for pixel in pixels) / len(pixels)
+            self.assertGreater(mean_chroma, 20)
+            self.assertLess(exact_gray_ratio, 0.05)
 
     def test_resolution_is_even_bounded_and_preserves_aspect_when_one_axis_is_automatic(self):
         pipeline = load_pipeline()
