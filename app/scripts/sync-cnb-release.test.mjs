@@ -10,13 +10,17 @@ describe('CNB release synchronization', () => {
     it('uploads signed indexes after packages and latest.json last', () => {
         const result = orderedAssetPaths([
             '/tmp/latest.json',
+            '/tmp/cockroach-module-index.json',
+            '/tmp/cockroach-module-index.json.sig',
             '/tmp/video-editor-module-index.json',
             '/tmp/module.zip',
             '/tmp/video-editor-module-index.json.sig',
         ]).map((path) => path.split('/').at(-1));
         expect(result).toEqual([
             'module.zip',
+            'cockroach-module-index.json.sig',
             'video-editor-module-index.json.sig',
+            'cockroach-module-index.json',
             'video-editor-module-index.json',
             'latest.json',
         ]);

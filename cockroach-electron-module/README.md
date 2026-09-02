@@ -9,7 +9,20 @@ commit `a7d103d2818b40e12b8a39948e9ebf4c6085bfd3` (upstream version `1.1.0`). Th
 upstream Electron application and vector renderer directly. CPA only owns download verification,
 settings seeding, and child-process lifecycle.
 
-## Build a runtime
+New public packages use index schema v2 and are split by change frequency:
+
+- `cockroach-runtime-40.8.0-<target>.zip`: the Electron base runtime for one target;
+- `cockroach-dependencies-<version>.zip`: the shared production JavaScript dependency tree and
+  generated SPDX-style package/license inventory;
+- `cockroach-logic-<version>.zip`: only the small platform-independent CockroachPet business code.
+
+All three components are content-addressed. Runtime and dependencies remain installed when only the
+business package changes. The
+client verifies the component manifest and every listed file before it skips a download. All CPA
+component documents use the `noncommercial-open-source` distribution policy while preserving the
+upstream MIT and dependency licenses.
+
+## Prepare the reviewed source
 
 ```bash
 git clone https://github.com/jo9900/CockroachPet-Public-Electron.git
@@ -19,39 +32,71 @@ npm install
 python ../CPA_V2/cockroach-electron-module/scripts/prepare_source.py --source-dir .
 ```
 
-Build an unpacked, self-contained Electron directory for the target platform. Do not package an
-installer; the CPA module launcher executes the packaged app binary directly.
+## Package layered components
+
+Package shared dependencies, then the business component. Both derive the same `dependencySet`
+from the pinned production dependency inventory:
+
+```bash
+python ../CPA_V2/cockroach-electron-module/scripts/package_layers.py dependencies \
+  --source-dir . --version electron-store-8.2.0-lock-1 \
+  --licenses ../CPA_V2/cockroach-electron-module/licenses \
+  --output-dir ../CPA_V2/cpa-v2-release/cockroach-layered \
+  --release-url https://github.com/UnityX103/CPA_V2/releases/download/v<app-version>
+
+python ../CPA_V2/cockroach-electron-module/scripts/package_layers.py logic \
+  --source-dir . --version 1.1.0-noncommercial.1 \
+  --licenses ../CPA_V2/cockroach-electron-module/licenses \
+  --output-dir ../CPA_V2/cpa-v2-release/cockroach-layered \
+  --release-url https://github.com/UnityX103/CPA_V2/releases/download/v<app-version>
+```
+
+Package official Electron `node_modules/electron/dist` directories separately. The macOS packager
+preserves framework symlinks, ad-hoc signs the copied thin app, verifies the exact architecture, and
+records every regular file and symlink hash. Windows must be the x86_64 Electron distribution.
+Runtime component documents start with `releaseEligible: false`. After smoke-testing the exact ZIP
+on its target, generate a schema-v1 receipt containing the archive hash and required passing checks,
+then run `scripts/accept_runtime.py`. The index builder rejects runtimes without a matching receipt.
 
 Examples:
 
 ```bash
-# macOS ARM64
-npx electron-builder --mac --arm64 --dir
-python ../CPA_V2/cockroach-electron-module/scripts/package_module.py \
-  --runtime-dir dist/mac-arm64/CockroachPet.app \
-  --source-dir . \
-  --entry 'runtime/CockroachPet.app/Contents/MacOS/CockroachPet' \
-  --target macos-arm64 --version 1.1.0 \
-  --output-dir ../CPA_V2/cockroach-electron-module/dist
+# macOS ARM64 (use --target macos-x86_64 for the Intel distribution)
+python ../CPA_V2/cockroach-electron-module/scripts/package_layers.py runtime \
+  --runtime-dir node_modules/electron/dist \
+  --entry 'runtime/Electron.app/Contents/MacOS/Electron' \
+  --target macos-arm64 --version 40.8.0 \
+  --licenses ../CPA_V2/cockroach-electron-module/licenses \
+  --output-dir ../CPA_V2/cpa-v2-release/cockroach-layered \
+  --release-url https://github.com/UnityX103/CPA_V2/releases/download/v<app-version>
 
-# Windows x86_64 (run on Windows)
-npx electron-builder --win --x64 --dir
-python ..\CPA_V2\cockroach-electron-module\scripts\package_module.py \
-  --runtime-dir dist\win-unpacked \
-  --source-dir . \
-  --entry 'runtime/win-unpacked/CockroachPet.exe' \
-  --target windows-x86_64 --version 1.1.0 \
-  --output-dir ..\CPA_V2\cockroach-electron-module\dist
+# Windows x86_64
+python ..\CPA_V2\cockroach-electron-module\scripts\package_layers.py runtime \
+  --runtime-dir node_modules\electron\dist \
+  --entry 'runtime/electron.exe' \
+  --target windows-x86_64 --version 40.8.0 \
+  --licenses ..\CPA_V2\cockroach-electron-module\licenses \
+  --output-dir ..\CPA_V2\cpa-v2-release\cockroach-layered \
+  --release-url https://github.com/UnityX103/CPA_V2/releases/download/v<app-version>
 ```
 
-For macOS x86_64, build with `--x64 --dir` and use target `macos-x86_64`.
+Build `cockroach-module-index.json` from the five generated `.component.json` documents:
 
-The packager refuses unpinned or unpatched source trees. The generated ZIP contains `module.json`,
-the unpacked runtime, and the upstream MIT license.
-Publish the target ZIPs to a `UnityX103/CPA_V2` GitHub Release, create
-`cockroach-module-index.json` with each ZIP's HTTPS URL, exact byte size and SHA-256, then sign that
-index with the same minisign key used by the Tauri updater. Publish the Base64-wrapped signature as
-`cockroach-module-index.json.sig`.
+```bash
+python cockroach-electron-module/scripts/build_layered_index.py \
+  --version 1.1.0-noncommercial.1 \
+  --output /release/cockroach-module-index.json \
+  /release/cockroach-logic-1.1.0-noncommercial.1.component.json \
+  /release/cockroach-dependencies-electron-store-8.2.0-lock-1.component.json \
+  /release/cockroach-runtime-40.8.0-macos-arm64.component.json \
+  /release/cockroach-runtime-40.8.0-macos-x86_64.component.json \
+  /release/cockroach-runtime-40.8.0-windows-x86_64.component.json
+```
+
+The index may reference unchanged runtime documents from older release tags. Upload only new
+components, then sign each provider-specific index with the same Minisign key as the Tauri updater.
+CNB is the primary source and keeps the GitHub URL as a signed mirror. Schema-v1 monolithic packages
+remain readable for existing installations, but new releases use schema v2.
 
 The default index URL intentionally returns a friendly “尚未开放下载” error until verified macOS
 ARM64, macOS x86_64 and Windows x86_64 packages are published.

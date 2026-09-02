@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 2,
+  "id": "cpa-cockroach-electron",
+  "runtimeAbi": "cpa-cockroach-electron-40-control-v2",
+  "capabilities": [
+    "electron-vector-cockroach-v1",
+    "max-count",
+    "baby-growth-minutes",
+    "process-lifecycle",
+    "process-control-file-v1"
+  ]
+}

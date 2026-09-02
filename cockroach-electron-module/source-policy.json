@@ -3,6 +3,12 @@
   "commit": "a7d103d2818b40e12b8a39948e9ebf4c6085bfd3",
   "version": "1.1.0",
   "license": "MIT",
+  "distribution": "noncommercial-open-source",
+  "runtime": {
+    "name": "Electron",
+    "version": "40.8.0",
+    "license": "MIT"
+  },
   "integrationPatch": "scripts/prepare_source.py",
   "allowedTargets": ["macos-arm64", "macos-x86_64", "windows-x86_64"]
 }

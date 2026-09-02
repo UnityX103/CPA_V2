@@ -25,7 +25,7 @@ CAPABILITIES = [
 TARGETS = {"macos-arm64", "macos-x86_64", "windows-x86_64"}
 ROOT = Path(__file__).resolve().parents[1]
 PATCHED_SOURCE_HASHES = {
-    "main.js": "36d78c0ad637b19f470b7001ffb83770c1f4aa018b160711461c683bacf653ee",
+    "main.js": "5504ef6ea0c5eac4857647b94df3194888275cc24e15e1ab8879b0aa2466786b",
     "src/overlay/overlay.js": "9879f7e4d059cbf379ab98eb3b5bfd9a4a6629e39c17aaa9065d5c5894fb1431",
 }
 
@@ -152,7 +152,7 @@ def package(
             "upstream": {
                 "repository": "https://github.com/jo9900/CockroachPet-Public-Electron",
                 "commit": UPSTREAM_COMMIT,
-                "integrationPatch": "cpa-control-file-v1",
+                "integrationPatch": "cpa-control-file-v2",
             },
         }
         (staging / "module.json").write_text(

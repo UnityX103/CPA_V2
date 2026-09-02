@@ -16,6 +16,10 @@ pub fn restore_archive_permissions(_path: &Path, _mode: Option<u32>) -> Result<(
     Ok(())
 }
 
+pub fn restore_archive_symlink(_target: &Path, _output: &Path) -> Result<(), String> {
+    Err("Windows 蟑螂组件不允许符号链接".to_string())
+}
+
 pub fn ensure_entry_executable(_path: &Path) -> Result<(), String> {
     Ok(())
 }

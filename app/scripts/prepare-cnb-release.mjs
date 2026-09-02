@@ -75,20 +75,21 @@ export function transformUpdaterManifest(manifest, { repo, tag }) {
     return { ...manifest, platforms };
 }
 
-export function transformModuleIndex(index, { repo, tag }) {
-    const transformArtifact = (entry, label) => {
-        if (!entry?.url || !entry?.sha256 || !entry?.size) {
-            throw new Error(`Incomplete video module package: ${label}`);
-        }
-        const mirrors = [entry.url, ...(entry.mirrors ?? [])].filter(
-            (url, position, values) => url && values.indexOf(url) === position,
-        );
-        return {
-            ...entry,
-            url: cnbTaggedAssetUrl(repo, releaseTagFromUrl(entry.url), assetNameFromUrl(entry.url)),
-            mirrors,
-        };
+function transformReleaseArtifact(entry, label, { repo }) {
+    if (!entry?.url || !entry?.sha256 || !entry?.size) {
+        throw new Error(`Incomplete module package: ${label}`);
+    }
+    const mirrors = [entry.url, ...(entry.mirrors ?? [])].filter(
+        (url, position, values) => url && values.indexOf(url) === position,
+    );
+    return {
+        ...entry,
+        url: cnbTaggedAssetUrl(repo, releaseTagFromUrl(entry.url), assetNameFromUrl(entry.url)),
+        mirrors,
     };
+}
+
+export function transformModuleIndex(index, options) {
     if (index.schemaVersion === 2) {
         if (!index.logic || !index.models) {
             throw new Error('Layered video module index is missing logic or models');
@@ -96,7 +97,7 @@ export function transformModuleIndex(index, { repo, tag }) {
         const engines = Object.fromEntries(
             Object.entries(index.engines ?? {}).map(([target, entry]) => [
                 target,
-                transformArtifact(entry, `engine ${target}`),
+                transformReleaseArtifact(entry, `video engine ${target}`, options),
             ]),
         );
         if (Object.keys(engines).length === 0) {
@@ -104,14 +105,14 @@ export function transformModuleIndex(index, { repo, tag }) {
         }
         return {
             ...index,
-            logic: transformArtifact(index.logic, 'logic'),
-            models: transformArtifact(index.models, 'models'),
+            logic: transformReleaseArtifact(index.logic, 'video logic', options),
+            models: transformReleaseArtifact(index.models, 'video models', options),
             engines,
         };
     }
     const packages = Object.fromEntries(
         Object.entries(index.packages ?? {}).map(([target, entry]) => {
-            return [target, transformArtifact(entry, target)];
+            return [target, transformReleaseArtifact(entry, `video ${target}`, options)];
         }),
     );
     if (Object.keys(packages).length === 0) {
@@ -120,21 +121,55 @@ export function transformModuleIndex(index, { repo, tag }) {
     return { ...index, packages };
 }
 
+export function transformCockroachModuleIndex(index, options) {
+    if (
+        index.schemaVersion !== 2
+        || index.distribution !== 'noncommercial-open-source'
+        || !index.logic
+        || !index.dependencies
+    ) {
+        throw new Error('Layered cockroach module index is incomplete or not noncommercial');
+    }
+    const runtimes = Object.fromEntries(
+        Object.entries(index.runtimes ?? {}).map(([target, entry]) => [
+            target,
+            transformReleaseArtifact(entry, `cockroach runtime ${target}`, options),
+        ]),
+    );
+    const requiredTargets = ['macos-arm64', 'macos-x86_64', 'windows-x86_64'];
+    const missingTargets = requiredTargets.filter((target) => !runtimes[target]);
+    if (missingTargets.length > 0) {
+        throw new Error(`Layered cockroach module index is missing runtimes: ${missingTargets.join(', ')}`);
+    }
+    return {
+        ...index,
+        logic: transformReleaseArtifact(index.logic, 'cockroach logic', options),
+        dependencies: transformReleaseArtifact(index.dependencies, 'cockroach dependencies', options),
+        runtimes,
+    };
+}
+
 export async function prepareCnbRelease({
     updaterManifestPath,
     moduleIndexPath,
+    cockroachModuleIndexPath,
     outputDirectory,
     repo = DEFAULT_CNB_REPO,
     tag,
 }) {
-    const [updaterManifest, moduleIndex] = await Promise.all([
+    if (!cockroachModuleIndexPath) {
+        throw new Error('Missing required option: cockroachModuleIndexPath');
+    }
+    const [updaterManifest, moduleIndex, cockroachModuleIndex] = await Promise.all([
         readFile(updaterManifestPath, 'utf8').then(JSON.parse),
         readFile(moduleIndexPath, 'utf8').then(JSON.parse),
+        readFile(cockroachModuleIndexPath, 'utf8').then(JSON.parse),
     ]);
     const output = resolve(outputDirectory);
     await mkdir(output, { recursive: true });
     const latestPath = resolve(output, 'latest.json');
     const mirroredModuleIndexPath = resolve(output, 'video-editor-module-index.json');
+    const mirroredCockroachModuleIndexPath = resolve(output, 'cockroach-module-index.json');
     await Promise.all([
         writeFile(
             latestPath,
@@ -145,7 +180,15 @@ export async function prepareCnbRelease({
             `${JSON.stringify(transformModuleIndex(moduleIndex, { repo, tag }), null, 2)}\n`,
         ),
     ]);
-    return { latestPath, moduleIndexPath: mirroredModuleIndexPath };
+    await writeFile(
+        mirroredCockroachModuleIndexPath,
+        `${JSON.stringify(transformCockroachModuleIndex(cockroachModuleIndex, { repo, tag }), null, 2)}\n`,
+    );
+    return {
+        latestPath,
+        moduleIndexPath: mirroredModuleIndexPath,
+        cockroachModuleIndexPath: mirroredCockroachModuleIndexPath,
+    };
 }
 
 function parseArgs(argv) {
@@ -160,12 +203,19 @@ function parseArgs(argv) {
         };
         if (argument === '--latest') options.updaterManifestPath = next();
         else if (argument === '--module-index') options.moduleIndexPath = next();
+        else if (argument === '--cockroach-module-index') options.cockroachModuleIndexPath = next();
         else if (argument === '--out-dir') options.outputDirectory = next();
         else if (argument === '--repo') options.repo = next();
         else if (argument === '--tag') options.tag = next();
         else throw new Error(`Unknown option: ${argument}`);
     }
-    for (const required of ['updaterManifestPath', 'moduleIndexPath', 'outputDirectory', 'tag']) {
+    for (const required of [
+        'updaterManifestPath',
+        'moduleIndexPath',
+        'cockroachModuleIndexPath',
+        'outputDirectory',
+        'tag',
+    ]) {
         if (!options[required]) throw new Error(`Missing required option: ${required}`);
     }
     return options;
@@ -176,7 +226,10 @@ if (fileURLToPath(import.meta.url) === resolve(process.argv[1] ?? '')) {
         const result = await prepareCnbRelease(parseArgs(process.argv.slice(2)));
         console.log(`Wrote ${result.latestPath}`);
         console.log(`Wrote ${result.moduleIndexPath}`);
-        console.log('Sign video-editor-module-index.json before publishing it to CNB.');
+        if (result.cockroachModuleIndexPath) {
+            console.log(`Wrote ${result.cockroachModuleIndexPath}`);
+        }
+        console.log('Sign every generated module index before publishing it to CNB.');
     } catch (error) {
         console.error(error instanceof Error ? error.message : String(error));
         process.exitCode = 1;

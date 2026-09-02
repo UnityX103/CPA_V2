@@ -57,6 +57,14 @@ New video-editor releases use module-index schema v2 and independently version s
 
 Before building or publishing video-module artifacts, read [references/video-module-layered.md](references/video-module-layered.md). It defines rebuild boundaries, commands, cross-release component reuse, provider-specific signing, and public download gates.
 
+### Downloadable cockroach module: layered artifacts
+
+New cockroach releases use schema v2 with one shared dependency package, one small business package,
+and three reusable target-specific Electron runtime packages. Before building or publishing them, read
+[references/cockroach-module-layered.md](references/cockroach-module-layered.md). All public
+components use the non-commercial open-source learning distribution policy while retaining upstream
+license notices.
+
 1. Confirm the tree and auth:
    ```bash
    git status --short --branch
@@ -272,6 +280,7 @@ cd app
 npm run release:cnb:prepare -- \
   --latest /absolute/release-stage/latest.json \
   --module-index /absolute/release-stage/video-editor-module-index.json \
+  --cockroach-module-index /absolute/release-stage/cockroach-module-index.json \
   --out-dir /absolute/release-stage/cnb \
   --tag v<version> \
   --repo nanzhaigame-xpy/CPA_V2
@@ -280,6 +289,10 @@ source ~/.config/cpa-v2-release/release-secret-paths.env
 TAURI_SIGNING_PRIVATE_KEY_PASSWORD="$(cat "$CPA_UPDATER_PASSWORD_PATH")" \
   npm run tauri -- signer sign -f "$CPA_UPDATER_PRIVATE_KEY_PATH" \
   /absolute/release-stage/cnb/video-editor-module-index.json
+
+TAURI_SIGNING_PRIVATE_KEY_PASSWORD="$(cat "$CPA_UPDATER_PASSWORD_PATH")" \
+  npm run tauri -- signer sign -f "$CPA_UPDATER_PRIVATE_KEY_PATH" \
+  /absolute/release-stage/cnb/cockroach-module-index.json
 ```
 
 Publish the CNB Release with `release:cnb:sync`, passing every ordinary asset
@@ -298,6 +311,8 @@ CNB_TOKEN="$CNB_TOKEN" npm run release:cnb:sync -- \
   --asset /absolute/path/to/first-asset \
   --asset /absolute/release-stage/cnb/video-editor-module-index.json.sig \
   --asset /absolute/release-stage/cnb/video-editor-module-index.json \
+  --asset /absolute/release-stage/cnb/cockroach-module-index.json.sig \
+  --asset /absolute/release-stage/cnb/cockroach-module-index.json \
   --asset /absolute/release-stage/cnb/latest.json
 ```
 
@@ -317,6 +332,9 @@ curl -fsSL \
 curl -fsSL \
   https://cnb.cool/nanzhaigame-xpy/CPA_V2/-/releases/latest/download/video-editor-module-index.json \
   | jq -e 'if .schemaVersion == 2 then .logic and .models and .engines["macos-arm64"] and .engines["macos-x86_64"] and .engines["windows-x86_64"] else .packages["macos-arm64"] and .packages["macos-x86_64"] and .packages["windows-x86_64"] end'
+curl -fsSL \
+  https://cnb.cool/nanzhaigame-xpy/CPA_V2/-/releases/latest/download/cockroach-module-index.json \
+  | jq -e '.schemaVersion == 2 and .distribution == "noncommercial-open-source" and .logic and .dependencies and .runtimes["macos-arm64"] and .runtimes["macos-x86_64"] and .runtimes["windows-x86_64"]'
 ```
 
 If CNB mirroring fails, keep the GitHub Release as a draft. There is no
@@ -332,6 +350,8 @@ Before reporting a release complete, all of these must be true:
 - The CNB Release is not a draft, is Latest, and contains every expected asset.
 - CNB `latest.json` contains all four updater platform keys and only CNB binary URLs.
 - The CNB module index and `.sig` match; every v2 logic/models/engine URL (or legacy v1 package URL) is present, and its signed `mirrors` list contains the corresponding GitHub URL.
+- The CNB cockroach index and `.sig` match; its logic/runtime URLs are present on both providers,
+  declare the non-commercial distribution, and retain GitHub mirrors.
 - Anonymous Range requests succeed for every large CNB video-module package.
 - The GitHub Release is not a draft, is Latest, and contains every expected asset.
 - GitHub `latest.json` and its provider-specific signed module index pass the existing online gates.

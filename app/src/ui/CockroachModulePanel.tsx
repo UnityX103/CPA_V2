@@ -92,7 +92,9 @@ export function CockroachModulePanel() {
                 <div className="cockroach-module-download">
                     <div>
                         <strong>蟑螂模块需要单独下载</strong>
-                        <span>默认安装包不包含 Electron 运行时和蟑螂程序。</span>
+                        <span>首次下载基础运行时、通用依赖与业务逻辑；默认安装包不包含这些内容。</span>
+                        <span>后续业务更新会复用已校验的运行时与依赖，避免重复下载。</span>
+                        <span>模块仅限非商业开源学习，并保留各上游项目原始许可。</span>
                         <span>当前平台：{status?.target ?? '正在识别…'}</span>
                     </div>
                     <button

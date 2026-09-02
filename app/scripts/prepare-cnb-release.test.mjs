@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
     cnbLatestAssetUrl,
     cnbTaggedAssetUrl,
+    transformCockroachModuleIndex,
     transformModuleIndex,
     transformUpdaterManifest,
 } from './prepare-cnb-release.mjs';
@@ -80,6 +81,41 @@ describe('CNB release manifest preparation', () => {
         expect(result.logic.version).toBe('1.3.0');
         expect(result.models.version).toBe('1.0.0');
         expect(result.engines['macos-arm64'].url).toContain('/download/v0.1.22/');
+    });
+
+    it('rewrites layered cockroach runtime and logic components with GitHub mirrors', () => {
+        const artifact = (name, marker, releaseTag = 'v0.1.24') => ({
+            version: name === 'logic' ? '1.1.0-noncommercial.1' : '40.8.0',
+            runtimeAbi: 'cpa-cockroach-electron-40-control-v1',
+            manifestSha256: marker.repeat(64),
+            url: `https://github.com/UnityX103/CPA_V2/releases/download/${releaseTag}/cockroach-${name}.zip`,
+            sha256: marker.repeat(64),
+            size: 42,
+        });
+        const result = transformCockroachModuleIndex(
+            {
+                schemaVersion: 2,
+                version: '1.1.0-noncommercial.1',
+                distribution: 'noncommercial-open-source',
+                logic: { ...artifact('logic', 'a', 'v0.1.25'), dependencySet: 'cockroach-js-test' },
+                dependencies: {
+                    ...artifact('dependencies', 'e'),
+                    dependencySet: 'cockroach-js-test',
+                },
+                runtimes: {
+                    'macos-arm64': artifact('runtime-arm64', 'b'),
+                    'macos-x86_64': artifact('runtime-x64', 'c'),
+                    'windows-x86_64': artifact('runtime-windows', 'd'),
+                },
+            },
+            { repo, tag: 'v0.1.25' },
+        );
+        for (const entry of [result.logic, result.dependencies, ...Object.values(result.runtimes)]) {
+            expect(entry.url).toMatch(/^https:\/\/cnb\.cool\//);
+            expect(entry.mirrors[0]).toMatch(/^https:\/\/github\.com\//);
+        }
+        expect(result.runtimes['macos-arm64'].url).toContain('/download/v0.1.24/');
+        expect(result.distribution).toBe('noncommercial-open-source');
     });
 
     it('provides stable tagged and latest URLs', () => {

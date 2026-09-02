@@ -55,6 +55,14 @@ ipcMain.on('cpa-control-complete', (_event, nonce) => {
 });
 """
 
+DEPENDENCY_BOOTSTRAP = """const cpaDependencyRoot = process.env.CPA_COCKROACH_DEPENDENCY_ROOT;
+if (cpaDependencyRoot) {
+  const Module = require('module');
+  process.env.NODE_PATH = [cpaDependencyRoot, process.env.NODE_PATH].filter(Boolean).join(path.delimiter);
+  Module._initPaths();
+}
+"""
+
 
 def replace_once(value: str, old: str, new: str, label: str) -> str:
     if value.count(old) != 1:
@@ -79,6 +87,12 @@ def prepare(source_dir: Path) -> None:
     main_path = source_dir / "main.js"
     overlay_path = source_dir / "src" / "overlay" / "overlay.js"
     main = main_path.read_text(encoding="utf-8")
+    main = replace_once(
+        main,
+        "const fs = require('fs');\n",
+        f"const fs = require('fs');\n{DEPENDENCY_BOOTSTRAP}\n",
+        "dependency bootstrap",
+    )
     main = replace_once(main, "let tray = null;\n", f"let tray = null;\n\n{CONTROL_BLOCK}\n", "main globals")
     main = replace_once(
         main,

@@ -135,6 +135,7 @@ class ContractTest(unittest.TestCase):
             overlay = source / "src/overlay/overlay.js"
             overlay.parent.mkdir(parents=True)
             (source / "main.js").write_bytes(
+                b"const fs = require('fs');\r\n"
                 b"let tray = null;\r\n"
                 b"  startCursorPolling();\r\n  startHitTestPolling();\r\n"
                 b"app.on('will-quit', () => {\r\n  globalShortcut.unregisterAll();\r\n"

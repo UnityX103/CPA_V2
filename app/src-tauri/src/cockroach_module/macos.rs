@@ -25,6 +25,11 @@ pub fn restore_archive_permissions(path: &Path, mode: Option<u32>) -> Result<(),
         .map_err(|error| format!("无法恢复模块文件权限：{error}"))
 }
 
+pub fn restore_archive_symlink(target: &Path, output: &Path) -> Result<(), String> {
+    std::os::unix::fs::symlink(target, output)
+        .map_err(|error| format!("无法恢复组件符号链接：{error}"))
+}
+
 pub fn ensure_entry_executable(path: &Path) -> Result<(), String> {
     use std::os::unix::fs::PermissionsExt;
     std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o755))

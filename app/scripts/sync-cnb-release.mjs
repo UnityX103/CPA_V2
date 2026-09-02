@@ -35,8 +35,8 @@ export function orderedAssetPaths(paths) {
     }
     const priority = (name) => {
         if (name === 'latest.json') return 100;
-        if (name === 'video-editor-module-index.json') return 90;
-        if (name === 'video-editor-module-index.json.sig') return 80;
+        if (name.endsWith('-module-index.json')) return 90;
+        if (name.endsWith('-module-index.json.sig')) return 80;
         return 10;
     };
     return [...unique.values()].sort((left, right) => {
