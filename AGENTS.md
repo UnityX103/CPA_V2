@@ -17,15 +17,24 @@ CPA_V2/
 ├── app/                ← Tauri 2 desktop app (frontend + Rust shell)
 │   ├── src/            ← React + TypeScript
 │   │   ├── domain/     ← Zustand stores + services (Pomodoro / Network / BindingKey / ActiveApp / Settings / stateSync)
+│   │   ├── extensions/ ← Lazy feature runtimes driven by signed extension manifests
 │   │   ├── ui/         ← Components mapped 1:1 to Pencil design nodes
 │   │   └── styles/     ← global.css + tokens.css (no Tailwind, native CSS only)
 │   └── src-tauri/      ← Rust (lib.rs, active_app.rs, key_counter.rs)
 ├── Server/             ← Node.js WebSocket backend (port 8039) — has its own .git
 ├── AUI/PUI.pen         ← Pencil design source-of-truth (encrypted, MCP-only)
+├── .agents/skills/cpa-v2-extension-packs/ ← Extension implementation contract and validation
 └── docs/superpowers/   ← Specs and adversarial reviews
 ```
 
 ## Common commands
+
+### Graphify knowledge graph
+- After every completed modification to project files—including code, tests, documentation, configuration, and assets—run `graphify update .` from the repository root before reporting the task as complete.
+- Treat a successful Graphify update as part of the definition of done. If the update fails, report the failure explicitly instead of claiming completion.
+
+### Extension skill validation
+- Validate the project-local extension skill without changing global Python packages: `uv run --with pyyaml python ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py .agents/skills/cpa-v2-extension-packs`.
 
 ### Tauri app (`app/`)
 - Dev (Rust + Vite + opens transparent window): `cd app && npm run tauri dev`
@@ -62,6 +71,20 @@ The domain layer is structured to mirror what existed in Unity, so the Unity fie
 - **Tauri command/event ≈ Utility/IPC**: Native operations (window control, foreground-app query, global keyboard, hit-test passthrough) live in Rust under `app/src-tauri/src/` and are exposed via `#[tauri::command]` (invoke) or `app.emit("...")` (events). On macOS these go through AppKit (NSWorkspace, CGEventTap, NSView hitTest); on Windows through Win32 (GetForegroundWindow, SetWindowsHookEx, WM_NCHITTEST). The command/event surface is identical across platforms.
 
 The protocol layer (`Server/src/protocol.js` + `app/src/domain/network.ts`) carries `RemoteState = { pomodoro, activeApp, bindingKey }`. Every wire message includes `v: PROTOCOL_VERSION` (currently `1`); mismatched versions are rejected and the connection is closed.
+
+## Downloadable extension packs
+
+**Use the `cpa-v2-extension-packs` skill whenever adding, migrating, reviewing, or troubleshooting an optional downloadable module, common runtime, extension settings page, module lifecycle action, or signed module manifest.** Read its extension contract before changing code.
+
+- Current pack graph: `video.editor → video.core` and `pet.cockroach-invasion → pet.core`.
+- Before adding a second feature to an existing family, follow the skill's multi-feature storage rules: common dependencies may have many dependents, and every feature needs its own active pointer and deterministic settings contribution.
+- Optional runtimes, models, and feature logic must remain outside the default app bundle. Features install their common dependencies automatically; shared components use content-addressed storage and independent pointers.
+- Native status is authoritative. Installation, upgrade, enable/disable, and uninstall go through the unified commands in `src-tauri/src/extension_packs.rs`; do not reintroduce feature-specific lifecycle buttons or frontend-only enablement.
+- A common pack cannot be disabled while an enabled dependent uses it or uninstalled while any dependent remains installed. Layered feature uninstall preserves common components. Legacy monolithic packages must upgrade before feature-only uninstall.
+- Enabled, installed features contribute settings tabs through `app/src/domain/extensionPacks.ts` and `app/src/ui/ExtensionSettingsOutlet.tsx`. Do not maintain parallel pack-ID lists or hard-coded navigation branches.
+- The CPA core publishes `pomodoro-broadcast-v1`. Pet-specific policy belongs to the signed feature manifest's `runtimeContribution`; `pet.core` owns only reusable runtime, dependencies, process lifecycle, and control protocol.
+- Feature activation is allow-listed by pack ID in Rust. Never execute shell commands or arbitrary remote React/JavaScript supplied by a manifest.
+- Platform-specific extension code follows the same macOS/Windows file split required for all native features.
 
 ## Non-obvious rules and constraints
 
