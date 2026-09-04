@@ -62,7 +62,7 @@ python ../CPA_V2/cockroach-electron-module/scripts/package_layers.py dependencie
   --release-url https://github.com/UnityX103/CPA_V2/releases/download/v<app-version>
 
 python ../CPA_V2/cockroach-electron-module/scripts/package_layers.py logic \
-  --source-dir . --version 1.1.0-noncommercial.1 \
+  --source-dir . --version 1.2.0-noncommercial.1 \
   --licenses ../CPA_V2/cockroach-electron-module/licenses \
   --output-dir ../CPA_V2/cpa-v2-release/cockroach-layered \
   --release-url https://github.com/UnityX103/CPA_V2/releases/download/v<app-version>
@@ -101,9 +101,9 @@ Build `cockroach-module-index.json` from the five generated `.component.json` do
 
 ```bash
 python cockroach-electron-module/scripts/build_layered_index.py \
-  --version 1.1.0-noncommercial.1 \
+  --version 1.2.0-noncommercial.1 \
   --output /release/cockroach-module-index.json \
-  /release/cockroach-logic-1.1.0-noncommercial.1.component.json \
+  /release/cockroach-logic-1.2.0-noncommercial.1.component.json \
   /release/cockroach-dependencies-electron-store-8.2.0-lock-1.component.json \
   /release/cockroach-runtime-40.8.0-macos-arm64.component.json \
   /release/cockroach-runtime-40.8.0-macos-x86_64.component.json \
