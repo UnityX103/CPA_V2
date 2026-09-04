@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::ffi::OsStr;
+use std::ffi::{OsStr, OsString};
 #[cfg(test)]
 use std::io::Read;
 use std::io::{BufRead, BufReader, Write};
@@ -19,6 +19,7 @@ static STOP_REQUESTED: AtomicBool = AtomicBool::new(false);
 
 const SAMPLE_HELPER_ARG: &str = "--camera-presence-sample-helper";
 const STREAM_HELPER_ARG: &str = "--camera-presence-stream-helper";
+const CAMERA_DEVICE_ID_ARG: &str = "--camera-device-id";
 const SAMPLE_TIMEOUT: Duration = Duration::from_secs(10);
 const MIN_STREAM_INTERVAL_SECONDS: u64 = 5;
 const MAX_STREAM_INTERVAL_SECONDS: u64 = 600;
@@ -68,6 +69,14 @@ pub struct PresenceSample {
     pub error_code: Option<String>,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CameraDevice {
+    pub id: String,
+    pub name: String,
+    pub is_default: bool,
+}
+
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq, Serialize)]
 pub(super) enum NativeErrorKind {
     PermissionDenied,
@@ -100,6 +109,13 @@ struct StreamState {
     latest: Option<(u64, Result<bool, NativeError>)>,
     running: bool,
     frame_interval: Option<Duration>,
+    camera_device_id: Option<String>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct StreamHelperRequest {
+    frame_interval: Duration,
+    camera_device_id: Option<String>,
 }
 
 fn platform() -> PresencePlatform {
@@ -150,18 +166,41 @@ fn parse_stream_interval(value: &OsStr) -> Result<Duration, NativeError> {
     validated_stream_interval(seconds)
 }
 
-fn requested_stream_helper_interval() -> Option<Result<Duration, NativeError>> {
-    let mut args = std::env::args_os();
-    while let Some(arg) = args.next() {
+fn requested_camera_device_id(args: &[OsString]) -> Result<Option<String>, NativeError> {
+    let Some(index) = args
+        .iter()
+        .position(|arg| arg == OsStr::new(CAMERA_DEVICE_ID_ARG))
+    else {
+        return Ok(None);
+    };
+    let value = args
+        .get(index + 1)
+        .ok_or_else(|| NativeError::new(NativeErrorKind::Error, "camera-device-id-missing"))?;
+    let value = value
+        .to_str()
+        .map(str::trim)
+        .filter(|value| !value.is_empty());
+    value
+        .map(|value| Some(value.to_string()))
+        .ok_or_else(|| NativeError::new(NativeErrorKind::Error, "camera-device-id-invalid"))
+}
+
+fn requested_stream_helper(args: &[OsString]) -> Option<Result<StreamHelperRequest, NativeError>> {
+    for (index, arg) in args.iter().enumerate() {
         if arg == OsStr::new(STREAM_HELPER_ARG) {
-            return Some(args.next().map_or_else(
+            return Some(args.get(index + 1).map_or_else(
                 || {
                     Err(NativeError::new(
                         NativeErrorKind::Error,
                         "camera-sample-interval-missing",
                     ))
                 },
-                |value| parse_stream_interval(&value),
+                |value| {
+                    Ok(StreamHelperRequest {
+                        frame_interval: parse_stream_interval(value)?,
+                        camera_device_id: requested_camera_device_id(args)?,
+                    })
+                },
             ));
         }
     }
@@ -239,6 +278,7 @@ fn stop_stream_locked(state: &mut StreamState) {
     state.latest = None;
     state.running = false;
     state.frame_interval = None;
+    state.camera_device_id = None;
 }
 
 fn stop_stream_process() {
@@ -317,13 +357,19 @@ fn read_stream_output(stdout: ChildStdout, generation: u64) {
 fn start_stream_locked(
     state: &mut StreamState,
     frame_interval: Duration,
+    camera_device_id: Option<&str>,
 ) -> Result<(), NativeError> {
     let executable = std::env::current_exe().map_err(|_| {
         NativeError::new(NativeErrorKind::Error, "camera-helper-executable-not-found")
     })?;
-    let mut child = Command::new(executable)
+    let mut command = Command::new(executable);
+    command
         .arg(STREAM_HELPER_ARG)
-        .arg(frame_interval.as_secs().to_string())
+        .arg(frame_interval.as_secs().to_string());
+    if let Some(camera_device_id) = camera_device_id {
+        command.arg(CAMERA_DEVICE_ID_ARG).arg(camera_device_id);
+    }
+    let mut child = command
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
@@ -344,12 +390,16 @@ fn start_stream_locked(
     state.latest = None;
     state.running = true;
     state.frame_interval = Some(frame_interval);
+    state.camera_device_id = camera_device_id.map(str::to_string);
     state.child = Some(child);
     std::thread::spawn(move || read_stream_output(stdout, generation));
     Ok(())
 }
 
-fn sample_from_stream_with_timeout(frame_interval: Duration) -> Result<bool, NativeError> {
+fn sample_from_stream_with_timeout(
+    frame_interval: Duration,
+    camera_device_id: Option<String>,
+) -> Result<bool, NativeError> {
     let deadline = Instant::now() + SAMPLE_TIMEOUT;
     let (mutex, ready) = stream_runtime();
     let mut state = mutex
@@ -358,6 +408,7 @@ fn sample_from_stream_with_timeout(frame_interval: Duration) -> Result<bool, Nat
     if state
         .frame_interval
         .is_some_and(|current| current != frame_interval)
+        || state.camera_device_id != camera_device_id
     {
         stop_stream_locked(&mut state);
     }
@@ -367,7 +418,7 @@ fn sample_from_stream_with_timeout(frame_interval: Duration) -> Result<bool, Nat
         .is_some_and(|(sequence, _)| *sequence > state.delivered_sequence);
     if !state.running && !has_undelivered {
         stop_stream_locked(&mut state);
-        start_stream_locked(&mut state, frame_interval)?;
+        start_stream_locked(&mut state, frame_interval, camera_device_id.as_deref())?;
     }
     let generation = state.generation;
     let after_sequence = state.delivered_sequence;
@@ -441,14 +492,19 @@ fn run_releasing_sample_loop(
 }
 
 pub(crate) fn run_sample_helper_if_requested() -> bool {
-    if let Some(frame_interval) = requested_stream_helper_interval() {
+    let args = std::env::args_os().collect::<Vec<_>>();
+    if let Some(request) = requested_stream_helper(&args) {
         let mut stdout = std::io::stdout().lock();
         let mut emitted = false;
-        let result = frame_interval.and_then(|frame_interval| {
-            platform_impl::stream_samples(frame_interval, |sample| {
-                emitted = true;
-                write_stream_result(&mut stdout, &sample)
-            })
+        let result = request.and_then(|request| {
+            platform_impl::stream_samples(
+                request.frame_interval,
+                request.camera_device_id.as_deref(),
+                |sample| {
+                    emitted = true;
+                    write_stream_result(&mut stdout, &sample)
+                },
+            )
         });
         if let Err(error) = result {
             if !emitted {
@@ -457,11 +513,12 @@ pub(crate) fn run_sample_helper_if_requested() -> bool {
         }
         return true;
     }
-    if !std::env::args_os().any(|arg| arg == OsStr::new(SAMPLE_HELPER_ARG)) {
+    if !args.iter().any(|arg| arg == OsStr::new(SAMPLE_HELPER_ARG)) {
         return false;
     }
 
-    let result = platform_impl::sample();
+    let result = requested_camera_device_id(&args)
+        .and_then(|camera_device_id| platform_impl::sample(camera_device_id.as_deref()));
     let mut stdout = std::io::stdout().lock();
     let _ = serde_json::to_writer(&mut stdout, &result);
     let _ = stdout.flush();
@@ -479,10 +536,22 @@ pub(crate) fn stop_for_exit() {
 }
 
 #[tauri::command]
-pub async fn camera_presence_status() -> Result<PresenceCapability, String> {
-    let availability = tauri::async_runtime::spawn_blocking(platform_impl::status)
+pub async fn list_camera_devices() -> Result<Vec<CameraDevice>, String> {
+    tauri::async_runtime::spawn_blocking(platform_impl::list_devices)
         .await
-        .map_err(|error| format!("camera status task failed: {error}"))?;
+        .map_err(|error| format!("camera device list task failed: {error}"))?
+        .map_err(|error| error.code)
+}
+
+#[tauri::command]
+pub async fn camera_presence_status(
+    camera_device_id: Option<String>,
+) -> Result<PresenceCapability, String> {
+    let availability = tauri::async_runtime::spawn_blocking(move || {
+        platform_impl::status(camera_device_id.as_deref())
+    })
+    .await
+    .map_err(|error| format!("camera status task failed: {error}"))?;
     Ok(PresenceCapability {
         platform: platform(),
         availability,
@@ -492,13 +561,14 @@ pub async fn camera_presence_status() -> Result<PresenceCapability, String> {
 #[tauri::command]
 pub async fn request_camera_presence_access(
     app: tauri::AppHandle,
+    camera_device_id: Option<String>,
 ) -> Result<PresenceCapability, String> {
     let app_for_prompt = app.clone();
     let availability = tauri::async_runtime::spawn_blocking(move || {
         #[cfg(target_os = "macos")]
         let window_snapshot =
             crate::accessibility::lower_permission_windows_for_camera_prompt(&app_for_prompt)?;
-        let result = platform_impl::request_access();
+        let result = platform_impl::request_access(camera_device_id.as_deref());
         #[cfg(target_os = "macos")]
         crate::accessibility::restore_permission_windows(&app_for_prompt, window_snapshot)?;
         #[cfg(not(target_os = "macos"))]
@@ -525,13 +595,16 @@ pub fn stop_camera_presence_stream() {
 }
 
 #[tauri::command]
-pub async fn sample_camera_presence(interval_seconds: u64) -> Result<PresenceSample, String> {
+pub async fn sample_camera_presence(
+    interval_seconds: u64,
+    camera_device_id: Option<String>,
+) -> Result<PresenceSample, String> {
     let frame_interval = match validated_stream_interval(interval_seconds) {
         Ok(interval) => interval,
         Err(error) => return Ok(error_sample(error)),
     };
     let result = tauri::async_runtime::spawn_blocking(move || {
-        sample_from_stream_with_timeout(frame_interval)
+        sample_from_stream_with_timeout(frame_interval, camera_device_id)
     })
     .await
     .map_err(|error| format!("camera sample task failed: {error}"));
@@ -610,6 +683,42 @@ mod tests {
                 .expect_err("interval above the settings maximum should be rejected")
                 .code,
             "camera-sample-interval-invalid"
+        );
+    }
+
+    #[test]
+    fn stream_helper_preserves_the_selected_camera_id() {
+        let args = vec![
+            OsString::from("cpa"),
+            OsString::from(STREAM_HELPER_ARG),
+            OsString::from("30"),
+            OsString::from(CAMERA_DEVICE_ID_ARG),
+            OsString::from("camera-usb"),
+        ];
+
+        assert_eq!(
+            requested_stream_helper(&args),
+            Some(Ok(StreamHelperRequest {
+                frame_interval: Duration::from_secs(30),
+                camera_device_id: Some("camera-usb".to_string()),
+            }))
+        );
+    }
+
+    #[test]
+    fn stream_helper_defaults_to_the_system_camera_without_an_id() {
+        let args = vec![
+            OsString::from("cpa"),
+            OsString::from(STREAM_HELPER_ARG),
+            OsString::from("10"),
+        ];
+
+        assert_eq!(
+            requested_stream_helper(&args),
+            Some(Ok(StreamHelperRequest {
+                frame_interval: Duration::from_secs(10),
+                camera_device_id: None,
+            }))
         );
     }
 

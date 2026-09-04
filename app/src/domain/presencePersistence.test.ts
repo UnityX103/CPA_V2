@@ -22,6 +22,7 @@ describe('presence persistence', () => {
     it('defaults to disabled when no value exists', async () => {
         await expect(persistence.loadPresencePreferences()).resolves.toEqual({
             enabled: false,
+            cameraDeviceId: null,
             intervalSeconds: 10,
             absenceSensitivity: 'strict',
             restDeskReminderEnabled: false,
@@ -39,6 +40,7 @@ describe('presence persistence', () => {
 
         await expect(persistence.loadPresencePreferences()).resolves.toEqual({
             enabled: true,
+            cameraDeviceId: null,
             intervalSeconds: 45,
             absenceSensitivity: 'strict',
             restDeskReminderEnabled: false,
@@ -59,6 +61,7 @@ describe('presence persistence', () => {
 
             await expect(persistence.loadPresencePreferences()).resolves.toEqual({
                 enabled: true,
+                cameraDeviceId: null,
                 intervalSeconds: 10,
                 absenceSensitivity,
                 restDeskReminderEnabled: false,
@@ -79,6 +82,7 @@ describe('presence persistence', () => {
 
         await expect(persistence.loadPresencePreferences()).resolves.toEqual({
             enabled: true,
+            cameraDeviceId: null,
             intervalSeconds: 10,
             absenceSensitivity: 'strict',
             restDeskReminderEnabled: true,
@@ -95,6 +99,7 @@ describe('presence persistence', () => {
 
         await expect(persistence.loadPresencePreferences()).resolves.toEqual({
             enabled: true,
+            cameraDeviceId: null,
             intervalSeconds: 5,
             absenceSensitivity: 'strict',
             restDeskReminderEnabled: false,
@@ -104,12 +109,13 @@ describe('presence persistence', () => {
 
     it('falls back for unsupported schemas', async () => {
         storeData.set('presencePreferences', {
-            schemaVersion: 4,
+            schemaVersion: 5,
             enabled: true,
             intervalSeconds: 30,
         });
         await expect(persistence.loadPresencePreferences()).resolves.toEqual({
             enabled: false,
+            cameraDeviceId: null,
             intervalSeconds: 10,
             absenceSensitivity: 'strict',
             restDeskReminderEnabled: false,
@@ -117,9 +123,10 @@ describe('presence persistence', () => {
         });
     });
 
-    it('saves only device-local v3 settings', async () => {
+    it('saves only device-local v4 settings', async () => {
         await persistence.savePresencePreferences({
             enabled: true,
+            cameraDeviceId: 'camera-usb',
             intervalSeconds: 30,
             absenceSensitivity: 'relaxed',
             restDeskReminderEnabled: true,
@@ -127,13 +134,35 @@ describe('presence persistence', () => {
         });
 
         expect(storeData.get('presencePreferences')).toEqual({
-            schemaVersion: 3,
+            schemaVersion: 4,
             enabled: true,
+            cameraDeviceId: 'camera-usb',
             intervalSeconds: 30,
             absenceSensitivity: 'relaxed',
             restDeskReminderEnabled: true,
             restDeskReminderMode: 'cockroachInvasion',
         });
         expect(save).toHaveBeenCalledTimes(1);
+    });
+
+    it('loads a selected camera from device-local v4 settings', async () => {
+        storeData.set('presencePreferences', {
+            schemaVersion: 4,
+            enabled: true,
+            cameraDeviceId: 'camera-usb',
+            intervalSeconds: 10,
+            absenceSensitivity: 'balanced',
+            restDeskReminderEnabled: false,
+            restDeskReminderMode: 'cockroachInvasion',
+        });
+
+        await expect(persistence.loadPresencePreferences()).resolves.toEqual({
+            enabled: true,
+            cameraDeviceId: 'camera-usb',
+            intervalSeconds: 10,
+            absenceSensitivity: 'balanced',
+            restDeskReminderEnabled: false,
+            restDeskReminderMode: 'cockroachInvasion',
+        });
     });
 });

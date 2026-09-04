@@ -43,6 +43,34 @@ async function flushPromises() {
 }
 
 describe('presence settings updates', () => {
+    it('restarts monitoring and clears the stale observation when the camera changes', async () => {
+        const { presence } = freshStores();
+        presence.setState({
+            enabled: true,
+            cameraDeviceId: null,
+            availability: 'ready',
+            confirmedPresence: 'present',
+            lastSuccessfulAt: 1_000,
+            generation: 4,
+        });
+
+        await presence.getState().applySettings({
+            enabled: true,
+            cameraDeviceId: 'camera-usb',
+            intervalSeconds: 10,
+            absenceSensitivity: 'strict',
+            restDeskReminderEnabled: false,
+            restDeskReminderMode: 'cockroachInvasion',
+        });
+
+        expect(presence.getState()).toMatchObject({
+            cameraDeviceId: 'camera-usb',
+            confirmedPresence: 'unknown',
+            lastSuccessfulAt: null,
+            generation: 5,
+        });
+    });
+
     it('applies a new interval without clearing the last visible observation', async () => {
         const { presence } = freshStores();
         presence.setState({
@@ -56,6 +84,7 @@ describe('presence settings updates', () => {
 
         await presence.getState().applySettings({
             enabled: true,
+            cameraDeviceId: null,
             intervalSeconds: 5,
             absenceSensitivity: 'strict',
             restDeskReminderEnabled: false,
@@ -89,6 +118,7 @@ describe('presence settings updates', () => {
 
         await presence.getState().applySettings({
             enabled: true,
+            cameraDeviceId: null,
             intervalSeconds: 10,
             absenceSensitivity: 'balanced',
             restDeskReminderEnabled: false,
@@ -371,7 +401,7 @@ describe('presence monitor scheduling', () => {
         });
         await flushPromises();
         expect(invokeSample).toHaveBeenCalledTimes(1);
-        expect(invokeSample).toHaveBeenCalledWith(30);
+        expect(invokeSample).toHaveBeenCalledWith(30, null);
         expect(presence.getState().availability).toBe('ready');
 
         intervalCallback();
@@ -379,6 +409,40 @@ describe('presence monitor scheduling', () => {
 
         pending.resolve(sample('present'));
         await flushPromises();
+        cleanup();
+    });
+
+    it('passes the selected camera to capability checks and samples', async () => {
+        const { presence, pomodoro } = freshStores();
+        presence.setState({
+            enabled: true,
+            cameraDeviceId: 'camera-usb',
+            generation: 1,
+            intervalSeconds: 30,
+        });
+        const invokeCapability = vi.fn(async (): Promise<PresenceCapability> => ({
+            platform: 'macos',
+            availability: 'ready',
+        }));
+        const invokeSample = vi.fn(async () => sample('present'));
+
+        const cleanup = startPresenceMonitor({
+            store: presence,
+            pomodoro,
+            runtime: {
+                invokeCapability,
+                invokeSample,
+                now: () => 0,
+                setInterval: vi.fn(() => 1),
+                clearInterval: vi.fn(),
+                setTimeout: vi.fn(() => 2),
+                clearTimeout: vi.fn(),
+            },
+        });
+        await flushPromises();
+
+        expect(invokeCapability).toHaveBeenCalledWith('camera-usb');
+        expect(invokeSample).toHaveBeenCalledWith(30, 'camera-usb');
         cleanup();
     });
 

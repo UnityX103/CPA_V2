@@ -1,4 +1,4 @@
-use super::{NativeError, NativeErrorKind, PresenceAvailability};
+use super::{CameraDevice, NativeError, NativeErrorKind, PresenceAvailability};
 use nokhwa::pixel_format::RgbFormat;
 use nokhwa::utils::{ApiBackend, FrameFormat, RequestedFormat, RequestedFormatType};
 use nokhwa::Camera;
@@ -41,15 +41,32 @@ impl Drop for RoInitializeGuard {
     }
 }
 
-pub(super) fn status() -> PresenceAvailability {
-    match probe_camera_access() {
+pub(super) fn list_devices() -> Result<Vec<CameraDevice>, NativeError> {
+    let _winrt = RoInitializeGuard::new();
+    let devices = nokhwa::query(ApiBackend::MediaFoundation)
+        .map_err(|error| map_camera_error_at(error, "camera-query-failed"))?;
+    Ok(devices
+        .into_iter()
+        .map(|device| CameraDevice {
+            id: device.misc().to_string(),
+            name: device.human_name().to_string(),
+            // Windows has no reliable system-wide default camera selection.
+            // The empty preference means "automatically pick the first available device".
+            is_default: false,
+        })
+        .collect())
+}
+
+pub(super) fn status(camera_device_id: Option<&str>) -> PresenceAvailability {
+    let _winrt = RoInitializeGuard::new();
+    match probe_camera_access(camera_device_id) {
         Ok(()) => PresenceAvailability::Ready,
         Err(error) => availability_for_error(&error),
     }
 }
 
-pub(super) fn request_access() -> PresenceAvailability {
-    status()
+pub(super) fn request_access(camera_device_id: Option<&str>) -> PresenceAvailability {
+    status(camera_device_id)
 }
 
 pub(super) fn open_privacy_settings() -> Result<(), String> {
@@ -60,9 +77,9 @@ pub(super) fn open_privacy_settings() -> Result<(), String> {
     Ok(())
 }
 
-pub(super) fn sample() -> Result<bool, NativeError> {
+pub(super) fn sample(camera_device_id: Option<&str>) -> Result<bool, NativeError> {
     let _winrt = RoInitializeGuard::new();
-    let mut camera = open_camera()?;
+    let mut camera = open_camera(camera_device_id)?;
     let detector = create_face_detector()?;
     let detection = sample_open_camera(&mut camera, &detector);
     let stop_result = camera
@@ -76,25 +93,45 @@ pub(super) fn sample() -> Result<bool, NativeError> {
 
 pub(super) fn stream_samples(
     frame_interval: Duration,
+    camera_device_id: Option<&str>,
     emit: impl FnMut(Result<bool, NativeError>) -> bool,
 ) -> Result<(), NativeError> {
-    super::run_releasing_sample_loop(frame_interval, sample, emit, std::thread::sleep)
+    super::run_releasing_sample_loop(
+        frame_interval,
+        || sample(camera_device_id),
+        emit,
+        std::thread::sleep,
+    )
 }
 
-fn probe_camera_access() -> Result<(), NativeError> {
-    let mut camera = open_camera()?;
+fn probe_camera_access(camera_device_id: Option<&str>) -> Result<(), NativeError> {
+    let mut camera = open_camera(camera_device_id)?;
     camera
         .stop_stream()
         .map_err(|error| map_camera_error_at(error, "camera-stream-stop-failed"))
 }
 
-fn open_camera() -> Result<Camera, NativeError> {
+fn open_camera(camera_device_id: Option<&str>) -> Result<Camera, NativeError> {
     let devices = nokhwa::query(ApiBackend::MediaFoundation)
         .map_err(|error| map_camera_error_at(error, "camera-query-failed"))?;
-    let index = devices
-        .first()
+    let selected_device = match camera_device_id {
+        Some(camera_device_id) => devices
+            .iter()
+            .find(|device| device.misc() == camera_device_id),
+        None => devices.first(),
+    };
+    let index = selected_device
         .map(|device| device.index().clone())
-        .ok_or_else(|| NativeError::new(NativeErrorKind::NoDevice, "camera-not-found"))?;
+        .ok_or_else(|| {
+            NativeError::new(
+                NativeErrorKind::NoDevice,
+                if camera_device_id.is_some() {
+                    "selected-camera-not-found"
+                } else {
+                    "camera-not-found"
+                },
+            )
+        })?;
     let format = RequestedFormat::with_formats(
         RequestedFormatType::AbsoluteHighestFrameRate,
         RAW_CAMERA_FORMATS,

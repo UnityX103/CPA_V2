@@ -30,6 +30,7 @@ import {
 } from '../domain/pomodoroSounds';
 import { pickCustomMp3Path } from '../domain/soundFiles';
 import { listAudioOutputDevices, type AudioOutputDevice } from '../domain/audioPlayback';
+import { listCameraDevices, type CameraDevice } from '../domain/cameraDevices';
 import { useNetworkStore } from '../domain/network';
 import {
     labelForInput,
@@ -234,6 +235,8 @@ function PomodoroTab({ onApplyStateChange }: {
     const [endActionVideo, setEndActionVideo] = useState<PomodoroEndActionVideo>({ ...pomo.endActionVideo });
     const [endSounds, setEndSounds] = useState<PomodoroEndSounds>(clonePomodoroEndSounds(pomo.endSounds));
     const [presenceEnabled, setPresenceEnabled] = useState(presence.enabled);
+    const [cameraDeviceId, setCameraDeviceId] = useState(presence.cameraDeviceId);
+    const [cameraDevices, setCameraDevices] = useState<CameraDevice[]>([]);
     const [presenceIntervalSeconds, setPresenceIntervalSeconds] = useState(presence.intervalSeconds);
     const [absenceSensitivity, setAbsenceSensitivity] = useState(presence.absenceSensitivity);
     const [restDeskReminderEnabled, setRestDeskReminderEnabled] = useState(
@@ -251,6 +254,7 @@ function PomodoroTab({ onApplyStateChange }: {
         endActionVideo: { ...pomo.endActionVideo },
         endSounds: clonePomodoroEndSounds(pomo.endSounds),
         presenceEnabled: presence.enabled,
+        cameraDeviceId: presence.cameraDeviceId,
         presenceIntervalSeconds: presence.intervalSeconds,
         absenceSensitivity: presence.absenceSensitivity,
         restDeskReminderEnabled: presence.restDeskReminderEnabled,
@@ -270,6 +274,7 @@ function PomodoroTab({ onApplyStateChange }: {
         const endSoundDraftDirty = !samePomodoroEndSounds(endSounds, previous.endSounds);
         const presenceDraftDirty =
             presenceEnabled !== previous.presenceEnabled
+            || cameraDeviceId !== previous.cameraDeviceId
             || presenceIntervalSeconds !== previous.presenceIntervalSeconds
             || absenceSensitivity !== previous.absenceSensitivity
             || restDeskReminderEnabled !== previous.restDeskReminderEnabled
@@ -297,6 +302,7 @@ function PomodoroTab({ onApplyStateChange }: {
         }
         if (!presenceDraftDirty) {
             setPresenceEnabled(presence.enabled);
+            setCameraDeviceId(presence.cameraDeviceId);
             setPresenceIntervalSeconds(presence.intervalSeconds);
             setAbsenceSensitivity(presence.absenceSensitivity);
             setRestDeskReminderEnabled(presence.restDeskReminderEnabled);
@@ -312,6 +318,7 @@ function PomodoroTab({ onApplyStateChange }: {
             endActionVideo: { ...pomo.endActionVideo },
             endSounds: clonePomodoroEndSounds(pomo.endSounds),
             presenceEnabled: presence.enabled,
+            cameraDeviceId: presence.cameraDeviceId,
             presenceIntervalSeconds: presence.intervalSeconds,
             absenceSensitivity: presence.absenceSensitivity,
             restDeskReminderEnabled: presence.restDeskReminderEnabled,
@@ -333,6 +340,7 @@ function PomodoroTab({ onApplyStateChange }: {
         pomo.endSounds.break.builtinSoundId,
         pomo.endSounds.break.customSoundPath,
         presence.enabled,
+        presence.cameraDeviceId,
         presence.intervalSeconds,
         presence.absenceSensitivity,
         presence.restDeskReminderEnabled,
@@ -345,11 +353,26 @@ function PomodoroTab({ onApplyStateChange }: {
         endActionVideo,
         endSounds,
         presenceEnabled,
+        cameraDeviceId,
         presenceIntervalSeconds,
         absenceSensitivity,
         restDeskReminderEnabled,
         restDeskReminderMode,
     ]);
+
+    useEffect(() => {
+        if (!presenceEnabled) return undefined;
+        let active = true;
+        void listCameraDevices()
+            .then((devices) => {
+                if (active) setCameraDevices(devices);
+            })
+            .catch((error) => {
+                console.warn('[settings] failed to list camera devices', error);
+                if (active) setCameraDevices([]);
+            });
+        return () => { active = false; };
+    }, [presenceEnabled]);
 
     const dirty =
         focusMin * 60 !== pomo.focusDurationSeconds ||
@@ -360,6 +383,7 @@ function PomodoroTab({ onApplyStateChange }: {
         !sameEndActionVideo(endActionVideo, pomo.endActionVideo) ||
         !samePomodoroEndSounds(endSounds, pomo.endSounds) ||
         presenceEnabled !== presence.enabled ||
+        cameraDeviceId !== presence.cameraDeviceId ||
         presenceIntervalSeconds !== presence.intervalSeconds ||
         absenceSensitivity !== presence.absenceSensitivity ||
         restDeskReminderEnabled !== presence.restDeskReminderEnabled ||
@@ -388,6 +412,7 @@ function PomodoroTab({ onApplyStateChange }: {
         const endSoundsChanged = !samePomodoroEndSounds(endSounds, pomo.endSounds);
         const presenceChanged =
             presenceEnabled !== presence.enabled
+            || cameraDeviceId !== presence.cameraDeviceId
             || presenceIntervalSeconds !== presence.intervalSeconds
             || absenceSensitivity !== presence.absenceSensitivity
             || restDeskReminderEnabled !== presence.restDeskReminderEnabled
@@ -414,6 +439,7 @@ function PomodoroTab({ onApplyStateChange }: {
         if (presenceChanged) {
             void Promise.resolve(presence.applySettings({
                 enabled: presenceEnabled,
+                cameraDeviceId,
                 intervalSeconds: presenceIntervalSeconds,
                 absenceSensitivity,
                 restDeskReminderEnabled,
@@ -437,6 +463,7 @@ function PomodoroTab({ onApplyStateChange }: {
         pomo,
         presence,
         presenceEnabled,
+        cameraDeviceId,
         presenceIntervalSeconds,
         absenceSensitivity,
         restDeskReminderEnabled,
@@ -554,6 +581,32 @@ function PomodoroTab({ onApplyStateChange }: {
                                 ariaLabel="摄像头自动控制"
                             />
                         </div>
+
+                        {presenceEnabled && (
+                            <div className="card pomo-row camera-device-row">
+                                <span className="pomo-row-label">目标摄像头</span>
+                                <select
+                                    className="dropdown dropdown-fit camera-device-select"
+                                    aria-label="目标摄像头"
+                                    value={cameraDeviceId ?? ''}
+                                    onChange={(event) => setCameraDeviceId(
+                                        event.currentTarget.value || null,
+                                    )}
+                                >
+                                    <option value="">自动选择摄像头</option>
+                                    {cameraDeviceId !== null
+                                        && !cameraDevices.some((device) => device.id === cameraDeviceId)
+                                        && (
+                                            <option value={cameraDeviceId}>当前选择的摄像头不可用</option>
+                                        )}
+                                    {cameraDevices.map((device) => (
+                                        <option key={device.id} value={device.id}>
+                                            {device.name}{device.isDefault ? '（系统默认）' : ''}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
 
                         <PresenceAuthorizationControl
                             enabled={presence.enabled}

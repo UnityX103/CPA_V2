@@ -115,6 +115,7 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
         },
         presence: {
             enabled: presence.enabled,
+            cameraDeviceId: presence.cameraDeviceId,
             intervalSeconds: presence.intervalSeconds,
             absenceSensitivity: presence.absenceSensitivity,
             restDeskReminderEnabled: presence.restDeskReminderEnabled,
@@ -333,6 +334,7 @@ export function pomoSig(s: {
 
 export function presenceSig(s: {
     enabled: boolean;
+    cameraDeviceId: string | null;
     intervalSeconds: number;
     absenceSensitivity: PresenceAbsenceSensitivity;
     restDeskReminderEnabled: boolean;
@@ -345,6 +347,7 @@ export function presenceSig(s: {
 }): string {
     return JSON.stringify([
         s.enabled,
+        s.cameraDeviceId,
         s.intervalSeconds,
         s.absenceSensitivity,
         s.restDeskReminderEnabled,

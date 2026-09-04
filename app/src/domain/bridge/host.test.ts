@@ -87,6 +87,7 @@ describe('bridge host', () => {
             action: 'applySettings',
             args: [{
                 enabled: true,
+                cameraDeviceId: 'camera-usb',
                 intervalSeconds: 30,
                 absenceSensitivity: 'balanced',
                 restDeskReminderEnabled: true,
@@ -96,6 +97,7 @@ describe('bridge host', () => {
 
         expect(applySettings).toHaveBeenCalledWith({
             enabled: true,
+            cameraDeviceId: 'camera-usb',
             intervalSeconds: 30,
             absenceSensitivity: 'balanced',
             restDeskReminderEnabled: true,

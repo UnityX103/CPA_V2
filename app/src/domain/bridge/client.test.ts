@@ -36,6 +36,7 @@ function snapshot(): BridgeSnapshot {
         },
         presence: {
             enabled: true,
+            cameraDeviceId: 'camera-usb',
             intervalSeconds: 30,
             absenceSensitivity: 'relaxed',
             restDeskReminderEnabled: true,
@@ -110,6 +111,7 @@ describe('bridge client', () => {
         }));
         expect(usePresenceStore.getState()).toEqual(expect.objectContaining({
             enabled: true,
+            cameraDeviceId: 'camera-usb',
             intervalSeconds: 30,
             absenceSensitivity: 'relaxed',
             restDeskReminderEnabled: true,

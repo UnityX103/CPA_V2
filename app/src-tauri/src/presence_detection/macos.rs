@@ -1,4 +1,4 @@
-use super::{NativeError, NativeErrorKind, PresenceAvailability};
+use super::{CameraDevice, NativeError, NativeErrorKind, PresenceAvailability};
 use block2::RcBlock;
 use nokhwa::pixel_format::RgbFormat;
 use nokhwa::utils::{ApiBackend, FrameFormat, RequestedFormat, RequestedFormatType};
@@ -28,18 +28,30 @@ fn video_media_type() -> &'static objc2_av_foundation::AVMediaType {
     unsafe { AVMediaTypeVideo.expect("AVMediaTypeVideo is unavailable") }
 }
 
-pub(super) fn status() -> PresenceAvailability {
+pub(super) fn list_devices() -> Result<Vec<CameraDevice>, NativeError> {
+    let default_id = unsafe { AVCaptureDevice::defaultDeviceWithMediaType(video_media_type()) }
+        .map(|device| unsafe { device.uniqueID() }.to_string());
+    let devices = nokhwa::query(ApiBackend::AVFoundation).map_err(map_camera_error)?;
+    Ok(devices
+        .into_iter()
+        .map(|device| {
+            let id = device.misc();
+            CameraDevice {
+                is_default: default_id.as_deref() == Some(id.as_str()),
+                id,
+                name: device.human_name().to_string(),
+            }
+        })
+        .collect())
+}
+
+pub(super) fn status(camera_device_id: Option<&str>) -> PresenceAvailability {
     let status = unsafe { AVCaptureDevice::authorizationStatusForMediaType(video_media_type()) };
     match status {
         AVAuthorizationStatus::NotDetermined => PresenceAvailability::PermissionRequired,
-        AVAuthorizationStatus::Authorized => {
-            let device = unsafe { AVCaptureDevice::defaultDeviceWithMediaType(video_media_type()) };
-            if device.is_some() {
-                PresenceAvailability::Ready
-            } else {
-                PresenceAvailability::NoDevice
-            }
-        }
+        AVAuthorizationStatus::Authorized => camera_index(camera_device_id)
+            .map(|_| PresenceAvailability::Ready)
+            .unwrap_or_else(|error| availability_for_error(&error)),
         AVAuthorizationStatus::Denied | AVAuthorizationStatus::Restricted => {
             PresenceAvailability::PermissionDenied
         }
@@ -47,9 +59,9 @@ pub(super) fn status() -> PresenceAvailability {
     }
 }
 
-pub(super) fn request_access() -> PresenceAvailability {
-    if status() != PresenceAvailability::PermissionRequired {
-        return status();
+pub(super) fn request_access(camera_device_id: Option<&str>) -> PresenceAvailability {
+    if status(camera_device_id) != PresenceAvailability::PermissionRequired {
+        return status(camera_device_id);
     }
 
     let (tx, rx) = mpsc::sync_channel(1);
@@ -60,7 +72,7 @@ pub(super) fn request_access() -> PresenceAvailability {
         AVCaptureDevice::requestAccessForMediaType_completionHandler(video_media_type(), &handler);
     }
     match rx.recv_timeout(Duration::from_secs(120)) {
-        Ok(true) => status(),
+        Ok(true) => status(camera_device_id),
         Ok(false) => PresenceAvailability::PermissionDenied,
         Err(_) => PresenceAvailability::Error,
     }
@@ -74,8 +86,8 @@ pub(super) fn open_privacy_settings() -> Result<(), String> {
     Ok(())
 }
 
-pub(super) fn sample() -> Result<bool, NativeError> {
-    let mut camera = open_camera()?;
+pub(super) fn sample(camera_device_id: Option<&str>) -> Result<bool, NativeError> {
+    let mut camera = open_camera(camera_device_id)?;
     let detection = sample_open_camera(&mut camera);
     let stop_result = camera.stop_stream().map_err(map_camera_error);
     match (detection, stop_result) {
@@ -86,13 +98,19 @@ pub(super) fn sample() -> Result<bool, NativeError> {
 
 pub(super) fn stream_samples(
     frame_interval: Duration,
+    camera_device_id: Option<&str>,
     emit: impl FnMut(Result<bool, NativeError>) -> bool,
 ) -> Result<(), NativeError> {
-    super::run_releasing_sample_loop(frame_interval, sample, emit, std::thread::sleep)
+    super::run_releasing_sample_loop(
+        frame_interval,
+        || sample(camera_device_id),
+        emit,
+        std::thread::sleep,
+    )
 }
 
-fn open_camera() -> Result<Camera, NativeError> {
-    match status() {
+fn open_camera(camera_device_id: Option<&str>) -> Result<Camera, NativeError> {
+    match status(camera_device_id) {
         PresenceAvailability::PermissionRequired | PresenceAvailability::PermissionDenied => {
             return Err(NativeError::new(
                 NativeErrorKind::PermissionDenied,
@@ -114,7 +132,7 @@ fn open_camera() -> Result<Camera, NativeError> {
         }
     }
 
-    let index = default_camera_index()?;
+    let index = camera_index(camera_device_id)?;
     let format = RequestedFormat::with_formats(
         RequestedFormatType::AbsoluteHighestFrameRate,
         RAW_CAMERA_FORMATS,
@@ -136,16 +154,42 @@ fn sample_open_camera(camera: &mut Camera) -> Result<bool, NativeError> {
     detect_face(&bytes, width as usize, height as usize)
 }
 
-fn default_camera_index() -> Result<nokhwa::utils::CameraIndex, NativeError> {
-    let default_device = unsafe { AVCaptureDevice::defaultDeviceWithMediaType(video_media_type()) }
-        .ok_or_else(|| NativeError::new(NativeErrorKind::NoDevice, "camera-not-found"))?;
-    let default_id = unsafe { default_device.uniqueID() }.to_string();
+fn camera_index(camera_device_id: Option<&str>) -> Result<nokhwa::utils::CameraIndex, NativeError> {
+    let target_id = match camera_device_id {
+        Some(camera_device_id) => camera_device_id.to_string(),
+        None => {
+            let default_device =
+                unsafe { AVCaptureDevice::defaultDeviceWithMediaType(video_media_type()) }
+                    .ok_or_else(|| {
+                        NativeError::new(NativeErrorKind::NoDevice, "camera-not-found")
+                    })?;
+            unsafe { default_device.uniqueID() }.to_string()
+        }
+    };
     let devices = nokhwa::query(ApiBackend::AVFoundation).map_err(map_camera_error)?;
     devices
         .into_iter()
-        .find(|device| device.misc() == default_id)
+        .find(|device| device.misc() == target_id)
         .map(|device| device.index().clone())
-        .ok_or_else(|| NativeError::new(NativeErrorKind::NoDevice, "default-camera-not-found"))
+        .ok_or_else(|| {
+            NativeError::new(
+                NativeErrorKind::NoDevice,
+                if camera_device_id.is_some() {
+                    "selected-camera-not-found"
+                } else {
+                    "default-camera-not-found"
+                },
+            )
+        })
+}
+
+fn availability_for_error(error: &NativeError) -> PresenceAvailability {
+    match error.kind {
+        NativeErrorKind::PermissionDenied => PresenceAvailability::PermissionDenied,
+        NativeErrorKind::NoDevice => PresenceAvailability::NoDevice,
+        NativeErrorKind::Busy => PresenceAvailability::Busy,
+        NativeErrorKind::Error => PresenceAvailability::Error,
+    }
 }
 
 fn detect_face(bytes: &[u8], width: usize, height: usize) -> Result<bool, NativeError> {

@@ -179,19 +179,20 @@ export function createPresenceStore(opts: { isSettingsWindow: boolean }): Presen
             const normalized = normalizePresencePreferences(preferences);
             const previous = get();
             const enabledChanged = previous.enabled !== normalized.enabled;
+            const cameraChanged = previous.cameraDeviceId !== normalized.cameraDeviceId;
             const intervalChanged = previous.intervalSeconds !== normalized.intervalSeconds;
             const sensitivityChanged = previous.absenceSensitivity
                 !== normalized.absenceSensitivity;
-            const monitorChanged = enabledChanged || intervalChanged;
+            const monitorChanged = enabledChanged || cameraChanged || intervalChanged;
             set((state) => ({
                 ...normalized,
                 availability: normalized.enabled
                     ? (enabledChanged ? 'checking' : state.availability)
                     : 'disabled',
                 generation: monitorChanged ? state.generation + 1 : state.generation,
-                confirmedPresence: enabledChanged ? 'unknown' : state.confirmedPresence,
-                lastSuccessfulAt: enabledChanged ? null : state.lastSuccessfulAt,
-                lastError: enabledChanged ? null : state.lastError,
+                confirmedPresence: enabledChanged || cameraChanged ? 'unknown' : state.confirmedPresence,
+                lastSuccessfulAt: enabledChanged || cameraChanged ? null : state.lastSuccessfulAt,
+                lastError: enabledChanged || cameraChanged ? null : state.lastError,
                 inFlight: monitorChanged ? false : state.inFlight,
                 consecutiveAbsentSamples: monitorChanged || sensitivityChanged
                     ? 0
@@ -213,7 +214,9 @@ export function createPresenceStore(opts: { isSettingsWindow: boolean }): Presen
                 consecutiveAbsentSamples: 0,
             }));
             try {
-                const capability = await invoke<PresenceCapability>('request_camera_presence_access');
+                const capability = await invoke<PresenceCapability>('request_camera_presence_access', {
+                    cameraDeviceId: get().cameraDeviceId,
+                });
                 set((state) => ({
                     ...capabilityState(state, capability),
                     generation: state.generation + 1,
@@ -238,7 +241,9 @@ export function createPresenceStore(opts: { isSettingsWindow: boolean }): Presen
                 consecutiveAbsentSamples: 0,
             }));
             try {
-                const capability = await invoke<PresenceCapability>('camera_presence_status');
+                const capability = await invoke<PresenceCapability>('camera_presence_status', {
+                    cameraDeviceId: get().cameraDeviceId,
+                });
                 set((state) => ({
                     ...capabilityState(state, capability),
                     generation: state.generation + 1,
@@ -387,8 +392,11 @@ export function applyPresenceSample(
 }
 
 interface PresenceMonitorRuntime {
-    invokeCapability: () => Promise<PresenceCapability>;
-    invokeSample: (intervalSeconds: number) => Promise<PresenceSample>;
+    invokeCapability: (cameraDeviceId: string | null) => Promise<PresenceCapability>;
+    invokeSample: (
+        intervalSeconds: number,
+        cameraDeviceId: string | null,
+    ) => Promise<PresenceSample>;
     stopSampleStream?: () => Promise<unknown>;
     now: () => number;
     setInterval: (callback: () => void, delayMs: number) => number;
@@ -398,9 +406,12 @@ interface PresenceMonitorRuntime {
 }
 
 const defaultMonitorRuntime: PresenceMonitorRuntime = {
-    invokeCapability: () => invoke<PresenceCapability>('camera_presence_status'),
-    invokeSample: (intervalSeconds) => invoke<PresenceSample>('sample_camera_presence', {
+    invokeCapability: (cameraDeviceId) => invoke<PresenceCapability>('camera_presence_status', {
+        cameraDeviceId,
+    }),
+    invokeSample: (intervalSeconds, cameraDeviceId) => invoke<PresenceSample>('sample_camera_presence', {
         intervalSeconds,
+        cameraDeviceId,
     }),
     stopSampleStream: () => invoke('stop_camera_presence_stream'),
     now: () => performance.now(),
@@ -428,6 +439,7 @@ export function startPresenceMonitor({
     let intervalId: number | null = null;
     let inFlight = false;
     const intervalSeconds = store.getState().intervalSeconds;
+    const cameraDeviceId = store.getState().cameraDeviceId;
     const intervalMs = intervalSeconds * 1000;
 
     const isCurrent = () => !stopped
@@ -467,7 +479,10 @@ export function startPresenceMonitor({
             applyPresenceSample(store, pomodoro, result, runtime.now());
         };
         try {
-            const result = await Promise.race([runtime.invokeSample(intervalSeconds), timeout]);
+            const result = await Promise.race([
+                runtime.invokeSample(intervalSeconds, cameraDeviceId),
+                timeout,
+            ]);
             if (!isCurrent()) return;
             applyResult(result);
             if (terminalAvailability(result.availability)) {
@@ -492,7 +507,7 @@ export function startPresenceMonitor({
         if (!isCurrent()) return;
         store.setState({ availability: 'checking', inFlight: true });
         try {
-            const capability = await runtime.invokeCapability();
+            const capability = await runtime.invokeCapability(cameraDeviceId);
             if (!isCurrent()) return;
             applyPresenceCapability(store, capability);
             if (capability.availability === 'permissionRequired'
@@ -524,6 +539,7 @@ export function startPresenceMonitor({
 
 export function usePresenceMonitor({ enabled }: { enabled: boolean }): void {
     const presenceEnabled = usePresenceStore((state) => state.enabled);
+    const cameraDeviceId = usePresenceStore((state) => state.cameraDeviceId);
     const intervalSeconds = usePresenceStore((state) => state.intervalSeconds);
     const generation = usePresenceStore((state) => state.generation);
 
@@ -533,7 +549,7 @@ export function usePresenceMonitor({ enabled }: { enabled: boolean }): void {
             store: usePresenceStore,
             pomodoro: usePomodoroStore,
         });
-    }, [enabled, presenceEnabled, intervalSeconds, generation]);
+    }, [enabled, presenceEnabled, cameraDeviceId, intervalSeconds, generation]);
 
     useEffect(() => {
         if (!enabled || presenceEnabled) return;

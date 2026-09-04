@@ -25,6 +25,12 @@ beforeEach(() => {
                 { id: 'coreaudio:external-dac', name: 'USB DAC', isDefault: false },
             ]);
         }
+        if (command === 'list_camera_devices') {
+            return Promise.resolve([
+                { id: 'camera-built-in', name: 'FaceTime HD Camera', isDefault: true },
+                { id: 'camera-usb', name: 'USB Camera', isDefault: false },
+            ]);
+        }
         return Promise.resolve(undefined);
     });
     listen.mockReset().mockResolvedValue(() => {});
@@ -57,6 +63,7 @@ beforeEach(() => {
     });
     usePresenceStore.setState({
         enabled: false,
+        cameraDeviceId: null,
         intervalSeconds: 60,
         absenceSensitivity: 'strict',
         platform: 'macos',
@@ -116,7 +123,12 @@ describe('SettingsPanel', () => {
     });
 
     it('keeps video module download progress when switching settings tabs', async () => {
-        const notInstalled = {
+        const notInstalled: {
+            installed: boolean;
+            version: string | null;
+            target: string;
+            message: string;
+        } = {
             installed: false,
             version: null,
             target: 'macos-arm64',
@@ -288,6 +300,28 @@ describe('SettingsPanel', () => {
         expect(screen.getByText('摄像头授权')).toBeTruthy();
         expect(screen.getByText('未启用')).toBeTruthy();
         expect(screen.getByText('工位状态')).toBeTruthy();
+        expect(screen.queryByRole('combobox', { name: '目标摄像头' })).toBeNull();
+    });
+
+    it('selects and applies a target camera only after camera automation is enabled', async () => {
+        render(<SettingsPanel />);
+
+        expect(screen.queryByRole('combobox', { name: '目标摄像头' })).toBeNull();
+        fireEvent.click(screen.getByRole('button', { name: '摄像头自动控制' }));
+
+        const camera = await screen.findByRole('combobox', { name: '目标摄像头' });
+        expect(screen.getByRole('option', { name: '自动选择摄像头' })).toBeTruthy();
+        expect(screen.getByRole('option', { name: 'FaceTime HD Camera（系统默认）' })).toBeTruthy();
+        expect(screen.getByRole('option', { name: 'USB Camera' })).toBeTruthy();
+        fireEvent.change(camera, { target: { value: 'camera-usb' } });
+        fireEvent.click(screen.getByRole('button', { name: '应用' }));
+
+        await vi.waitFor(() => {
+            expect(usePresenceStore.getState()).toEqual(expect.objectContaining({
+                enabled: true,
+                cameraDeviceId: 'camera-usb',
+            }));
+        });
     });
 
     it('labels automatic focus-end pinning clearly', () => {

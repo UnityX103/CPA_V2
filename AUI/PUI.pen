@@ -144,6 +144,47 @@
             },
             {
               "type": "frame",
+              "id": "y6D5n4",
+              "name": "pomoTargetCamera",
+              "context": "仅在摄像头自动控制开启时显示。",
+              "width": "fill_container",
+              "height": 52,
+              "fill": "#F6F7F8",
+              "cornerRadius": 16,
+              "padding": [
+                14,
+                16
+              ],
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "vkgQl",
+                  "name": "pomoTargetCameraLabel",
+                  "fill": "#1A1A1A",
+                  "content": "目标摄像头",
+                  "fontFamily": "MaokenAssortedSans",
+                  "fontSize": 14,
+                  "fontWeight": "500"
+                },
+                {
+                  "id": "Q7kFzQ",
+                  "type": "ref",
+                  "ref": "Frjkw",
+                  "name": "pomoTargetCameraDropdown",
+                  "context": "下拉选项示例：FaceTime HD Camera（系统默认）；USB Camera。自动选择摄像头由应用从可用设备中选择。",
+                  "width": 192,
+                  "descendants": {
+                    "d5bpi": {
+                      "content": "自动选择摄像头"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
               "id": "jTQXM",
               "name": "pomoPresenceAuthorization",
               "width": "fill_container",
@@ -2022,9 +2063,9 @@
                     "mo62i": {
                       "flipX": false,
                       "flipY": false,
-                      "width": 47.49269371986886,
+                      "width": 47.188253375510726,
                       "height": 18,
-                      "x": 13.29795424156328,
+                      "x": 13.212710945143003,
                       "y": 21,
                       "textGrowth": "fixed-width-height",
                       "fontSize": 17
@@ -6827,6 +6868,17 @@
                         "ley1X": {
                           "fill": "#E5E7EB",
                           "justifyContent": "start"
+                        },
+                        "y6D5n4": {
+                          "enabled": false,
+                          "width": 0,
+                          "height": 0
+                        },
+                        "vkgQl": {
+                          "enabled": false
+                        },
+                        "Q7kFzQ": {
+                          "enabled": false
                         },
                         "jTQXM": {
                           "enabled": false,

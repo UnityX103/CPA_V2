@@ -1010,6 +1010,18 @@
 /* Frjkw 的 fit-content 变体 */
 .dropdown-fit { width: auto; }
 
+.camera-device-select {
+    max-width: min(320px, 100%);
+    min-width: 220px;
+}
+
+@media (max-width: 520px) {
+    .camera-device-select {
+        width: 100%;
+        min-width: 0;
+    }
+}
+
 .reminder-method-actions {
     display: inline-flex;
     align-items: center;

@@ -631,6 +631,7 @@ pub fn run() {
             accessibility::restart_key_counter_listener,
             accessibility::request_accessibility_permission,
             presence_detection::camera_presence_status,
+            presence_detection::list_camera_devices,
             presence_detection::request_camera_presence_access,
             presence_detection::open_camera_privacy_settings,
             presence_detection::stop_camera_presence_stream,
