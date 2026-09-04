@@ -54,6 +54,19 @@ atomically switches the active pointer after all three pass. Component URLs may
 refer to older release tags, which is how unchanged multi-gigabyte assets are
 reused across releases.
 
+## CPA extension-pack mapping
+
+The host exposes the schema-v2 layers as two independently managed extension packs:
+
+- `video.core`: the selected platform engine plus the shared models layer;
+- `video.editor`: the lightweight logic/UI layer, depending on `video.core`.
+
+Installing or upgrading `video.editor` resolves and installs `video.core` first. The host records
+the common selection in `core.json`, so uninstalling the feature removes its logic and active
+feature pointer without deleting the verified engine or model cache. A common-pack uninstall is
+rejected while the feature pack is still installed. Legacy schema-v1 archives remain readable but
+cannot be split after installation because their runtime, models, and logic share one archive.
+
 The host remains compatible with the legacy schema-v1 platform archive:
 
 ```text

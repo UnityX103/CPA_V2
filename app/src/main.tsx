@@ -6,6 +6,7 @@ import DevAlignApp from "./DevAlignApp";
 import InputCounterApp from "./InputCounterApp";
 import RemotePlayerCardApp from "./RemotePlayerCardApp";
 import VideoPlayerApp from "./VideoPlayerApp";
+import { useExtensionPackSync } from "./domain/extensionPacks";
 import "./styles/global.css";
 
 const which = new URLSearchParams(window.location.search).get("window");
@@ -21,8 +22,13 @@ const Root = which === "settings"
                     ? RemotePlayerCardApp
                     : App;
 
+function WindowRoot() {
+    useExtensionPackSync({ enabled: which === null || which === "settings" });
+    return <Root />;
+}
+
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <React.StrictMode>
-        <Root />
+        <WindowRoot />
     </React.StrictMode>,
 );

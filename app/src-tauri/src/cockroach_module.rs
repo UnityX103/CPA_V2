@@ -1,3 +1,7 @@
+use crate::extension_packs::{
+    pack_is_enabled, replace_file_atomically, ExtensionRuntimeContribution, InstallState,
+    COCKROACH_ID,
+};
 use futures_util::StreamExt;
 use minisign_verify::{PublicKey, Signature};
 use serde::{Deserialize, Serialize};
@@ -173,6 +177,15 @@ struct LayeredInstalledPointer {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
+struct PetCorePointer {
+    schema_version: u32,
+    target: String,
+    runtime: InstalledComponentPointer,
+    dependencies: InstalledComponentPointer,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
 struct ModuleManifest {
     schema_version: u32,
     id: String,
@@ -211,6 +224,8 @@ struct LogicManifest {
     module_root: String,
     distribution: String,
     capabilities: Vec<String>,
+    #[serde(default)]
+    runtime_contribution: Option<ExtensionRuntimeContribution>,
     files: Vec<ComponentFile>,
 }
 
@@ -255,6 +270,7 @@ struct ResolvedCockroachModule {
     working_directory: PathBuf,
     arguments: Vec<String>,
     environment: HashMap<String, String>,
+    runtime_contribution: Option<ExtensionRuntimeContribution>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -350,6 +366,180 @@ fn pointer_path(root: &Path) -> PathBuf {
     root.join("current.json")
 }
 
+fn core_pointer_path(root: &Path) -> PathBuf {
+    root.join("core.json")
+}
+
+fn write_core_pointer(root: &Path, core: &PetCorePointer) -> Result<(), String> {
+    fs::create_dir_all(root).map_err(|error| format!("无法创建宠物通用包目录：{error}"))?;
+    let temporary = root.join(format!(".core-{}.tmp", std::process::id()));
+    fs::write(
+        &temporary,
+        serde_json::to_vec_pretty(core)
+            .map_err(|error| format!("无法序列化宠物通用包状态：{error}"))?,
+    )
+    .map_err(|error| format!("无法保存宠物通用包状态：{error}"))?;
+    let destination = core_pointer_path(root);
+    let result = replace_file_atomically(&temporary, &destination, "激活宠物通用包");
+    if result.is_err() {
+        let _ = fs::remove_file(&temporary);
+    }
+    result
+}
+
+fn core_pointer_from_feature(pointer: &LayeredInstalledPointer) -> PetCorePointer {
+    PetCorePointer {
+        schema_version: 1,
+        target: pointer.target.clone(),
+        runtime: pointer.runtime.clone(),
+        dependencies: pointer.dependencies.clone(),
+    }
+}
+
+fn split_layered_feature_installation(
+    root: &Path,
+    pointer: &LayeredInstalledPointer,
+) -> Result<(), String> {
+    safe_relative_path(&pointer.runtime.directory)?;
+    safe_relative_path(&pointer.dependencies.directory)?;
+    safe_relative_path(&pointer.logic.directory)?;
+    write_core_pointer(root, &core_pointer_from_feature(pointer))?;
+    let logic_root = root.join("logic");
+    if logic_root.exists() {
+        fs::remove_dir_all(&logic_root).map_err(|error| format!("无法删除蟑螂业务包：{error}"))?;
+    }
+    let current = pointer_path(root);
+    if current.exists() {
+        fs::remove_file(current).map_err(|error| format!("无法移除蟑螂模块状态：{error}"))?;
+    }
+    Ok(())
+}
+
+fn resolve_pet_core(root: &Path) -> Result<Option<PetCorePointer>, String> {
+    let path = core_pointer_path(root);
+    let core = if path.is_file() {
+        let bytes = fs::read(&path).map_err(|error| format!("无法读取宠物通用包状态：{error}"))?;
+        serde_json::from_slice::<PetCorePointer>(&bytes)
+            .map_err(|error| format!("宠物通用包状态损坏：{error}"))?
+    } else {
+        let current = pointer_path(root);
+        if !current.is_file() {
+            return Ok(None);
+        }
+        let value: serde_json::Value = serde_json::from_slice(
+            &fs::read(&current).map_err(|error| format!("无法读取蟑螂模块状态：{error}"))?,
+        )
+        .map_err(|error| format!("蟑螂模块状态损坏：{error}"))?;
+        if value
+            .get("schemaVersion")
+            .and_then(serde_json::Value::as_u64)
+            != Some(LAYERED_INDEX_SCHEMA_VERSION as u64)
+        {
+            return Ok(None);
+        }
+        let pointer: LayeredInstalledPointer = serde_json::from_value(value)
+            .map_err(|error| format!("分层蟑螂模块状态损坏：{error}"))?;
+        resolve_layered_module(root, pointer.clone())?;
+        core_pointer_from_feature(&pointer)
+    };
+    if core.schema_version != 1 || core.target != runtime_target() {
+        return Err("宠物通用包状态版本或平台不兼容".to_string());
+    }
+    let runtime_directory = resolve_component_directory(
+        root,
+        &core.runtime,
+        LayeredComponentKind::Runtime,
+        &core.target,
+    )?;
+    let dependencies_directory = resolve_component_directory(
+        root,
+        &core.dependencies,
+        LayeredComponentKind::Dependencies,
+        &core.target,
+    )?;
+    validate_layered_component_directory(
+        &runtime_directory,
+        LayeredComponentKind::Runtime,
+        &core.runtime.version,
+        &core.target,
+        None,
+        true,
+    )?;
+    validate_layered_component_directory(
+        &dependencies_directory,
+        LayeredComponentKind::Dependencies,
+        &core.dependencies.version,
+        &core.target,
+        None,
+        true,
+    )?;
+    Ok(Some(core))
+}
+
+pub(crate) fn feature_pack_state(app: &tauri::AppHandle) -> InstallState {
+    let target = runtime_target().to_string();
+    match module_root(app).and_then(|root| resolve_installed_module(&root)) {
+        Ok(Some(resolved)) => InstallState {
+            installed: true,
+            version: Some(resolved.version),
+            target,
+            message: "蟑螂入侵功能包已安装".to_string(),
+            runtime_contribution: resolved.runtime_contribution,
+        },
+        Ok(None) => InstallState {
+            installed: false,
+            version: None,
+            target,
+            message: "蟑螂入侵功能包尚未安装".to_string(),
+            runtime_contribution: None,
+        },
+        Err(error) => InstallState {
+            installed: false,
+            version: None,
+            target,
+            message: error,
+            runtime_contribution: None,
+        },
+    }
+}
+
+pub(crate) fn common_pack_state(app: &tauri::AppHandle) -> InstallState {
+    let target = runtime_target().to_string();
+    let state = module_root(app).and_then(|root| {
+        if let Some(core) = resolve_pet_core(&root)? {
+            return Ok(Some(format!(
+                "runtime {} + dependencies {}",
+                core.runtime.version, core.dependencies.version
+            )));
+        }
+        let legacy = read_installed_manifest(&root)?;
+        Ok(legacy.map(|(pointer, _)| pointer.version))
+    });
+    match state {
+        Ok(Some(version)) => InstallState {
+            installed: true,
+            version: Some(version),
+            target,
+            message: "宠物通用包已安装".to_string(),
+            runtime_contribution: None,
+        },
+        Ok(None) => InstallState {
+            installed: false,
+            version: None,
+            target,
+            message: "宠物通用包尚未安装".to_string(),
+            runtime_contribution: None,
+        },
+        Err(error) => InstallState {
+            installed: false,
+            version: None,
+            target,
+            message: error,
+            runtime_contribution: None,
+        },
+    }
+}
+
 fn read_pointer(root: &Path) -> Result<Option<InstalledPointer>, String> {
     let path = pointer_path(root);
     if !path.is_file() {
@@ -423,6 +613,7 @@ fn resolve_installed_module(root: &Path) -> Result<Option<ResolvedCockroachModul
         working_directory,
         arguments: Vec::new(),
         environment: HashMap::new(),
+        runtime_contribution: None,
     }))
 }
 
@@ -496,6 +687,7 @@ fn resolve_layered_module(
         working_directory: module_root.clone(),
         arguments: vec![module_root.to_string_lossy().into_owned()],
         environment,
+        runtime_contribution: logic.runtime_contribution,
     })
 }
 
@@ -553,10 +745,36 @@ fn validate_layered_manifests(
     if logic.id != MODULE_ID || missing_capabilities(&logic.capabilities) {
         return Err("蟑螂模块业务包缺少必需能力".to_string());
     }
+    if let Some(contribution) = &logic.runtime_contribution {
+        validate_runtime_contribution(contribution)?;
+    }
     safe_relative_path(&runtime.entry)?;
     safe_relative_path(&runtime.runtime_root)?;
     safe_relative_path(&dependencies.dependency_root)?;
     safe_relative_path(&logic.module_root)?;
+    Ok(())
+}
+
+fn validate_runtime_contribution(
+    contribution: &ExtensionRuntimeContribution,
+) -> Result<(), String> {
+    let valid_phase = matches!(
+        contribution.activation_phase.as_str(),
+        "focus" | "break" | "completed"
+    );
+    let valid_gate = !contribution.settings_gate.is_empty()
+        && contribution.settings_gate.len() <= 64
+        && contribution
+            .settings_gate
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'.' | b'-'));
+    if contribution.event_contract != "pomodoro-broadcast-v1"
+        || !valid_phase
+        || contribution.delay_ms > 60 * 60 * 1000
+        || !valid_gate
+    {
+        return Err("蟑螂功能包的事件订阅声明无效".to_string());
+    }
     Ok(())
 }
 
@@ -1016,7 +1234,6 @@ pub fn cockroach_module_status(
     }
 }
 
-#[tauri::command]
 pub async fn download_cockroach_module(
     app: tauri::AppHandle,
     state: tauri::State<'_, CockroachModuleState>,
@@ -1040,6 +1257,74 @@ pub async fn download_cockroach_module(
             download_layered_module(&app, &state, &client, *index, target).await
         }
     }
+}
+
+pub(crate) async fn install_common_pack(app: &tauri::AppHandle) -> Result<(), String> {
+    let target = runtime_target();
+    if target == "unsupported" {
+        return Err("当前平台不支持宠物通用包".to_string());
+    }
+    emit_progress(app, "index", 0, None, "正在检查宠物通用包版本");
+    let client = reqwest::Client::builder()
+        .redirect(reqwest::redirect::Policy::limited(5))
+        .timeout(Duration::from_secs(60 * 60))
+        .build()
+        .map_err(|error| format!("无法创建下载客户端：{error}"))?;
+    let index = download_verified_index(&client).await?;
+    let ModuleIndexDocument::Layered(index) = parse_module_index(&index)? else {
+        return Err("当前发布仍是旧版整包，无法单独安装宠物通用包".to_string());
+    };
+    let index = *index;
+    if index.debug_only && !cfg!(debug_assertions) {
+        return Err("正式应用不能安装内部测试宠物通用包".to_string());
+    }
+    let runtime = validate_layered_index(&index, target)?;
+    let root = module_root(app)?;
+    fs::create_dir_all(&root).map_err(|error| format!("无法创建宠物通用包目录：{error}"))?;
+    let mut downloaded = 0_u64;
+    downloaded += ensure_layered_component(
+        app,
+        &client,
+        &root,
+        LayeredComponentKind::Runtime,
+        &runtime,
+        target,
+    )
+    .await?;
+    downloaded += ensure_layered_component(
+        app,
+        &client,
+        &root,
+        LayeredComponentKind::Dependencies,
+        &index.dependencies,
+        target,
+    )
+    .await?;
+    write_core_pointer(
+        &root,
+        &PetCorePointer {
+            schema_version: 1,
+            target: target.to_string(),
+            runtime: InstalledComponentPointer {
+                version: runtime.version.clone(),
+                directory: LayeredComponentKind::Runtime.directory(
+                    &runtime.version,
+                    target,
+                    &runtime.package.sha256,
+                )?,
+            },
+            dependencies: InstalledComponentPointer {
+                version: index.dependencies.version.clone(),
+                directory: LayeredComponentKind::Dependencies.directory(
+                    &index.dependencies.version,
+                    target,
+                    &index.dependencies.package.sha256,
+                )?,
+            },
+        },
+    )?;
+    emit_progress(app, "complete", downloaded, None, "宠物通用包安装完成");
+    Ok(())
 }
 
 async fn download_legacy_module(
@@ -1219,6 +1504,11 @@ async fn download_layered_module(
     })
     .await
     .map_err(|error| format!("蟑螂模块激活任务异常结束：{error}"))??;
+    let pointer: LayeredInstalledPointer = serde_json::from_slice(
+        &fs::read(pointer_path(&root)).map_err(|error| format!("无法读取蟑螂模块状态：{error}"))?,
+    )
+    .map_err(|error| format!("分层蟑螂模块状态损坏：{error}"))?;
+    write_core_pointer(&root, &core_pointer_from_feature(&pointer))?;
     emit_progress(
         app,
         "complete",
@@ -1811,6 +2101,9 @@ pub fn launch_cockroach_module(
     state: tauri::State<'_, CockroachModuleState>,
     settings: Option<CockroachModuleSettings>,
 ) -> Result<CockroachModuleStatus, String> {
+    if !pack_is_enabled(&app, COCKROACH_ID)? {
+        return Err("蟑螂入侵功能包已禁用，请先在扩展包设置中启用".to_string());
+    }
     let root = module_root(&app)?;
     let Some(resolved) = resolve_installed_module(&root)? else {
         return Err("请先下载蟑螂模块".to_string());
@@ -1936,30 +2229,84 @@ pub fn stop_cockroach_module(
     app: tauri::AppHandle,
     state: tauri::State<'_, CockroachModuleState>,
 ) -> Result<CockroachModuleStatus, String> {
-    stop_child(&state);
-    let root = module_root(&app)?;
-    if !root.exists() {
-        return Ok(cockroach_module_status(app, state));
-    }
-    let settings = read_settings(&root);
-    write_upstream_config(&root, &settings, true)?;
+    stop_feature(&app, &state)?;
     Ok(cockroach_module_status(app, state))
 }
 
-#[tauri::command]
-pub fn uninstall_cockroach_module(
-    app: tauri::AppHandle,
-    state: tauri::State<'_, CockroachModuleState>,
-) -> Result<CockroachModuleStatus, String> {
-    stop_child(&state);
+pub(crate) fn stop_feature(
+    app: &tauri::AppHandle,
+    state: &CockroachModuleState,
+) -> Result<(), String> {
     if let Some(window) = app.get_webview_window("cockroach-module") {
-        let _ = window.close();
+        window
+            .close()
+            .map_err(|error| format!("无法关闭蟑螂模块窗口：{error}"))?;
     }
-    let root = module_root(&app)?;
+    stop_child_checked(state)?;
+    let root = module_root(app)?;
+    for (path, label) in [
+        (control_file_path(&root), "控制文件"),
+        (control_ack_path(&root), "控制确认文件"),
+    ] {
+        match fs::remove_file(path) {
+            Ok(()) => {}
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            Err(error) => return Err(format!("无法清理蟑螂模块{label}：{error}")),
+        }
+    }
     if root.exists() {
-        fs::remove_dir_all(&root).map_err(|error| format!("无法删除蟑螂模块：{error}"))?;
+        let settings = read_settings(&root);
+        write_upstream_config(&root, &settings, true)?;
     }
-    Ok(cockroach_module_status(app, state))
+    Ok(())
+}
+
+pub(crate) fn uninstall_feature_pack(
+    app: &tauri::AppHandle,
+    state: &CockroachModuleState,
+) -> Result<(), String> {
+    let root = module_root(app)?;
+    if !root.exists() {
+        return Ok(());
+    }
+    let current = pointer_path(&root);
+    if !current.is_file() {
+        return Ok(());
+    }
+    let value: serde_json::Value = serde_json::from_slice(
+        &fs::read(&current).map_err(|error| format!("无法读取蟑螂模块状态：{error}"))?,
+    )
+    .map_err(|error| format!("蟑螂模块状态损坏：{error}"))?;
+    if value
+        .get("schemaVersion")
+        .and_then(serde_json::Value::as_u64)
+        == Some(LAYERED_INDEX_SCHEMA_VERSION as u64)
+    {
+        let pointer: LayeredInstalledPointer = serde_json::from_value(value)
+            .map_err(|error| format!("分层蟑螂模块状态损坏：{error}"))?;
+        stop_feature(app, state)?;
+        return split_layered_feature_installation(&root, &pointer);
+    }
+    Err("旧版蟑螂整包无法安全拆分，请先升级到分层扩展包再卸载".to_string())
+}
+
+pub(crate) fn uninstall_common_pack(app: &tauri::AppHandle) -> Result<(), String> {
+    let root = module_root(app)?;
+    if pointer_path(&root).exists() {
+        return Err("蟑螂入侵功能包仍依赖宠物通用包，请先卸载功能包".to_string());
+    }
+    for name in ["runtimes", "dependencies"] {
+        let path = root.join(name);
+        if path.exists() {
+            fs::remove_dir_all(&path)
+                .map_err(|error| format!("无法删除宠物通用包{name}：{error}"))?;
+        }
+    }
+    let pointer = core_pointer_path(&root);
+    if pointer.exists() {
+        fs::remove_file(pointer).map_err(|error| format!("无法删除宠物通用包状态：{error}"))?;
+    }
+    Ok(())
 }
 
 fn stop_child(state: &CockroachModuleState) {
@@ -1971,6 +2318,30 @@ fn stop_child(state: &CockroachModuleState) {
     }
 }
 
+fn stop_child_checked(state: &CockroachModuleState) -> Result<(), String> {
+    let mut guard = state
+        .child
+        .lock()
+        .map_err(|_| "蟑螂模块进程状态不可用".to_string())?;
+    let Some(child) = guard.as_mut() else {
+        return Ok(());
+    };
+    if child
+        .try_wait()
+        .map_err(|error| format!("无法检查蟑螂模块进程：{error}"))?
+        .is_none()
+    {
+        child
+            .kill()
+            .map_err(|error| format!("无法停止蟑螂模块进程：{error}"))?;
+    }
+    child
+        .wait()
+        .map_err(|error| format!("无法等待蟑螂模块进程退出：{error}"))?;
+    guard.take();
+    Ok(())
+}
+
 pub fn stop_for_exit(app: &tauri::AppHandle) {
     let state = app.state::<CockroachModuleState>();
     stop_child(&state);
@@ -1980,13 +2351,16 @@ pub fn stop_for_exit(app: &tauri::AppHandle) {
 mod tests {
     use super::{
         extract_archive_to, index_urls, module_public_key, parse_module_index, runtime_target,
-        safe_relative_path, send_kill_all_command, sha256_file, validate_index_url,
-        validate_layered_component_directory, validate_layered_index, validate_manifest,
-        validate_package_url, validate_release_version, validate_settings, validate_sha256_text,
+        safe_relative_path, send_kill_all_command, sha256_file, split_layered_feature_installation,
+        validate_index_url, validate_layered_component_directory, validate_layered_index,
+        validate_manifest, validate_package_url, validate_release_version,
+        validate_runtime_contribution, validate_settings, validate_sha256_text,
         verify_index_signature, write_upstream_config, CockroachModuleSettings,
-        CockroachModuleState, ComponentPackage, InstalledArtifact, LayeredComponentKind,
-        ModuleIndexDocument, ModuleManifest, ModulePackage, MODULE_ID, MODULE_SCHEMA_VERSION,
+        CockroachModuleState, ComponentPackage, InstalledArtifact, InstalledComponentPointer,
+        LayeredComponentKind, LayeredInstalledPointer, ModuleIndexDocument, ModuleManifest,
+        ModulePackage, MODULE_ID, MODULE_SCHEMA_VERSION,
     };
+    use crate::extension_packs::ExtensionRuntimeContribution;
 
     fn manifest() -> ModuleManifest {
         ModuleManifest {
@@ -2003,6 +2377,62 @@ mod tests {
                 "process-control-file-v1".to_string(),
             ],
         }
+    }
+
+    #[test]
+    fn layered_feature_uninstall_preserves_the_pet_common_pack() {
+        let unique = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!(
+            "cpa-pet-split-uninstall-{}-{unique}",
+            std::process::id()
+        ));
+        for directory in [
+            "runtimes/40.8.0-macos-arm64-aaaaaaaaaaaaaaaa",
+            "dependencies/electron-store-bbbbbbbbbbbbbbbb",
+            "logic/1.1.0-cccccccccccccccc",
+        ] {
+            std::fs::create_dir_all(root.join(directory)).unwrap();
+        }
+        let pointer = LayeredInstalledPointer {
+            schema_version: 2,
+            version: "1.1.0".to_string(),
+            target: "macos-arm64".to_string(),
+            runtime: InstalledComponentPointer {
+                version: "40.8.0".to_string(),
+                directory: "runtimes/40.8.0-macos-arm64-aaaaaaaaaaaaaaaa".to_string(),
+            },
+            dependencies: InstalledComponentPointer {
+                version: "electron-store".to_string(),
+                directory: "dependencies/electron-store-bbbbbbbbbbbbbbbb".to_string(),
+            },
+            logic: InstalledComponentPointer {
+                version: "1.1.0".to_string(),
+                directory: "logic/1.1.0-cccccccccccccccc".to_string(),
+            },
+        };
+        std::fs::write(
+            root.join("current.json"),
+            serde_json::to_vec_pretty(&pointer).unwrap(),
+        )
+        .unwrap();
+
+        split_layered_feature_installation(&root, &pointer).unwrap();
+
+        assert!(!root.join("current.json").exists());
+        assert!(!root.join("logic").exists());
+        assert!(root.join(&pointer.runtime.directory).exists());
+        assert!(root.join(&pointer.dependencies.directory).exists());
+        let common: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(root.join("core.json")).unwrap()).unwrap();
+        assert_eq!(common["runtime"]["directory"], pointer.runtime.directory);
+        assert_eq!(
+            common["dependencies"]["directory"],
+            pointer.dependencies.directory
+        );
+        std::fs::remove_dir_all(root).unwrap();
     }
 
     #[test]
@@ -2291,6 +2721,25 @@ mod tests {
             baby_growth_minutes: 61,
         })
         .is_err());
+    }
+
+    #[test]
+    fn validates_feature_owned_pomodoro_subscription_contract() {
+        let valid = ExtensionRuntimeContribution {
+            event_contract: "pomodoro-broadcast-v1".to_string(),
+            activation_phase: "break".to_string(),
+            delay_ms: 60_000,
+            requires_presence: true,
+            settings_gate: "cockroachInvasion".to_string(),
+        };
+        assert!(validate_runtime_contribution(&valid).is_ok());
+        assert!(
+            validate_runtime_contribution(&ExtensionRuntimeContribution {
+                event_contract: "private-pet-event".to_string(),
+                ..valid
+            })
+            .is_err()
+        );
     }
 
     #[test]

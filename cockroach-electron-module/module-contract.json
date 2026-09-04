@@ -2,6 +2,13 @@
   "schemaVersion": 2,
   "id": "cpa-cockroach-electron",
   "runtimeAbi": "cpa-cockroach-electron-40-control-v2",
+  "runtimeContribution": {
+    "eventContract": "pomodoro-broadcast-v1",
+    "activationPhase": "break",
+    "delayMs": 60000,
+    "requiresPresence": true,
+    "settingsGate": "cockroachInvasion"
+  },
   "capabilities": [
     "electron-vector-cockroach-v1",
     "max-count",

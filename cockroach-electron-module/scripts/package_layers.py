@@ -439,6 +439,7 @@ def package_logic(
             "moduleRoot": "logic",
             "distribution": DISTRIBUTION,
             "capabilities": CONTRACT["capabilities"],
+            "runtimeContribution": CONTRACT["runtimeContribution"],
             "upstream": {
                 "repository": "https://github.com/jo9900/CockroachPet-Public-Electron",
                 "commit": legacy.UPSTREAM_COMMIT,

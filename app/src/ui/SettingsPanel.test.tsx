@@ -3,6 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { usePomodoroStore } from '../domain/pomodoro';
 import { useSettingsStore } from '../domain/settings';
 import { usePresenceStore } from '../domain/presence';
+import {
+    useExtensionPackStore,
+    type ExtensionPackId,
+    type ExtensionPackStatus,
+} from '../domain/extensionPacks';
 import { SettingsPanel } from './SettingsPanel';
 
 const invoke = vi.hoisted(() => vi.fn());
@@ -16,6 +21,21 @@ vi.mock('@tauri-apps/api/window', () => ({
     getCurrentWindow: () => ({ startDragging: vi.fn(async () => {}) }),
 }));
 vi.mock('@tauri-apps/plugin-dialog', () => ({ open, message }));
+
+function packStatus(
+    id: ExtensionPackId,
+    installed = false,
+    enabled = false,
+): ExtensionPackStatus {
+    return {
+        id,
+        installed,
+        enabled,
+        version: installed ? '1.0.0' : null,
+        target: 'macos-arm64',
+        message: '',
+    };
+}
 
 beforeEach(() => {
     invoke.mockReset().mockImplementation((command: string) => {
@@ -75,99 +95,143 @@ beforeEach(() => {
         generation: 0,
         notice: null,
     });
+    useExtensionPackStore.setState({
+        hydrated: true,
+        busyPackId: null,
+        progress: null,
+        error: null,
+        statuses: {
+            'video.core': packStatus('video.core'),
+            'video.editor': packStatus('video.editor'),
+            'pet.core': packStatus('pet.core'),
+            'pet.cockroach-invasion': packStatus('pet.cockroach-invasion'),
+        },
+    });
 });
 
 afterEach(cleanup);
 
 describe('SettingsPanel', () => {
-    it('shows the retained navigation tabs', () => {
+    it('adds settings tabs only for installed and enabled feature packs', () => {
         render(<SettingsPanel />);
 
         expect(screen.getByRole('button', { name: '番茄钟' })).toBeTruthy();
         expect(screen.getByRole('button', { name: '联机' })).toBeTruthy();
+        expect(screen.getByRole('button', { name: '扩展包' })).toBeTruthy();
+        expect(screen.getByRole('button', { name: '全局' })).toBeTruthy();
+        expect(screen.queryByRole('button', { name: '宠物' })).toBeNull();
+        expect(screen.queryByRole('button', { name: '视频编辑' })).toBeNull();
+
+        act(() => {
+            useExtensionPackStore.setState((state) => ({
+                statuses: {
+                    ...state.statuses,
+                    'video.core': packStatus('video.core', true, true),
+                    'video.editor': packStatus('video.editor', true, true),
+                    'pet.core': packStatus('pet.core', true, true),
+                    'pet.cockroach-invasion': packStatus('pet.cockroach-invasion', true, true),
+                },
+            }));
+        });
+
         expect(screen.getByRole('button', { name: '宠物' })).toBeTruthy();
         expect(screen.getByRole('button', { name: '视频编辑' })).toBeTruthy();
-        expect(screen.getByRole('button', { name: '全局' })).toBeTruthy();
     });
 
-    it('shows the separately downloadable video editor module shell', async () => {
+    it('returns to extension management when the active feature is disabled', async () => {
+        useExtensionPackStore.setState((state) => ({
+            statuses: {
+                ...state.statuses,
+                'video.core': packStatus('video.core', true, true),
+                'video.editor': packStatus('video.editor', true, true),
+            },
+        }));
+        useSettingsStore.setState({ activeTab: 'video' });
+        render(<SettingsPanel />);
+
+        expect(screen.getByRole('button', { name: '视频编辑' }).className).toContain('active');
+        act(() => {
+            useExtensionPackStore.setState((state) => ({
+                statuses: {
+                    ...state.statuses,
+                    'video.editor': packStatus('video.editor', true, false),
+                },
+            }));
+        });
+
+        await vi.waitFor(() => {
+            expect(useSettingsStore.getState().activeTab).toBe('extensions');
+        });
+        expect(screen.queryByRole('button', { name: '视频编辑' })).toBeNull();
+    });
+
+    it('downloads video editing from the extension manager and then contributes its tab', async () => {
+        const notInstalled = [
+            packStatus('video.core'),
+            packStatus('video.editor'),
+            packStatus('pet.core'),
+            packStatus('pet.cockroach-invasion'),
+        ];
+        const installed = [
+            packStatus('video.core', true, true),
+            packStatus('video.editor', true, true),
+            packStatus('pet.core'),
+            packStatus('pet.cockroach-invasion'),
+        ];
         invoke.mockImplementation((command: string) => {
-            if (command === 'video_editor_module_status') {
-                return Promise.resolve({
-                    installed: false,
-                    version: null,
-                    target: 'macos-arm64',
-                    message: '视频编辑模块尚未下载',
-                });
-            }
-            if (command === 'download_video_editor_module') {
-                return Promise.resolve({
-                    installed: true,
-                    version: '1.0.0',
-                    target: 'macos-arm64',
-                    message: '视频编辑模块已下载',
-                });
-            }
+            if (command === 'extension_pack_statuses') return Promise.resolve(notInstalled);
+            if (command === 'install_extension_pack') return Promise.resolve(installed);
             return Promise.resolve(undefined);
         });
         render(<SettingsPanel />);
 
-        fireEvent.click(screen.getByRole('button', { name: '视频编辑' }));
-        expect(await screen.findByText('视频编辑模板需要单独下载')).toBeTruthy();
-        expect(screen.getByText(/默认应用包不包含这些内容/)).toBeTruthy();
+        fireEvent.click(screen.getByRole('button', { name: '扩展包' }));
+        expect(await screen.findByText('安装时自动补齐视频通用包')).toBeTruthy();
+        fireEvent.click(screen.getByRole('button', { name: '下载 AI 视频编辑' }));
 
-        fireEvent.click(screen.getByRole('button', { name: '下载视频编辑模板' }));
-        await screen.findByRole('button', { name: '打开视频编辑器' });
-        expect(screen.getByRole('button', { name: '更新视频编辑模板' })).toBeTruthy();
-        expect(invoke).toHaveBeenCalledWith('download_video_editor_module');
+        expect(await screen.findByRole('button', { name: '视频编辑' })).toBeTruthy();
+        expect(invoke).toHaveBeenCalledWith('install_extension_pack', {
+            packId: 'video.editor',
+        });
     });
 
     it('keeps video module download progress when switching settings tabs', async () => {
-        const notInstalled: {
-            installed: boolean;
-            version: string | null;
-            target: string;
-            message: string;
-        } = {
-            installed: false,
-            version: null,
-            target: 'macos-arm64',
-            message: '视频编辑模块尚未下载',
-        };
+        const notInstalled = [
+            packStatus('video.core'),
+            packStatus('video.editor'),
+            packStatus('pet.core'),
+            packStatus('pet.cockroach-invasion'),
+        ];
+        const installed = [
+            packStatus('video.core', true, true),
+            packStatus('video.editor', true, true),
+            packStatus('pet.core'),
+            packStatus('pet.cockroach-invasion'),
+        ];
         let finishDownload!: (status: typeof notInstalled) => void;
         const pendingDownload = new Promise<typeof notInstalled>((resolve) => {
             finishDownload = resolve;
         });
-        let progressListener: ((event: { payload: {
-            stage: 'download';
-            downloadedBytes: number;
-            totalBytes: number;
-            message: string;
-        } }) => void) | undefined;
-
-        listen.mockImplementation(async (eventName: string, listener: typeof progressListener) => {
-            if (eventName === 'video-editor-module-progress') progressListener = listener;
-            return () => {};
-        });
         invoke.mockImplementation((command: string) => {
-            if (command === 'video_editor_module_status') return Promise.resolve(notInstalled);
-            if (command === 'download_video_editor_module') return pendingDownload;
+            if (command === 'extension_pack_statuses') return Promise.resolve(notInstalled);
+            if (command === 'install_extension_pack') return pendingDownload;
             return Promise.resolve(undefined);
         });
 
         render(<SettingsPanel />);
-        fireEvent.click(screen.getByRole('button', { name: '视频编辑' }));
-        const download = await screen.findByRole('button', { name: '下载视频编辑模板' });
+        fireEvent.click(screen.getByRole('button', { name: '扩展包' }));
+        const download = await screen.findByRole('button', { name: '下载 AI 视频编辑' });
         fireEvent.click(download);
         await vi.waitFor(() => {
             expect(invoke.mock.calls.filter(([command]) => (
-                command === 'download_video_editor_module'
+                command === 'install_extension_pack'
             ))).toHaveLength(1);
         });
 
         act(() => {
-            progressListener?.({
-                payload: {
+            useExtensionPackStore.setState({
+                progress: {
+                    packId: 'video.editor',
                     stage: 'download',
                     downloadedBytes: 25,
                     totalBytes: 100,
@@ -178,18 +242,18 @@ describe('SettingsPanel', () => {
         expect(await screen.findByText('正在下载视频编辑模块 · 25%')).toBeTruthy();
 
         fireEvent.click(screen.getByRole('button', { name: '全局' }));
-        fireEvent.click(screen.getByRole('button', { name: '视频编辑' }));
+        fireEvent.click(screen.getByRole('button', { name: '扩展包' }));
 
         expect(await screen.findByText('正在下载视频编辑模块 · 25%')).toBeTruthy();
-        const restoredDownload = screen.getByRole('button', { name: '下载视频编辑模板' }) as HTMLButtonElement;
+        const restoredDownload = screen.getByRole('button', { name: '下载 AI 视频编辑' }) as HTMLButtonElement;
         expect(restoredDownload.disabled).toBe(true);
         expect(restoredDownload.textContent).toBe('下载中…');
         fireEvent.click(restoredDownload);
         expect(invoke.mock.calls.filter(([command]) => (
-            command === 'download_video_editor_module'
+            command === 'install_extension_pack'
         ))).toHaveLength(1);
 
-        finishDownload({ ...notInstalled, installed: true, version: '1.3.0' });
+        finishDownload(installed);
     });
 
     it('opens the global settings surface', () => {
@@ -202,14 +266,22 @@ describe('SettingsPanel', () => {
     });
 
     it('shows the cockroach module panel only after cockroach invasion is selected', async () => {
+        const packStatuses = [
+            packStatus('video.core'),
+            packStatus('video.editor'),
+            packStatus('pet.core', true, true),
+            packStatus('pet.cockroach-invasion', true, true),
+        ];
+        useExtensionPackStore.getState().receiveStatuses(packStatuses);
         invoke.mockImplementation((command: string) => {
+            if (command === 'extension_pack_statuses') return Promise.resolve(packStatuses);
             if (command === 'cockroach_module_status') {
                 return Promise.resolve({
-                    installed: false,
+                    installed: true,
                     running: false,
-                    version: null,
+                    version: '1.1.0',
                     target: 'macos-arm64',
-                    message: '蟑螂模块尚未下载',
+                    message: '蟑螂模块已下载',
                     settings: { maxCount: 30, babyGrowthMinutes: 10 },
                 });
             }
@@ -218,14 +290,20 @@ describe('SettingsPanel', () => {
         render(<SettingsPanel />);
 
         fireEvent.click(screen.getByRole('button', { name: '宠物' }));
-        expect(screen.queryByText('蟑螂模块需要单独下载')).toBeNull();
+        expect(screen.queryByLabelText('蟑螂入侵模块设置')).toBeNull();
 
         fireEvent.click(screen.getByRole('button', { name: '选择蟑螂入侵' }));
-        expect(await screen.findByText('蟑螂模块需要单独下载')).toBeTruthy();
-        expect(screen.getByRole('button', { name: '下载蟑螂模块' })).toBeTruthy();
+        expect(await screen.findByLabelText('蟑螂入侵模块设置')).toBeTruthy();
     });
 
     it('exposes upstream cockroach settings, simulation, and kill-all controls', async () => {
+        const packStatuses = [
+            packStatus('video.core'),
+            packStatus('video.editor'),
+            packStatus('pet.core', true, true),
+            packStatus('pet.cockroach-invasion', true, true),
+        ];
+        useExtensionPackStore.getState().receiveStatuses(packStatuses);
         const moduleStatus = {
             installed: true,
             running: false,
@@ -235,6 +313,7 @@ describe('SettingsPanel', () => {
             settings: { maxCount: 30, babyGrowthMinutes: 10 },
         };
         invoke.mockImplementation((command: string) => {
+            if (command === 'extension_pack_statuses') return Promise.resolve(packStatuses);
             if (command === 'cockroach_module_status') return Promise.resolve(moduleStatus);
             if (command === 'launch_cockroach_module') {
                 return Promise.resolve({ ...moduleStatus, running: true });
@@ -432,6 +511,13 @@ describe('SettingsPanel', () => {
     });
 
     it('reveals the rest-at-desk reminder and its method only after their dependencies are enabled', async () => {
+        useExtensionPackStore.setState((state) => ({
+            statuses: {
+                ...state.statuses,
+                'pet.core': packStatus('pet.core', true, true),
+                'pet.cockroach-invasion': packStatus('pet.cockroach-invasion', true, true),
+            },
+        }));
         render(<SettingsPanel />);
 
         expect(screen.queryByRole('button', { name: '休息未离开工位时的提醒' })).toBeNull();

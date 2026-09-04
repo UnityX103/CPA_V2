@@ -104,6 +104,11 @@ class LayeredContractTest(unittest.TestCase):
                 names = set(archive.namelist())
                 self.assertIn("logic/main.js", names)
                 self.assertIn("module.json", names)
+                module_manifest = json.loads(archive.read("module.json"))
+                self.assertEqual(
+                    module_manifest["runtimeContribution"],
+                    LAYERS.CONTRACT["runtimeContribution"],
+                )
                 self.assertFalse(any(name.startswith("runtime/") for name in names))
                 self.assertFalse(any("node_modules/" in name for name in names))
             with zipfile.ZipFile(dependency_archive) as archive:

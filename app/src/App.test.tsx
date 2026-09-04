@@ -32,6 +32,15 @@ vi.mock('./domain/userPreferencesPersistence', () => ({
     loadPersistedUserPreferences: mocks.loadPreferences,
     savePersistedUserPreferences: mocks.savePreferences,
 }));
+vi.mock('@tauri-apps/api/core', () => ({
+    invoke: vi.fn(async (command: string) => (
+        command === 'extension_pack_statuses' ? [] : undefined
+    )),
+}));
+vi.mock('@tauri-apps/api/event', () => ({
+    listen: vi.fn(async () => () => {}),
+    emit: vi.fn(async () => {}),
+}));
 
 beforeEach(() => {
     mocks.loadSettings.mockReset().mockResolvedValue({

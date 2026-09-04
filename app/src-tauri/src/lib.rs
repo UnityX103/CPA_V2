@@ -2,6 +2,7 @@ mod accessibility;
 mod active_app;
 mod audio;
 mod cockroach_module;
+mod extension_packs;
 mod key_counter;
 mod presence_detection;
 mod scaled_window;
@@ -643,16 +644,17 @@ pub fn run() {
             video_files::validate_custom_video_path,
             video_files::prepare_custom_alpha_video_path,
             video_editor_module::video_editor_module_status,
-            video_editor_module::download_video_editor_module,
             video_editor_module::launch_video_editor_module,
-            video_editor_module::uninstall_video_editor_module,
             cockroach_module::cockroach_module_status,
-            cockroach_module::download_cockroach_module,
             cockroach_module::launch_cockroach_module,
             cockroach_module::save_cockroach_module_settings,
             cockroach_module::kill_all_cockroaches,
             cockroach_module::stop_cockroach_module,
-            cockroach_module::uninstall_cockroach_module,
+            extension_packs::extension_pack_statuses,
+            extension_packs::install_extension_pack,
+            extension_packs::set_extension_pack_enabled,
+            extension_packs::set_extension_pack_active,
+            extension_packs::uninstall_extension_pack,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application");

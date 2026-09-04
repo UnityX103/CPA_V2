@@ -13,20 +13,21 @@ afterEach(() => {
 });
 
 describe('CockroachModulePanel', () => {
-    it('explains the reusable noncommercial runtime and logic download', async () => {
+    it('keeps package lifecycle actions out of the feature settings panel', async () => {
         invoke.mockResolvedValue({
-            installed: false,
+            installed: true,
             running: false,
-            version: null,
+            version: '1.1.0',
             target: 'macos-arm64',
-            message: '蟑螂模块尚未下载',
+            message: '蟑螂模块已下载',
             settings: { maxCount: 30, babyGrowthMinutes: 10 },
         });
 
         render(<CockroachModulePanel />);
 
-        expect(await screen.findByText(/首次下载基础运行时、通用依赖与业务逻辑/)).toBeTruthy();
-        expect(screen.getByText(/后续业务更新会复用已校验的运行时与依赖/)).toBeTruthy();
-        expect(screen.getByText(/仅限非商业开源学习/)).toBeTruthy();
+        expect(await screen.findByRole('spinbutton', { name: '最大蟑螂数量' })).toBeTruthy();
+        expect(screen.queryByRole('button', { name: '下载蟑螂模块' })).toBeNull();
+        expect(screen.queryByRole('button', { name: '删除蟑螂模块' })).toBeNull();
+        expect(screen.getByText(/安装、升级、启停与卸载请前往“扩展包”/)).toBeTruthy();
     });
 });

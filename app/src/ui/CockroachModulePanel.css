@@ -16,6 +16,7 @@
 .cockroach-module-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .btn-danger { border: 1px solid #fecaca; background: #fff1f2; color: #b42318; }
 .cockroach-module-error { border-radius: 12px; padding: 10px 12px; background: #fee2e2; color: #991b1b; font-size: 12px; }
+.cockroach-module-lifecycle-note { color: var(--text-muted); font-size: 11px; line-height: 1.45; }
 .cockroach-module-progress { display: flex; flex-direction: column; gap: 5px; font-size: 11px; color: var(--text-warm); }
 .cockroach-module-progress-track { height: 6px; overflow: hidden; border-radius: 999px; background: #e5e7eb; }
 .cockroach-module-progress-fill { height: 100%; border-radius: inherit; background: #7c5cfc; transition: width 160ms ease; }

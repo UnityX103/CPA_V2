@@ -22,6 +22,23 @@ client verifies the component manifest and every listed file before it skips a d
 component documents use the `noncommercial-open-source` distribution policy while preserving the
 upstream MIT and dependency licenses.
 
+The CPA extension manager exposes these layers as two logical packs:
+
+- `pet.core`: Electron runtime plus shared production dependencies and process-control protocol;
+- `pet.cockroach-invasion`: CockroachPet business logic and settings, depending on `pet.core`.
+
+Installing the feature resolves `pet.core` automatically. Uninstalling only the feature writes a
+`core.json` pointer and preserves the verified runtime/dependency directories. The common pack
+cannot be disabled while an enabled feature depends on it, or uninstalled while the feature remains
+installed. Pomodoro events are published by the CPA core; the feature subscriber owns pet-specific
+trigger policy rather than placing a pet event bridge in `pet.core`.
+
+New logic archives declare that policy in `module.json.runtimeContribution` (event contract,
+activation phase, delay, presence requirement, and settings gate). The generic extension runtime
+interprets this signed declaration. Existing archives without the declaration continue through the
+lazy legacy adapter until they are upgraded; new Cockroach behavior can therefore update with the
+feature logic package instead of the CPA core.
+
 ## Prepare the reviewed source
 
 ```bash

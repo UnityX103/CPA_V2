@@ -1,82 +1,26 @@
-import { useEffect, useState } from 'react';
-import {
-    downloadVideoEditorModule,
-    launchVideoEditorModule,
-    listenVideoEditorModuleProgress,
-    readVideoEditorModuleStatus,
-    uninstallVideoEditorModule,
-    videoEditorModuleProgressText,
-    type VideoEditorModuleProgress,
-    type VideoEditorModuleStatus,
-} from '../domain/videoEditorModule';
+import { useState } from 'react';
+import { launchVideoEditorModule } from '../domain/videoEditorModule';
+import { useExtensionPackStore } from '../domain/extensionPacks';
 import './VideoEditorModuleTab.css';
 
 export function VideoEditorModuleTab() {
-    const [status, setStatus] = useState<VideoEditorModuleStatus | null>(null);
-    const [progress, setProgress] = useState<VideoEditorModuleProgress | null>(null);
-    const [busy, setBusy] = useState<'download' | 'update' | 'launch' | 'uninstall' | null>(null);
+    const status = useExtensionPackStore((state) => state.statuses['video.editor']);
+    const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
 
-    useEffect(() => {
-        let disposed = false;
-        void readVideoEditorModuleStatus()
-            .then((value) => { if (!disposed) setStatus(value); })
-            .catch((reason) => { if (!disposed) setError(errorText(reason)); });
-        let unlisten: (() => void) | undefined;
-        void listenVideoEditorModuleProgress((value) => {
-            if (!disposed) setProgress(value);
-        }).then((value) => {
-            if (disposed) value();
-            else unlisten = value;
-        });
-        return () => {
-            disposed = true;
-            unlisten?.();
-        };
-    }, []);
-
-    const installLatest = async (kind: 'download' | 'update') => {
-        setBusy(kind);
-        setError('');
-        try {
-            setStatus(await downloadVideoEditorModule());
-        } catch (reason) {
-            setError(errorText(reason));
-        } finally {
-            setBusy(null);
-        }
-    };
-
-    const download = () => installLatest('download');
-
     const launch = async () => {
-        setBusy('launch');
+        setBusy(true);
         setError('');
         try {
             await launchVideoEditorModule();
         } catch (reason) {
             setError(errorText(reason));
         } finally {
-            setBusy(null);
+            setBusy(false);
         }
     };
 
-    const update = () => installLatest('update');
-
-    const uninstall = async () => {
-        setBusy('uninstall');
-        setError('');
-        try {
-            setStatus(await uninstallVideoEditorModule());
-            setProgress(null);
-        } catch (reason) {
-            setError(errorText(reason));
-        } finally {
-            setBusy(null);
-        }
-    };
-
-    const installed = status?.installed ?? false;
+    const available = status.installed && status.enabled;
     return (
         <div className="settings-content-scroll video-module-scroll">
             <div className="tab-pane video-module-pane">
@@ -87,72 +31,35 @@ export function VideoEditorModuleTab() {
                             使用 SAM 2.1 跟踪主体，并由 BiRefNet 恢复毛发软边；支持自动/点选主体和可调抠图参数。
                         </p>
                     </div>
-                    <span className={`video-module-badge ${installed ? 'installed' : ''}`}>
-                        {installed ? '已下载' : '未下载'}
+                    <span className={`video-module-badge ${available ? 'installed' : ''}`}>
+                        {available ? '已启用' : '不可用'}
                     </span>
                 </section>
 
-                {!installed ? (
+                {!available ? (
                     <section className="card video-module-download-card">
                         <div className="video-module-download-copy">
-                            <strong>视频编辑模板需要单独下载</strong>
-                            <span>
-                                下载包包含完整编辑界面、SAM2/BiRefNet worker、模型、媒体工具和第三方许可；默认应用包不包含这些内容。
-                            </span>
-                            <span className="video-module-target">
-                                当前平台：{status?.target ?? '正在识别…'}
-                            </span>
-                            <span className="video-module-target">
-                                正式下载仅接受已签名索引、合规模型和通过目标平台验收的运行包。
-                            </span>
+                            <strong>视频编辑功能包当前不可用</strong>
+                            <span>请前往“扩展包”检查安装与启用状态。</span>
                         </div>
-                        <button
-                            type="button"
-                            className="btn btn-primary video-module-action"
-                            aria-label="下载视频编辑模板"
-                            disabled={busy !== null}
-                            onClick={() => { void download(); }}
-                        >
-                            {busy === 'download' ? '下载中…' : '下载模板'}
-                        </button>
-                        {progress && busy === 'download' ? <ModuleProgress progress={progress} /> : null}
                     </section>
                 ) : (
                     <section className="card video-module-ready-card">
                         <div>
-                            <strong>视频编辑模板 {status?.version}</strong>
-                            <span>界面与 AI 运行时位于应用数据目录，可独立升级或删除。</span>
+                            <strong>视频编辑功能包 {status.version}</strong>
+                            <span>编辑器在独立进程中运行；包生命周期由“扩展包”页面统一管理。</span>
                         </div>
                         <div className="video-module-buttons">
                             <button
                                 type="button"
                                 className="btn btn-primary"
                                 aria-label="打开视频编辑器"
-                                disabled={busy !== null}
+                                disabled={busy}
                                 onClick={() => { void launch(); }}
                             >
-                                {busy === 'launch' ? '启动中…' : '打开编辑器'}
-                            </button>
-                            <button
-                                type="button"
-                                className="btn btn-secondary"
-                                aria-label="更新视频编辑模板"
-                                disabled={busy !== null}
-                                onClick={() => { void update(); }}
-                            >
-                                {busy === 'update' ? '更新中…' : '更新模板'}
-                            </button>
-                            <button
-                                type="button"
-                                className="btn btn-secondary"
-                                aria-label="删除视频编辑模板"
-                                disabled={busy !== null}
-                                onClick={() => { void uninstall(); }}
-                            >
-                                {busy === 'uninstall' ? '删除中…' : '删除模板'}
+                                {busy ? '启动中…' : '打开编辑器'}
                             </button>
                         </div>
-                        {progress && busy === 'update' ? <ModuleProgress progress={progress} /> : null}
                     </section>
                 )}
 
@@ -162,23 +69,6 @@ export function VideoEditorModuleTab() {
                 </section>
                 {error ? <div className="video-module-error" role="alert">{error}</div> : null}
             </div>
-        </div>
-    );
-}
-
-function ModuleProgress({ progress }: { progress: VideoEditorModuleProgress }) {
-    const percent = progress.totalBytes && progress.totalBytes > 0
-        ? Math.min(100, Math.floor((progress.downloadedBytes / progress.totalBytes) * 100))
-        : null;
-    return (
-        <div className="video-module-progress" aria-label="视频编辑模板下载进度">
-            <div className="video-module-progress-track">
-                <div
-                    className={`video-module-progress-fill ${percent === null ? 'indeterminate' : ''}`}
-                    style={percent === null ? undefined : { width: `${percent}%` }}
-                />
-            </div>
-            <span>{videoEditorModuleProgressText(progress)}</span>
         </div>
     );
 }

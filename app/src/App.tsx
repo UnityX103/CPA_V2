@@ -30,7 +30,8 @@ import type { CloudAccountData } from './domain/cloudAccountData';
 import { usePresenceMonitor, usePresenceStore } from './domain/presence';
 import { loadPresencePreferences } from './domain/presencePersistence';
 import { PresenceNotice } from './ui/PresenceNotice';
-import { useCockroachModuleController } from './domain/cockroachModuleController';
+import { usePomodoroBroadcastSource } from './domain/pomodoroBroadcast';
+import { useExtensionRuntimeContributions } from './extensions/runtime';
 
 const STARTUP_ACCOUNT_RESTORE_TIMEOUT_MS = 2500;
 
@@ -155,10 +156,11 @@ export default function App() {
     useActiveAppListener();
     useBindingKeyListener();
     useBridgeHost();
+    usePomodoroBroadcastSource();
     usePresenceMonitor({ enabled: localHydrated });
     useInputCounterWindowController();
     useRemotePlayerWindowController();
-    useCockroachModuleController({ enabled: localHydrated });
+    useExtensionRuntimeContributions({ enabled: localHydrated });
     const uiScale = useSettingsStore((s) => s.uiScale);
     useCloudAccountSync({ enabled: localHydrated });
     useScaledWindowSize({

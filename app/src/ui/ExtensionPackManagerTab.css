@@ -1,0 +1,218 @@
+.extension-manager-pane {
+    gap: 12px;
+}
+
+.extension-manager-intro h3 {
+    margin: 0 0 5px;
+    color: var(--text-primary);
+    font-size: 16px;
+}
+
+.extension-manager-intro p,
+.extension-pack-description {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.extension-manager-group-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    color: var(--text-primary);
+    font-size: 12px;
+}
+
+.extension-manager-group-heading span {
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+.extension-pack-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.extension-common-list {
+    display: grid;
+    gap: 8px;
+}
+
+.extension-pack-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    padding: 12px;
+    border: 1px solid var(--settings-stroke);
+    border-radius: 14px;
+    background: var(--settings-card-bg);
+}
+
+.extension-pack-card.common {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+}
+
+.extension-pack-card.common .extension-pack-description,
+.extension-pack-card.common .extension-pack-contents,
+.extension-pack-card.common .extension-pack-progress,
+.extension-pack-card.common .extension-pack-guard {
+    grid-column: 1 / -1;
+}
+
+.extension-pack-heading {
+    display: flex;
+    gap: 9px;
+    min-width: 0;
+}
+
+.extension-pack-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    border-radius: 11px;
+    background: var(--btn-tab-bg);
+    color: var(--btn-primary-bg-idle);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.extension-pack-title-block {
+    flex: 1;
+    min-width: 0;
+}
+
+.extension-pack-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+}
+
+.extension-pack-title-row h3 {
+    overflow: hidden;
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.extension-pack-status {
+    flex: 0 0 auto;
+    padding: 3px 7px;
+    border-radius: 999px;
+    background: var(--pill-bg);
+    color: var(--text-muted);
+    font-size: 10px;
+}
+
+.extension-pack-status.enabled {
+    background: var(--online-room-bg);
+    color: var(--text-success);
+}
+
+.extension-pack-status.disabled {
+    background: var(--break-card-bg);
+    color: var(--text-warning);
+}
+
+.extension-pack-version,
+.extension-pack-contents,
+.extension-pack-guard,
+.extension-pack-progress {
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+.extension-pack-version {
+    display: block;
+    overflow: hidden;
+    margin-top: 3px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.extension-pack-contents {
+    min-height: 16px;
+}
+
+.extension-pack-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.extension-pack-actions .btn,
+.extension-pack-download {
+    min-width: 0;
+    height: 32px;
+    padding: 0 10px;
+    font-size: 11px;
+}
+
+.extension-pack-uninstall {
+    color: #b42318;
+}
+
+.extension-pack-progress {
+    display: grid;
+    gap: 5px;
+}
+
+.extension-pack-progress-track {
+    height: 4px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--pill-bg);
+}
+
+.extension-pack-progress-track span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--btn-primary-bg-idle);
+}
+
+.extension-pack-progress-track span.indeterminate {
+    width: 35%;
+    animation: extension-progress-slide 1.1s ease-in-out infinite alternate;
+}
+
+.extension-pack-error {
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: #fee2e2;
+    color: #991b1b;
+    font-size: 12px;
+}
+
+@keyframes extension-progress-slide {
+    from { transform: translateX(0); }
+    to { transform: translateX(185%); }
+}
+
+@media (max-width: 420px) {
+    .extension-pack-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .extension-pack-card.common {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .extension-pack-progress-track span.indeterminate {
+        animation: none;
+        width: 65%;
+    }
+}

@@ -1,14 +1,9 @@
 import { useEffect, useState } from 'react';
 import {
-    cockroachModuleProgressText,
-    downloadCockroachModule,
     killAllCockroaches,
     launchCockroachModule,
-    listenCockroachModuleProgress,
     readCockroachModuleStatus,
     saveCockroachModuleSettings,
-    uninstallCockroachModule,
-    type CockroachModuleProgress,
     type CockroachModuleSettings,
     type CockroachModuleStatus,
 } from '../domain/cockroachModule';
@@ -22,8 +17,7 @@ const DEFAULT_SETTINGS: CockroachModuleSettings = {
 export function CockroachModulePanel() {
     const [status, setStatus] = useState<CockroachModuleStatus | null>(null);
     const [settings, setSettings] = useState<CockroachModuleSettings>(DEFAULT_SETTINGS);
-    const [progress, setProgress] = useState<CockroachModuleProgress | null>(null);
-    const [busy, setBusy] = useState<'download' | 'launch' | 'kill' | 'save' | 'uninstall' | null>(null);
+    const [busy, setBusy] = useState<'launch' | 'kill' | 'save' | null>(null);
     const [error, setError] = useState('');
 
     useEffect(() => {
@@ -35,16 +29,8 @@ export function CockroachModulePanel() {
                 setSettings(value.settings);
             })
             .catch((reason) => { if (!disposed) setError(errorText(reason)); });
-        let unlisten: (() => void) | undefined;
-        void listenCockroachModuleProgress((value) => {
-            if (!disposed) setProgress(value);
-        }).then((value) => {
-            if (disposed) value();
-            else unlisten = value;
-        });
         return () => {
             disposed = true;
-            unlisten?.();
         };
     }, []);
 
@@ -58,7 +44,6 @@ export function CockroachModulePanel() {
             const next = await action();
             setStatus(next);
             setSettings(next.settings);
-            if (operation === 'uninstall') setProgress(null);
         } catch (reason) {
             setError(errorText(reason));
         } finally {
@@ -84,29 +69,16 @@ export function CockroachModulePanel() {
                     <span>基于 CockroachPet-Public-Electron，作为独立进程按需安装与运行。</span>
                 </div>
                 <span className={`cockroach-module-badge ${installed ? 'installed' : ''}`}>
-                    {installed ? (status?.running ? '运行中' : '已下载') : '未下载'}
+                    {installed ? (status?.running ? '运行中' : '已启用') : '不可用'}
                 </span>
             </div>
 
             {!installed ? (
                 <div className="cockroach-module-download">
                     <div>
-                        <strong>蟑螂模块需要单独下载</strong>
-                        <span>首次下载基础运行时、通用依赖与业务逻辑；默认安装包不包含这些内容。</span>
-                        <span>后续业务更新会复用已校验的运行时与依赖，避免重复下载。</span>
-                        <span>模块仅限非商业开源学习，并保留各上游项目原始许可。</span>
-                        <span>当前平台：{status?.target ?? '正在识别…'}</span>
+                        <strong>蟑螂入侵当前不可用</strong>
+                        <span>请前往“扩展包”检查安装与启用状态。</span>
                     </div>
-                    <button
-                        type="button"
-                        className="btn btn-primary"
-                        aria-label="下载蟑螂模块"
-                        disabled={busy !== null}
-                        onClick={() => { void perform('download', downloadCockroachModule); }}
-                    >
-                        {busy === 'download' ? '下载中…' : '下载模块'}
-                    </button>
-                    {progress && busy === 'download' ? <ModuleProgress progress={progress} /> : null}
                 </div>
             ) : (
                 <div className="cockroach-module-ready">
@@ -165,37 +137,14 @@ export function CockroachModulePanel() {
                         >
                             {busy === 'kill' ? '处理中…' : '杀死所有'}
                         </button>
-                        <button
-                            type="button"
-                            className="btn btn-secondary"
-                            aria-label="删除蟑螂模块"
-                            disabled={busy !== null}
-                            onClick={() => { void perform('uninstall', uninstallCockroachModule); }}
-                        >
-                            {busy === 'uninstall' ? '删除中…' : '删除模块'}
-                        </button>
                     </div>
+                    <span className="cockroach-module-lifecycle-note">
+                        安装、升级、启停与卸载请前往“扩展包”。
+                    </span>
                 </div>
             )}
             {error ? <div className="cockroach-module-error" role="alert">{error}</div> : null}
         </section>
-    );
-}
-
-function ModuleProgress({ progress }: { progress: CockroachModuleProgress }) {
-    const percent = progress.totalBytes && progress.totalBytes > 0
-        ? Math.min(100, Math.floor((progress.downloadedBytes / progress.totalBytes) * 100))
-        : null;
-    return (
-        <div className="cockroach-module-progress" aria-label="蟑螂模块下载进度">
-            <div className="cockroach-module-progress-track">
-                <div
-                    className={`cockroach-module-progress-fill ${percent === null ? 'indeterminate' : ''}`}
-                    style={percent === null ? undefined : { width: `${percent}%` }}
-                />
-            </div>
-            <span>{cockroachModuleProgressText(progress)}</span>
-        </div>
     );
 }
 

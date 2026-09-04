@@ -1,3 +1,6 @@
+use crate::extension_packs::{
+    pack_is_enabled, replace_file_atomically, InstallState, VIDEO_EDITOR_ID,
+};
 use futures_util::StreamExt;
 use minisign_verify::{PublicKey, Signature};
 use rand::distr::{Alphanumeric, SampleString};
@@ -152,6 +155,15 @@ struct LayeredInstalledPointer {
     engine: InstalledComponentPointer,
     models: InstalledComponentPointer,
     logic: InstalledComponentPointer,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct VideoCorePointer {
+    schema_version: u32,
+    target: String,
+    engine: InstalledComponentPointer,
+    models: InstalledComponentPointer,
 }
 
 #[derive(Debug, Deserialize)]
@@ -475,6 +487,182 @@ fn pointer_path(root: &Path) -> PathBuf {
     root.join("current.json")
 }
 
+fn core_pointer_path(root: &Path) -> PathBuf {
+    root.join("core.json")
+}
+
+fn write_core_pointer(root: &Path, core: &VideoCorePointer) -> Result<(), String> {
+    fs::create_dir_all(root).map_err(|error| format!("无法创建视频通用包目录：{error}"))?;
+    let temporary = root.join(format!(".core-{}.tmp", std::process::id()));
+    let result = (|| {
+        fs::write(
+            &temporary,
+            serde_json::to_vec_pretty(core)
+                .map_err(|error| format!("无法序列化视频通用包状态：{error}"))?,
+        )
+        .map_err(|error| format!("无法保存视频通用包状态：{error}"))?;
+        replace_file_atomically(&temporary, &core_pointer_path(root), "激活视频通用包")
+    })();
+    if result.is_err() {
+        let _ = fs::remove_file(&temporary);
+    }
+    result
+}
+
+fn core_pointer_from_feature(pointer: &LayeredInstalledPointer) -> VideoCorePointer {
+    VideoCorePointer {
+        schema_version: 1,
+        target: pointer.target.clone(),
+        engine: pointer.engine.clone(),
+        models: pointer.models.clone(),
+    }
+}
+
+fn split_layered_feature_installation(
+    root: &Path,
+    pointer: &LayeredInstalledPointer,
+) -> Result<(), String> {
+    safe_relative_path(&pointer.engine.directory)?;
+    safe_relative_path(&pointer.models.directory)?;
+    safe_relative_path(&pointer.logic.directory)?;
+    write_core_pointer(root, &core_pointer_from_feature(pointer))?;
+    let logic_root = root.join("logic");
+    if logic_root.exists() {
+        fs::remove_dir_all(&logic_root)
+            .map_err(|error| format!("无法删除视频编辑业务包：{error}"))?;
+    }
+    let current = pointer_path(root);
+    if current.exists() {
+        fs::remove_file(current).map_err(|error| format!("无法移除视频编辑状态：{error}"))?;
+    }
+    Ok(())
+}
+
+fn resolve_video_core(root: &Path) -> Result<Option<VideoCorePointer>, String> {
+    let path = core_pointer_path(root);
+    let core = if path.is_file() {
+        let bytes = fs::read(&path).map_err(|error| format!("无法读取视频通用包状态：{error}"))?;
+        serde_json::from_slice::<VideoCorePointer>(&bytes)
+            .map_err(|error| format!("视频通用包状态损坏：{error}"))?
+    } else {
+        let current = pointer_path(root);
+        if !current.is_file() {
+            return Ok(None);
+        }
+        let value: serde_json::Value = serde_json::from_slice(
+            &fs::read(&current).map_err(|error| format!("无法读取视频编辑模块状态：{error}"))?,
+        )
+        .map_err(|error| format!("视频编辑模块状态损坏：{error}"))?;
+        if value
+            .get("schemaVersion")
+            .and_then(serde_json::Value::as_u64)
+            != Some(LAYERED_INDEX_SCHEMA_VERSION as u64)
+        {
+            return Ok(None);
+        }
+        let pointer: LayeredInstalledPointer = serde_json::from_value(value)
+            .map_err(|error| format!("分层视频编辑模块状态损坏：{error}"))?;
+        resolve_layered_module(root, pointer.clone())?;
+        core_pointer_from_feature(&pointer)
+    };
+    if core.schema_version != 1 || core.target != runtime_target() {
+        return Err("视频通用包状态版本或平台不兼容".to_string());
+    }
+    let engine_directory = resolve_component_directory(
+        root,
+        &core.engine,
+        LayeredComponentKind::Engine,
+        &core.target,
+    )?;
+    let models_directory = resolve_component_directory(
+        root,
+        &core.models,
+        LayeredComponentKind::Models,
+        &core.target,
+    )?;
+    validate_layered_component_directory(
+        &engine_directory,
+        LayeredComponentKind::Engine,
+        &core.engine.version,
+        &core.target,
+        None,
+        true,
+    )?;
+    validate_layered_component_directory(
+        &models_directory,
+        LayeredComponentKind::Models,
+        &core.models.version,
+        &core.target,
+        None,
+        true,
+    )?;
+    Ok(Some(core))
+}
+
+pub(crate) fn feature_pack_state(app: &tauri::AppHandle) -> InstallState {
+    let target = runtime_target().to_string();
+    match module_root(app).and_then(|root| resolve_installed_module(&root)) {
+        Ok(Some(resolved)) => InstallState {
+            installed: true,
+            version: Some(resolved.version),
+            target,
+            message: "视频编辑功能包已安装".to_string(),
+            runtime_contribution: None,
+        },
+        Ok(None) => InstallState {
+            installed: false,
+            version: None,
+            target,
+            message: "视频编辑功能包尚未安装".to_string(),
+            runtime_contribution: None,
+        },
+        Err(error) => InstallState {
+            installed: false,
+            version: None,
+            target,
+            message: error,
+            runtime_contribution: None,
+        },
+    }
+}
+
+pub(crate) fn common_pack_state(app: &tauri::AppHandle) -> InstallState {
+    let target = runtime_target().to_string();
+    let state = module_root(app).and_then(|root| {
+        if let Some(core) = resolve_video_core(&root)? {
+            return Ok(Some(format!(
+                "engine {} + models {}",
+                core.engine.version, core.models.version
+            )));
+        }
+        let legacy = read_installed_manifest(&root)?;
+        Ok(legacy.map(|(pointer, _)| pointer.version))
+    });
+    match state {
+        Ok(Some(version)) => InstallState {
+            installed: true,
+            version: Some(version),
+            target,
+            message: "视频通用包已安装".to_string(),
+            runtime_contribution: None,
+        },
+        Ok(None) => InstallState {
+            installed: false,
+            version: None,
+            target,
+            message: "视频通用包尚未安装".to_string(),
+            runtime_contribution: None,
+        },
+        Err(error) => InstallState {
+            installed: false,
+            version: None,
+            target,
+            message: error,
+            runtime_contribution: None,
+        },
+    }
+}
+
 fn read_pointer(root: &Path) -> Result<Option<InstalledPointer>, String> {
     let path = pointer_path(root);
     if !path.is_file() {
@@ -768,52 +956,6 @@ fn write_pointer_atomically(root: &Path, bytes: &[u8]) -> Result<(), String> {
         let _ = fs::remove_file(&temporary);
     }
     result
-}
-
-#[cfg(not(target_os = "windows"))]
-fn replace_file_atomically(
-    temporary: &Path,
-    destination: &Path,
-    action: &str,
-) -> Result<(), String> {
-    fs::rename(temporary, destination).map_err(|error| format!("无法{action}：{error}"))
-}
-
-#[cfg(target_os = "windows")]
-fn replace_file_atomically(
-    temporary: &Path,
-    destination: &Path,
-    action: &str,
-) -> Result<(), String> {
-    use std::os::windows::ffi::OsStrExt;
-    use windows::core::PCWSTR;
-    use windows::Win32::Storage::FileSystem::{ReplaceFileW, REPLACE_FILE_FLAGS};
-
-    if !destination.exists() {
-        return fs::rename(temporary, destination)
-            .map_err(|error| format!("无法{action}：{error}"));
-    }
-    let destination_wide: Vec<u16> = destination
-        .as_os_str()
-        .encode_wide()
-        .chain(std::iter::once(0))
-        .collect();
-    let temporary_wide: Vec<u16> = temporary
-        .as_os_str()
-        .encode_wide()
-        .chain(std::iter::once(0))
-        .collect();
-    unsafe {
-        ReplaceFileW(
-            PCWSTR(destination_wide.as_ptr()),
-            PCWSTR(temporary_wide.as_ptr()),
-            PCWSTR::null(),
-            REPLACE_FILE_FLAGS(0),
-            None,
-            None,
-        )
-    }
-    .map_err(|error| format!("无法原子{action}：{error}"))
 }
 
 fn validate_manifest(
@@ -1155,7 +1297,6 @@ pub fn video_editor_module_status(app: tauri::AppHandle) -> VideoEditorModuleSta
     }
 }
 
-#[tauri::command]
 pub async fn download_video_editor_module(
     app: tauri::AppHandle,
     state: tauri::State<'_, VideoEditorModuleState>,
@@ -1180,6 +1321,91 @@ pub async fn download_video_editor_module(
             download_layered_module(&app, &state, &client, *index, target).await
         }
     }
+}
+
+pub(crate) async fn install_common_pack(
+    app: &tauri::AppHandle,
+    state: &VideoEditorModuleState,
+) -> Result<(), String> {
+    let target = runtime_target();
+    if target == "unsupported" {
+        return Err("当前平台不支持视频通用包".to_string());
+    }
+    let _update_permit = begin_module_update(state)?;
+    ensure_module_idle_for_update(state)?;
+    emit_progress(app, "index", 0, None, "正在检查视频通用包版本");
+    let client = reqwest::Client::builder()
+        .redirect(reqwest::redirect::Policy::limited(5))
+        .timeout(Duration::from_secs(60 * 60))
+        .build()
+        .map_err(|error| format!("无法创建下载客户端：{error}"))?;
+    let index_bytes = download_verified_index(&client).await?;
+    let ModuleIndexDocument::Layered(index) = parse_module_index(&index_bytes)? else {
+        return Err("当前发布仍是旧版整包，无法单独安装视频通用包".to_string());
+    };
+    let index = *index;
+    if index.debug_only && !cfg!(debug_assertions) {
+        return Err("正式应用不能安装内部测试视频通用包".to_string());
+    }
+    let engine = index
+        .engines
+        .get(target)
+        .cloned()
+        .ok_or_else(|| format!("当前发布尚未提供 {target} 视频编辑引擎"))?;
+    validate_layered_index_compatibility(&index.logic, &index.models, &engine)?;
+    for component in [&engine, &index.models] {
+        validate_release_version(&component.version)?;
+        validate_sha256_text(&component.manifest_sha256)?;
+        validate_package(&component.package)?;
+    }
+    let root = module_root(app)?;
+    fs::create_dir_all(&root).map_err(|error| format!("无法创建视频通用包目录：{error}"))?;
+    let mut downloaded = 0_u64;
+    downloaded += ensure_layered_component(
+        app,
+        state,
+        &client,
+        &root,
+        LayeredComponentKind::Engine,
+        &engine,
+        target,
+    )
+    .await?;
+    downloaded += ensure_layered_component(
+        app,
+        state,
+        &client,
+        &root,
+        LayeredComponentKind::Models,
+        &index.models,
+        target,
+    )
+    .await?;
+    write_core_pointer(
+        &root,
+        &VideoCorePointer {
+            schema_version: 1,
+            target: target.to_string(),
+            engine: InstalledComponentPointer {
+                version: engine.version.clone(),
+                directory: LayeredComponentKind::Engine.directory(
+                    &engine.version,
+                    target,
+                    &engine.package.sha256,
+                )?,
+            },
+            models: InstalledComponentPointer {
+                version: index.models.version.clone(),
+                directory: LayeredComponentKind::Models.directory(
+                    &index.models.version,
+                    target,
+                    &index.models.package.sha256,
+                )?,
+            },
+        },
+    )?;
+    emit_progress(app, "complete", downloaded, None, "视频通用包安装完成");
+    Ok(())
 }
 
 async fn download_legacy_module(
@@ -1346,6 +1572,12 @@ async fn download_layered_module(
     })
     .await
     .map_err(|error| format!("视频编辑模块激活任务异常结束：{error}"))??;
+    let pointer: LayeredInstalledPointer = serde_json::from_slice(
+        &fs::read(pointer_path(&root))
+            .map_err(|error| format!("无法读取视频编辑模块状态：{error}"))?,
+    )
+    .map_err(|error| format!("分层视频编辑模块状态损坏：{error}"))?;
+    write_core_pointer(&root, &core_pointer_from_feature(&pointer))?;
     emit_progress(
         app,
         "complete",
@@ -1911,6 +2143,9 @@ pub async fn launch_video_editor_module(
     app: tauri::AppHandle,
     state: tauri::State<'_, VideoEditorModuleState>,
 ) -> Result<(), String> {
+    if !pack_is_enabled(&app, VIDEO_EDITOR_ID)? {
+        return Err("视频编辑功能包已禁用，请先在扩展包设置中启用".to_string());
+    }
     if let Some(window) = app.get_webview_window("video-editor-module") {
         window.show().map_err(|error| error.to_string())?;
         window.set_focus().map_err(|error| error.to_string())?;
@@ -2010,26 +2245,70 @@ pub async fn launch_video_editor_module(
     window.on_window_event(move |event| {
         if matches!(event, tauri::WindowEvent::Destroyed) {
             let state = app_for_close.state::<VideoEditorModuleState>();
-            stop_child(&state);
+            let _ = stop_child_checked(&state);
         }
     });
     Ok(())
 }
 
-#[tauri::command]
-pub fn uninstall_video_editor_module(
-    app: tauri::AppHandle,
-    state: tauri::State<'_, VideoEditorModuleState>,
-) -> Result<VideoEditorModuleStatus, String> {
-    stop_child(&state);
+pub(crate) fn stop_feature(
+    app: &tauri::AppHandle,
+    state: &VideoEditorModuleState,
+) -> Result<(), String> {
     if let Some(window) = app.get_webview_window("video-editor-module") {
-        let _ = window.close();
+        window
+            .close()
+            .map_err(|error| format!("无法关闭视频编辑窗口：{error}"))?;
     }
-    let root = module_root(&app)?;
-    if root.exists() {
-        fs::remove_dir_all(&root).map_err(|error| format!("无法删除视频编辑模块：{error}"))?;
+    stop_child_checked(state)
+}
+
+pub(crate) fn uninstall_feature_pack(
+    app: &tauri::AppHandle,
+    state: &VideoEditorModuleState,
+) -> Result<(), String> {
+    let root = module_root(app)?;
+    if !root.exists() {
+        return Ok(());
     }
-    Ok(video_editor_module_status(app))
+    let current = pointer_path(&root);
+    if !current.is_file() {
+        return Ok(());
+    }
+    let value: serde_json::Value = serde_json::from_slice(
+        &fs::read(&current).map_err(|error| format!("无法读取视频编辑模块状态：{error}"))?,
+    )
+    .map_err(|error| format!("视频编辑模块状态损坏：{error}"))?;
+    if value
+        .get("schemaVersion")
+        .and_then(serde_json::Value::as_u64)
+        == Some(LAYERED_INDEX_SCHEMA_VERSION as u64)
+    {
+        let pointer: LayeredInstalledPointer = serde_json::from_value(value)
+            .map_err(|error| format!("分层视频编辑模块状态损坏：{error}"))?;
+        stop_feature(app, state)?;
+        return split_layered_feature_installation(&root, &pointer);
+    }
+    Err("旧版视频编辑整包无法安全拆分，请先升级到分层扩展包再卸载".to_string())
+}
+
+pub(crate) fn uninstall_common_pack(app: &tauri::AppHandle) -> Result<(), String> {
+    let root = module_root(app)?;
+    if pointer_path(&root).exists() {
+        return Err("视频编辑功能包仍依赖视频通用包，请先卸载功能包".to_string());
+    }
+    for name in ["engines", "models"] {
+        let path = root.join(name);
+        if path.exists() {
+            fs::remove_dir_all(&path)
+                .map_err(|error| format!("无法删除视频通用包{name}：{error}"))?;
+        }
+    }
+    let pointer = core_pointer_path(&root);
+    if pointer.exists() {
+        fs::remove_file(pointer).map_err(|error| format!("无法删除视频通用包状态：{error}"))?;
+    }
+    Ok(())
 }
 
 fn stop_child(state: &VideoEditorModuleState) {
@@ -2039,6 +2318,30 @@ fn stop_child(state: &VideoEditorModuleState) {
             let _ = child.wait();
         }
     }
+}
+
+fn stop_child_checked(state: &VideoEditorModuleState) -> Result<(), String> {
+    let mut guard = state
+        .child
+        .lock()
+        .map_err(|_| "视频编辑模块进程状态不可用".to_string())?;
+    let Some(child) = guard.as_mut() else {
+        return Ok(());
+    };
+    if child
+        .try_wait()
+        .map_err(|error| format!("无法检查视频编辑进程：{error}"))?
+        .is_none()
+    {
+        child
+            .kill()
+            .map_err(|error| format!("无法停止视频编辑进程：{error}"))?;
+    }
+    child
+        .wait()
+        .map_err(|error| format!("无法等待视频编辑进程退出：{error}"))?;
+    guard.take();
+    Ok(())
 }
 
 fn child_is_running(state: &VideoEditorModuleState) -> bool {
@@ -2107,10 +2410,11 @@ mod tests {
         activate_layered_installation, download_video_editor_file, ensure_module_idle_for_update,
         index_urls, install_archive, install_layered_component, module_contract, module_public_key,
         parse_module_index, read_installed_manifest, resolve_installed_module, runtime_target,
-        safe_relative_path, stop_child, validate_index_url, validate_layered_component_directory,
-        validate_layered_index_compatibility, validate_manifest, validate_package_url,
-        validate_release_version, validate_sha256_text, verify_index_signature,
-        video_editor_download_filename, ComponentPackage, LayeredComponentKind,
+        safe_relative_path, split_layered_feature_installation, stop_child, validate_index_url,
+        validate_layered_component_directory, validate_layered_index_compatibility,
+        validate_manifest, validate_package_url, validate_release_version, validate_sha256_text,
+        verify_index_signature, video_editor_download_filename, ComponentPackage,
+        InstalledComponentPointer, LayeredComponentKind, LayeredInstalledPointer,
         ModuleIndexDocument, ModuleManifest, ModulePackage, VideoEditorModuleState,
     };
 
@@ -2143,6 +2447,59 @@ mod tests {
             entry: "runtime/video-editor-module".to_string(),
             capabilities: contract.capabilities,
         }
+    }
+
+    #[test]
+    fn layered_feature_uninstall_preserves_the_video_common_pack() {
+        let unique = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!(
+            "cpa-video-split-uninstall-{}-{unique}",
+            std::process::id()
+        ));
+        for directory in [
+            "engines/1.0.0-macos-arm64-aaaaaaaaaaaaaaaa",
+            "models/1.0.0-bbbbbbbbbbbbbbbb",
+            "logic/1.2.0-cccccccccccccccc",
+        ] {
+            std::fs::create_dir_all(root.join(directory)).unwrap();
+        }
+        let pointer = LayeredInstalledPointer {
+            schema_version: 2,
+            version: "1.2.0".to_string(),
+            target: "macos-arm64".to_string(),
+            engine: InstalledComponentPointer {
+                version: "1.0.0".to_string(),
+                directory: "engines/1.0.0-macos-arm64-aaaaaaaaaaaaaaaa".to_string(),
+            },
+            models: InstalledComponentPointer {
+                version: "1.0.0".to_string(),
+                directory: "models/1.0.0-bbbbbbbbbbbbbbbb".to_string(),
+            },
+            logic: InstalledComponentPointer {
+                version: "1.2.0".to_string(),
+                directory: "logic/1.2.0-cccccccccccccccc".to_string(),
+            },
+        };
+        std::fs::write(
+            root.join("current.json"),
+            serde_json::to_vec_pretty(&pointer).unwrap(),
+        )
+        .unwrap();
+
+        split_layered_feature_installation(&root, &pointer).unwrap();
+
+        assert!(!root.join("current.json").exists());
+        assert!(!root.join("logic").exists());
+        assert!(root.join(&pointer.engine.directory).exists());
+        assert!(root.join(&pointer.models.directory).exists());
+        let common: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(root.join("core.json")).unwrap()).unwrap();
+        assert_eq!(common["engine"]["directory"], pointer.engine.directory);
+        assert_eq!(common["models"]["directory"], pointer.models.directory);
+        std::fs::remove_dir_all(root).unwrap();
     }
 
     #[test]

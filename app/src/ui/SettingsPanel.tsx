@@ -59,16 +59,18 @@ import {
     presenceAuthorizationView,
     type PresenceAuthorizationAction,
 } from './presenceAuthorization';
-import { VideoEditorModuleTab } from './VideoEditorModuleTab';
-import { CockroachModulePanel } from './CockroachModulePanel';
+import { ExtensionPackManagerTab } from './ExtensionPackManagerTab';
+import { ExtensionSettingsOutlet } from './ExtensionSettingsOutlet';
+import {
+    settingsContributionsFor,
+    useExtensionPackStore,
+} from '../domain/extensionPacks';
 import './SettingsPanel.css';
 
-const TABS: Array<{ id: SettingsTab; label: string }> = [
+const CORE_TABS: Array<{ id: SettingsTab; label: string }> = [
     { id: 'pomodoro', label: '番茄钟' },
     { id: 'online', label: '联机' },
-    { id: 'pet', label: '宠物' },
-    { id: 'video', label: '视频编辑' },
-    { id: 'global', label: '全局' },
+    { id: 'extensions', label: '扩展包' },
 ];
 
 interface OrdinaryApplyState {
@@ -101,11 +103,30 @@ export function SettingsPanel() {
     const setActiveTab = useSettingsStore((s) => s.setActiveTab);
     const dangerousChange = useSettingsStore((s) => s.dangerousChange);
     const revertDangerousChange = useSettingsStore((s) => s.revertDangerousChange);
+    const packStatuses = useExtensionPackStore((state) => state.statuses);
     const [ordinaryApply, setOrdinaryApply] = useState<OrdinaryApplyState>(EMPTY_APPLY_STATE);
+    const extensionSettings = settingsContributionsFor(Object.values(packStatuses));
+    const tabs = [
+        ...CORE_TABS,
+        ...extensionSettings.map((contribution) => ({
+            id: contribution.tab as SettingsTab,
+            label: contribution.label,
+        })),
+        { id: 'global' as SettingsTab, label: '全局' },
+    ];
+    const activeExtensionSettings = extensionSettings.find((contribution) => (
+        contribution.tab === activeTab
+    ));
 
     useEffect(() => {
         setOrdinaryApply(EMPTY_APPLY_STATE);
     }, [activeTab]);
+
+    useEffect(() => {
+        if (!tabs.some((tab) => tab.id === activeTab)) {
+            setActiveTab('extensions');
+        }
+    }, [activeTab, setActiveTab, tabs]);
 
     const onClose = () => {
         if (dangerousChange) {
@@ -137,7 +158,7 @@ export function SettingsPanel() {
             </div>
             <div className="settings-body">
                 <nav className="settings-nav">
-                    {TABS.map((t) => (
+                    {tabs.map((t) => (
                         <button
                             key={t.id}
                             className={`settings-tab ${activeTab === t.id ? 'active' : ''}`}
@@ -150,8 +171,10 @@ export function SettingsPanel() {
                 <div className="settings-content" data-no-window-drag>
                     {activeTab === 'pomodoro' && <PomodoroTab onApplyStateChange={setOrdinaryApply} />}
                     {activeTab === 'online' && <OnlineTab />}
-                    {activeTab === 'pet' && <PetTab />}
-                    {activeTab === 'video' && <VideoEditorModuleTab />}
+                    {activeTab === 'extensions' && <ExtensionPackManagerTab />}
+                    {activeExtensionSettings && (
+                        <ExtensionSettingsOutlet renderer={activeExtensionSettings.renderer} />
+                    )}
                     {activeTab === 'global' && <GlobalTab />}
                     <SettingsApplyRow
                         visible={ordinaryApply.dirty}
@@ -159,44 +182,6 @@ export function SettingsPanel() {
                         onApply={ordinaryApply.apply}
                     />
                 </div>
-            </div>
-        </div>
-    );
-}
-
-function PetTab() {
-    const mode = useSettingsStore((state) => state.breakPetMode);
-    const setMode = useSettingsStore((state) => state.setBreakPetMode);
-    return (
-        <div className="settings-content-scroll">
-            <div className="tab-pane pet-settings-pane">
-                <section className="card pet-settings-selector">
-                    <div>
-                        <h3 className="card-title">休息宠物</h3>
-                        <p>进入休息提醒条件后自动启动，休息结束时自动退出。</p>
-                    </div>
-                    <div className="pet-settings-options" role="group" aria-label="休息宠物选择">
-                        <button
-                            type="button"
-                            className={`pet-settings-option ${mode === 'off' ? 'selected' : ''}`}
-                            aria-label="关闭休息宠物"
-                            aria-pressed={mode === 'off'}
-                            onClick={() => setMode('off')}
-                        >
-                            关闭
-                        </button>
-                        <button
-                            type="button"
-                            className={`pet-settings-option ${mode === 'cockroachInvasion' ? 'selected' : ''}`}
-                            aria-label="选择蟑螂入侵"
-                            aria-pressed={mode === 'cockroachInvasion'}
-                            onClick={() => setMode('cockroachInvasion')}
-                        >
-                            蟑螂入侵
-                        </button>
-                    </div>
-                </section>
-                {mode === 'cockroachInvasion' ? <CockroachModulePanel /> : null}
             </div>
         </div>
     );
@@ -227,6 +212,10 @@ function PomodoroTab({ onApplyStateChange }: {
 }) {
     const pomo = usePomodoroStore();
     const presence = usePresenceStore();
+    const cockroachPackAvailable = useExtensionPackStore((state) => {
+        const status = state.statuses['pet.cockroach-invasion'];
+        return status.installed && status.enabled;
+    });
     const [focusMin, setFocusMin] = useState(Math.round(pomo.focusDurationSeconds / 60));
     const [breakMin, setBreakMin] = useState(Math.round(pomo.breakDurationSeconds / 60));
     const [autoStartBreak, setAutoStartBreak] = useState(pomo.autoStartBreak);
@@ -651,7 +640,7 @@ function PomodoroTab({ onApplyStateChange }: {
                             <span className="pomo-row-value">{confirmedPresenceText(presence.confirmedPresence)}</span>
                         </div>
 
-                        {presenceEnabled && (
+                        {presenceEnabled && cockroachPackAvailable && (
                             <div className="card pomo-row">
                                 <span className="pomo-row-label">休息未离开工位时的提醒</span>
                                 <Toggle
@@ -662,7 +651,7 @@ function PomodoroTab({ onApplyStateChange }: {
                             </div>
                         )}
 
-                        {presenceEnabled && restDeskReminderEnabled && (
+                        {presenceEnabled && cockroachPackAvailable && restDeskReminderEnabled && (
                             <div className="card pomo-row">
                                 <span className="pomo-row-label">提醒方式</span>
                                 <div className="reminder-method-actions">
