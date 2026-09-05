@@ -2746,8 +2746,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "server_src_iconcache",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 198,
+      "community_name": "IconCache",
       "norm_label": "iconcache.js"
     },
     {
@@ -2759,8 +2759,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "server_src_iconcache_iconcacheerror",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 198,
+      "community_name": "IconCache",
       "norm_label": "iconcacheerror"
     },
     {
@@ -2771,8 +2771,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_iconcache_iconcacheerror_constructor",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 198,
+      "community_name": "IconCache",
       "norm_label": ".constructor()"
     },
     {
@@ -2784,8 +2784,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "server_src_iconcache_iconcache",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 198,
+      "community_name": "IconCache",
       "norm_label": "iconcache"
     },
     {
@@ -2796,8 +2796,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_iconcache_iconcache_constructor",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 198,
+      "community_name": "IconCache",
       "norm_label": ".constructor()"
     },
     {
@@ -2808,8 +2808,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_iconcache_iconcache_has",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 198,
+      "community_name": "IconCache",
       "norm_label": ".has()"
     },
     {
@@ -2820,8 +2820,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_iconcache_iconcache_get",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 198,
+      "community_name": "IconCache",
       "norm_label": ".get()"
     },
     {
@@ -2832,8 +2832,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_iconcache_iconcache_set",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 198,
+      "community_name": "IconCache",
       "norm_label": ".set()"
     },
     {
@@ -2844,8 +2844,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_iconcache_iconcache_keys",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 198,
+      "community_name": "IconCache",
       "norm_label": ".keys()"
     },
     {
@@ -2956,8 +2956,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "server_src_roommanager_roommanagererror",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 203,
+      "community_name": "RoomManagerError",
       "norm_label": "roommanagererror"
     },
     {
@@ -2968,8 +2968,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_roommanager_roommanagererror_constructor",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 203,
+      "community_name": "RoomManagerError",
       "norm_label": ".constructor()"
     },
     {
@@ -3902,8 +3902,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "server_src_protocol",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 167,
+      "community_name": "protocol.js",
       "norm_label": "protocol.js"
     },
     {
@@ -3913,8 +3913,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "server_src_protocol_protocol_version",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 167,
+      "community_name": "protocol.js",
       "norm_label": "protocol_version"
     },
     {
@@ -3924,8 +3924,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "server_src_protocol_supported_client_message_types",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 167,
+      "community_name": "protocol.js",
       "norm_label": "supported_client_message_types"
     },
     {
@@ -3937,8 +3937,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "server_src_protocol_protocolerror",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 167,
+      "community_name": "protocol.js",
       "norm_label": "protocolerror"
     },
     {
@@ -3949,8 +3949,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_protocol_protocolerror_constructor",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 167,
+      "community_name": "protocol.js",
       "norm_label": ".constructor()"
     },
     {
@@ -3961,8 +3961,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_protocol_parseclientmessage",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 167,
+      "community_name": "protocol.js",
       "norm_label": "parseclientmessage()"
     },
     {
@@ -3973,8 +3973,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_protocol_encodemessage",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 167,
+      "community_name": "protocol.js",
       "norm_label": "encodemessage()"
     },
     {
@@ -4009,8 +4009,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_protocol_createroomsnapshotmessage",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 167,
+      "community_name": "protocol.js",
       "norm_label": "createroomsnapshotmessage()"
     },
     {
@@ -4021,8 +4021,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_protocol_createplayerjoinedmessage",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 167,
+      "community_name": "protocol.js",
       "norm_label": "createplayerjoinedmessage()"
     },
     {
@@ -4141,8 +4141,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_protocol_normalizeplayername",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 167,
+      "community_name": "protocol.js",
       "norm_label": "normalizeplayername()"
     },
     {
@@ -4153,8 +4153,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_protocol_normalizeaccountcredentials",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 167,
+      "community_name": "protocol.js",
       "norm_label": "normalizeaccountcredentials()"
     },
     {
@@ -4165,8 +4165,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_protocol_normalizeauthtoken",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 167,
+      "community_name": "protocol.js",
       "norm_label": "normalizeauthtoken()"
     },
     {
@@ -4177,8 +4177,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_protocol_normalizeoptionalupdatedat",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 167,
+      "community_name": "protocol.js",
       "norm_label": "normalizeoptionalupdatedat()"
     },
     {
@@ -4189,8 +4189,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_protocol_normalizeuserdatapayload",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 167,
+      "community_name": "protocol.js",
       "norm_label": "normalizeuserdatapayload()"
     },
     {
@@ -4201,8 +4201,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_protocol_normalizerequiredroomcode",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 167,
+      "community_name": "protocol.js",
       "norm_label": "normalizerequiredroomcode()"
     },
     {
@@ -4213,8 +4213,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_protocol_normalizeoptionalroomcode",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 167,
+      "community_name": "protocol.js",
       "norm_label": "normalizeoptionalroomcode()"
     },
     {
@@ -4225,8 +4225,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_protocol_normalizeremotestate",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 167,
+      "community_name": "protocol.js",
       "norm_label": "normalizeremotestate()"
     },
     {
@@ -4237,8 +4237,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_protocol_normalizeactiveapp",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 167,
+      "community_name": "protocol.js",
       "norm_label": "normalizeactiveapp()"
     },
     {
@@ -4249,8 +4249,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_protocol_clampstring",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 167,
+      "community_name": "protocol.js",
       "norm_label": "clampstring()"
     },
     {
@@ -4261,8 +4261,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_protocol_normalizebindingkey",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 167,
+      "community_name": "protocol.js",
       "norm_label": "normalizebindingkey()"
     },
     {
@@ -4273,8 +4273,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_protocol_normalizeplayers",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 167,
+      "community_name": "protocol.js",
       "norm_label": "normalizeplayers()"
     },
     {
@@ -4285,8 +4285,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_protocol_normalizeinteger",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 167,
+      "community_name": "protocol.js",
       "norm_label": "normalizeinteger()"
     },
     {
@@ -4309,8 +4309,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_protocol_stripundefinedfields",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 167,
+      "community_name": "protocol.js",
       "norm_label": "stripundefinedfields()"
     },
     {
@@ -4321,8 +4321,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_protocol_normalizebundleid",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 167,
+      "community_name": "protocol.js",
       "norm_label": "normalizebundleid()"
     },
     {
@@ -4333,8 +4333,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_protocol_normalizeiconbase64",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 167,
+      "community_name": "protocol.js",
       "norm_label": "normalizeiconbase64()"
     },
     {
@@ -4345,8 +4345,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_protocol_normalizebundleidarray",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 167,
+      "community_name": "protocol.js",
       "norm_label": "normalizebundleidarray()"
     },
     {
@@ -4379,8 +4379,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "server_test_icon_cache_test",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 198,
+      "community_name": "IconCache",
       "norm_label": "icon-cache.test.js"
     },
     {
@@ -4390,8 +4390,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "server_test_integration_test",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 199,
+      "community_name": "integration.test.js",
       "norm_label": "integration.test.js"
     },
     {
@@ -4402,8 +4402,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_test_integration_test_openclient",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 199,
+      "community_name": "integration.test.js",
       "norm_label": "openclient()"
     },
     {
@@ -4414,8 +4414,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_test_integration_test_sendjson",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 199,
+      "community_name": "integration.test.js",
       "norm_label": "sendjson()"
     },
     {
@@ -4426,8 +4426,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_test_integration_test_createmessagecollector",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 199,
+      "community_name": "integration.test.js",
       "norm_label": "createmessagecollector()"
     },
     {
@@ -4438,8 +4438,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_test_integration_test_authclient",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 199,
+      "community_name": "integration.test.js",
       "norm_label": "authclient()"
     },
     {
@@ -4450,8 +4450,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_test_integration_test_validuserdatapayload",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 199,
+      "community_name": "integration.test.js",
       "norm_label": "validuserdatapayload()"
     },
     {
@@ -4462,8 +4462,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_test_integration_test_createtestserver",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 199,
+      "community_name": "integration.test.js",
       "norm_label": "createtestserver()"
     },
     {
@@ -4473,8 +4473,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "server_test_latency_test",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 200,
+      "community_name": "latency.test.js",
       "norm_label": "latency.test.js"
     },
     {
@@ -4485,8 +4485,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_test_latency_test_openclient",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 200,
+      "community_name": "latency.test.js",
       "norm_label": "openclient()"
     },
     {
@@ -4497,8 +4497,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_test_latency_test_sendjson",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 200,
+      "community_name": "latency.test.js",
       "norm_label": "sendjson()"
     },
     {
@@ -4509,8 +4509,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_test_latency_test_createmessagecollector",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 200,
+      "community_name": "latency.test.js",
       "norm_label": "createmessagecollector()"
     },
     {
@@ -4521,8 +4521,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_test_latency_test_authclient",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 200,
+      "community_name": "latency.test.js",
       "norm_label": "authclient()"
     },
     {
@@ -4533,8 +4533,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_test_latency_test_createtestserver",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 200,
+      "community_name": "latency.test.js",
       "norm_label": "createtestserver()"
     },
     {
@@ -4544,8 +4544,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "server_test_protocol_test",
-      "community": 0,
-      "community_name": "index.js",
+      "community": 167,
+      "community_name": "protocol.js",
       "norm_label": "protocol.test.js"
     },
     {
@@ -16573,8 +16573,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_remoteplayercardapp_test",
-      "community": 35,
-      "community_name": "userPreferences.ts",
+      "community": 85,
+      "community_name": "ui/PlayerCard.tsx",
       "norm_label": "remoteplayercardapp.test.tsx"
     },
     {
@@ -16584,8 +16584,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "app_src_remoteplayercardapp_test_onmovedmock_savepositionmock_usebridgeclientmock",
-      "community": 35,
-      "community_name": "userPreferences.ts",
+      "community": 85,
+      "community_name": "ui/PlayerCard.tsx",
       "norm_label": "{\n    onmovedmock,\n    savepositionmock,\n    usebridgeclientmock,\n}"
     },
     {
@@ -16595,8 +16595,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_remoteplayercardapp",
-      "community": 23,
-      "community_name": "useSettingsStore",
+      "community": 85,
+      "community_name": "ui/PlayerCard.tsx",
       "norm_label": "remoteplayercardapp.tsx"
     },
     {
@@ -16607,8 +16607,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_remoteplayercardapp_routeplayerid",
-      "community": 23,
-      "community_name": "useSettingsStore",
+      "community": 85,
+      "community_name": "ui/PlayerCard.tsx",
       "norm_label": "routeplayerid()"
     },
     {
@@ -16619,8 +16619,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_remoteplayercardapp_remoteplayercardapp",
-      "community": 23,
-      "community_name": "useSettingsStore",
+      "community": 85,
+      "community_name": "ui/PlayerCard.tsx",
       "norm_label": "remoteplayercardapp()"
     },
     {
@@ -16675,8 +16675,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_videoplayerapp_test",
-      "community": 23,
-      "community_name": "useSettingsStore",
+      "community": 85,
+      "community_name": "ui/PlayerCard.tsx",
       "norm_label": "videoplayerapp.test.tsx"
     },
     {
@@ -16686,8 +16686,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "app_src_videoplayerapp_test_close",
-      "community": 23,
-      "community_name": "useSettingsStore",
+      "community": 85,
+      "community_name": "ui/PlayerCard.tsx",
       "norm_label": "close"
     },
     {
@@ -16697,8 +16697,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_videoplayerapp",
-      "community": 23,
-      "community_name": "useSettingsStore",
+      "community": 85,
+      "community_name": "ui/PlayerCard.tsx",
       "norm_label": "videoplayerapp.tsx"
     },
     {
@@ -16709,8 +16709,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_videoplayerapp_closeplayerwindow",
-      "community": 23,
-      "community_name": "useSettingsStore",
+      "community": 85,
+      "community_name": "ui/PlayerCard.tsx",
       "norm_label": "closeplayerwindow()"
     },
     {
@@ -16721,8 +16721,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_videoplayerapp_videoplayerapp",
-      "community": 23,
-      "community_name": "useSettingsStore",
+      "community": 85,
+      "community_name": "ui/PlayerCard.tsx",
       "norm_label": "videoplayerapp()"
     },
     {
@@ -16998,8 +16998,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_activeapp",
-      "community": 22,
-      "community_name": "bindingKey.ts",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "activeapp.ts"
     },
     {
@@ -17024,8 +17024,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_activeapp_activeappstate",
-      "community": 22,
-      "community_name": "bindingKey.ts",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "activeappstate"
     },
     {
@@ -17035,8 +17035,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "app_src_domain_activeapp_useactiveappstore",
-      "community": 22,
-      "community_name": "bindingKey.ts",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "useactiveappstore"
     },
     {
@@ -17582,8 +17582,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_bindingkey_test",
-      "community": 24,
-      "community_name": "pomodoro.ts",
+      "community": 22,
+      "community_name": "bindingKey.ts",
       "norm_label": "bindingkey.test.ts"
     },
     {
@@ -17593,8 +17593,8 @@
       "source_location": "L197",
       "_origin": "ast",
       "id": "app_src_domain_bindingkey_test_listenmock_invokemock",
-      "community": 24,
-      "community_name": "pomodoro.ts",
+      "community": 22,
+      "community_name": "bindingKey.ts",
       "norm_label": "{ listenmock, invokemock }"
     },
     {
@@ -17708,8 +17708,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_bindingkey_bindingkeyentry",
-      "community": 35,
-      "community_name": "userPreferences.ts",
+      "community": 24,
+      "community_name": "pomodoro.ts",
       "norm_label": "bindingkeyentry"
     },
     {
@@ -18112,8 +18112,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_bridge_dispatch_test",
-      "community": 24,
-      "community_name": "pomodoro.ts",
+      "community": 22,
+      "community_name": "bindingKey.ts",
       "norm_label": "dispatch.test.ts"
     },
     {
@@ -18123,8 +18123,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_bridge_dispatch",
-      "community": 24,
-      "community_name": "pomodoro.ts",
+      "community": 22,
+      "community_name": "bindingKey.ts",
       "norm_label": "dispatch.ts"
     },
     {
@@ -18135,8 +18135,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_bridge_dispatch_dispatch",
-      "community": 24,
-      "community_name": "pomodoro.ts",
+      "community": 22,
+      "community_name": "bindingKey.ts",
       "norm_label": "dispatch()"
     },
     {
@@ -18148,8 +18148,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_bridge_dispatch_confirmeddispatchoptions",
-      "community": 24,
-      "community_name": "pomodoro.ts",
+      "community": 22,
+      "community_name": "bindingKey.ts",
       "norm_label": "confirmeddispatchoptions"
     },
     {
@@ -18160,8 +18160,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_bridge_dispatch_dispatchconfirmed",
-      "community": 24,
-      "community_name": "pomodoro.ts",
+      "community": 22,
+      "community_name": "bindingKey.ts",
       "norm_label": "dispatchconfirmed()"
     },
     {
@@ -18172,8 +18172,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_bridge_dispatch_createdispatchrequestid",
-      "community": 24,
-      "community_name": "pomodoro.ts",
+      "community": 22,
+      "community_name": "bindingKey.ts",
       "norm_label": "createdispatchrequestid()"
     },
     {
@@ -18513,8 +18513,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "app_src_domain_bridge_protocol_evt_dispatch",
-      "community": 24,
-      "community_name": "pomodoro.ts",
+      "community": 22,
+      "community_name": "bindingKey.ts",
       "norm_label": "evt_dispatch"
     },
     {
@@ -18524,8 +18524,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "app_src_domain_bridge_protocol_evt_dispatch_result",
-      "community": 24,
-      "community_name": "pomodoro.ts",
+      "community": 25,
+      "community_name": "host.ts",
       "norm_label": "evt_dispatch_result"
     },
     {
@@ -18574,8 +18574,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_bridge_protocol_confirmeddispatchrequest",
-      "community": 24,
-      "community_name": "pomodoro.ts",
+      "community": 25,
+      "community_name": "host.ts",
       "norm_label": "confirmeddispatchrequest"
     },
     {
@@ -18587,8 +18587,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_bridge_protocol_dispatchresult",
-      "community": 24,
-      "community_name": "pomodoro.ts",
+      "community": 25,
+      "community_name": "host.ts",
       "norm_label": "dispatchresult"
     },
     {
@@ -18669,8 +18669,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountdata_test",
-      "community": 35,
-      "community_name": "userPreferences.ts",
+      "community": 175,
+      "community_name": "cloudAccountData.ts",
       "norm_label": "cloudaccountdata.test.ts"
     },
     {
@@ -18680,8 +18680,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountdata_test_stores",
-      "community": 35,
-      "community_name": "userPreferences.ts",
+      "community": 175,
+      "community_name": "cloudAccountData.ts",
       "norm_label": "stores"
     },
     {
@@ -18691,8 +18691,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountdata",
-      "community": 35,
-      "community_name": "userPreferences.ts",
+      "community": 175,
+      "community_name": "cloudAccountData.ts",
       "norm_label": "cloudaccountdata.ts"
     },
     {
@@ -18717,8 +18717,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountdata_pomodorostore",
-      "community": 35,
-      "community_name": "userPreferences.ts",
+      "community": 175,
+      "community_name": "cloudAccountData.ts",
       "norm_label": "pomodorostore"
     },
     {
@@ -18730,8 +18730,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountdata_settingsstore",
-      "community": 35,
-      "community_name": "userPreferences.ts",
+      "community": 175,
+      "community_name": "cloudAccountData.ts",
       "norm_label": "settingsstore"
     },
     {
@@ -18743,8 +18743,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountdata_appupdatestore",
-      "community": 35,
-      "community_name": "userPreferences.ts",
+      "community": 175,
+      "community_name": "cloudAccountData.ts",
       "norm_label": "appupdatestore"
     },
     {
@@ -18756,8 +18756,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountdata_networkstore",
-      "community": 35,
-      "community_name": "userPreferences.ts",
+      "community": 175,
+      "community_name": "cloudAccountData.ts",
       "norm_label": "networkstore"
     },
     {
@@ -18769,8 +18769,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountdata_bindingkeystore",
-      "community": 35,
-      "community_name": "userPreferences.ts",
+      "community": 175,
+      "community_name": "cloudAccountData.ts",
       "norm_label": "bindingkeystore"
     },
     {
@@ -18782,8 +18782,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountdata_cloudstores",
-      "community": 35,
-      "community_name": "userPreferences.ts",
+      "community": 175,
+      "community_name": "cloudAccountData.ts",
       "norm_label": "cloudstores"
     },
     {
@@ -18794,8 +18794,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountdata_buildcloudaccountdata",
-      "community": 35,
-      "community_name": "userPreferences.ts",
+      "community": 175,
+      "community_name": "cloudAccountData.ts",
       "norm_label": "buildcloudaccountdata()"
     },
     {
@@ -18806,8 +18806,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountdata_hydratecloudaccountdata",
-      "community": 35,
-      "community_name": "userPreferences.ts",
+      "community": 175,
+      "community_name": "cloudAccountData.ts",
       "norm_label": "hydratecloudaccountdata()"
     },
     {
@@ -18830,8 +18830,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountdata_cloudaccountdatakey",
-      "community": 35,
-      "community_name": "userPreferences.ts",
+      "community": 175,
+      "community_name": "cloudAccountData.ts",
       "norm_label": "cloudaccountdatakey()"
     },
     {
@@ -18842,8 +18842,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountdata_clonebindingkey",
-      "community": 35,
-      "community_name": "userPreferences.ts",
+      "community": 175,
+      "community_name": "cloudAccountData.ts",
       "norm_label": "clonebindingkey()"
     },
     {
@@ -18854,8 +18854,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountdata_clonebindingkeyentry",
-      "community": 35,
-      "community_name": "userPreferences.ts",
+      "community": 175,
+      "community_name": "cloudAccountData.ts",
       "norm_label": "clonebindingkeyentry()"
     },
     {
@@ -18865,8 +18865,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountsync_test",
-      "community": 35,
-      "community_name": "userPreferences.ts",
+      "community": 175,
+      "community_name": "cloudAccountData.ts",
       "norm_label": "cloudaccountsync.test.tsx"
     },
     {
@@ -18876,8 +18876,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountsync_test_savelocal",
-      "community": 35,
-      "community_name": "userPreferences.ts",
+      "community": 175,
+      "community_name": "cloudAccountData.ts",
       "norm_label": "savelocal"
     },
     {
@@ -18887,8 +18887,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountsync",
-      "community": 35,
-      "community_name": "userPreferences.ts",
+      "community": 175,
+      "community_name": "cloudAccountData.ts",
       "norm_label": "cloudaccountsync.ts"
     },
     {
@@ -18899,8 +18899,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountsync_usecloudaccountsync",
-      "community": 35,
-      "community_name": "userPreferences.ts",
+      "community": 175,
+      "community_name": "cloudAccountData.ts",
       "norm_label": "usecloudaccountsync()"
     },
     {
@@ -19042,8 +19042,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_extensionpacks_extensionpackid",
-      "community": 198,
-      "community_name": "eventDrivenRuntime.ts",
+      "community": 121,
+      "community_name": "runtime.ts",
       "norm_label": "extensionpackid"
     },
     {
@@ -19107,8 +19107,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_extensionpacks_extensionpackstatus",
-      "community": 121,
-      "community_name": "ExtensionPackManagerTab.tsx",
+      "community": 65,
+      "community_name": "extensionPacks.ts",
       "norm_label": "extensionpackstatus"
     },
     {
@@ -19120,8 +19120,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_extensionpacks_extensionruntimecontribution",
-      "community": 198,
-      "community_name": "eventDrivenRuntime.ts",
+      "community": 121,
+      "community_name": "runtime.ts",
       "norm_label": "extensionruntimecontribution"
     },
     {
@@ -19221,7 +19221,7 @@
       "_origin": "ast",
       "id": "app_src_domain_extensionpacks_extensionpackcatalog",
       "community": 121,
-      "community_name": "ExtensionPackManagerTab.tsx",
+      "community_name": "runtime.ts",
       "norm_label": "extensionpackcatalog"
     },
     {
@@ -19377,8 +19377,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_extensionpacks_useextensionpacksync",
-      "community": 23,
-      "community_name": "useSettingsStore",
+      "community": 85,
+      "community_name": "ui/PlayerCard.tsx",
       "norm_label": "useextensionpacksync()"
     },
     {
@@ -19708,8 +19708,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_network_remoteplayer",
-      "community": 85,
-      "community_name": "ui/PlayerCard.tsx",
+      "community": 24,
+      "community_name": "pomodoro.ts",
       "norm_label": "remoteplayer"
     },
     {
@@ -19929,8 +19929,8 @@
       "source_location": "L552",
       "_origin": "ast",
       "id": "app_src_domain_network_usenetworkstore",
-      "community": 35,
-      "community_name": "userPreferences.ts",
+      "community": 175,
+      "community_name": "cloudAccountData.ts",
       "norm_label": "usenetworkstore"
     },
     {
@@ -20116,8 +20116,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodoro_pomodorostore",
-      "community": 24,
-      "community_name": "pomodoro.ts",
+      "community": 31,
+      "community_name": "pomodoroBroadcast.ts",
       "norm_label": "pomodorostore"
     },
     {
@@ -20151,8 +20151,8 @@
       "source_location": "L490",
       "_origin": "ast",
       "id": "app_src_domain_pomodoro_usepomodorostore",
-      "community": 35,
-      "community_name": "userPreferences.ts",
+      "community": 175,
+      "community_name": "cloudAccountData.ts",
       "norm_label": "usepomodorostore"
     },
     {
@@ -20163,8 +20163,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodoro_formatmmss",
-      "community": 175,
-      "community_name": "ui/PomodoroPanel.tsx",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "formatmmss()"
     },
     {
@@ -20270,8 +20270,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodorobroadcast_pomodorobroadcast",
-      "community": 198,
-      "community_name": "eventDrivenRuntime.ts",
+      "community": 31,
+      "community_name": "pomodoroBroadcast.ts",
       "norm_label": "pomodorobroadcast"
     },
     {
@@ -21004,8 +21004,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_presence_confirmedpresence",
-      "community": 175,
-      "community_name": "ui/PomodoroPanel.tsx",
+      "community": 24,
+      "community_name": "pomodoro.ts",
       "norm_label": "confirmedpresence"
     },
     {
@@ -21273,8 +21273,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_presencepersistence_test",
-      "community": 2,
-      "community_name": "presence.ts",
+      "community": 201,
+      "community_name": "presencePersistence.test.ts",
       "norm_label": "presencepersistence.test.ts"
     },
     {
@@ -21284,8 +21284,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "app_src_domain_presencepersistence_test_storedata",
-      "community": 2,
-      "community_name": "presence.ts",
+      "community": 201,
+      "community_name": "presencePersistence.test.ts",
       "norm_label": "storedata"
     },
     {
@@ -21295,8 +21295,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "app_src_domain_presencepersistence_test_save",
-      "community": 2,
-      "community_name": "presence.ts",
+      "community": 201,
+      "community_name": "presencePersistence.test.ts",
       "norm_label": "save"
     },
     {
@@ -21695,8 +21695,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_remoteplayercardpositions_saveremoteplayercardposition",
-      "community": 23,
-      "community_name": "useSettingsStore",
+      "community": 85,
+      "community_name": "ui/PlayerCard.tsx",
       "norm_label": "saveremoteplayercardposition()"
     },
     {
@@ -21835,8 +21835,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_remoteplayerwindows_syncremoteplayerwindowsinput",
-      "community": 85,
-      "community_name": "ui/PlayerCard.tsx",
+      "community": 24,
+      "community_name": "pomodoro.ts",
       "norm_label": "syncremoteplayerwindowsinput"
     },
     {
@@ -22605,8 +22605,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_statesync_test",
-      "community": 22,
-      "community_name": "bindingKey.ts",
+      "community": 175,
+      "community_name": "cloudAccountData.ts",
       "norm_label": "statesync.test.ts"
     },
     {
@@ -22616,8 +22616,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_statesync",
-      "community": 22,
-      "community_name": "bindingKey.ts",
+      "community": 175,
+      "community_name": "cloudAccountData.ts",
       "norm_label": "statesync.ts"
     },
     {
@@ -22627,8 +22627,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_src_domain_statesync_phase_to_int",
-      "community": 22,
-      "community_name": "bindingKey.ts",
+      "community": 175,
+      "community_name": "cloudAccountData.ts",
       "norm_label": "phase_to_int"
     },
     {
@@ -22639,8 +22639,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_statesync_buildremotestate",
-      "community": 22,
-      "community_name": "bindingKey.ts",
+      "community": 175,
+      "community_name": "cloudAccountData.ts",
       "norm_label": "buildremotestate()"
     },
     {
@@ -22651,8 +22651,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_statesync_buildremotestatefortest",
-      "community": 22,
-      "community_name": "bindingKey.ts",
+      "community": 175,
+      "community_name": "cloudAccountData.ts",
       "norm_label": "buildremotestatefortest()"
     },
     {
@@ -22663,8 +22663,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_statesync_usestatesync",
-      "community": 22,
-      "community_name": "bindingKey.ts",
+      "community": 175,
+      "community_name": "cloudAccountData.ts",
       "norm_label": "usestatesync()"
     },
     {
@@ -22778,8 +22778,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_userpreferences_userpreferencesstores",
-      "community": 16,
-      "community_name": "network.ts",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "userpreferencesstores"
     },
     {
@@ -22825,8 +22825,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_userpreferences_hydrateuserpreferencessnapshot",
-      "community": 35,
-      "community_name": "userPreferences.ts",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "hydrateuserpreferencessnapshot()"
     },
     {
@@ -23063,8 +23063,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_userpreferencespersistence_persisteduserpreferencesv1",
-      "community": 24,
-      "community_name": "pomodoro.ts",
+      "community": 35,
+      "community_name": "userPreferences.ts",
       "norm_label": "persisteduserpreferencesv1"
     },
     {
@@ -23296,8 +23296,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_extensions_cockroachinvasion_controller",
-      "community": 198,
-      "community_name": "eventDrivenRuntime.ts",
+      "community": 31,
+      "community_name": "pomodoroBroadcast.ts",
       "norm_label": "controller.ts"
     },
     {
@@ -23307,8 +23307,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "app_src_extensions_cockroachinvasion_controller_legacy_cockroach_contribution",
-      "community": 198,
-      "community_name": "eventDrivenRuntime.ts",
+      "community": 31,
+      "community_name": "pomodoroBroadcast.ts",
       "norm_label": "legacy_cockroach_contribution"
     },
     {
@@ -23319,8 +23319,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_extensions_cockroachinvasion_controller_startcockroachmodulecontroller",
-      "community": 198,
-      "community_name": "eventDrivenRuntime.ts",
+      "community": 31,
+      "community_name": "pomodoroBroadcast.ts",
       "norm_label": "startcockroachmodulecontroller()"
     },
     {
@@ -23330,8 +23330,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_extensions_eventdrivenruntime_test",
-      "community": 198,
-      "community_name": "eventDrivenRuntime.ts",
+      "community": 31,
+      "community_name": "pomodoroBroadcast.ts",
       "norm_label": "eventdrivenruntime.test.ts"
     },
     {
@@ -23341,8 +23341,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_extensions_eventdrivenruntime",
-      "community": 198,
-      "community_name": "eventDrivenRuntime.ts",
+      "community": 31,
+      "community_name": "pomodoroBroadcast.ts",
       "norm_label": "eventdrivenruntime.ts"
     },
     {
@@ -23354,8 +23354,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_extensions_eventdrivenruntime_eventdrivenruntimeadapter",
-      "community": 198,
-      "community_name": "eventDrivenRuntime.ts",
+      "community": 31,
+      "community_name": "pomodoroBroadcast.ts",
       "norm_label": "eventdrivenruntimeadapter"
     },
     {
@@ -23365,8 +23365,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "app_src_extensions_eventdrivenruntime_defaultadapter",
-      "community": 198,
-      "community_name": "eventDrivenRuntime.ts",
+      "community": 31,
+      "community_name": "pomodoroBroadcast.ts",
       "norm_label": "defaultadapter"
     },
     {
@@ -23377,8 +23377,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_extensions_eventdrivenruntime_activationgatematches",
-      "community": 198,
-      "community_name": "eventDrivenRuntime.ts",
+      "community": 31,
+      "community_name": "pomodoroBroadcast.ts",
       "norm_label": "activationgatematches()"
     },
     {
@@ -23389,8 +23389,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_extensions_eventdrivenruntime_starteventdrivenruntime",
-      "community": 198,
-      "community_name": "eventDrivenRuntime.ts",
+      "community": 31,
+      "community_name": "pomodoroBroadcast.ts",
       "norm_label": "starteventdrivenruntime()"
     },
     {
@@ -23434,8 +23434,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_extensions_runtime",
-      "community": 198,
-      "community_name": "eventDrivenRuntime.ts",
+      "community": 121,
+      "community_name": "runtime.ts",
       "norm_label": "runtime.ts"
     },
     {
@@ -23447,8 +23447,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_extensions_runtime_extensionruntimemodule",
-      "community": 198,
-      "community_name": "eventDrivenRuntime.ts",
+      "community": 121,
+      "community_name": "runtime.ts",
       "norm_label": "extensionruntimemodule"
     },
     {
@@ -23460,8 +23460,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_extensions_runtime_activeruntimeentry",
-      "community": 198,
-      "community_name": "eventDrivenRuntime.ts",
+      "community": 121,
+      "community_name": "runtime.ts",
       "norm_label": "activeruntimeentry"
     },
     {
@@ -23471,8 +23471,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "app_src_extensions_runtime_runtime_loaders",
-      "community": 198,
-      "community_name": "eventDrivenRuntime.ts",
+      "community": 121,
+      "community_name": "runtime.ts",
       "norm_label": "runtime_loaders"
     },
     {
@@ -23560,8 +23560,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_main",
-      "community": 23,
-      "community_name": "useSettingsStore",
+      "community": 85,
+      "community_name": "ui/PlayerCard.tsx",
       "norm_label": "main.tsx"
     },
     {
@@ -23571,8 +23571,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "app_src_main_which",
-      "community": 23,
-      "community_name": "useSettingsStore",
+      "community": 85,
+      "community_name": "ui/PlayerCard.tsx",
       "norm_label": "which"
     },
     {
@@ -23583,8 +23583,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_main_windowroot",
-      "community": 23,
-      "community_name": "useSettingsStore",
+      "community": 85,
+      "community_name": "ui/PlayerCard.tsx",
       "norm_label": "windowroot()"
     },
     {
@@ -23834,7 +23834,7 @@
       "_origin": "ast",
       "id": "app_src_ui_extensionpackmanagertab_test",
       "community": 121,
-      "community_name": "ExtensionPackManagerTab.tsx",
+      "community_name": "runtime.ts",
       "norm_label": "extensionpackmanagertab.test.tsx"
     },
     {
@@ -23845,7 +23845,7 @@
       "_origin": "ast",
       "id": "app_src_ui_extensionpackmanagertab_test_invoke",
       "community": 121,
-      "community_name": "ExtensionPackManagerTab.tsx",
+      "community_name": "runtime.ts",
       "norm_label": "invoke"
     },
     {
@@ -23857,7 +23857,7 @@
       "_origin": "ast",
       "id": "app_src_ui_extensionpackmanagertab_test_status",
       "community": 121,
-      "community_name": "ExtensionPackManagerTab.tsx",
+      "community_name": "runtime.ts",
       "norm_label": "status()"
     },
     {
@@ -23868,7 +23868,7 @@
       "_origin": "ast",
       "id": "app_src_ui_extensionpackmanagertab",
       "community": 121,
-      "community_name": "ExtensionPackManagerTab.tsx",
+      "community_name": "runtime.ts",
       "norm_label": "extensionpackmanagertab.tsx"
     },
     {
@@ -23879,7 +23879,7 @@
       "_origin": "ast",
       "id": "app_src_ui_extensionpackmanagertab_feature_packs",
       "community": 121,
-      "community_name": "ExtensionPackManagerTab.tsx",
+      "community_name": "runtime.ts",
       "norm_label": "feature_packs"
     },
     {
@@ -23890,7 +23890,7 @@
       "_origin": "ast",
       "id": "app_src_ui_extensionpackmanagertab_common_packs",
       "community": 121,
-      "community_name": "ExtensionPackManagerTab.tsx",
+      "community_name": "runtime.ts",
       "norm_label": "common_packs"
     },
     {
@@ -23902,7 +23902,7 @@
       "_origin": "ast",
       "id": "app_src_ui_extensionpackmanagertab_extensionpackmanagertab",
       "community": 121,
-      "community_name": "ExtensionPackManagerTab.tsx",
+      "community_name": "runtime.ts",
       "norm_label": "extensionpackmanagertab()"
     },
     {
@@ -24017,8 +24017,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_ui_inputcounterpanel_test",
-      "community": 22,
-      "community_name": "bindingKey.ts",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "inputcounterpanel.test.tsx"
     },
     {
@@ -24028,8 +24028,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "app_src_ui_inputcounterpanel_test_startdraggingmock_invokemock",
-      "community": 22,
-      "community_name": "bindingKey.ts",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "{ startdraggingmock, invokemock }"
     },
     {
@@ -24039,8 +24039,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_ui_inputcounterpanel",
-      "community": 22,
-      "community_name": "bindingKey.ts",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "ui/inputcounterpanel.tsx"
     },
     {
@@ -24051,8 +24051,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_inputcounterpanel_windowheightforpills",
-      "community": 22,
-      "community_name": "bindingKey.ts",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "windowheightforpills()"
     },
     {
@@ -24063,8 +24063,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_inputcounterpanel_inputcounterpanel",
-      "community": 22,
-      "community_name": "bindingKey.ts",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "inputcounterpanel()"
     },
     {
@@ -24087,8 +24087,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_inputcounterpanel_pinicon",
-      "community": 22,
-      "community_name": "bindingKey.ts",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "pinicon()"
     },
     {
@@ -24099,8 +24099,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_inputcounterpanel_appwindowicon",
-      "community": 22,
-      "community_name": "bindingKey.ts",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "appwindowicon()"
     },
     {
@@ -24366,8 +24366,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_test",
-      "community": 175,
-      "community_name": "ui/PomodoroPanel.tsx",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "pomodoropanel.test.tsx"
     },
     {
@@ -24377,8 +24377,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_test_startdragging_invokemock",
-      "community": 175,
-      "community_name": "ui/PomodoroPanel.tsx",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "{ startdragging, invokemock }"
     },
     {
@@ -24389,8 +24389,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_test_resetpomodoro",
-      "community": 175,
-      "community_name": "ui/PomodoroPanel.tsx",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "resetpomodoro()"
     },
     {
@@ -24401,8 +24401,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_test_resetpresence",
-      "community": 175,
-      "community_name": "ui/PomodoroPanel.tsx",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "resetpresence()"
     },
     {
@@ -24413,8 +24413,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_test_pincalls",
-      "community": 175,
-      "community_name": "ui/PomodoroPanel.tsx",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "pincalls()"
     },
     {
@@ -24425,8 +24425,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_test_deferred",
-      "community": 175,
-      "community_name": "ui/PomodoroPanel.tsx",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "deferred()"
     },
     {
@@ -24436,8 +24436,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel",
-      "community": 175,
-      "community_name": "ui/PomodoroPanel.tsx",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "ui/pomodoropanel.tsx"
     },
     {
@@ -24449,8 +24449,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_clockstate",
-      "community": 175,
-      "community_name": "ui/PomodoroPanel.tsx",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "clockstate"
     },
     {
@@ -24461,8 +24461,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_clockstateof",
-      "community": 175,
-      "community_name": "ui/PomodoroPanel.tsx",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "clockstateof()"
     },
     {
@@ -24473,8 +24473,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_phaselabel",
-      "community": 175,
-      "community_name": "ui/PomodoroPanel.tsx",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "phaselabel()"
     },
     {
@@ -24485,8 +24485,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_pomodoropanel",
-      "community": 175,
-      "community_name": "ui/PomodoroPanel.tsx",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "pomodoropanel()"
     },
     {
@@ -24497,8 +24497,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_confirmedpresencestatus",
-      "community": 175,
-      "community_name": "ui/PomodoroPanel.tsx",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "confirmedpresencestatus()"
     },
     {
@@ -24510,8 +24510,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_clockringprops",
-      "community": 175,
-      "community_name": "ui/PomodoroPanel.tsx",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "clockringprops"
     },
     {
@@ -24522,8 +24522,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_clockring",
-      "community": 175,
-      "community_name": "ui/PomodoroPanel.tsx",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "clockring()"
     },
     {
@@ -24534,8 +24534,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_settingsicon",
-      "community": 175,
-      "community_name": "ui/PomodoroPanel.tsx",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "settingsicon()"
     },
     {
@@ -24546,8 +24546,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_pinicon",
-      "community": 175,
-      "community_name": "ui/PomodoroPanel.tsx",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "pinicon()"
     },
     {
@@ -24761,8 +24761,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_iskeycounterhealth",
-      "community": 12,
-      "community_name": "ui/SettingsPanel.tsx",
+      "community": 22,
+      "community_name": "bindingKey.ts",
       "norm_label": "iskeycounterhealth()"
     },
     {
@@ -24773,8 +24773,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_inputforpointerbutton",
-      "community": 12,
-      "community_name": "ui/SettingsPanel.tsx",
+      "community": 22,
+      "community_name": "bindingKey.ts",
       "norm_label": "inputforpointerbutton()"
     },
     {
@@ -24929,8 +24929,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_globaltab",
-      "community": 12,
-      "community_name": "ui/SettingsPanel.tsx",
+      "community": 22,
+      "community_name": "bindingKey.ts",
       "norm_label": "globaltab()"
     },
     {
@@ -25204,8 +25204,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_ui_windowdrag",
-      "community": 22,
-      "community_name": "bindingKey.ts",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "windowdrag.ts"
     },
     {
@@ -25215,8 +25215,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_ui_windowdrag_no_window_drag_selector",
-      "community": 22,
-      "community_name": "bindingKey.ts",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "no_window_drag_selector"
     },
     {
@@ -25227,8 +25227,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_windowdrag_shouldstartwindowdrag",
-      "community": 22,
-      "community_name": "bindingKey.ts",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "shouldstartwindowdrag()"
     },
     {
@@ -28697,336 +28697,6 @@
       "community": 43,
       "community_name": "app.js",
       "norm_label": "showerror()"
-    },
-    {
-      "label": "SKILL.md",
-      "file_type": "document",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/SKILL.md",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "agents_skills_cpa_v2_extension_packs_skill",
-      "community": 167,
-      "community_name": "CPA V2 extension contract",
-      "norm_label": "skill.md"
-    },
-    {
-      "label": "CPA V2 Extension Packs",
-      "file_type": "document",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/SKILL.md",
-      "source_location": "L6",
-      "_origin": "ast",
-      "id": "agents_skills_cpa_v2_extension_packs_skill_cpa_v2_extension_packs",
-      "community": 167,
-      "community_name": "CPA V2 extension contract",
-      "norm_label": "cpa v2 extension packs"
-    },
-    {
-      "label": "Before changing code",
-      "file_type": "document",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/SKILL.md",
-      "source_location": "L10",
-      "_origin": "ast",
-      "id": "agents_skills_cpa_v2_extension_packs_skill_before_changing_code",
-      "community": 167,
-      "community_name": "CPA V2 extension contract",
-      "norm_label": "before changing code"
-    },
-    {
-      "label": "Implementation rules",
-      "file_type": "document",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/SKILL.md",
-      "source_location": "L22",
-      "_origin": "ast",
-      "id": "agents_skills_cpa_v2_extension_packs_skill_implementation_rules",
-      "community": 167,
-      "community_name": "CPA V2 extension contract",
-      "norm_label": "implementation rules"
-    },
-    {
-      "label": "Verification",
-      "file_type": "document",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/SKILL.md",
-      "source_location": "L38",
-      "_origin": "ast",
-      "id": "agents_skills_cpa_v2_extension_packs_skill_verification",
-      "community": 167,
-      "community_name": "CPA V2 extension contract",
-      "norm_label": "verification"
-    },
-    {
-      "label": "extension-contract.md",
-      "file_type": "document",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/extension-contract.md",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "agents_skills_cpa_v2_extension_packs_references_extension_contract",
-      "community": 167,
-      "community_name": "CPA V2 extension contract",
-      "norm_label": "extension-contract.md"
-    },
-    {
-      "label": "CPA V2 extension contract",
-      "file_type": "document",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/extension-contract.md",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "agents_skills_cpa_v2_extension_packs_references_extension_contract_cpa_v2_extension_contract",
-      "community": 167,
-      "community_name": "CPA V2 extension contract",
-      "norm_label": "cpa v2 extension contract"
-    },
-    {
-      "label": "Ownership model",
-      "file_type": "document",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/extension-contract.md",
-      "source_location": "L5",
-      "_origin": "ast",
-      "id": "agents_skills_cpa_v2_extension_packs_references_extension_contract_ownership_model",
-      "community": 167,
-      "community_name": "CPA V2 extension contract",
-      "norm_label": "ownership model"
-    },
-    {
-      "label": "Canonical code seams",
-      "file_type": "document",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/extension-contract.md",
-      "source_location": "L16",
-      "_origin": "ast",
-      "id": "agents_skills_cpa_v2_extension_packs_references_extension_contract_canonical_code_seams",
-      "community": 167,
-      "community_name": "CPA V2 extension contract",
-      "norm_label": "canonical code seams"
-    },
-    {
-      "label": "Lifecycle commands",
-      "file_type": "document",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/extension-contract.md",
-      "source_location": "L30",
-      "_origin": "ast",
-      "id": "agents_skills_cpa_v2_extension_packs_references_extension_contract_lifecycle_commands",
-      "community": 167,
-      "community_name": "CPA V2 extension contract",
-      "norm_label": "lifecycle commands"
-    },
-    {
-      "label": "Install or upgrade",
-      "file_type": "document",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/extension-contract.md",
-      "source_location": "L45",
-      "_origin": "ast",
-      "id": "agents_skills_cpa_v2_extension_packs_references_extension_contract_install_or_upgrade",
-      "community": 167,
-      "community_name": "CPA V2 extension contract",
-      "norm_label": "install or upgrade"
-    },
-    {
-      "label": "Disable",
-      "file_type": "document",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/extension-contract.md",
-      "source_location": "L59",
-      "_origin": "ast",
-      "id": "agents_skills_cpa_v2_extension_packs_references_extension_contract_disable",
-      "community": 167,
-      "community_name": "CPA V2 extension contract",
-      "norm_label": "disable"
-    },
-    {
-      "label": "Uninstall",
-      "file_type": "document",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/extension-contract.md",
-      "source_location": "L65",
-      "_origin": "ast",
-      "id": "agents_skills_cpa_v2_extension_packs_references_extension_contract_uninstall",
-      "community": 167,
-      "community_name": "CPA V2 extension contract",
-      "norm_label": "uninstall"
-    },
-    {
-      "label": "Settings contributions",
-      "file_type": "document",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/extension-contract.md",
-      "source_location": "L71",
-      "_origin": "ast",
-      "id": "agents_skills_cpa_v2_extension_packs_references_extension_contract_settings_contributions",
-      "community": 167,
-      "community_name": "CPA V2 extension contract",
-      "norm_label": "settings contributions"
-    },
-    {
-      "label": "Runtime contribution manifest",
-      "file_type": "document",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/extension-contract.md",
-      "source_location": "L79",
-      "_origin": "ast",
-      "id": "agents_skills_cpa_v2_extension_packs_references_extension_contract_runtime_contribution_manifest",
-      "community": 167,
-      "community_name": "CPA V2 extension contract",
-      "norm_label": "runtime contribution manifest"
-    },
-    {
-      "label": "Security and release boundaries",
-      "file_type": "document",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/extension-contract.md",
-      "source_location": "L101",
-      "_origin": "ast",
-      "id": "agents_skills_cpa_v2_extension_packs_references_extension_contract_security_and_release_boundaries",
-      "community": 167,
-      "community_name": "CPA V2 extension contract",
-      "norm_label": "security and release boundaries"
-    },
-    {
-      "label": "multi-feature-family.md",
-      "file_type": "document",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/multi-feature-family.md",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "agents_skills_cpa_v2_extension_packs_references_multi_feature_family",
-      "community": 167,
-      "community_name": "CPA V2 extension contract",
-      "norm_label": "multi-feature-family.md"
-    },
-    {
-      "label": "Adding another feature to an existing family",
-      "file_type": "document",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/multi-feature-family.md",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "agents_skills_cpa_v2_extension_packs_references_multi_feature_family_adding_another_feature_to_an_existing_family",
-      "community": 167,
-      "community_name": "CPA V2 extension contract",
-      "norm_label": "adding another feature to an existing family"
-    },
-    {
-      "label": "Decisions to settle first",
-      "file_type": "document",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/multi-feature-family.md",
-      "source_location": "L5",
-      "_origin": "ast",
-      "id": "agents_skills_cpa_v2_extension_packs_references_multi_feature_family_decisions_to_settle_first",
-      "community": 167,
-      "community_name": "CPA V2 extension contract",
-      "norm_label": "decisions to settle first"
-    },
-    {
-      "label": "Storage and migration",
-      "file_type": "document",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/multi-feature-family.md",
-      "source_location": "L16",
-      "_origin": "ast",
-      "id": "agents_skills_cpa_v2_extension_packs_references_multi_feature_family_storage_and_migration",
-      "community": 167,
-      "community_name": "CPA V2 extension contract",
-      "norm_label": "storage and migration"
-    },
-    {
-      "label": "Plural dependency behavior",
-      "file_type": "document",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/multi-feature-family.md",
-      "source_location": "L33",
-      "_origin": "ast",
-      "id": "agents_skills_cpa_v2_extension_packs_references_multi_feature_family_plural_dependency_behavior",
-      "community": 167,
-      "community_name": "CPA V2 extension contract",
-      "norm_label": "plural dependency behavior"
-    },
-    {
-      "label": "Settings contributions",
-      "file_type": "document",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/multi-feature-family.md",
-      "source_location": "L42",
-      "_origin": "ast",
-      "id": "agents_skills_cpa_v2_extension_packs_references_multi_feature_family_settings_contributions",
-      "community": 167,
-      "community_name": "CPA V2 extension contract",
-      "norm_label": "settings contributions"
-    },
-    {
-      "label": "Runtime gates",
-      "file_type": "document",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/multi-feature-family.md",
-      "source_location": "L48",
-      "_origin": "ast",
-      "id": "agents_skills_cpa_v2_extension_packs_references_multi_feature_family_runtime_gates",
-      "community": 167,
-      "community_name": "CPA V2 extension contract",
-      "norm_label": "runtime gates"
-    },
-    {
-      "label": "validation.md",
-      "file_type": "document",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/validation.md",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "agents_skills_cpa_v2_extension_packs_references_validation",
-      "community": 167,
-      "community_name": "CPA V2 extension contract",
-      "norm_label": "validation.md"
-    },
-    {
-      "label": "Extension-pack validation",
-      "file_type": "document",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/validation.md",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "agents_skills_cpa_v2_extension_packs_references_validation_extension_pack_validation",
-      "community": 167,
-      "community_name": "CPA V2 extension contract",
-      "norm_label": "extension-pack validation"
-    },
-    {
-      "label": "Required behavioral coverage",
-      "file_type": "document",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/validation.md",
-      "source_location": "L5",
-      "_origin": "ast",
-      "id": "agents_skills_cpa_v2_extension_packs_references_validation_required_behavioral_coverage",
-      "community": 167,
-      "community_name": "CPA V2 extension contract",
-      "norm_label": "required behavioral coverage"
-    },
-    {
-      "label": "Frontend",
-      "file_type": "document",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/validation.md",
-      "source_location": "L22",
-      "_origin": "ast",
-      "id": "agents_skills_cpa_v2_extension_packs_references_validation_frontend",
-      "community": 167,
-      "community_name": "CPA V2 extension contract",
-      "norm_label": "frontend"
-    },
-    {
-      "label": "Native host",
-      "file_type": "document",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/validation.md",
-      "source_location": "L42",
-      "_origin": "ast",
-      "id": "agents_skills_cpa_v2_extension_packs_references_validation_native_host",
-      "community": 167,
-      "community_name": "CPA V2 extension contract",
-      "norm_label": "native host"
-    },
-    {
-      "label": "Package contracts",
-      "file_type": "document",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/validation.md",
-      "source_location": "L50",
-      "_origin": "ast",
-      "id": "agents_skills_cpa_v2_extension_packs_references_validation_package_contracts",
-      "community": 167,
-      "community_name": "CPA V2 extension contract",
-      "norm_label": "package contracts"
-    },
-    {
-      "label": "Repository completion",
-      "file_type": "document",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/validation.md",
-      "source_location": "L66",
-      "_origin": "ast",
-      "id": "agents_skills_cpa_v2_extension_packs_references_validation_repository_completion",
-      "community": 167,
-      "community_name": "CPA V2 extension contract",
-      "norm_label": "repository completion"
     },
     {
       "label": "cockroach-module-layered.md",
@@ -106898,325 +106568,6 @@
       "confidence_score": 1.0
     },
     {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/SKILL.md",
-      "source_location": "L12",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "agents_skills_cpa_v2_extension_packs_skill",
-      "target": "agents_skills_cpa_v2_extension_packs_references_extension_contract",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/SKILL.md",
-      "source_location": "L14",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "agents_skills_cpa_v2_extension_packs_skill",
-      "target": "agents_skills_cpa_v2_extension_packs_references_multi_feature_family",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/SKILL.md",
-      "source_location": "L40",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "agents_skills_cpa_v2_extension_packs_skill",
-      "target": "agents_skills_cpa_v2_extension_packs_references_validation",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/SKILL.md",
-      "source_location": "L6",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "agents_skills_cpa_v2_extension_packs_skill",
-      "target": "agents_skills_cpa_v2_extension_packs_skill_cpa_v2_extension_packs",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/SKILL.md",
-      "source_location": "L10",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "agents_skills_cpa_v2_extension_packs_skill_cpa_v2_extension_packs",
-      "target": "agents_skills_cpa_v2_extension_packs_skill_before_changing_code",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/SKILL.md",
-      "source_location": "L22",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "agents_skills_cpa_v2_extension_packs_skill_cpa_v2_extension_packs",
-      "target": "agents_skills_cpa_v2_extension_packs_skill_implementation_rules",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/SKILL.md",
-      "source_location": "L38",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "agents_skills_cpa_v2_extension_packs_skill_cpa_v2_extension_packs",
-      "target": "agents_skills_cpa_v2_extension_packs_skill_verification",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/extension-contract.md",
-      "source_location": "L1",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "agents_skills_cpa_v2_extension_packs_references_extension_contract",
-      "target": "agents_skills_cpa_v2_extension_packs_references_extension_contract_cpa_v2_extension_contract",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/extension-contract.md",
-      "source_location": "L16",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "agents_skills_cpa_v2_extension_packs_references_extension_contract_cpa_v2_extension_contract",
-      "target": "agents_skills_cpa_v2_extension_packs_references_extension_contract_canonical_code_seams",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/extension-contract.md",
-      "source_location": "L30",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "agents_skills_cpa_v2_extension_packs_references_extension_contract_cpa_v2_extension_contract",
-      "target": "agents_skills_cpa_v2_extension_packs_references_extension_contract_lifecycle_commands",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/extension-contract.md",
-      "source_location": "L5",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "agents_skills_cpa_v2_extension_packs_references_extension_contract_cpa_v2_extension_contract",
-      "target": "agents_skills_cpa_v2_extension_packs_references_extension_contract_ownership_model",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/extension-contract.md",
-      "source_location": "L79",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "agents_skills_cpa_v2_extension_packs_references_extension_contract_cpa_v2_extension_contract",
-      "target": "agents_skills_cpa_v2_extension_packs_references_extension_contract_runtime_contribution_manifest",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/extension-contract.md",
-      "source_location": "L101",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "agents_skills_cpa_v2_extension_packs_references_extension_contract_cpa_v2_extension_contract",
-      "target": "agents_skills_cpa_v2_extension_packs_references_extension_contract_security_and_release_boundaries",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/extension-contract.md",
-      "source_location": "L71",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "agents_skills_cpa_v2_extension_packs_references_extension_contract_cpa_v2_extension_contract",
-      "target": "agents_skills_cpa_v2_extension_packs_references_extension_contract_settings_contributions",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/extension-contract.md",
-      "source_location": "L59",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "agents_skills_cpa_v2_extension_packs_references_extension_contract_lifecycle_commands",
-      "target": "agents_skills_cpa_v2_extension_packs_references_extension_contract_disable",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/extension-contract.md",
-      "source_location": "L45",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "agents_skills_cpa_v2_extension_packs_references_extension_contract_lifecycle_commands",
-      "target": "agents_skills_cpa_v2_extension_packs_references_extension_contract_install_or_upgrade",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/extension-contract.md",
-      "source_location": "L65",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "agents_skills_cpa_v2_extension_packs_references_extension_contract_lifecycle_commands",
-      "target": "agents_skills_cpa_v2_extension_packs_references_extension_contract_uninstall",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/multi-feature-family.md",
-      "source_location": "L1",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "agents_skills_cpa_v2_extension_packs_references_multi_feature_family",
-      "target": "agents_skills_cpa_v2_extension_packs_references_multi_feature_family_adding_another_feature_to_an_existing_family",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/multi-feature-family.md",
-      "source_location": "L5",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "agents_skills_cpa_v2_extension_packs_references_multi_feature_family_adding_another_feature_to_an_existing_family",
-      "target": "agents_skills_cpa_v2_extension_packs_references_multi_feature_family_decisions_to_settle_first",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/multi-feature-family.md",
-      "source_location": "L33",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "agents_skills_cpa_v2_extension_packs_references_multi_feature_family_adding_another_feature_to_an_existing_family",
-      "target": "agents_skills_cpa_v2_extension_packs_references_multi_feature_family_plural_dependency_behavior",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/multi-feature-family.md",
-      "source_location": "L48",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "agents_skills_cpa_v2_extension_packs_references_multi_feature_family_adding_another_feature_to_an_existing_family",
-      "target": "agents_skills_cpa_v2_extension_packs_references_multi_feature_family_runtime_gates",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/multi-feature-family.md",
-      "source_location": "L42",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "agents_skills_cpa_v2_extension_packs_references_multi_feature_family_adding_another_feature_to_an_existing_family",
-      "target": "agents_skills_cpa_v2_extension_packs_references_multi_feature_family_settings_contributions",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/multi-feature-family.md",
-      "source_location": "L16",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "agents_skills_cpa_v2_extension_packs_references_multi_feature_family_adding_another_feature_to_an_existing_family",
-      "target": "agents_skills_cpa_v2_extension_packs_references_multi_feature_family_storage_and_migration",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/validation.md",
-      "source_location": "L1",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "agents_skills_cpa_v2_extension_packs_references_validation",
-      "target": "agents_skills_cpa_v2_extension_packs_references_validation_extension_pack_validation",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/validation.md",
-      "source_location": "L22",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "agents_skills_cpa_v2_extension_packs_references_validation_extension_pack_validation",
-      "target": "agents_skills_cpa_v2_extension_packs_references_validation_frontend",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/validation.md",
-      "source_location": "L42",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "agents_skills_cpa_v2_extension_packs_references_validation_extension_pack_validation",
-      "target": "agents_skills_cpa_v2_extension_packs_references_validation_native_host",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/validation.md",
-      "source_location": "L50",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "agents_skills_cpa_v2_extension_packs_references_validation_extension_pack_validation",
-      "target": "agents_skills_cpa_v2_extension_packs_references_validation_package_contracts",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/validation.md",
-      "source_location": "L66",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "agents_skills_cpa_v2_extension_packs_references_validation_extension_pack_validation",
-      "target": "agents_skills_cpa_v2_extension_packs_references_validation_repository_completion",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".agents/skills/cpa-v2-extension-packs/references/validation.md",
-      "source_location": "L5",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "agents_skills_cpa_v2_extension_packs_references_validation_extension_pack_validation",
-      "target": "agents_skills_cpa_v2_extension_packs_references_validation_required_behavioral_coverage",
-      "confidence_score": 1.0
-    },
-    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".agents/skills/cpa-v2-release-publish/references/cockroach-module-layered.md",
@@ -116538,5 +115889,5 @@
       "source_file": "docs/superpowers/plans/2026-05-21-temporary-focus-windows.md"
     }
   ],
-  "built_at_commit": "6c8ec815da19d43b32b8a7d9a9b8b5f018e37954"
+  "built_at_commit": "cb120221062b6d060d093db411fd62aafb3c7873"
 }

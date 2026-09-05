@@ -180,8 +180,8 @@
     "semantic_hash": "a5965f46475e54a0d9d73de3212ad7df"
   },
   "app/package.json": {
-    "mtime": 1788507452.1280985,
-    "ast_hash": "6c335a154ff18a731d24fb08d0641ed6",
+    "mtime": 1788326523.023585,
+    "ast_hash": "902dca8be4732461312dd0162aae76a6",
     "semantic_hash": ""
   },
   "app/public/sounds/pomodoro/manifest.json": {
@@ -345,8 +345,8 @@
     "semantic_hash": "cfa124a91cc09e1a2c209025e198a71f"
   },
   "app/src-tauri/tauri.conf.json": {
-    "mtime": 1788507452.1298692,
-    "ast_hash": "28609af77e5c7d544d5b69946da4f94d",
+    "mtime": 1788326523.025389,
+    "ast_hash": "8cfdd376f07c7f62743bb0931b1bc46a",
     "semantic_hash": ""
   },
   "app/src-tauri/tests/focus_restore_regression.rs": {
@@ -945,8 +945,8 @@
     "semantic_hash": "fbf61b6573dc50a5223a32ca93fc17cf"
   },
   "AGENTS.md": {
-    "mtime": 1788505262.0151448,
-    "ast_hash": "ce28165f912f6eefcc80a2830596f638",
+    "mtime": 1788499289.396115,
+    "ast_hash": "0c9dfd52b8f84de9389fe2c12b1bb2a0",
     "semantic_hash": ""
   },
   "CLAUDE.md": {
@@ -2055,8 +2055,8 @@
     "semantic_hash": ""
   },
   "cockroach-electron-module/README.md": {
-    "mtime": 1788507452.1300316,
-    "ast_hash": "8790a3c3412d96b2d4173add7a43a659",
+    "mtime": 1788504299.3499935,
+    "ast_hash": "404f0d04687413ff7a6b37e9a0fcf2cf",
     "semantic_hash": ""
   },
   "cockroach-electron-module/licenses/CockroachPet-MIT.txt": {
@@ -2227,31 +2227,6 @@
   "app/src/extensions/eventDrivenRuntime.ts": {
     "mtime": 1788504230.5085306,
     "ast_hash": "f6423472b36e333cf5642c5c711ad10a",
-    "semantic_hash": ""
-  },
-  ".agents/skills/cpa-v2-extension-packs/SKILL.md": {
-    "mtime": 1788505262.0143676,
-    "ast_hash": "2a62e07b439fce1210653abe75593215",
-    "semantic_hash": ""
-  },
-  ".agents/skills/cpa-v2-extension-packs/agents/openai.yaml": {
-    "mtime": 1788504914.94559,
-    "ast_hash": "3a6d46114f89509f869f8f383570a376",
-    "semantic_hash": ""
-  },
-  ".agents/skills/cpa-v2-extension-packs/references/extension-contract.md": {
-    "mtime": 1788505262.0145931,
-    "ast_hash": "f7fd970938e05b189c640d694a69cc69",
-    "semantic_hash": ""
-  },
-  ".agents/skills/cpa-v2-extension-packs/references/multi-feature-family.md": {
-    "mtime": 1788505262.0148969,
-    "ast_hash": "b1cebf28b410d84de0ff04d8f045b2a8",
-    "semantic_hash": ""
-  },
-  ".agents/skills/cpa-v2-extension-packs/references/validation.md": {
-    "mtime": 1788505262.0147614,
-    "ast_hash": "17cbd797b7f35254c938287fe8506178",
     "semantic_hash": ""
   }
 }
