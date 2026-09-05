@@ -30,7 +30,7 @@ export function ExtensionPackManagerTab() {
         const uninstallBlocked = Boolean(dependent?.installed);
         const anyBusy = busyPackId !== null;
         const isBusy = busyPackId === packId;
-        const packProgress = progress?.packId === packId ? progress : null;
+        const packProgress = isBusy && progress?.packId === packId ? progress : null;
         const percent = packProgress?.totalBytes
             ? Math.min(100, Math.round((packProgress.downloadedBytes / packProgress.totalBytes) * 100))
             : null;

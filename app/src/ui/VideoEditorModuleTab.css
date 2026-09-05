@@ -3,8 +3,7 @@
 
 .video-module-hero,
 .video-module-download-card,
-.video-module-ready-card,
-.video-module-boundary-card {
+.video-module-ready-card {
     border-radius: 16px;
     padding: 16px;
     background: #f6f7f8;
@@ -29,8 +28,7 @@
 .video-module-ready-card { display: grid; gap: 14px; }
 
 .video-module-download-copy,
-.video-module-ready-card > div:first-child,
-.video-module-boundary-card {
+.video-module-ready-card > div:first-child {
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -44,7 +42,6 @@
 .video-module-target { color: #8a6d00; }
 .video-module-action { justify-self: start; }
 .video-module-buttons { display: flex; gap: 8px; }
-.video-module-boundary-card { background: #fff7d9; color: #8a6d00; }
 
 .video-module-progress { display: flex; flex-direction: column; gap: 5px; font-size: 11px; color: var(--text-warm); }
 .video-module-progress-track { height: 6px; overflow: hidden; border-radius: 999px; background: #e5e7eb; }

@@ -63,10 +63,6 @@ export function VideoEditorModuleTab() {
                     </section>
                 )}
 
-                <section className="card video-module-boundary-card">
-                    <span>模板内保留：当前帧截图、输出分辨率、时间范围、自动/点选主体、抠图参数、透明成品预览与导出。</span>
-                    <span>模板内移除：裁剪框拖拽、画笔剔除和任何区域绘制工具。</span>
-                </section>
                 {error ? <div className="video-module-error" role="alert">{error}</div> : null}
             </div>
         </div>

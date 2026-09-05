@@ -313,8 +313,7 @@ class VideoEditorModuleContractTests(unittest.TestCase):
         html = (ROOT / "video_editor_module" / "static" / "index.html").read_text(
             encoding="utf-8"
         )
-        self.assertIn("仅限非商业开源学习与研究", html)
-        self.assertIn("CC BY-NC-SA 4.0", html)
+        self.assertNotIn('class="noncommercial-notice"', html)
 
         notice = (ROOT / "licenses" / "NONCOMMERCIAL-NOTICE.md").read_text(
             encoding="utf-8"

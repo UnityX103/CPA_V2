@@ -41,7 +41,7 @@ describe('extension pack registry', () => {
             {
                 packId: 'pet.cockroach-invasion',
                 tab: 'pet',
-                label: '宠物',
+                label: '蟑螂入侵',
                 renderer: 'pet.cockroach-invasion',
             },
         ]);

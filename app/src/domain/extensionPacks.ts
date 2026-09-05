@@ -133,7 +133,7 @@ export const extensionPackRegistry: Readonly<Record<ExtensionPackId, ExtensionPa
         dependencies: ['pet.core'],
         settings: {
             tab: 'pet',
-            label: '宠物',
+            label: '蟑螂入侵',
             order: 10,
             renderer: 'pet.cockroach-invasion',
         },
@@ -220,7 +220,7 @@ export function createExtensionPackStore(): ExtensionPackStore {
             } catch (reason) {
                 set({ error: errorText(reason) });
             } finally {
-                set({ busyPackId: null });
+                set({ busyPackId: null, progress: null });
             }
         };
 
@@ -277,11 +277,11 @@ interface NativeStatusChangedEvent {
     readonly statuses: readonly ExtensionPackStatus[];
 }
 
-function featurePackForProgress(kind: 'video' | 'pet'): ExtensionPackId {
+function featurePackForProgress(kind: 'video' | 'pet'): ExtensionPackId | null {
     const busy = useExtensionPackStore.getState().busyPackId;
     if (kind === 'video' && (busy === 'video.core' || busy === 'video.editor')) return busy;
     if (kind === 'pet' && (busy === 'pet.core' || busy === 'pet.cockroach-invasion')) return busy;
-    return kind === 'video' ? 'video.editor' : 'pet.cockroach-invasion';
+    return null;
 }
 
 async function listenProgress(
@@ -289,9 +289,11 @@ async function listenProgress(
     kind: 'video' | 'pet',
 ): Promise<UnlistenFn> {
     return listen<NativeModuleProgress>(event, ({ payload }) => {
+        const packId = featurePackForProgress(kind);
+        if (!packId) return;
         useExtensionPackStore.setState({
             progress: {
-                packId: featurePackForProgress(kind),
+                packId,
                 ...payload,
             },
         });

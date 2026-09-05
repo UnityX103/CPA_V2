@@ -16,7 +16,6 @@ const heightInput = document.querySelector('#output-height');
 const presetInput = document.querySelector('#resolution-preset');
 const sourceMeta = document.querySelector('#source-meta');
 const resultMeta = document.querySelector('#result-meta');
-const moduleVersion = document.querySelector('#module-version');
 const progressPanel = document.querySelector('#progress-panel');
 const progressFill = document.querySelector('#progress-fill');
 const progressText = document.querySelector('#progress-text');
@@ -62,15 +61,26 @@ subjectPointButton.addEventListener('click', () => setSubjectMode('point'));
 sourceVideo.addEventListener('click', selectSubjectPoint);
 resetMattingParameters();
 setSubjectMode('auto');
-loadModuleVersion();
-
-async function loadModuleVersion() {
-  try {
-    const health = await api('/api/health').then((response) => response.json());
-    moduleVersion.textContent = `模块 v${health.version} · ${health.videoCodec.toUpperCase()}`;
-  } catch {
-    moduleVersion.textContent = '模块版本不可用';
-  }
+for (const help of document.querySelectorAll('.parameter-help')) {
+  const button = help.querySelector('button');
+  const content = help.querySelector('.parameter-help-content');
+  const show = (visible) => {
+    content.hidden = !visible;
+    button.setAttribute('aria-expanded', String(visible));
+  };
+  help.addEventListener('mouseenter', () => show(true));
+  help.addEventListener('mouseleave', () => {
+    if (document.activeElement !== button) show(false);
+  });
+  button.addEventListener('click', () => show(true));
+  button.addEventListener('focus', () => show(true));
+  button.addEventListener('blur', () => show(false));
+  help.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') show(false);
+  });
+  document.addEventListener('pointerdown', (event) => {
+    if (!help.contains(event.target)) show(false);
+  });
 }
 
 async function api(path, options = {}) {

@@ -12,18 +12,12 @@
     <header class="editor-head">
       <div>
         <h1>AI 视频编辑器</h1>
-        <p>SAM 2.1 锁定同一只动物，BiRefNet 保留毛发与运动软边。<span id="module-version"></span></p>
       </div>
       <label class="button secondary import-button">
         <input id="video-file" type="file" accept="video/mp4,video/quicktime,video/webm,video/ogg" />
         导入视频
       </label>
     </header>
-
-    <aside class="noncommercial-notice" role="note">
-      <strong>仅限非商业开源学习与研究</strong>
-      <span>BiRefNet-matting 训练来源包含 PPM-100；请保留署名、修改说明与 CC BY-NC-SA 4.0 许可信息。</span>
-    </aside>
 
     <section class="workspace">
       <div class="preview-column">
@@ -99,37 +93,89 @@
             <h2>抠图参数</h2>
             <button id="reset-matting-parameters" class="inline-reset" type="button">恢复默认</button>
           </div>
-          <p>默认值与当前算法完全一致；提高背景清理阈值可减少虚影。</p>
           <div class="parameter-row">
-            <label for="background-cutoff">背景清理阈值 <span>0–0.5</span></label>
-            <div class="parameter-inputs"><input id="background-cutoff" type="range" min="0" max="0.5" step="0.01" value="0" /><input id="background-cutoff-value" type="number" min="0" max="0.5" step="0.01" value="0" /></div>
+            <div class="parameter-label-row">
+              <div class="parameter-label-title">
+                <label for="background-cutoff">背景清理阈值</label>
+                <span class="parameter-help">
+                  <button class="parameter-help-button" type="button" aria-label="背景清理阈值调整效果" aria-expanded="false" aria-controls="background-cutoff-help">?</button>
+                  <span id="background-cutoff-help" class="parameter-help-content" hidden>
+                    <strong>调低</strong><span>保留更多半透明细节，也可能留下背景虚影。</span>
+                    <strong>调高</strong><span>清除更多淡背景，也可能损失细毛和透明边缘。</span>
+                  </span>
+                </span>
+              </div>
+              <span class="parameter-bounds">0–0.5</span>
+            </div>
+            <div class="parameter-inputs"><input id="background-cutoff" type="range" min="0" max="0.5" step="0.01" value="0" /><input aria-label="背景清理阈值数值" id="background-cutoff-value" type="number" min="0" max="0.5" step="0.01" value="0" /></div>
           </div>
           <div class="parameter-row">
-            <label for="seed-threshold">Seed 阈值 <span>0.05–0.95</span></label>
-            <div class="parameter-inputs"><input id="seed-threshold" type="range" min="0.05" max="0.95" step="0.01" value="0.5" /><input id="seed-threshold-value" type="number" min="0.05" max="0.95" step="0.01" value="0.5" /></div>
+            <div class="parameter-label-row">
+              <div class="parameter-label-title">
+                <label for="seed-threshold">Seed 阈值</label>
+                <span class="parameter-help">
+                  <button class="parameter-help-button" type="button" aria-label="Seed 阈值调整效果" aria-expanded="false" aria-controls="seed-threshold-help">?</button>
+                  <span id="seed-threshold-help" class="parameter-help-content" hidden>
+                    <strong>调低</strong><span>自动选择时纳入更多主体区域，也更容易带入背景。</span>
+                    <strong>调高</strong><span>自动选择时只保留更确定的主体区域，可能漏掉较淡部位。点选主体时不使用此阈值。</span>
+                  </span>
+                </span>
+              </div>
+              <span class="parameter-bounds">0.05–0.95</span>
+            </div>
+            <div class="parameter-inputs"><input id="seed-threshold" type="range" min="0.05" max="0.95" step="0.01" value="0.5" /><input aria-label="Seed 阈值数值" id="seed-threshold-value" type="number" min="0.05" max="0.95" step="0.01" value="0.5" /></div>
           </div>
           <div class="parameter-row">
-            <label for="core-threshold">核心阈值 <span>0–0.95</span></label>
-            <div class="parameter-inputs"><input id="core-threshold" type="range" min="0" max="0.95" step="0.01" value="0.35" /><input id="core-threshold-value" type="number" min="0" max="0.95" step="0.01" value="0.35" /></div>
+            <div class="parameter-label-row">
+              <div class="parameter-label-title">
+                <label for="core-threshold">核心阈值</label>
+                <span class="parameter-help">
+                  <button class="parameter-help-button" type="button" aria-label="核心阈值调整效果" aria-expanded="false" aria-controls="core-threshold-help">?</button>
+                  <span id="core-threshold-help" class="parameter-help-content" hidden>
+                    <strong>调低</strong><span>更多主体内部区域会变得接近不透明，减少空洞。</span>
+                    <strong>调高</strong><span>保留更多主体内部的原始透明度，较淡部位可能出现空洞。</span>
+                  </span>
+                </span>
+              </div>
+              <span class="parameter-bounds">0–0.95</span>
+            </div>
+            <div class="parameter-inputs"><input id="core-threshold" type="range" min="0" max="0.95" step="0.01" value="0.35" /><input aria-label="核心阈值数值" id="core-threshold-value" type="number" min="0" max="0.95" step="0.01" value="0.35" /></div>
           </div>
           <div class="parameter-row">
-            <label for="support-radius">支持带半径 <span>0–100 px</span></label>
-            <div class="parameter-inputs"><input id="support-radius" type="range" min="0" max="100" step="1" value="30" /><input id="support-radius-value" type="number" min="0" max="100" step="1" value="30" /></div>
+            <div class="parameter-label-row">
+              <div class="parameter-label-title">
+                <label for="support-radius">支持带半径</label>
+                <span class="parameter-help">
+                  <button class="parameter-help-button" type="button" aria-label="支持带半径调整效果" aria-expanded="false" aria-controls="support-radius-help">?</button>
+                  <span id="support-radius-help" class="parameter-help-content" hidden>
+                    <strong>调低</strong><span>收紧主体周围的保留范围，减少背景残留，可能截掉长毛。</span>
+                    <strong>调高</strong><span>扩大主体周围的保留范围，保留长毛和运动边缘，也可能带入背景。</span>
+                  </span>
+                </span>
+              </div>
+              <span class="parameter-bounds">0–100 px</span>
+            </div>
+            <div class="parameter-inputs"><input id="support-radius" type="range" min="0" max="100" step="1" value="30" /><input aria-label="支持带半径数值" id="support-radius-value" type="number" min="0" max="100" step="1" value="30" /></div>
           </div>
           <div class="parameter-row">
-            <label for="feather-sigma">羽化强度 <span>0–20</span></label>
-            <div class="parameter-inputs"><input id="feather-sigma" type="range" min="0" max="20" step="0.5" value="5" /><input id="feather-sigma-value" type="number" min="0" max="20" step="0.5" value="5" /></div>
+            <div class="parameter-label-row">
+              <div class="parameter-label-title">
+                <label for="feather-sigma">羽化强度</label>
+                <span class="parameter-help">
+                  <button class="parameter-help-button" type="button" aria-label="羽化强度调整效果" aria-expanded="false" aria-controls="feather-sigma-help">?</button>
+                  <span id="feather-sigma-help" class="parameter-help-content" hidden>
+                    <strong>调低</strong><span>主体保留范围的过渡更锐利，边缘可能生硬。</span>
+                    <strong>调高</strong><span>主体保留范围的过渡更柔和，过高可能出现模糊或淡影。</span>
+                  </span>
+                </span>
+              </div>
+              <span class="parameter-bounds">0–20</span>
+            </div>
+            <div class="parameter-inputs"><input id="feather-sigma" type="range" min="0" max="20" step="0.5" value="5" /><input aria-label="羽化强度数值" id="feather-sigma-value" type="number" min="0" max="20" step="0.5" value="5" /></div>
           </div>
         </article>
 
         <article class="card pipeline-card">
-          <h2>处理流程</h2>
-          <ol>
-            <li>BiRefNet 生成逐帧动物 soft alpha</li>
-            <li>自动选择清晰主体帧，或使用用户点选</li>
-            <li>SAM 2.1 前后双向跟踪</li>
-            <li>融合并编码高质量 VP9 Alpha WebM</li>
-          </ol>
           <button id="process-button" class="button primary wide" type="button" disabled>生成透明视频</button>
           <div id="progress-panel" class="progress-panel hidden" aria-live="polite">
             <div class="progress-track"><div id="progress-fill" class="progress-fill"></div></div>

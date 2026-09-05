@@ -850,8 +850,8 @@
     "semantic_hash": "5e59f78377d4ccba9b695d67a7e3482d"
   },
   "app/src/ui/SettingsPanel.test.tsx": {
-    "mtime": 1788502957.979472,
-    "ast_hash": "e88ebb886a6b025bb7a52a6d74739322",
+    "mtime": 1788568901.07349,
+    "ast_hash": "18005419a7b615056a85b00c2e770397",
     "semantic_hash": ""
   },
   "app/src/ui/SettingsPanel.tsx": {
@@ -1930,8 +1930,8 @@
     "semantic_hash": ""
   },
   "app/src/ui/VideoEditorModuleTab.tsx": {
-    "mtime": 1788501506.0048685,
-    "ast_hash": "29b7ec15d32541d860364aed09f95945",
+    "mtime": 1788568715.6792672,
+    "ast_hash": "67396f24586ab413794482a4cb24b51b",
     "semantic_hash": ""
   },
   "app/src/videoEditorModuleConfig.test.ts": {
@@ -2005,8 +2005,8 @@
     "semantic_hash": ""
   },
   "video-editor-module/tests/test_contract.py": {
-    "mtime": 1788326523.0274262,
-    "ast_hash": "ddfb47ded1aadab8f5ba6d530225ee16",
+    "mtime": 1788568715.6817856,
+    "ast_hash": "397eb251f392608482d1e1316b095eaa",
     "semantic_hash": ""
   },
   "video-editor-module/video_editor_host.py": {
@@ -2035,8 +2035,8 @@
     "semantic_hash": ""
   },
   "video-editor-module/video_editor_module/static/app.js": {
-    "mtime": 1788272318.8360088,
-    "ast_hash": "90ce199d2dcaef23d2fb0af50a7650ca",
+    "mtime": 1788568715.681114,
+    "ast_hash": "c0b5c92324090f90cceb3d6d2861c7b7",
     "semantic_hash": ""
   },
   ".agents/skills/cpa-v2-release-publish/references/cockroach-module-layered.md": {
@@ -2125,8 +2125,8 @@
     "semantic_hash": ""
   },
   "video-editor-module/video_editor_module/static/index.html": {
-    "mtime": 1788266989.1152632,
-    "ast_hash": "2c820ad7aec683a2ff97b220c4a2d842",
+    "mtime": 1788568715.6808295,
+    "ast_hash": "731c720e261bb39ef402ab3b765532a1",
     "semantic_hash": ""
   },
   "app/src-tauri/src/extension_packs.rs": {
@@ -2150,13 +2150,13 @@
     "semantic_hash": ""
   },
   "app/src/domain/extensionPacks.test.ts": {
-    "mtime": 1788502588.3585823,
-    "ast_hash": "ad56f34803e53272b9bcd8f99f2893ea",
+    "mtime": 1788568885.6205087,
+    "ast_hash": "1d45afbfe9ed6e656606f11a1362ee08",
     "semantic_hash": ""
   },
   "app/src/domain/extensionPacks.ts": {
-    "mtime": 1788504230.5082846,
-    "ast_hash": "973e5636e334acbcad15c2e71067859b",
+    "mtime": 1788568885.6200914,
+    "ast_hash": "95d46f85cd463338a35d6b0369b0989c",
     "semantic_hash": ""
   },
   "app/src/domain/pomodoroBroadcast.test.ts": {
@@ -2190,13 +2190,13 @@
     "semantic_hash": ""
   },
   "app/src/ui/ExtensionPackManagerTab.test.tsx": {
-    "mtime": 1788501278.68691,
-    "ast_hash": "ffa66e11d53c5cc3c5a7141399cc1697",
+    "mtime": 1788568777.2256658,
+    "ast_hash": "159010c6a25e175b540bb3a4ca91489b",
     "semantic_hash": ""
   },
   "app/src/ui/ExtensionPackManagerTab.tsx": {
-    "mtime": 1788502393.6205595,
-    "ast_hash": "ca08f187b3bd19b639b905d787163031",
+    "mtime": 1788568715.680399,
+    "ast_hash": "e12aab7c7ec3a0d0deae80bdc40157f5",
     "semantic_hash": ""
   },
   "app/src/ui/ExtensionSettingsOutlet.tsx": {
@@ -2205,8 +2205,8 @@
     "semantic_hash": ""
   },
   "app/src/ui/PetSettingsTab.tsx": {
-    "mtime": 1788502580.344759,
-    "ast_hash": "9850332335e1cc573e15ec9cf4733a36",
+    "mtime": 1788568885.6189837,
+    "ast_hash": "fee6e1346e1cebd54ab16b277fbece71",
     "semantic_hash": ""
   },
   "app/src/ui/VideoEditorModuleTab.test.tsx": {

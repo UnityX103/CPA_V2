@@ -119,7 +119,7 @@ describe('SettingsPanel', () => {
         expect(screen.getByRole('button', { name: '联机' })).toBeTruthy();
         expect(screen.getByRole('button', { name: '扩展包' })).toBeTruthy();
         expect(screen.getByRole('button', { name: '全局' })).toBeTruthy();
-        expect(screen.queryByRole('button', { name: '宠物' })).toBeNull();
+        expect(screen.queryByRole('button', { name: '蟑螂入侵' })).toBeNull();
         expect(screen.queryByRole('button', { name: '视频编辑' })).toBeNull();
 
         act(() => {
@@ -134,7 +134,7 @@ describe('SettingsPanel', () => {
             }));
         });
 
-        expect(screen.getByRole('button', { name: '宠物' })).toBeTruthy();
+        expect(screen.getByRole('button', { name: '蟑螂入侵' })).toBeTruthy();
         expect(screen.getByRole('button', { name: '视频编辑' })).toBeTruthy();
     });
 
@@ -265,7 +265,7 @@ describe('SettingsPanel', () => {
         expect(screen.getByText('开机自启动')).toBeTruthy();
     });
 
-    it('shows the cockroach module panel only after cockroach invasion is selected', async () => {
+    it('opens cockroach settings directly without the former pet selector', async () => {
         const packStatuses = [
             packStatus('video.core'),
             packStatus('video.editor'),
@@ -289,11 +289,11 @@ describe('SettingsPanel', () => {
         });
         render(<SettingsPanel />);
 
-        fireEvent.click(screen.getByRole('button', { name: '宠物' }));
-        expect(screen.queryByLabelText('蟑螂入侵模块设置')).toBeNull();
-
-        fireEvent.click(screen.getByRole('button', { name: '选择蟑螂入侵' }));
+        fireEvent.click(screen.getByRole('button', { name: '蟑螂入侵' }));
         expect(await screen.findByLabelText('蟑螂入侵模块设置')).toBeTruthy();
+        expect(screen.queryByRole('group', { name: '休息宠物选择' })).toBeNull();
+        expect(screen.queryByRole('heading', { name: '休息宠物' })).toBeNull();
+        expect(await screen.findByRole('spinbutton', { name: '最大蟑螂数量' })).toBeTruthy();
     });
 
     it('exposes upstream cockroach settings, simulation, and kill-all controls', async () => {

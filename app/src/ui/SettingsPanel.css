@@ -1197,8 +1197,3 @@
     }
 }
 .pet-settings-pane { gap: 12px; }
-.pet-settings-selector { display: grid; gap: 14px; padding: 16px; border-radius: 16px; background: #f6f7f8; }
-.pet-settings-selector p { margin: 6px 0 0; color: var(--text-warm); font-size: 12px; line-height: 1.5; }
-.pet-settings-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.pet-settings-option { min-height: 48px; border: 1px solid #eaded6; border-radius: 14px; background: #fff; color: var(--text-brand-dark); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
-.pet-settings-option.selected { border-color: #7c5cfc; background: #f1edff; color: #5b3ed0; box-shadow: 0 0 0 2px rgba(124, 92, 252, 0.1); }
