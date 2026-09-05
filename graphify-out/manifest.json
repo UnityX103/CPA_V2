@@ -945,14 +945,14 @@
     "semantic_hash": "fbf61b6573dc50a5223a32ca93fc17cf"
   },
   "AGENTS.md": {
-    "mtime": 1788505262.0151448,
-    "ast_hash": "ce28165f912f6eefcc80a2830596f638",
+    "mtime": 1788568985.1566887,
+    "ast_hash": "75fe83e1c1d24e71bc50066c00885cfe",
     "semantic_hash": ""
   },
   "CLAUDE.md": {
-    "mtime": 1786594517.7383873,
-    "ast_hash": "fd2003d0d7324ac5aa504714dea13c7f",
-    "semantic_hash": "fd2003d0d7324ac5aa504714dea13c7f"
+    "mtime": 1788568985.15703,
+    "ast_hash": "90cee096fdeb263f5149da4168047f0e",
+    "semantic_hash": ""
   },
   "CONTEXT.md": {
     "mtime": 1787665524.0705361,
@@ -2050,8 +2050,8 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1788326515.5399978,
-    "ast_hash": "7297a561093781449305dfb28577dc07",
+    "mtime": 1788568985.157264,
+    "ast_hash": "54610fdb68348bdaa194f08574118a97",
     "semantic_hash": ""
   },
   "cockroach-electron-module/README.md": {
@@ -2230,8 +2230,8 @@
     "semantic_hash": ""
   },
   ".agents/skills/cpa-v2-extension-packs/SKILL.md": {
-    "mtime": 1788505262.0143676,
-    "ast_hash": "2a62e07b439fce1210653abe75593215",
+    "mtime": 1788568985.1574643,
+    "ast_hash": "2ee0db9ccddfb1155bd011d9c049000d",
     "semantic_hash": ""
   },
   ".agents/skills/cpa-v2-extension-packs/agents/openai.yaml": {
@@ -2240,8 +2240,8 @@
     "semantic_hash": ""
   },
   ".agents/skills/cpa-v2-extension-packs/references/extension-contract.md": {
-    "mtime": 1788505262.0145931,
-    "ast_hash": "f7fd970938e05b189c640d694a69cc69",
+    "mtime": 1788568985.1577225,
+    "ast_hash": "7f55a5fa0ef23642fc85d43f6c24aee8",
     "semantic_hash": ""
   },
   ".agents/skills/cpa-v2-extension-packs/references/multi-feature-family.md": {

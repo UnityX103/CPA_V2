@@ -15,11 +15,10 @@ CPA_V2/
 ├── app/                ← Tauri 2 desktop app (frontend + Rust shell)
 │   ├── src/            ← React + TypeScript
 │   │   ├── domain/     ← Zustand stores + services (Pomodoro / Network / BindingKey / ActiveApp / Settings / stateSync)
-│   │   ├── ui/         ← Components mapped 1:1 to Pencil design nodes
+│   │   ├── ui/         ← React UI components and their native CSS
 │   │   └── styles/     ← global.css + tokens.css (no Tailwind, native CSS only)
 │   └── src-tauri/      ← Rust (lib.rs, active_app.rs, key_counter.rs)
 ├── Server/             ← Node.js WebSocket backend (port 8039) — has its own .git
-├── AUI/PUI.pen         ← Pencil design source-of-truth (encrypted, MCP-only)
 └── docs/superpowers/   ← Specs and adversarial reviews
 ```
 
@@ -51,7 +50,7 @@ The protocol layer (`Server/src/protocol.js` + `app/src/domain/network.ts`) carr
 
 ## Non-obvious rules and constraints
 
-- **`.pen` files are encrypted.** Never use `Read`/`Grep` on `AUI/PUI.pen`; always go through the Pencil MCP server (`mcp__pencil__*`). The Pencil design is the visual source of truth — components in `app/src/ui/` are intended to map node-for-node onto it.
+- **UI workflow:** Implement and refine UI directly in React/TypeScript and native CSS using the user’s requirements, supplied screenshots, and existing components/styles. Validate the rendered interface and relevant interactions. Pencil files and design synchronization are no longer maintained or required; do not create or update `.pen` files or block work on Pencil availability. References to Pencil nodes or Pencil-first steps in historical specs, plans, research, and code comments are historical context only and impose no current workflow requirements.
 - **Tauri capabilities are intentionally minimal.** `app/src-tauri/capabilities/default.json` only allows `core:default`, `core:window:default`, `core:window:allow-start-dragging`, `core:event:default`. All privileged operations (always-on-top, click-through, active-app query) must go through a `#[tauri::command]` defined in `lib.rs`. CSP is set in `tauri.conf.json` — do not disable it. (See adversarial-review #4.)
 - **WebSocket reconnect uses a generation counter.** `network.ts` increments `internal.generation` on every new socket / leave / disconnect; stale `onopen`/`onmessage`/`onclose` callbacks that don't match the current generation are no-ops. When adding new socket lifecycle code, preserve this guard. (Adversarial-review #2.)
 - **`stateSync.lastSent` is keyed by `roomCode:playerId:payload`**, and reset on `joined → not-joined` and `not-joined → joined`. A naive payload-only key will silently drop the first heartbeat of a re-joined room. (Adversarial-review #3.)

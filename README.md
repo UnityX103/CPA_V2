@@ -18,8 +18,12 @@ app/                         Tauri 桌面应用与 React 前端
 Server/                      多人模式 WebSocket 服务端
 video-editor-module/         可独立下载的视频编辑模块
 cockroach-electron-module/   可独立下载的蟑螂模拟模块
-AUI/                         Pencil 设计源文件与界面原型
+AUI/                         历史界面原型、字体与图片资源
 ```
+
+## UI 开发
+
+依据需求、截图和现有组件样式直接实现与调整 UI，并验证实际页面和交互。项目不再维护 Pencil 设计文件，也不要求设计稿同步；旧规格和计划中的 Pencil 节点与操作步骤仅作历史记录，不再作为开发前置条件。
 
 ## 本地开发
 

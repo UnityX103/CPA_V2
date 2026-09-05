@@ -16,7 +16,7 @@ Keep optional functionality independently downloadable without weakening CPA's n
    - `app/src/domain/extensionPacks.ts`
    - `app/src-tauri/src/extension_packs.rs`
    - `app/src/extensions/`
-4. If the work changes settings UI, inspect `AUI/PUI.pen` only through Pencil MCP. Never read or edit the encrypted file directly. If Pencil MCP is unavailable, implement no unreviewed visual divergence: report the design-source sync as a blocker or obtain an approved mockup first.
+4. For settings UI changes, implement directly from the user’s requirements/screenshots and existing React/CSS components, then verify the rendered page and interactions. No Pencil file, design synchronization, or separate mockup approval is required.
 5. Resolve behavior that the module contract cannot safely guess: whether its settings are a unique sidebar tab or a family subpage; whether paused phases count as active; delay/presence requirements; settings fields and ranges; source/license/distribution; and whether common dependency versions may coexist. Ask only when the answer materially changes the design.
 
 ## Implementation rules

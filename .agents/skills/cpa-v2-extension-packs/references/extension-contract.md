@@ -74,7 +74,7 @@ A feature descriptor may contribute one trusted settings renderer with `tab`, `l
 
 Keep package lifecycle controls in the extension manager. The contributed feature page contains only its functional settings and actions.
 
-Pencil is the visual source of truth. Add or update the corresponding Pencil nodes before considering a new settings surface complete.
+Implement settings surfaces directly in React/TypeScript and native CSS using the user’s requirements, supplied screenshots, and existing UI conventions. Completion requires checking the rendered interface and its interactions; no Pencil files or design-source synchronization are maintained.
 
 ## Runtime contribution manifest
 
