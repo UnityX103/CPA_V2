@@ -9,6 +9,7 @@ import tempfile
 from pathlib import Path
 
 import package_module as legacy
+from windows_runtime import validate_windows_runtime
 
 
 ENGINE_ABI = "cpa-video-engine-1"
@@ -129,6 +130,8 @@ def validate_models_license_pack(licenses: Path, policy: dict, distribution: str
 
 
 def package_engine(args, project_root: Path, policy: dict, release_eligible: bool) -> None:
+    if args.target == "windows-x86_64":
+        validate_windows_runtime(args.runtime)
     suffix = ".exe" if args.target == "windows-x86_64" else ""
     entry = args.runtime / f"video-editor-host{suffix}"
     media_dir = args.runtime / "bin"

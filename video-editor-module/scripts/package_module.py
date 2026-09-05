@@ -14,6 +14,8 @@ import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 
+from windows_runtime import validate_windows_runtime
+
 
 TARGETS = {"macos-arm64", "macos-x86_64", "windows-x86_64"}
 @dataclass(frozen=True)
@@ -179,6 +181,8 @@ def validate_runtime(
     allow_unsigned: bool,
     distribution: str,
 ) -> tuple[str, str]:
+    if target == "windows-x86_64":
+        validate_windows_runtime(runtime)
     entry = runtime / Path(entry_path(target)).name
     ffmpeg = runtime / "bin" / ("ffmpeg.exe" if target == "windows-x86_64" else "ffmpeg")
     ffprobe = runtime / "bin" / ("ffprobe.exe" if target == "windows-x86_64" else "ffprobe")

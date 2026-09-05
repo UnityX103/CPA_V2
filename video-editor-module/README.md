@@ -141,6 +141,22 @@ unless all three required target package documents are present and each is
 marked `releaseEligible: true`. `--allow-internal` produces a `debugOnly` index
 that release builds of the host reject.
 
+Windows builds also require `--windows-crt-dir` pointing to the Visual Studio
+redistributables at `VC/Redist/MSVC/<version>/x64/Microsoft.VC143.CRT`. The builder
+copies that complete x64 CRT set into the frozen runtime before checking every
+EXE, DLL and PYD. Both layered and legacy packagers repeat the architecture check
+before accepting an engine, including internal builds.
+
+Do not use `VC/Tools/MSVC/<version>/bin/HostARM64/x64` as the CRT source: `x64`
+there describes the compiler's target, while its own DLLs can be ARM64/ARM64X.
+PyInstaller previously collected `msvcp140.dll` and `vcruntime140.dll` from that
+directory into the `1.0.0-noncommercial.1` Windows engine. They loaded under x64
+emulation on Windows on ARM but failed on Intel Windows when NumPy initialized
+`_multiarray_umath`. Installing a system Python or reinstalling NumPy outside
+CPA does not replace these bundled files. A corrected engine must be distributed
+through the signed extension index with new hashes; do not modify an installed
+engine in place, because its manifest hashes would no longer match.
+
 The published `video-editor-module-index.json` must be signed with the same
 Minisign key as the Tauri updater. Place the detached signature beside it as
 `video-editor-module-index.json.sig`; for example:

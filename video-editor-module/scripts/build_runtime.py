@@ -12,6 +12,8 @@ import tempfile
 import urllib.request
 from pathlib import Path
 
+from windows_runtime import install_windows_crt, validate_windows_runtime, windows_crt_files
+
 
 TARGETS = {"macos-arm64", "macos-x86_64", "windows-x86_64"}
 
@@ -92,7 +94,15 @@ def main() -> None:
     parser.add_argument("--python", type=Path, default=Path(sys.executable))
     parser.add_argument("--work-dir", type=Path)
     parser.add_argument("--layout", choices=["legacy", "layered"], default="legacy")
+    parser.add_argument("--windows-crt-dir", type=Path, help="VC/Redist/MSVC/<version>/x64/Microsoft.VC143.CRT")
     args = parser.parse_args()
+
+    if args.target == "windows-x86_64":
+        if args.windows_crt_dir is None:
+            parser.error("Windows builds require --windows-crt-dir with the x64 Microsoft CRT redistributables")
+        windows_crt_files(args.windows_crt_dir)
+    elif args.windows_crt_dir is not None:
+        parser.error("--windows-crt-dir is only valid for windows-x86_64")
 
     args.python = args.python.resolve()
     detected = interpreter_target(args.python)
@@ -178,12 +188,12 @@ def main() -> None:
         frozen = dist / (
             "video-editor-engine" if args.layout == "layered" else "video-editor-module"
         )
+        prepare_frozen_runtime(frozen, args.ffmpeg_dir, args.target, args.windows_crt_dir)
         if args.output.exists():
             shutil.rmtree(args.output)
         shutil.copytree(frozen, args.output)
 
         media_dir = args.output / "bin"
-        shutil.copytree(args.ffmpeg_dir, media_dir)
 
         if args.layout == "legacy":
             prepare_models(project_root, policy, model_cache, args.output / "models", python)
@@ -261,6 +271,17 @@ def main() -> None:
     finally:
         if temporary is not None:
             temporary.cleanup()
+
+
+def prepare_frozen_runtime(
+    frozen: Path, ffmpeg_dir: Path, target: str, windows_crt_dir: Path | None = None,
+) -> None:
+    shutil.copytree(ffmpeg_dir, frozen / "bin")
+    if target == "windows-x86_64":
+        if windows_crt_dir is None:
+            raise SystemExit("Windows builds require --windows-crt-dir")
+        install_windows_crt(frozen, windows_crt_dir)
+        validate_windows_runtime(frozen)
 
 
 def clean_source_commit(project_root: Path) -> str:

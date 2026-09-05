@@ -17,8 +17,24 @@ python video-editor-module/scripts/build_runtime.py \
   --layout layered \
   --target macos-arm64 \
   --ffmpeg-dir /absolute/audited-ffmpeg/bin \
-  --output /absolute/build/runtime
+  --output /absolute/build/runtime \
+  --licenses-output /absolute/build/licenses
 ```
+
+For Windows, additionally pass `--windows-crt-dir` with the x64 Visual Studio
+CRT redistributable directory (`VC/Redist/MSVC/<version>/x64/Microsoft.VC143.CRT`).
+The build and both packagers reject any bundled EXE, DLL or PYD whose on-disk PE
+machine is not AMD64 (`0x8664`), including ARM64X and ARM64EC files that can load
+successfully under Windows-on-ARM emulation.
+
+The Windows row above records historical acceptance on an ARM64 Parallels VM.
+On 2026-09-05, inspection of the published Windows engine found ARM64/ARM64X
+`msvcp140.dll` and `vcruntime140.dll` collected from `HostARM64/x64`. Therefore
+that historical smoke pass does **not** establish Intel/AMD compatibility.
+After rebuilding with the x64 redistributables, repeat the frozen NumPy,
+PyTorch/NumPy bridge and golden-video checks on Intel/AMD Windows 11 as well as
+the VM. Keep the shared models and other platforms' engines unchanged when
+publishing this Windows engine repair under a new component version/hash.
 
 Then package changed components with `package_layers.py` and assemble them with
 `build_layered_index.py`. Commercial public packages require

@@ -27,6 +27,14 @@ python3 video-editor-module/scripts/prepare_models.py \
 
 On Windows, pass `engine-work\venv\Scripts\python.exe`. Model preparation needs the engine build environment because it contains the pinned `huggingface_hub` dependency.
 
+Windows engine builds also require `--windows-crt-dir` pointing to
+`VC/Redist/MSVC/<version>/x64/Microsoft.VC143.CRT`. Never use the compiler's
+`HostARM64/x64` directory: its CRT files can be ARM64/ARM64X even though the
+compiler targets x64. The builder replaces collected CRT files from the
+explicit x64 redistributable set, and both packagers inspect every bundled
+EXE/DLL/PYD for AMD64 (`0x8664`). A smoke pass on an ARM Windows VM alone is not
+evidence that an engine will run on Intel/AMD Windows; verify that platform too.
+
 Package only components whose version changed:
 
 ```bash
