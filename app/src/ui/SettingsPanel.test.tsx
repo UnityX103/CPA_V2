@@ -135,26 +135,26 @@ describe('SettingsPanel', () => {
         });
 
         expect(screen.getByRole('button', { name: '蟑螂入侵' })).toBeTruthy();
-        expect(screen.getByRole('button', { name: '视频编辑' })).toBeTruthy();
+        expect(screen.queryByRole('button', { name: '视频编辑' })).toBeNull();
     });
 
     it('returns to extension management when the active feature is disabled', async () => {
         useExtensionPackStore.setState((state) => ({
             statuses: {
                 ...state.statuses,
-                'video.core': packStatus('video.core', true, true),
-                'video.editor': packStatus('video.editor', true, true),
+                'pet.core': packStatus('pet.core', true, true),
+                'pet.cockroach-invasion': packStatus('pet.cockroach-invasion', true, true),
             },
         }));
-        useSettingsStore.setState({ activeTab: 'video' });
+        useSettingsStore.setState({ activeTab: 'pet' });
         render(<SettingsPanel />);
 
-        expect(screen.getByRole('button', { name: '视频编辑' }).className).toContain('active');
+        expect(screen.getByRole('button', { name: '蟑螂入侵' }).className).toContain('active');
         act(() => {
             useExtensionPackStore.setState((state) => ({
                 statuses: {
                     ...state.statuses,
-                    'video.editor': packStatus('video.editor', true, false),
+                    'pet.cockroach-invasion': packStatus('pet.cockroach-invasion', true, false),
                 },
             }));
         });
@@ -162,10 +162,10 @@ describe('SettingsPanel', () => {
         await vi.waitFor(() => {
             expect(useSettingsStore.getState().activeTab).toBe('extensions');
         });
-        expect(screen.queryByRole('button', { name: '视频编辑' })).toBeNull();
+        expect(screen.queryByRole('button', { name: '蟑螂入侵' })).toBeNull();
     });
 
-    it('downloads video editing from the extension manager and then contributes its tab', async () => {
+    it('downloads video editing and offers Open without adding a settings tab', async () => {
         const notInstalled = [
             packStatus('video.core'),
             packStatus('video.editor'),
@@ -189,7 +189,8 @@ describe('SettingsPanel', () => {
         expect(await screen.findByText('安装时自动补齐视频通用包')).toBeTruthy();
         fireEvent.click(screen.getByRole('button', { name: '下载 AI 视频编辑' }));
 
-        expect(await screen.findByRole('button', { name: '视频编辑' })).toBeTruthy();
+        expect(await screen.findByRole('button', { name: '打开 AI 视频编辑' })).toBeTruthy();
+        expect(screen.queryByRole('button', { name: '视频编辑' })).toBeNull();
         expect(invoke).toHaveBeenCalledWith('install_extension_pack', {
             packId: 'video.editor',
         });
@@ -467,6 +468,10 @@ describe('SettingsPanel', () => {
 
     it('selects and applies a custom focus-end video path', async () => {
         open.mockResolvedValue('/Users/xpy/Videos/focus-end.webm');
+        invoke.mockImplementation((command: string) => {
+            if (command === 'import_custom_video') return Promise.resolve('/app-data/media/pomodoro-end/提示视频.webm');
+            return Promise.resolve([]);
+        });
         render(<SettingsPanel />);
 
         fireEvent.change(screen.getByRole('combobox', { name: '视频选项' }), {
@@ -474,7 +479,7 @@ describe('SettingsPanel', () => {
         });
         fireEvent.click(screen.getByRole('button', { name: '选择自定义视频' }));
 
-        expect(await screen.findByText('focus-end.webm')).toBeTruthy();
+        expect(await screen.findByText('提示视频.webm')).toBeTruthy();
         const applyButton = screen.getByRole('button', { name: '应用' });
         await vi.waitFor(() => expect(applyButton).toHaveProperty('disabled', false));
         fireEvent.click(applyButton);
@@ -483,9 +488,26 @@ describe('SettingsPanel', () => {
             expect(usePomodoroStore.getState().endActionVideo).toEqual({
                 sourceKind: 'custom',
                 builtinVideoId: 'qianqian',
-                customVideoPath: '/Users/xpy/Videos/focus-end.webm',
+                customVideoPath: '/app-data/media/pomodoro-end/提示视频.webm',
             });
         });
+    });
+
+    it('keeps the previous custom video when importing a replacement fails', async () => {
+        usePomodoroStore.setState({ endActionMode: 'playVideo', endActionVideo: {
+            sourceKind: 'custom', builtinVideoId: 'qianqian', customVideoPath: '/app-data/media/pomodoro-end/提示视频.webm',
+        } });
+        open.mockResolvedValue('/Videos/new.webm');
+        invoke.mockImplementation((command: string) => {
+            if (command === 'import_custom_video') return Promise.reject(new Error('无法复制提示视频'));
+            return Promise.resolve([]);
+        });
+        render(<SettingsPanel />);
+        fireEvent.click(screen.getByRole('button', { name: '选择自定义视频' }));
+        expect((await screen.findByRole('alert')).textContent).toBe('无法复制提示视频');
+        expect(screen.getByText('提示视频.webm')).toBeTruthy();
+        expect(usePomodoroStore.getState().endActionVideo.customVideoPath).toBe('/app-data/media/pomodoro-end/提示视频.webm');
+        expect((screen.getByRole('button', { name: '选择自定义视频' }) as HTMLButtonElement).disabled).toBe(false);
     });
 
     it('applies camera automation settings through the existing apply flow', async () => {

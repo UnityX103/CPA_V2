@@ -26,10 +26,10 @@ function startCpaControlFile() {
           typeof command.nonce !== 'string' ||
           command.nonce === cpaLastControlNonce ||
           command.nonce === cpaPendingControlNonce ||
-          command.command !== 'kill-all') return;
+          !['kill-all', 'spawn-one'].includes(command.command)) return;
       if (!overlayWindow || overlayWindow.isDestroyed() || overlayWindow.webContents.isLoading()) return;
       cpaPendingControlNonce = command.nonce;
-      overlayWindow.webContents.send('kill-all', command.nonce);
+      overlayWindow.webContents.send(command.command === 'spawn-one' ? 'cpa-spawn-one' : 'kill-all', command.nonce);
     } catch (error) {
       if (error && error.code !== 'ENOENT') {
         console.error('[cpa-control] command failed', error);
@@ -115,6 +115,12 @@ def prepare(source_dir: Path) -> None:
         "  if (typeof controlNonce === 'string') {\n"
         "    ipcRenderer.send('cpa-control-complete', controlNonce);\n"
         "  }\n"
+        "});\n"
+        "ipcRenderer.on('cpa-spawn-one', (_event, controlNonce) => {\n"
+        "  const x = Math.random() * canvas.width * 0.6 + canvas.width * 0.2;\n"
+        "  const y = Math.random() * canvas.height * 0.6 + canvas.height * 0.2;\n"
+        "  manager.spawn(x, y, false);\n"
+        "  ipcRenderer.send('cpa-control-complete', controlNonce);\n"
         "});",
         "renderer kill-all handler",
     )

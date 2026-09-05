@@ -41,6 +41,14 @@ pub struct ExtensionRuntimeContribution {
     pub delay_ms: u64,
     pub requires_presence: bool,
     pub settings_gate: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub event_rules: Option<ExtensionEventRules>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
+pub struct ExtensionEventRules {
+    pub events: Vec<String>,
+    pub actions: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -332,6 +340,19 @@ pub fn set_extension_pack_active(
         COCKROACH_ID => cockroach_module::stop_feature(&app, &cockroach_state),
         _ => Err(format!("扩展包不支持活动状态控制：{pack_id}")),
     }
+}
+
+#[tauri::command]
+pub async fn execute_extension_pack_action(
+    app: tauri::AppHandle,
+    pack_id: String,
+    action: cockroach_module::automation::CockroachAction,
+) -> Result<(), String> {
+    if pack_id != COCKROACH_ID { return Err("扩展包不支持此操作".into()); }
+    tauri::async_runtime::spawn_blocking(move || {
+        let state = app.state::<cockroach_module::CockroachModuleState>();
+        cockroach_module::automation::execute_action(&app, &state, action)
+    }).await.map_err(|error| error.to_string())?
 }
 
 fn dependent_id(pack_id: &str) -> Option<&'static str> {

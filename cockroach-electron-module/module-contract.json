@@ -7,13 +7,30 @@
     "activationPhase": "break",
     "delayMs": 60000,
     "requiresPresence": true,
-    "settingsGate": "cockroachInvasion"
+    "settingsGate": "cockroachInvasion",
+    "eventRules": {
+      "events": [
+        "focus.started",
+        "focus.ended",
+        "break.started",
+        "break.ended",
+        "break.present",
+        "focus.present"
+      ],
+      "actions": [
+        "kill-all",
+        "spawn-one",
+        "start-simulation",
+        "stop-simulation"
+      ]
+    }
   },
   "capabilities": [
     "electron-vector-cockroach-v1",
     "max-count",
     "baby-growth-minutes",
     "process-lifecycle",
-    "process-control-file-v1"
+    "process-control-file-v1",
+    "spawn-one-v1"
   ]
 }

@@ -1,3 +1,5 @@
+import { usePresenceStore, type ConfirmedPresence } from './presence';
+import { createPomodoroEventDetector, type PomodoroRuleEvent } from './pomodoroEvents';
 import { useEffect } from 'react';
 import { emit, listen, type UnlistenFn } from '@tauri-apps/api/event';
 import {
@@ -18,7 +20,8 @@ export type PomodoroBroadcastType =
     | 'timer.paused'
     | 'timer.reset'
     | 'timer.ticked'
-    | 'settings.changed';
+    | 'settings.changed'
+    | 'presence.changed';
 
 export type PomodoroBroadcastReason = 'timer' | 'skip' | 'manual' | 'presence' | 'hydrate';
 
@@ -34,6 +37,8 @@ export interface PomodoroBroadcastEvent {
     readonly totalRounds: number;
     readonly remainingSeconds: number;
     readonly reason: PomodoroBroadcastReason;
+    readonly workstationPresence?: ConfirmedPresence;
+    readonly signals?: readonly PomodoroRuleEvent[];
 }
 
 export interface PomodoroBroadcast {
@@ -74,10 +79,13 @@ function eventTypeFor(state: PomodoroState, previous: PomodoroState): PomodoroBr
 export function createPomodoroBroadcast(
     store: PomodoroStore,
     now: () => number = () => Date.now(),
+    presence: Pick<typeof usePresenceStore, 'getState' | 'subscribe'> = usePresenceStore,
 ): PomodoroBroadcast {
     const listeners = new Set<(event: PomodoroBroadcastEvent) => void>();
     let sequence = 0;
     let unsubscribeStore: (() => void) | null = null;
+    let unsubscribePresence: (() => void) | null = null;
+    let detectEvents = createPomodoroEventDetector();
 
     const build = (
         state: PomodoroState,
@@ -97,10 +105,12 @@ export function createPomodoroBroadcast(
         totalRounds: state.totalRounds,
         remainingSeconds: state.remainingSeconds,
         reason,
+        workstationPresence: presence.getState().enabled ? presence.getState().confirmedPresence : 'unknown',
     });
 
     const publish = (event: PomodoroBroadcastEvent) => {
-        listeners.forEach((listener) => listener(event));
+        const published = { ...event, signals: detectEvents(event) };
+        listeners.forEach((listener) => listener(published));
     };
 
     return {
@@ -111,6 +121,7 @@ export function createPomodoroBroadcast(
         },
         start: () => {
             if (unsubscribeStore) return () => {};
+            detectEvents = createPomodoroEventDetector();
             publish(build(store.getState(), 'snapshot', null, 'hydrate', true));
             unsubscribeStore = store.subscribe((state, previous) => {
                 const type = eventTypeFor(state, previous);
@@ -122,7 +133,14 @@ export function createPomodoroBroadcast(
                     true,
                 ));
             });
+            unsubscribePresence = presence.subscribe((state, previous) => {
+                if (state.enabled !== previous.enabled || state.confirmedPresence !== previous.confirmedPresence) {
+                    publish(build(store.getState(), 'presence.changed', null, 'presence', true));
+                }
+            });
             return () => {
+                unsubscribePresence?.();
+                unsubscribePresence = null;
                 unsubscribeStore?.();
                 unsubscribeStore = null;
             };

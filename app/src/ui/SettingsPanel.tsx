@@ -222,6 +222,8 @@ function PomodoroTab({ onApplyStateChange }: {
     const [autoPinAfterFocus, setAutoPinAfterFocus] = useState(pomo.autoPinAfterFocus);
     const [endActionMode, setEndActionMode] = useState<PomodoroEndActionMode>(pomo.endActionMode);
     const [endActionVideo, setEndActionVideo] = useState<PomodoroEndActionVideo>({ ...pomo.endActionVideo });
+    const [importingVideo, setImportingVideo] = useState(false);
+    const [videoImportError, setVideoImportError] = useState('');
     const [endSounds, setEndSounds] = useState<PomodoroEndSounds>(clonePomodoroEndSounds(pomo.endSounds));
     const [presenceEnabled, setPresenceEnabled] = useState(presence.enabled);
     const [cameraDeviceId, setCameraDeviceId] = useState(presence.cameraDeviceId);
@@ -384,7 +386,7 @@ function PomodoroTab({ onApplyStateChange }: {
     const hasMissingCustomSound =
         (endSounds.focus.sourceKind === 'custom' && !endSounds.focus.customSoundPath)
         || (endSounds.break.sourceKind === 'custom' && !endSounds.break.customSoundPath);
-    const canApply = dirty && !hasMissingCustomVideo && !hasMissingCustomSound;
+    const canApply = dirty && !hasMissingCustomVideo && !hasMissingCustomSound && !importingVideo;
 
     const apply = useCallback(() => {
         if (!canApply) return;
@@ -494,6 +496,9 @@ function PomodoroTab({ onApplyStateChange }: {
     };
 
     const chooseCustomVideo = async () => {
+        if (importingVideo) return;
+        setImportingVideo(true);
+        setVideoImportError('');
         try {
             const path = await pickCustomWebmPath();
             if (!path) return;
@@ -504,7 +509,9 @@ function PomodoroTab({ onApplyStateChange }: {
                 customVideoPath: path,
             }));
         } catch (error) {
-            console.warn('[settings] failed to select custom Pomodoro video', error);
+            setVideoImportError(error instanceof Error ? error.message : String(error));
+        } finally {
+            setImportingVideo(false);
         }
     };
 
@@ -733,17 +740,19 @@ function PomodoroTab({ onApplyStateChange }: {
                             </div>
                         )}
 
+                        {videoImportError ? <div className="extension-pack-error" role="alert">{videoImportError}</div> : null}
                         {showCustomVideoRow && (
                             <button
                                 className="card pomo-row pomo-row-button"
                                 type="button"
                                 aria-label="选择自定义视频"
+                                disabled={importingVideo}
                                 onClick={() => { void chooseCustomVideo(); }}
                             >
                                 <span className="pomo-row-label">自定义视频文件</span>
                                 <span className="pomo-row-right">
                                     <span className={`pomo-row-value ${endActionVideo.customVideoPath ? 'pomo-row-value-link' : 'pomo-row-value-muted'}`}>
-                                        {customVideoName}
+                                        {importingVideo ? '正在导入…' : customVideoName}
                                     </span>
                                     <FolderIcon />
                                 </span>

@@ -1,3 +1,4 @@
+import { CockroachAutomationRules } from './CockroachAutomationRules';
 import { useEffect, useState } from 'react';
 import {
     killAllCockroaches,
@@ -109,6 +110,7 @@ export function CockroachModulePanel() {
                             </span>
                         </label>
                     </div>
+                    <CockroachAutomationRules />
                     <div className="cockroach-module-actions">
                         <button
                             type="button"

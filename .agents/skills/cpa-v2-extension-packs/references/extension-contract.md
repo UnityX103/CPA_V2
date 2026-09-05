@@ -7,7 +7,7 @@ Use this reference for any extension-pack implementation or review.
 | Pack | Kind | Owns | Must not own |
 |---|---|---|---|
 | `video.core` | common | Platform engine, model bridge, shared models, FFmpeg/FFprobe | Video-editor UI or business workflow |
-| `video.editor` | feature | Video-editor logic/UI package and settings contribution | Duplicate engine/model payloads |
+| `video.editor` | feature | Video-editor logic/UI package and Open action in the extension manager | Duplicate engine/model payloads |
 | `pet.core` | common | Electron runtime, shared dependencies, process lifecycle and control protocol | Pomodoro/presence policy or a Cockroach-specific event bridge |
 | `pet.cockroach-invasion` | feature | Cockroach logic, settings contribution and signed runtime policy | A private Pomodoro implementation |
 
@@ -72,7 +72,7 @@ Schema-v1 monolithic packages are readable for launch compatibility but cannot b
 
 A feature descriptor may contribute one trusted settings renderer with `tab`, `label`, `order`, and `renderer`. The sidebar shows it only when native status is both `installed` and `enabled`. If the active feature becomes unavailable, return to the extension manager. A feature requesting its own sidebar entry needs a unique tab ID; features intentionally sharing a family tab need an outlet that composes all enabled contributions rather than selecting the first match.
 
-Keep package lifecycle controls in the extension manager. The contributed feature page contains only its functional settings and actions.
+Keep package lifecycle controls in the extension manager. Features can register an allow-listed Open action on their manager card without contributing a sidebar settings tab; `video.editor` uses this path. A contributed feature page contains only its functional settings and actions.
 
 Implement settings surfaces directly in React/TypeScript and native CSS using the user’s requirements, supplied screenshots, and existing UI conventions. Completion requires checking the rendered interface and its interactions; no Pencil files or design-source synchronization are maintained.
 
@@ -97,6 +97,16 @@ Validate contract name, supported phase, bounded delay and a registered settings
 If “active during a phase” depends on whether the timer is running, add and validate an explicit signed field such as `requiresRunning`; do not infer pause semantics from the phase name. Likewise, presence and delay defaults must be explicit contract decisions.
 
 The Pomodoro event contains version, sequence, timestamp, type, current/previous phase, running state, round counts, remaining seconds and reason. Subscribers obtain the initial snapshot through the public Tauri request/reply event, not by reaching into the Pomodoro Zustand store.
+
+### User-configured event/action rules
+
+The Cockroach feature now owns an ordered event/action rule list. Its logic manifest additionally
+publishes `runtimeContribution.eventRules` with `events` and `actions` allow-lists. The public
+Pomodoro envelope adds `signals` and `workstationPresence`; the core emits generic lifecycle/presence
+signals, and the feature adapter alone chooses actions. Native settings are stored separately from
+upstream simulation data. Empty rules mean no automatic actions, and saving rules replaces queued
+work without replaying the current snapshot. The older fixed-policy fields are compatibility metadata.
+See `docs/superpowers/specs/2026-09-05-cockroach-event-action-rules.md` for exact event/action semantics.
 
 ## Security and release boundaries
 

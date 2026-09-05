@@ -4,7 +4,7 @@ import { BRIDGE_VERSION } from './bridge/protocol';
 import { savePersistedSettings, type PersistedSettings } from './settingsPersistence';
 import { applyAutostartEnabled } from './autostart';
 
-export type SettingsTab = 'pomodoro' | 'online' | 'extensions' | 'pet' | 'video' | 'global';
+export type SettingsTab = 'pomodoro' | 'online' | 'extensions' | 'pet' | 'global';
 export type BreakPetMode = 'off' | 'cockroachInvasion';
 export type DangerousSettingKind = 'uiScale';
 

@@ -128,7 +128,20 @@ CPA writes Electron Store's `config.json` under the module-specific `--user-data
 
 “模拟” starts the upstream executable. The reviewed integration patch adds a module-private control
 file; “杀死所有” sends a nonce-bearing command to the tracked Electron process, which runs its own
-`manager.killAll()` behavior and writes an acknowledgement. Leaving the break phase, uninstalling the
+`manager.killAll()` behavior and writes an acknowledgement. A configured stop action, uninstalling the
 module, and exiting CPA terminate the tracked child process and clear persisted cockroaches. Saving
 settings while the module is active restarts that process once so the new values take effect
 immediately without desynchronizing the Pomodoro controller.
+
+## Event/action rules
+
+The settings page now offers an ordered event/action list. Available events are focus start/end,
+break start/end, and confirmed workstation presence during a running focus or break. Actions are
+kill all, add one cockroach, start simulation (with one new cockroach), and stop simulation.
+Rules start empty and take effect on save; they replace the former fixed break reminder policy.
+See [the rule contract](../docs/superpowers/specs/2026-09-05-cockroach-event-action-rules.md).
+
+The logic manifest declares the public event/action allow-list in `runtimeContribution.eventRules`.
+The source adapter handles the new `spawn-one` control command using the existing nonce/ack protocol.
+Install a newly built logic package for this command; older installed packages report an upgrade error.
+The shared Electron runtime and dependencies do not need rebuilding.

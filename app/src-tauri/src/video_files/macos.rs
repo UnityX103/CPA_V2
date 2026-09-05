@@ -34,6 +34,27 @@ pub(super) fn prepare_playable_path(
     Ok(target)
 }
 
+pub(super) fn clear_playable_cache(app: &tauri::AppHandle, source: &Path) -> Result<(), String> {
+    let cache_dir = app
+        .path()
+        .app_cache_dir()
+        .map_err(|error| error.to_string())?
+        .join("alpha-videos");
+    clear_cached_paths(&cache_dir, source)
+}
+
+fn clear_cached_paths(cache_dir: &Path, source: &Path) -> Result<(), String> {
+    let target = cache_dir.join(alpha_cache_filename(source));
+    for path in [&target, &alpha_tmp_path(&target)] {
+        match fs::remove_file(path) {
+            Ok(()) => {}
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            Err(error) => return Err(format!("无法清理旧提示视频缓存：{error}")),
+        }
+    }
+    Ok(())
+}
+
 fn run_ffmpeg_alpha_transcode(
     app: &tauri::AppHandle,
     source: &Path,
@@ -165,8 +186,28 @@ fn cached_alpha_video_is_fresh(source: &Path, target: &Path) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{alpha_cache_filename, ffmpeg_alpha_transcode_arguments};
+    use super::{
+        alpha_cache_filename, alpha_tmp_path, clear_cached_paths, ffmpeg_alpha_transcode_arguments,
+    };
     use std::path::Path;
+
+    #[test]
+    fn replacement_invalidates_only_the_owned_video_cache() {
+        let root =
+            std::env::temp_dir().join(format!("cpa-video-cache-clear-{}", std::process::id()));
+        std::fs::create_dir_all(&root).unwrap();
+        let source = Path::new("/data/media/pomodoro-end/提示视频.webm");
+        let target = root.join(alpha_cache_filename(source));
+        std::fs::write(&target, b"old converted video").unwrap();
+        std::fs::write(alpha_tmp_path(&target), b"unfinished conversion").unwrap();
+        std::fs::write(root.join("unrelated.mov"), b"keep").unwrap();
+        clear_cached_paths(&root, source).unwrap();
+        assert!(!target.exists());
+        assert!(!alpha_tmp_path(&target).exists());
+        assert!(root.join("unrelated.mov").exists());
+        clear_cached_paths(&root, source).unwrap();
+        std::fs::remove_dir_all(root).unwrap();
+    }
 
     #[test]
     fn alpha_transcode_supports_vp9_and_vp8_sources() {

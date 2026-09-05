@@ -21,12 +21,13 @@ CAPABILITIES = [
     "baby-growth-minutes",
     "process-lifecycle",
     "process-control-file-v1",
+    "spawn-one-v1",
 ]
 TARGETS = {"macos-arm64", "macos-x86_64", "windows-x86_64"}
 ROOT = Path(__file__).resolve().parents[1]
 PATCHED_SOURCE_HASHES = {
-    "main.js": "5504ef6ea0c5eac4857647b94df3194888275cc24e15e1ab8879b0aa2466786b",
-    "src/overlay/overlay.js": "9879f7e4d059cbf379ab98eb3b5bfd9a4a6629e39c17aaa9065d5c5894fb1431",
+    "main.js": "6c51cf1b38243621510a7c670a409d3ad5bc7029c06d81c42267fd54cc93bfa4",
+    "src/overlay/overlay.js": "3da15d3aca941069c006349ea9562b965a9199e3224a6d244a1b0e9f654ecf07",
 }
 
 
@@ -152,7 +153,7 @@ def package(
             "upstream": {
                 "repository": "https://github.com/jo9900/CockroachPet-Public-Electron",
                 "commit": UPSTREAM_COMMIT,
-                "integrationPatch": "cpa-control-file-v2",
+                "integrationPatch": "cpa-control-file-v3",
             },
         }
         (staging / "module.json").write_text(

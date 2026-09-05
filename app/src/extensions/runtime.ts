@@ -8,7 +8,7 @@ import {
 import { startEventDrivenRuntime } from './eventDrivenRuntime';
 
 interface ExtensionRuntimeModule {
-    start: () => () => void;
+    start: (contribution?: ExtensionRuntimeContribution | null) => () => void;
 }
 
 interface ActiveRuntimeEntry {
@@ -49,15 +49,14 @@ export function useExtensionRuntimeContributions({ enabled }: { enabled: boolean
         const entries = JSON.parse(activeRuntimeKey) as ActiveRuntimeEntry[];
         entries.forEach((entry) => {
             const { packId, contribution } = entry;
-            if (contribution) {
-                cleanups.push(startEventDrivenRuntime(packId, contribution));
+            const loader = RUNTIME_LOADERS[packId];
+            if (!loader) {
+                if (contribution) cleanups.push(startEventDrivenRuntime(packId, contribution));
                 return;
             }
-            const loader = RUNTIME_LOADERS[packId];
-            if (!loader) return;
             void loader().then((runtime) => {
                 if (disposed) return;
-                cleanups.push(runtime.start());
+                cleanups.push(runtime.start(contribution));
             }).catch((error) => {
                 console.warn(`[extension-runtime] failed to start ${packId}`, error);
             });

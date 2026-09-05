@@ -443,7 +443,7 @@ def package_logic(
             "upstream": {
                 "repository": "https://github.com/jo9900/CockroachPet-Public-Electron",
                 "commit": legacy.UPSTREAM_COMMIT,
-                "integrationPatch": "cpa-control-file-v2",
+                "integrationPatch": "cpa-control-file-v3",
             },
             "files": tree_hashes(staging),
         })

@@ -8,3 +8,8 @@ and enabled. The Cockroach subscriber and eligibility policy therefore live unde
 `cockroachInvasion/`, separate from both the core Pomodoro domain and the reusable `pet.core`
 runtime/dependency pack. `pomodoroBroadcastClient.ts` consumes the public
 `pomodoro-broadcast-v1` Tauri event instead of subscribing to the Pomodoro Zustand store.
+
+Cockroach rules are saved separately from the upstream simulation state. The feature adapter reads
+`cockroach-automation-rules-changed` and the `signals` array on the public Pomodoro broadcast,
+then queues allow-listed native actions in row order. Empty rules disable automatic execution;
+there is no longer a fixed break delay or `breakPetMode` gate in this adapter.

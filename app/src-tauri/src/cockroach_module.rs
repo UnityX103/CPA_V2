@@ -1,3 +1,4 @@
+pub mod automation;
 use crate::extension_packs::{
     pack_is_enabled, replace_file_atomically, ExtensionRuntimeContribution, InstallState,
     COCKROACH_ID,
@@ -11,7 +12,7 @@ use std::fs;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Mutex;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use tauri::{Emitter, Manager};
@@ -47,6 +48,8 @@ const MAX_SIGNATURE_BYTES: usize = 16 * 1024;
 pub struct CockroachModuleState {
     child: Mutex<Option<Child>>,
     next_control_nonce: AtomicU64,
+    action_lock: Mutex<()>,
+    terminating: AtomicBool,
 }
 
 impl Default for CockroachModuleState {
@@ -54,6 +57,8 @@ impl Default for CockroachModuleState {
         Self {
             child: Mutex::new(None),
             next_control_nonce: AtomicU64::new(1),
+            action_lock: Mutex::new(()),
+            terminating: AtomicBool::new(false),
         }
     }
 }
@@ -762,12 +767,16 @@ fn validate_runtime_contribution(
         contribution.activation_phase.as_str(),
         "focus" | "break" | "completed"
     );
-    let valid_gate = !contribution.settings_gate.is_empty()
-        && contribution.settings_gate.len() <= 64
-        && contribution
-            .settings_gate
-            .bytes()
-            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'.' | b'-'));
+    let valid_gate = contribution.settings_gate == "cockroachInvasion";
+    if let Some(rules) = &contribution.event_rules {
+        if rules.events.is_empty() || rules.actions.is_empty()
+            || rules.events.len() > 6 || rules.actions.len() > 4
+            || rules.events.iter().any(|event| !matches!(event.as_str(), "focus.started" | "focus.ended" | "break.started" | "break.ended" | "focus.present" | "break.present"))
+            || rules.actions.iter().any(|action| !matches!(action.as_str(), "kill-all" | "spawn-one" | "start-simulation" | "stop-simulation"))
+        {
+            return Err("蟑螂功能包的事件操作声明无效".into());
+        }
+    }
     if contribution.event_contract != "pomodoro-broadcast-v1"
         || !valid_phase
         || contribution.delay_ms > 60 * 60 * 1000
@@ -2101,6 +2110,7 @@ pub fn launch_cockroach_module(
     state: tauri::State<'_, CockroachModuleState>,
     settings: Option<CockroachModuleSettings>,
 ) -> Result<CockroachModuleStatus, String> {
+    let _operation = state.inner().action_lock.lock().map_err(|_| "蟑螂操作状态不可用".to_string())?;
     if !pack_is_enabled(&app, COCKROACH_ID)? {
         return Err("蟑螂入侵功能包已禁用，请先在扩展包设置中启用".to_string());
     }
@@ -2154,6 +2164,7 @@ pub fn save_cockroach_module_settings(
     state: tauri::State<'_, CockroachModuleState>,
     settings: CockroachModuleSettings,
 ) -> Result<CockroachModuleStatus, String> {
+    let _operation = state.inner().action_lock.lock().map_err(|_| "蟑螂操作状态不可用".to_string())?;
     let root = module_root(&app)?;
     let was_running = child_is_running(&state);
     if was_running {
@@ -2174,6 +2185,7 @@ pub fn kill_all_cockroaches(
     app: tauri::AppHandle,
     state: tauri::State<'_, CockroachModuleState>,
 ) -> Result<CockroachModuleStatus, String> {
+    let _operation = state.inner().action_lock.lock().map_err(|_| "蟑螂操作状态不可用".to_string())?;
     if !child_is_running(&state) {
         return Ok(cockroach_module_status(app, state));
     }
@@ -2183,6 +2195,10 @@ pub fn kill_all_cockroaches(
 }
 
 fn send_kill_all_command(root: &Path, state: &CockroachModuleState) -> Result<(), String> {
+    send_control_command(root, state, "kill-all")
+}
+
+fn send_control_command(root: &Path, state: &CockroachModuleState, action: &str) -> Result<(), String> {
     let counter = state.next_control_nonce.fetch_add(1, Ordering::Relaxed);
     let timestamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -2198,7 +2214,7 @@ fn send_kill_all_command(root: &Path, state: &CockroachModuleState) -> Result<()
         serde_json::to_vec(&serde_json::json!({
             "v": 1,
             "nonce": nonce,
-            "command": "kill-all",
+            "command": action,
         }))
         .map_err(|error| error.to_string())?,
     )
@@ -2221,7 +2237,7 @@ fn send_kill_all_command(root: &Path, state: &CockroachModuleState) -> Result<()
         }
         std::thread::sleep(Duration::from_millis(25));
     }
-    Err("蟑螂程序没有确认杀死所有命令".to_string())
+    Err(if action == "spawn-one" { "蟑螂程序未确认繁殖命令，请升级蟑螂入侵扩展包后重试" } else { "蟑螂程序没有确认杀死所有命令" }.to_string())
 }
 
 #[tauri::command]
@@ -2237,6 +2253,11 @@ pub(crate) fn stop_feature(
     app: &tauri::AppHandle,
     state: &CockroachModuleState,
 ) -> Result<(), String> {
+    let _operation = state.action_lock.lock().map_err(|_| "蟑螂操作状态不可用".to_string())?;
+    stop_feature_unlocked(app, state)
+}
+
+fn stop_feature_unlocked(app: &tauri::AppHandle, state: &CockroachModuleState) -> Result<(), String> {
     if let Some(window) = app.get_webview_window("cockroach-module") {
         window
             .close()
@@ -2344,6 +2365,8 @@ fn stop_child_checked(state: &CockroachModuleState) -> Result<(), String> {
 
 pub fn stop_for_exit(app: &tauri::AppHandle) {
     let state = app.state::<CockroachModuleState>();
+    state.terminating.store(true, Ordering::SeqCst);
+    let _operation = state.action_lock.lock().ok();
     stop_child(&state);
 }
 
@@ -2351,7 +2374,7 @@ pub fn stop_for_exit(app: &tauri::AppHandle) {
 mod tests {
     use super::{
         extract_archive_to, index_urls, module_public_key, parse_module_index, runtime_target,
-        safe_relative_path, send_kill_all_command, sha256_file, split_layered_feature_installation,
+        safe_relative_path, send_kill_all_command, send_control_command, sha256_file, split_layered_feature_installation,
         validate_index_url, validate_layered_component_directory, validate_layered_index,
         validate_manifest, validate_package_url, validate_release_version,
         validate_runtime_contribution, validate_settings, validate_sha256_text,
@@ -2731,8 +2754,16 @@ mod tests {
             delay_ms: 60_000,
             requires_presence: true,
             settings_gate: "cockroachInvasion".to_string(),
+            event_rules: None,
         };
         assert!(validate_runtime_contribution(&valid).is_ok());
+        let declared: serde_json::Value = serde_json::from_str(include_str!("../../../cockroach-electron-module/module-contract.json")).unwrap();
+        let declared: ExtensionRuntimeContribution = serde_json::from_value(declared["runtimeContribution"].clone()).unwrap();
+        assert!(validate_runtime_contribution(&declared).is_ok());
+        let mut invalid = declared;
+        invalid.event_rules.as_mut().unwrap().actions.push("shell".into());
+        assert!(validate_runtime_contribution(&invalid).is_err());
+
         assert!(
             validate_runtime_contribution(&ExtensionRuntimeContribution {
                 event_contract: "private-pet-event".to_string(),
@@ -2766,7 +2797,7 @@ mod tests {
     }
 
     #[test]
-    fn kill_all_control_waits_for_the_matching_process_acknowledgement() {
+    fn kill_and_spawn_control_wait_for_the_matching_process_acknowledgement() {
         let root = std::env::temp_dir().join(format!(
             "cpa-cockroach-control-test-{}-{}",
             std::process::id(),
@@ -2780,7 +2811,7 @@ mod tests {
         let process = std::thread::spawn(move || {
             let command_path = root_for_process.join("data/cpa-control.json");
             let mut last_nonce = None;
-            for _ in 0..2 {
+            for expected_action in ["kill-all", "spawn-one"] {
                 let started = std::time::Instant::now();
                 let mut acknowledged = false;
                 while started.elapsed() < std::time::Duration::from_secs(2) {
@@ -2791,6 +2822,7 @@ mod tests {
                             std::thread::sleep(std::time::Duration::from_millis(5));
                             continue;
                         }
+                        assert_eq!(command["command"], expected_action);
                         std::fs::write(
                             root_for_process.join("data/cpa-control.ack.json"),
                             serde_json::to_vec(&serde_json::json!({
@@ -2812,7 +2844,7 @@ mod tests {
         });
         let state = CockroachModuleState::default();
         send_kill_all_command(&root, &state).unwrap();
-        send_kill_all_command(&root, &state).unwrap();
+        send_control_command(&root, &state, "spawn-one").unwrap();
         process.join().unwrap();
         std::fs::remove_dir_all(root).unwrap();
     }

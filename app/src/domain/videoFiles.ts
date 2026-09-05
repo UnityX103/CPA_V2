@@ -13,7 +13,8 @@ export async function pickCustomWebmPath(): Promise<string | null> {
         filters: [{ name: 'WebM 视频', extensions: ['webm'] }],
     });
 
-    return typeof selected === 'string' ? selected : null;
+    if (typeof selected !== 'string') return null;
+    return invoke<string>('import_custom_video', { path: selected });
 }
 
 export async function validateCustomVideoPath(path: string): Promise<CustomVideoValidation> {
@@ -22,7 +23,8 @@ export async function validateCustomVideoPath(path: string): Promise<CustomVideo
 
 export async function customVideoSrc(path: string): Promise<string> {
     const playablePath = await invoke<string>('prepare_custom_alpha_video_path', { path });
-    return convertFileSrc(playablePath);
+    // The app-owned file has a stable path but its contents change on replacement.
+    return `${convertFileSrc(playablePath)}?v=${crypto.randomUUID()}`;
 }
 
 export async function showCustomVideoMissingMessage(text: string): Promise<void> {

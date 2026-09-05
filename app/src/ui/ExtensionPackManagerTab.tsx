@@ -13,6 +13,8 @@ export function ExtensionPackManagerTab() {
     const hydrated = useExtensionPackStore((state) => state.hydrated);
     const statuses = useExtensionPackStore((state) => state.statuses);
     const busyPackId = useExtensionPackStore((state) => state.busyPackId);
+    const openingPackId = useExtensionPackStore((state) => state.openingPackId);
+    const open = useExtensionPackStore((state) => state.open);
     const progress = useExtensionPackStore((state) => state.progress);
     const error = useExtensionPackStore((state) => state.error);
     const install = useExtensionPackStore((state) => state.install);
@@ -28,7 +30,7 @@ export function ExtensionPackManagerTab() {
         const dependent = dependentDescriptor ? statuses[dependentDescriptor.id] : null;
         const disableBlocked = Boolean(dependent?.installed && dependent.enabled);
         const uninstallBlocked = Boolean(dependent?.installed);
-        const anyBusy = busyPackId !== null;
+        const anyBusy = busyPackId !== null || openingPackId !== null;
         const isBusy = busyPackId === packId;
         const packProgress = isBusy && progress?.packId === packId ? progress : null;
         const percent = packProgress?.totalBytes
@@ -58,6 +60,17 @@ export function ExtensionPackManagerTab() {
 
                 {status.installed ? (
                     <div className="extension-pack-actions">
+                        {descriptor.open ? (
+                            <button
+                                type="button"
+                                className="btn btn-primary"
+                                aria-label={`打开 ${descriptor.name}`}
+                                disabled={anyBusy || !status.enabled}
+                                onClick={() => { void open(packId); }}
+                            >
+                                {openingPackId === packId ? '打开中…' : '打开'}
+                            </button>
+                        ) : null}
                         <button
                             type="button"
                             className="btn btn-secondary"
@@ -131,7 +144,7 @@ export function ExtensionPackManagerTab() {
 
                 <div className="extension-manager-group-heading">
                     <strong>功能扩展</strong>
-                    <span>启用后自动加入左侧设置栏目</span>
+                    <span>部分扩展启用后提供设置栏目</span>
                 </div>
                 <div className="extension-pack-grid">
                     {FEATURE_PACKS.map((pack) => renderPack(pack.id))}

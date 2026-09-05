@@ -61,6 +61,9 @@ The host exposes the schema-v2 layers as two independently managed extension pac
 - `video.core`: the selected platform engine plus the shared models layer;
 - `video.editor`: the lightweight logic/UI layer, depending on `video.core`.
 
+Open the installed, enabled editor from its card in the extension manager. It no longer contributes
+a separate settings sidebar tab or intermediate launch page.
+
 Installing or upgrading `video.editor` resolves and installs `video.core` first. The host records
 the common selection in `core.json`, so uninstalling the feature removes its logic and active
 feature pointer without deleting the verified engine or model cache. A common-pack uninstall is

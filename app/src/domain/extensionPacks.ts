@@ -1,3 +1,4 @@
+import { launchVideoEditorModule } from './videoEditorModule';
 import { useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
@@ -10,8 +11,8 @@ export type ExtensionPackId =
     | 'pet.cockroach-invasion';
 
 export type ExtensionPackKind = 'common' | 'feature';
-export type ExtensionSettingsTab = 'pet' | 'video';
-export type ExtensionSettingsRenderer = 'pet.cockroach-invasion' | 'video.editor';
+export type ExtensionSettingsTab = 'pet';
+export type ExtensionSettingsRenderer = 'pet.cockroach-invasion';
 
 export interface ExtensionPackDescriptor {
     readonly id: ExtensionPackId;
@@ -22,6 +23,7 @@ export interface ExtensionPackDescriptor {
     readonly description: string;
     readonly contents: string;
     readonly dependencies: readonly ExtensionPackId[];
+    readonly open?: () => Promise<void>;
     readonly settings?: {
         readonly tab: ExtensionSettingsTab;
         readonly label: string;
@@ -46,6 +48,10 @@ export interface ExtensionRuntimeContribution {
     readonly delayMs: number;
     readonly requiresPresence: boolean;
     readonly settingsGate: string;
+    readonly eventRules?: {
+        readonly events: readonly string[];
+        readonly actions: readonly string[];
+    };
 }
 
 export interface ExtensionSettingsContribution {
@@ -71,10 +77,12 @@ interface ExtensionPackStoreState {
     hydrated: boolean;
     revisions: ExtensionPackRevisions;
     busyPackId: ExtensionPackId | null;
+    openingPackId: ExtensionPackId | null;
     progress: ExtensionPackProgress | null;
     error: string | null;
     refresh: () => Promise<void>;
     install: (packId: ExtensionPackId) => Promise<void>;
+    open: (packId: ExtensionPackId) => Promise<void>;
     setEnabled: (packId: ExtensionPackId, enabled: boolean) => Promise<void>;
     uninstall: (packId: ExtensionPackId) => Promise<void>;
     receiveStatuses: (
@@ -105,12 +113,7 @@ export const extensionPackRegistry: Readonly<Record<ExtensionPackId, ExtensionPa
         description: '主体跟踪、毛发软边抠图与透明 WebM 导出。',
         contents: '安装时自动补齐视频通用包',
         dependencies: ['video.core'],
-        settings: {
-            tab: 'video',
-            label: '视频编辑',
-            order: 20,
-            renderer: 'video.editor',
-        },
+        open: launchVideoEditorModule,
     },
     'pet.core': {
         id: 'pet.core',
@@ -204,12 +207,13 @@ function errorText(reason: unknown): string {
 }
 
 export function createExtensionPackStore(): ExtensionPackStore {
-    return create<ExtensionPackStoreState>((set) => {
+    return create<ExtensionPackStoreState>((set, get) => {
         const operate = async (
             packId: ExtensionPackId,
             command: 'install_extension_pack' | 'set_extension_pack_enabled' | 'uninstall_extension_pack',
             args: Record<string, unknown> = {},
         ) => {
+            if (get().busyPackId || get().openingPackId) return;
             set({ busyPackId: packId, progress: null, error: null });
             try {
                 const statuses = await invoke<ExtensionPackStatus[]>(command, {
@@ -229,6 +233,7 @@ export function createExtensionPackStore(): ExtensionPackStore {
             hydrated: false,
             revisions: emptyRevisions(),
             busyPackId: null,
+            openingPackId: null,
             progress: null,
             error: null,
             refresh: async () => {
@@ -242,6 +247,17 @@ export function createExtensionPackStore(): ExtensionPackStore {
                 } catch (reason) {
                     set({ hydrated: true, error: errorText(reason) });
                 }
+            },
+            open: async (packId) => {
+                const state = get();
+                if (state.busyPackId || state.openingPackId) return;
+                const descriptor = extensionPackRegistry[packId];
+                const status = state.statuses[packId];
+                if (!descriptor.open || !status.installed || !status.enabled) return;
+                set({ openingPackId: packId, error: null });
+                try { await descriptor.open(); }
+                catch (reason) { set({ error: errorText(reason) }); }
+                finally { set({ openingPackId: null }); }
             },
             install: (packId) => operate(packId, 'install_extension_pack'),
             setEnabled: (packId, enabled) => operate(

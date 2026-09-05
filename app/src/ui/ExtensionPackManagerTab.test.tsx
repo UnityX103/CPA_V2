@@ -1,4 +1,4 @@
-import { act, cleanup, render, renderHook, screen } from '@testing-library/react';
+import { act, cleanup, render, renderHook, screen, fireEvent } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
     useExtensionPackStore,
@@ -41,6 +41,7 @@ beforeEach(() => {
     useExtensionPackStore.setState({
         hydrated: true,
         busyPackId: null,
+        openingPackId: null,
         progress: null,
         error: null,
         statuses: {
@@ -55,6 +56,49 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('ExtensionPackManagerTab', () => {
+    it('opens the video editor from its card and prevents duplicate launches', async () => {
+        let finish!: () => void;
+        invoke.mockImplementation(() => new Promise<void>((resolve) => { finish = resolve; }));
+        render(<ExtensionPackManagerTab />);
+        const open = screen.getByRole('button', { name: '打开 AI 视频编辑' }) as HTMLButtonElement;
+        fireEvent.click(open);
+        expect(invoke).toHaveBeenCalledWith('launch_video_editor_module');
+        expect(open.disabled).toBe(true);
+        expect(open.textContent).toBe('打开中…');
+        fireEvent.click(open);
+        expect(invoke).toHaveBeenCalledTimes(1);
+        expect((screen.getByRole('button', { name: '卸载 AI 视频编辑' }) as HTMLButtonElement).disabled).toBe(true);
+        await act(async () => { finish(); });
+        expect(open.disabled).toBe(false);
+    });
+
+    it('surfaces launch errors and allows retry', async () => {
+        invoke.mockRejectedValueOnce(new Error('编辑器启动失败')).mockResolvedValue(undefined);
+        render(<ExtensionPackManagerTab />);
+        fireEvent.click(screen.getByRole('button', { name: '打开 AI 视频编辑' }));
+        expect((await screen.findByRole('alert')).textContent).toBe('编辑器启动失败');
+        await act(async () => { fireEvent.click(screen.getByRole('button', { name: '打开 AI 视频编辑' })); });
+        expect(screen.queryByRole('alert')).toBeNull();
+    });
+
+    it('does not open disabled or missing packages', async () => {
+        useExtensionPackStore.setState((state) => ({ statuses: {
+            ...state.statuses,
+            'video.editor': status('video.editor', true, false),
+        } }));
+        render(<ExtensionPackManagerTab />);
+        const open = screen.getByRole('button', { name: '打开 AI 视频编辑' }) as HTMLButtonElement;
+        expect(open.disabled).toBe(true);
+        await useExtensionPackStore.getState().open('video.editor');
+        expect(invoke).not.toHaveBeenCalled();
+        act(() => useExtensionPackStore.setState((state) => ({ statuses: {
+            ...state.statuses,
+            'video.editor': status('video.editor', false, false),
+        } })));
+        expect(screen.queryByRole('button', { name: '打开 AI 视频编辑' })).toBeNull();
+        expect(screen.getByRole('button', { name: '下载 AI 视频编辑' })).toBeTruthy();
+    });
+
     it('ignores late progress and progress from a different pack family', async () => {
         invoke.mockResolvedValue(Object.values(useExtensionPackStore.getState().statuses));
         render(<ExtensionPackManagerTab />);

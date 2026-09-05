@@ -22,3 +22,13 @@
 .cockroach-module-progress-fill { height: 100%; border-radius: inherit; background: #7c5cfc; transition: width 160ms ease; }
 .cockroach-module-progress-fill.indeterminate { width: 38%; animation: cockroach-module-progress 1.1s ease-in-out infinite; }
 @keyframes cockroach-module-progress { from { transform: translateX(-110%); } to { transform: translateX(280%); } }
+
+.cockroach-rules { display: grid; gap: 10px; padding: 14px; border-radius: 12px; background: #fff; }
+.cockroach-rules-heading, .cockroach-rules-save { display: flex; align-items: center; gap: 12px; justify-content: space-between; }
+.cockroach-rules-heading strong { color: var(--text-brand-dark); font-size: 13px; }
+.cockroach-rule-columns, .cockroach-rule-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 28px; gap: 10px; align-items: center; }
+.cockroach-rule-columns { color: var(--text-warm); font-size: 11px; }
+.cockroach-rule-row select { width: 100%; min-width: 0; padding: 9px 8px; border: 1px solid #eaded6; border-radius: 8px; background: #fff; color: var(--text-brand-dark); font: inherit; font-size: 12px; }
+.cockroach-rule-remove { width: 28px; height: 28px; border: 0; border-radius: 6px; background: #fff1f2; color: #b42318; cursor: pointer; font-size: 20px; }
+.cockroach-rules-empty, .cockroach-rules-hint { margin: 0; color: var(--text-warm); font-size: 11px; line-height: 1.6; }
+.cockroach-rules-save { justify-content: flex-start; color: #166534; font-size: 11px; }
