@@ -36,4 +36,8 @@ pub fn ensure_entry_executable(path: &Path) -> Result<(), String> {
         .map_err(|error| format!("无法设置模块启动权限：{error}"))
 }
 
-pub fn configure_child_command(_command: &mut Command) {}
+pub type ModuleChild = std::process::Child;
+
+pub fn spawn_child(command: &mut Command) -> std::io::Result<ModuleChild> {
+    command.spawn()
+}

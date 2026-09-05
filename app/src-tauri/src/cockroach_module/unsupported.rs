@@ -17,4 +17,8 @@ pub fn ensure_entry_executable(_path: &Path) -> Result<(), String> {
     Ok(())
 }
 
-pub fn configure_child_command(_command: &mut Command) {}
+pub type ModuleChild = std::process::Child;
+
+pub fn spawn_child(command: &mut Command) -> std::io::Result<ModuleChild> {
+    command.spawn()
+}

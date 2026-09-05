@@ -11,7 +11,7 @@ use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
-use std::process::{Child, Command, Stdio};
+use std::process::{Command, Stdio};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Mutex;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
@@ -46,7 +46,7 @@ const MAX_INDEX_BYTES: usize = 1024 * 1024;
 const MAX_SIGNATURE_BYTES: usize = 16 * 1024;
 
 pub struct CockroachModuleState {
-    child: Mutex<Option<Child>>,
+    child: Mutex<Option<platform::ModuleChild>>,
     next_control_nonce: AtomicU64,
     action_lock: Mutex<()>,
     terminating: AtomicBool,
@@ -2131,6 +2131,16 @@ fn start_child(
     resolved: &ResolvedCockroachModule,
     state: &CockroachModuleState,
 ) -> Result<(), String> {
+    let mut child_slot = state
+        .child
+        .lock()
+        .map_err(|_| "蟑螂模块进程状态不可用".to_string())?;
+    if state.terminating.load(Ordering::SeqCst) {
+        return Err("应用正在退出，无法启动蟑螂模块".to_string());
+    }
+    if child_slot.is_some() {
+        return Err("上一个蟑螂模块进程尚未停止".to_string());
+    }
     let control_file = control_file_path(root);
     let _ = fs::remove_file(&control_file);
     let _ = fs::remove_file(control_ack_path(root));
@@ -2147,14 +2157,9 @@ fn start_child(
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::null());
-    platform::configure_child_command(&mut command);
-    let child = command
-        .spawn()
+    let child = platform::spawn_child(&mut command)
         .map_err(|error| format!("无法启动蟑螂模块：{error}"))?;
-    *state
-        .child
-        .lock()
-        .map_err(|_| "蟑螂模块进程状态不可用".to_string())? = Some(child);
+    *child_slot = Some(child);
     Ok(())
 }
 
@@ -2331,11 +2336,8 @@ pub(crate) fn uninstall_common_pack(app: &tauri::AppHandle) -> Result<(), String
 }
 
 fn stop_child(state: &CockroachModuleState) {
-    if let Ok(mut guard) = state.child.lock() {
-        if let Some(mut child) = guard.take() {
-            let _ = child.kill();
-            let _ = child.wait();
-        }
+    if let Err(error) = stop_child_checked(state) {
+        eprintln!("[cockroach-module] {error}");
     }
 }
 
@@ -2347,15 +2349,13 @@ fn stop_child_checked(state: &CockroachModuleState) -> Result<(), String> {
     let Some(child) = guard.as_mut() else {
         return Ok(());
     };
-    if child
+    child
         .try_wait()
-        .map_err(|error| format!("无法检查蟑螂模块进程：{error}"))?
-        .is_none()
-    {
-        child
-            .kill()
-            .map_err(|error| format!("无法停止蟑螂模块进程：{error}"))?;
-    }
+        .map_err(|error| format!("无法检查蟑螂模块进程：{error}"))?;
+    // The root may already have exited while its descendants are still alive.
+    child
+        .kill()
+        .map_err(|error| format!("无法停止蟑螂模块进程：{error}"))?;
     child
         .wait()
         .map_err(|error| format!("无法等待蟑螂模块进程退出：{error}"))?;
@@ -2384,6 +2384,41 @@ mod tests {
         ModulePackage, MODULE_ID, MODULE_SCHEMA_VERSION,
     };
     use crate::extension_packs::ExtensionRuntimeContribution;
+
+    #[test]
+    fn shutdown_rejects_late_launches_before_touching_control_files() {
+        let root = std::env::temp_dir().join(format!(
+            "cpa-pet-exit-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(super::module_data_dir(&root)).unwrap();
+        let control = super::control_file_path(&root);
+        std::fs::write(&control, "pending").unwrap();
+        let state = CockroachModuleState::default();
+        state
+            .terminating
+            .store(true, std::sync::atomic::Ordering::SeqCst);
+        let resolved = super::ResolvedCockroachModule {
+            version: "test".into(),
+            target: runtime_target().into(),
+            runtime_version: "test".into(),
+            dependencies_version: "test".into(),
+            entry: root.join("must-not-launch"),
+            working_directory: root.clone(),
+            arguments: Vec::new(),
+            environment: std::collections::HashMap::new(),
+            runtime_contribution: None,
+        };
+        let error = super::start_child(&root, &resolved, &state).unwrap_err();
+        assert!(error.contains("应用正在退出"));
+        assert_eq!(std::fs::read_to_string(control).unwrap(), "pending");
+        assert!(state.child.lock().unwrap().is_none());
+        std::fs::remove_dir_all(root).unwrap();
+    }
 
     fn manifest() -> ModuleManifest {
         ModuleManifest {

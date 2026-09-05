@@ -1,6 +1,6 @@
 [package]
 name = "app"
-version = "0.1.28"
+version = "0.1.29"
 description = "桌宠番茄钟 (Tauri 2 重写)"
 authors = ["NanZhai"]
 edition = "2021"
@@ -57,6 +57,9 @@ windows = { version = "0.58", features = [
     "Security_Cryptography",
     "Storage_Streams",
     "Win32_Foundation",
+    "Win32_Security",
+    "Win32_System_Diagnostics_ToolHelp",
+    "Win32_System_JobObjects",
     "Win32_System_Threading",
     "Win32_System_WinRT",
     "Win32_UI_WindowsAndMessaging",
