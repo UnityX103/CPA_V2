@@ -17,12 +17,16 @@ policy and its `breakPetMode` gate; camera detection is still required for works
 | `focus.ended` | 专注结束 | Timer completion or skip out of focus |
 | `break.started` | 休息开始 | First start of a break phase |
 | `break.ended` | 休息结束 | Timer completion or skip out of break |
-| `break.present` | 休息时在工位上 | A running break and confirmed presence first coincide |
+| `break.present` | 休息时在工位上 | Presence detection successfully pauses a running break (`timer.paused`, reason `presence`) |
 | `focus.present` | 专注时在工位上 | A running focus and confirmed presence first coincide |
 
-Presence conditions fire once per arrival, re-arm after absent/unknown or a new phase, and never
-repeat on ticks or pause/resume while the user stays present. Snapshot replies do not replay rules.
-Manual resets do not emit an end signal. Simultaneous matching signals execute their rows in list order.
+Focus presence fires once per arrival and re-arms after absent/unknown or a new phase.
+Break presence instead fires once for each successful presence-owned break pause, even when the
+last known observation was already present. Leaving the desk allows rest to resume; returning and
+pausing rest emits the next signal immediately. Repeated present samples while paused, manual pauses,
+and a manual override of the automatic pause do not emit it. The public pause event preserves
+`reason: presence` so the rule still runs with `isRunning: false`.
+Snapshot replies do not replay rules. Manual resets do not emit an end signal. Simultaneous matching signals execute their rows in list order.
 
 ## Feature actions
 
@@ -57,3 +61,5 @@ a new logic pack is required for that path; the shared Electron runtime/dependen
 - UI tests cover available options, add/edit/delete/save, and read failures.
 - Native tests cover rule persistence/validation and nonce acknowledgements for kill and spawn.
 - Package tests run the generated main/renderer control patch and validate its pinned source hashes.
+
+首次使用（尚未保存规则）默认按顺序配置：休息开始 → 开始模拟蟑螂；休息时在工位上 → 开始繁殖蟑螂；专注开始 → 停止模拟。升级保留已保存的自定义规则，显式保存的空列表仍表示关闭自动操作。

@@ -38,6 +38,14 @@ export function createPomodoroEventDetector() {
             started = true;
             events.push(`${event.phase}.started`);
         }
+        if (event.phase === 'break') {
+            // A successful automatic pause is the trigger, even when presence was already known.
+            // Do not also emit on the preceding presence observation or on manual pauses/resumes.
+            if (event.type === 'timer.paused' && event.reason === 'presence') {
+                events.push('break.present');
+            }
+            return events;
+        }
         if (event.workstationPresence !== 'present') present = false;
         else if (event.isRunning && !present) {
             present = true;

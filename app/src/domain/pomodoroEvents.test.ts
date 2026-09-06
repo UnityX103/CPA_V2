@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createPomodoroStore } from './pomodoro';
 import { createPomodoroBroadcast } from './pomodoroBroadcast';
-import { usePresenceStore } from './presence';
+import { applyPresenceSample, usePresenceStore } from './presence';
 import type { PomodoroRuleEvent } from './pomodoroEvents';
 
 beforeEach(() => usePresenceStore.setState({ enabled: true, confirmedPresence: 'absent' }));
@@ -54,7 +54,26 @@ describe('public Pomodoro rule events', () => {
         expect(signals.filter((signal) => signal === 'focus.present')).toHaveLength(2);
         store.getState().tick(2);
         store.getState().start();
-        expect(signals).toContain('break.present');
+        expect(signals).not.toContain('break.present');
+        stop();
+    });
+
+    it('does not fire break presence on manual pauses, override, or snapshots', () => {
+        const { store, signals, stop } = fixture();
+        store.getState().start();
+        store.getState().tick(2);
+        store.getState().start();
+        store.getState().pause();
+        applyPresenceSample(usePresenceStore, store, { observation: 'present', availability: 'ready', errorCode: null }, 0);
+        expect(signals).not.toContain('break.present');
+
+        store.getState().start();
+        applyPresenceSample(usePresenceStore, store, { observation: 'present', availability: 'ready', errorCode: null }, 1);
+        expect(signals.filter((signal) => signal === 'break.present')).toHaveLength(1);
+        store.getState().start(); // Explicitly continuing a presence-owned pause overrides automation.
+        applyPresenceSample(usePresenceStore, store, { observation: 'present', availability: 'ready', errorCode: null }, 2);
+        expect(store.getState().isRunning).toBe(true);
+        expect(signals.filter((signal) => signal === 'break.present')).toHaveLength(1);
         stop();
     });
 

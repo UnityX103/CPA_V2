@@ -136,7 +136,7 @@ immediately without desynchronizing the Pomodoro controller.
 ## Event/action rules
 
 The settings page now offers an ordered event/action list. Available events are focus start/end,
-break start/end, and confirmed workstation presence during a running focus or break. Actions are
+break start/end, workstation presence during focus, and each presence-triggered break pause. Actions are
 kill all, add one cockroach, start simulation (with one new cockroach), and stop simulation.
 Rules start empty and take effect on save; they replace the former fixed break reminder policy.
 See [the rule contract](../docs/superpowers/specs/2026-09-05-cockroach-event-action-rules.md).
@@ -145,3 +145,5 @@ The logic manifest declares the public event/action allow-list in `runtimeContri
 The source adapter handles the new `spawn-one` control command using the existing nonce/ack protocol.
 Install a newly built logic package for this command; older installed packages report an upgrade error.
 The shared Electron runtime and dependencies do not need rebuilding.
+
+首次使用（尚未保存规则）默认按顺序配置：休息开始 → 开始模拟蟑螂；休息时在工位上 → 开始繁殖蟑螂；专注开始 → 停止模拟。升级保留已保存的自定义规则，显式保存的空列表仍表示关闭自动操作。

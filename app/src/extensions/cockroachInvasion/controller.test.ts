@@ -2,6 +2,9 @@ import { describe, expect, it, vi } from 'vitest';
 import { startCockroachModuleController, type CockroachRuleAdapter } from './controller';
 import type { CockroachRule } from '../../domain/cockroachAutomation';
 import type { PomodoroBroadcastEvent } from '../../domain/pomodoroBroadcast';
+import { createPomodoroBroadcast } from '../../domain/pomodoroBroadcast';
+import { createPomodoroStore } from '../../domain/pomodoro';
+import { applyPresenceSample, createPresenceStore } from '../../domain/presence';
 
 async function fixture(initial: CockroachRule[]) {
     let listener!: (event: PomodoroBroadcastEvent) => void;
@@ -22,6 +25,49 @@ async function fixture(initial: CockroachRule[]) {
 }
 
 describe('Cockroach event/action rules', () => {
+    it('spawns immediately on every presence-owned break pause, including leaving and returning', async () => {
+        const pomodoro = createPomodoroStore({ isSettingsWindow: false });
+        const presence = createPresenceStore({ isSettingsWindow: false });
+        presence.setState({ enabled: true, confirmedPresence: 'present', absenceSensitivity: 'off' });
+        pomodoro.setState({ currentPhase: 'break', remainingSeconds: 30, isRunning: true });
+        const broadcast = createPomodoroBroadcast(pomodoro, () => 1234, presence);
+        const observed: PomodoroBroadcastEvent[] = [];
+        broadcast.subscribe((event) => observed.push(event));
+        const stopBroadcast = broadcast.start();
+        const control: CockroachRuleAdapter = {
+            read: vi.fn(async () => [{ event: 'break.present', action: 'spawn-one' }] as CockroachRule[]),
+            listen: async () => () => {},
+            execute: vi.fn(async () => {}), stop: vi.fn(async () => {}), report: vi.fn(),
+        };
+        const stopController = startCockroachModuleController(null, control, broadcast);
+        await Promise.resolve(); await Promise.resolve();
+        const sample = (observation: 'present' | 'absent') => applyPresenceSample(
+            presence, pomodoro, { observation, availability: 'ready', errorCode: null }, 1234,
+        );
+        try {
+            expect(control.execute).not.toHaveBeenCalled();
+            sample('present');
+            expect(pomodoro.getState().isRunning).toBe(false);
+            await vi.waitFor(() => expect(control.execute).toHaveBeenCalledTimes(1));
+            sample('present');
+            sample('absent');
+            expect(pomodoro.getState().isRunning).toBe(true);
+            await Promise.resolve();
+            expect(control.execute).toHaveBeenCalledTimes(1);
+            sample('present');
+            expect(pomodoro.getState().isRunning).toBe(false);
+            await vi.waitFor(() => expect(control.execute).toHaveBeenCalledTimes(2));
+            expect(vi.mocked(control.execute).mock.calls).toEqual([['spawn-one'], ['spawn-one']]);
+            expect(observed.filter((event) => event.signals?.includes('break.present')))
+                .toEqual([
+                    expect.objectContaining({ type: 'timer.paused', reason: 'presence', isRunning: false }),
+                    expect.objectContaining({ type: 'timer.paused', reason: 'presence', isRunning: false }),
+                ]);
+        } finally {
+            stopController(); stopBroadcast();
+        }
+    });
+
     it('executes matching rows in order and ignores duplicate event deliveries', async () => {
         const f = await fixture([
             { event: 'break.present', action: 'spawn-one' },

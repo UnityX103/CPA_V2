@@ -41,10 +41,27 @@ fn rules_path(root: &Path) -> PathBuf {
     module_data_dir(root).join("cpa-automation.json")
 }
 
+fn default_rules() -> Vec<CockroachRule> {
+    vec![
+        CockroachRule {
+            event: "break.started".into(),
+            action: CockroachAction::StartSimulation,
+        },
+        CockroachRule {
+            event: "break.present".into(),
+            action: CockroachAction::SpawnOne,
+        },
+        CockroachRule {
+            event: "focus.started".into(),
+            action: CockroachAction::StopSimulation,
+        },
+    ]
+}
+
 fn read_rules(root: &Path) -> Result<Vec<CockroachRule>, String> {
     let path = rules_path(root);
     if !path.exists() {
-        return Ok(Vec::new());
+        return Ok(default_rules());
     }
     let rules: Vec<CockroachRule> =
         serde_json::from_slice(&fs::read(path).map_err(|e| format!("无法读取事件规则：{e}"))?)
@@ -145,7 +162,14 @@ mod tests {
                 action: CockroachAction::KillAll,
             },
         ];
-        assert_eq!(read_rules(&root).unwrap(), vec![]);
+        assert_eq!(
+            serde_json::to_value(read_rules(&root).unwrap()).unwrap(),
+            serde_json::json!([
+                { "event": "break.started", "action": "start-simulation" },
+                { "event": "break.present", "action": "spawn-one" },
+                { "event": "focus.started", "action": "stop-simulation" },
+            ])
+        );
         write_rules(&root, &rules).unwrap();
         assert_eq!(read_rules(&root).unwrap(), rules);
         write_rules(&root, &[]).unwrap();

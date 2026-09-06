@@ -51,6 +51,10 @@ function reasonFor(
     state: PomodoroState,
     type: PomodoroBroadcastType,
 ): PomodoroBroadcastReason {
+    if (type === 'timer.paused' && (
+        state.presenceAutomationState === 'breakPaused'
+        || state.presenceAutomationState === 'focusPaused'
+    )) return 'presence';
     if (type === 'phase.entered' && state.lastEndEvent?.triggeredBy === 'timer') return 'timer';
     if (type === 'phase.entered' && state.lastEndEvent?.triggeredBy === 'skip') return 'skip';
     if (type === 'timer.ticked') return 'timer';

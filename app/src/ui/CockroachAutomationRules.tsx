@@ -60,7 +60,7 @@ export function CockroachAutomationRules() {
                 </div>
             ))}
             {ready && rows.length === 0 ? <p className="cockroach-rules-empty">暂无规则，蟑螂不会自动出现。点击“添加规则”设置触发方式。</p> : null}
-            <p className="cockroach-rules-hint">同一事件按列表顺序执行。在工位事件需要开启摄像头检测，每次满足条件触发一次。</p>
+            <p className="cockroach-rules-hint">同一事件按列表顺序执行。在工位事件需要开启摄像头检测；休息期间每次因在场检测而暂停时触发一次。</p>
             <div className="cockroach-rules-save">
                 <button type="button" className="btn btn-primary" disabled={!ready || saving} onClick={() => { void save(); }}>{saving ? '保存中…' : '保存规则'}</button>
                 {saved ? <span role="status">规则已保存</span> : null}
