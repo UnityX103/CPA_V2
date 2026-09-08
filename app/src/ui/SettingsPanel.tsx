@@ -43,6 +43,7 @@ import {
 } from '../domain/bindingKey';
 import { useAppUpdateStore, type AppUpdateStatus } from '../domain/appUpdate';
 import { InputBindingBadge } from './InputBindingBadge';
+import { NumberInput, TextInput } from './TextInput';
 import { shouldStartWindowDrag } from './windowDrag';
 import {
     PRESENCE_ABSENCE_POLICIES,
@@ -226,6 +227,7 @@ function PomodoroTab({ onApplyStateChange }: {
     const [videoImportError, setVideoImportError] = useState('');
     const [endSounds, setEndSounds] = useState<PomodoroEndSounds>(clonePomodoroEndSounds(pomo.endSounds));
     const [presenceEnabled, setPresenceEnabled] = useState(presence.enabled);
+    const [inputActivityEnabled, setInputActivityEnabled] = useState(presence.inputActivityEnabled);
     const [cameraDeviceId, setCameraDeviceId] = useState(presence.cameraDeviceId);
     const [cameraDevices, setCameraDevices] = useState<CameraDevice[]>([]);
     const [presenceIntervalSeconds, setPresenceIntervalSeconds] = useState(presence.intervalSeconds);
@@ -245,6 +247,7 @@ function PomodoroTab({ onApplyStateChange }: {
         endActionVideo: { ...pomo.endActionVideo },
         endSounds: clonePomodoroEndSounds(pomo.endSounds),
         presenceEnabled: presence.enabled,
+        inputActivityEnabled: presence.inputActivityEnabled,
         cameraDeviceId: presence.cameraDeviceId,
         presenceIntervalSeconds: presence.intervalSeconds,
         absenceSensitivity: presence.absenceSensitivity,
@@ -265,6 +268,7 @@ function PomodoroTab({ onApplyStateChange }: {
         const endSoundDraftDirty = !samePomodoroEndSounds(endSounds, previous.endSounds);
         const presenceDraftDirty =
             presenceEnabled !== previous.presenceEnabled
+            || inputActivityEnabled !== previous.inputActivityEnabled
             || cameraDeviceId !== previous.cameraDeviceId
             || presenceIntervalSeconds !== previous.presenceIntervalSeconds
             || absenceSensitivity !== previous.absenceSensitivity
@@ -293,6 +297,7 @@ function PomodoroTab({ onApplyStateChange }: {
         }
         if (!presenceDraftDirty) {
             setPresenceEnabled(presence.enabled);
+            setInputActivityEnabled(presence.inputActivityEnabled);
             setCameraDeviceId(presence.cameraDeviceId);
             setPresenceIntervalSeconds(presence.intervalSeconds);
             setAbsenceSensitivity(presence.absenceSensitivity);
@@ -309,6 +314,7 @@ function PomodoroTab({ onApplyStateChange }: {
             endActionVideo: { ...pomo.endActionVideo },
             endSounds: clonePomodoroEndSounds(pomo.endSounds),
             presenceEnabled: presence.enabled,
+            inputActivityEnabled: presence.inputActivityEnabled,
             cameraDeviceId: presence.cameraDeviceId,
             presenceIntervalSeconds: presence.intervalSeconds,
             absenceSensitivity: presence.absenceSensitivity,
@@ -331,6 +337,7 @@ function PomodoroTab({ onApplyStateChange }: {
         pomo.endSounds.break.builtinSoundId,
         pomo.endSounds.break.customSoundPath,
         presence.enabled,
+        presence.inputActivityEnabled,
         presence.cameraDeviceId,
         presence.intervalSeconds,
         presence.absenceSensitivity,
@@ -344,6 +351,7 @@ function PomodoroTab({ onApplyStateChange }: {
         endActionVideo,
         endSounds,
         presenceEnabled,
+        inputActivityEnabled,
         cameraDeviceId,
         presenceIntervalSeconds,
         absenceSensitivity,
@@ -374,6 +382,7 @@ function PomodoroTab({ onApplyStateChange }: {
         !sameEndActionVideo(endActionVideo, pomo.endActionVideo) ||
         !samePomodoroEndSounds(endSounds, pomo.endSounds) ||
         presenceEnabled !== presence.enabled ||
+        inputActivityEnabled !== presence.inputActivityEnabled ||
         cameraDeviceId !== presence.cameraDeviceId ||
         presenceIntervalSeconds !== presence.intervalSeconds ||
         absenceSensitivity !== presence.absenceSensitivity ||
@@ -403,6 +412,7 @@ function PomodoroTab({ onApplyStateChange }: {
         const endSoundsChanged = !samePomodoroEndSounds(endSounds, pomo.endSounds);
         const presenceChanged =
             presenceEnabled !== presence.enabled
+            || inputActivityEnabled !== presence.inputActivityEnabled
             || cameraDeviceId !== presence.cameraDeviceId
             || presenceIntervalSeconds !== presence.intervalSeconds
             || absenceSensitivity !== presence.absenceSensitivity
@@ -430,6 +440,7 @@ function PomodoroTab({ onApplyStateChange }: {
         if (presenceChanged) {
             void Promise.resolve(presence.applySettings({
                 enabled: presenceEnabled,
+                inputActivityEnabled,
                 cameraDeviceId,
                 intervalSeconds: presenceIntervalSeconds,
                 absenceSensitivity,
@@ -454,6 +465,7 @@ function PomodoroTab({ onApplyStateChange }: {
         pomo,
         presence,
         presenceEnabled,
+        inputActivityEnabled,
         cameraDeviceId,
         presenceIntervalSeconds,
         absenceSensitivity,
@@ -547,11 +559,11 @@ function PomodoroTab({ onApplyStateChange }: {
                     <div className="card card-grid">
                         <div className="card">
                             <span className="card-label">专注时长</span>
-                            <NumberSuffix value={focusMin} onChange={setFocusMin} min={1} max={120} suffix="分钟" />
+                            <NumberInput aria-label="专注时长" value={focusMin} onChange={setFocusMin} min={1} max={120} suffix="分钟" />
                         </div>
                         <div className="card card-break">
                             <span className="card-label">休息时长</span>
-                            <NumberSuffix
+                            <NumberInput aria-label="休息时长"
                                 value={breakMin} onChange={setBreakMin} min={0} max={60} suffix="分钟"
                                 variant="warning"
                             />
@@ -612,10 +624,20 @@ function PomodoroTab({ onApplyStateChange }: {
                             onOpenPrivacySettings={() => { void presence.openPrivacySettings(); }}
                         />
 
+                        <div className="card input-activity-settings">
+                            <div className="pomo-row">
+                                <span className="pomo-row-label">允许检测键盘和鼠标活动</span>
+                                <Toggle checked={inputActivityEnabled} onChange={setInputActivityEnabled} ariaLabel="允许检测键盘和鼠标活动" />
+                            </div>
+                            <p className="input-activity-detail">仅在休息中每 5 秒检查一次。最近 30 秒有键鼠活动视为在工位，不读取或保存按键内容、鼠标位置；无需额外系统输入权限。开启后点击“应用”生效。</p>
+                            {inputActivityEnabled && <p className="input-activity-detail">可单独使用；同时开启摄像头时，任一检测到在场都会暂停休息。无输入满 30 秒且摄像头确认离场（或未启用）后继续休息。手动暂停和专注期间不检测。</p>}
+                            {presence.inputActivityEnabled && <span className="input-activity-status" role="status">{presence.inputActivityAvailability === 'error' ? '键鼠活动检测暂不可用，将自动重试。' : presence.inputActivityAvailability === 'ready' ? '键鼠活动检测可用' : '已允许，休息时检测'}</span>}
+                        </div>
+
                         <div className="card card-grid">
                             <div className="card">
                                 <span className="card-label">检测间隔</span>
-                                <NumberSuffix
+                                <NumberInput aria-label="检测间隔"
                                     value={presenceIntervalSeconds}
                                     onChange={setPresenceIntervalSeconds}
                                     min={MIN_PRESENCE_SECONDS}
@@ -991,9 +1013,11 @@ function OnlineTab() {
                         <>
                             <label className="card card-row-stack account-field">
                                 <span className="card-label">账号</span>
-                                <input
+                                <TextInput
                                     aria-label="账号"
-                                    className="text-input"
+                                    autoComplete="username"
+                                    autoCapitalize="none"
+                                    spellCheck={false}
                                     value={accountName}
                                     onChange={(e) => setAccountName(e.currentTarget.value)}
                                     placeholder="用户名"
@@ -1002,9 +1026,9 @@ function OnlineTab() {
                             </label>
                             <label className="card card-row-stack account-field">
                                 <span className="card-label">密码</span>
-                                <input
+                                <TextInput
                                     aria-label="密码"
-                                    className="text-input"
+                                    autoComplete="current-password"
                                     type="password"
                                     value={accountPassword}
                                     onChange={(e) => setAccountPassword(e.currentTarget.value)}
@@ -1058,8 +1082,9 @@ function OnlineTab() {
                             <span className="card-title">加入房间</span>
                             <div className="card card-row-stack" style={{ background: 'transparent', padding: 0 }}>
                                 <span className="card-label">用户名</span>
-                                <input
-                                    className="text-input"
+                                <TextInput
+                                    aria-label="用户名"
+                                    autoComplete="nickname"
                                     value={name}
                                     onChange={(e) => setName(e.currentTarget.value)}
                                     onBlur={() => net.setPlayerName(name)}
@@ -1068,8 +1093,10 @@ function OnlineTab() {
                             </div>
                             <div className="card card-row-stack" style={{ background: 'transparent', padding: 0 }}>
                                 <span className="card-label">房间号</span>
-                                <input
-                                    className="text-input"
+                                <TextInput
+                                    aria-label="房间号"
+                                    autoCapitalize="characters"
+                                    spellCheck={false}
                                     value={code}
                                     onChange={(e) => setCode(e.currentTarget.value.toUpperCase())}
                                     placeholder="ROOM-001"
@@ -1545,30 +1572,6 @@ function appUpdateStatusText(
 /* ============================================================
  * Form controls
  * ============================================================ */
-
-interface NumSuffixProps {
-    value: number;
-    onChange: (v: number) => void;
-    min: number;
-    max: number;
-    suffix: string;
-    variant?: 'default' | 'warning';
-}
-
-function NumberSuffix({ value, onChange, min, max, suffix, variant }: NumSuffixProps) {
-    return (
-        <div className={`num-input ${variant === 'warning' ? 'input-suffix-warning' : ''}`}>
-            <input
-                type="number"
-                value={value}
-                min={min}
-                max={max}
-                onChange={(e) => onChange(Number(e.currentTarget.value))}
-            />
-            <span className="num-suffix">{suffix}</span>
-        </div>
-    );
-}
 
 interface ToggleProps {
     checked: boolean;

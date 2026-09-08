@@ -1,4 +1,5 @@
 import { CockroachAutomationRules } from './CockroachAutomationRules';
+import { NumberInput } from './TextInput';
 import { useEffect, useState } from 'react';
 import {
     killAllCockroaches,
@@ -52,12 +53,7 @@ export function CockroachModulePanel() {
         }
     };
 
-    const updateSetting = (key: keyof CockroachModuleSettings, raw: string) => {
-        const bounds = key === 'maxCount' ? [1, 99] : [1, 60];
-        const parsed = Number.parseInt(raw, 10);
-        const value = Number.isFinite(parsed)
-            ? Math.max(bounds[0], Math.min(bounds[1], parsed))
-            : bounds[0];
+    const updateSetting = (key: keyof CockroachModuleSettings, value: number) => {
         setSettings((current) => ({ ...current, [key]: value }));
     };
 
@@ -86,28 +82,24 @@ export function CockroachModulePanel() {
                     <div className="cockroach-module-fields">
                         <label>
                             <span>最大蟑螂数量</span>
-                            <input
+                            <NumberInput
                                 aria-label="最大蟑螂数量"
-                                type="number"
-                                min="1"
-                                max="99"
+                                min={1}
+                                max={99}
                                 value={settings.maxCount}
-                                onChange={(event) => updateSetting('maxCount', event.currentTarget.value)}
+                                onChange={(value) => updateSetting('maxCount', value)}
                             />
                         </label>
                         <label>
                             <span>幼虫成长时间</span>
-                            <span className="cockroach-module-number-with-unit">
-                                <input
+                                <NumberInput
                                     aria-label="幼虫成长时间"
-                                    type="number"
-                                    min="1"
-                                    max="60"
+                                    min={1}
+                                    max={60}
+                                    suffix="分钟"
                                     value={settings.babyGrowthMinutes}
-                                    onChange={(event) => updateSetting('babyGrowthMinutes', event.currentTarget.value)}
+                                    onChange={(value) => updateSetting('babyGrowthMinutes', value)}
                                 />
-                                分钟
-                            </span>
                         </label>
                     </div>
                     <CockroachAutomationRules />

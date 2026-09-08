@@ -83,6 +83,8 @@ beforeEach(() => {
     });
     usePresenceStore.setState({
         enabled: false,
+        inputActivityEnabled: false,
+        inputActivityAvailability: 'disabled',
         cameraDeviceId: null,
         intervalSeconds: 60,
         absenceSensitivity: 'strict',
@@ -112,6 +114,17 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('SettingsPanel', () => {
+    it('allows clearing and replacing the focus duration without inserting zero', () => {
+        render(<SettingsPanel />);
+        const input = screen.getAllByRole('spinbutton')[0] as HTMLInputElement;
+        fireEvent.change(input, { target: { value: '' } });
+        expect(input.value).toBe('');
+        fireEvent.change(input, { target: { value: '30' } });
+        fireEvent.blur(input);
+        fireEvent.click(screen.getByRole('button', { name: '应用' }));
+        expect(usePomodoroStore.getState().focusDurationSeconds).toBe(30 * 60);
+    });
+
     it('adds settings tabs only for installed and enabled feature packs', () => {
         render(<SettingsPanel />);
 
@@ -565,4 +578,22 @@ describe('SettingsPanel', () => {
         });
     });
 
+});
+
+
+describe('keyboard and mouse activity consent', () => {
+    it('requires Apply, persists independently of the camera, and supports revocation', async () => {
+        render(<SettingsPanel />);
+        const toggle = screen.getByRole('button', { name: '允许检测键盘和鼠标活动' });
+        expect(toggle.getAttribute('aria-pressed')).toBe('false');
+        fireEvent.click(toggle);
+        expect(usePresenceStore.getState().inputActivityEnabled).toBe(false);
+        await act(async () => { fireEvent.click(screen.getByRole('button', { name: '应用' })); });
+        expect(usePresenceStore.getState().inputActivityEnabled).toBe(true);
+        expect(usePresenceStore.getState().enabled).toBe(false);
+        expect(invoke.mock.calls.some(([command]) => command === 'sample_input_activity')).toBe(false);
+        fireEvent.click(toggle);
+        await act(async () => { fireEvent.click(screen.getByRole('button', { name: '应用' })); });
+        expect(usePresenceStore.getState().inputActivityEnabled).toBe(false);
+    });
 });

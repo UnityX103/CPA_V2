@@ -47,6 +47,7 @@ describe('presence settings updates', () => {
         const { presence } = freshStores();
         presence.setState({
             enabled: true,
+            inputActivityEnabled: false,
             cameraDeviceId: null,
             availability: 'ready',
             confirmedPresence: 'present',
@@ -56,6 +57,7 @@ describe('presence settings updates', () => {
 
         await presence.getState().applySettings({
             enabled: true,
+            inputActivityEnabled: false,
             cameraDeviceId: 'camera-usb',
             intervalSeconds: 10,
             absenceSensitivity: 'strict',
@@ -64,6 +66,7 @@ describe('presence settings updates', () => {
         });
 
         expect(presence.getState()).toMatchObject({
+            inputActivityEnabled: false,
             cameraDeviceId: 'camera-usb',
             confirmedPresence: 'unknown',
             lastSuccessfulAt: null,
@@ -84,6 +87,7 @@ describe('presence settings updates', () => {
 
         await presence.getState().applySettings({
             enabled: true,
+            inputActivityEnabled: false,
             cameraDeviceId: null,
             intervalSeconds: 5,
             absenceSensitivity: 'strict',
@@ -118,6 +122,7 @@ describe('presence settings updates', () => {
 
         await presence.getState().applySettings({
             enabled: true,
+            inputActivityEnabled: false,
             cameraDeviceId: null,
             intervalSeconds: 10,
             absenceSensitivity: 'balanced',
@@ -416,6 +421,7 @@ describe('presence monitor scheduling', () => {
         const { presence, pomodoro } = freshStores();
         presence.setState({
             enabled: true,
+            inputActivityEnabled: false,
             cameraDeviceId: 'camera-usb',
             generation: 1,
             intervalSeconds: 30,

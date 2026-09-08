@@ -25,6 +25,9 @@ export type {
     RestDeskReminderMode,
 } from './presencePersistence';
 
+export const INPUT_ACTIVITY_RECENT_MS = 30_000;
+export type InputActivityAvailability = 'disabled' | 'waiting' | 'ready' | 'error';
+
 export type PresencePlatform = 'macos' | 'windows' | 'other';
 export type PresenceAvailability =
     | 'disabled'
@@ -57,6 +60,11 @@ export interface PresenceNotice {
 
 interface PresenceState extends PresencePreferences {
     platform: PresencePlatform;
+    inputActivityAvailability: InputActivityAvailability;
+    inputIdleMs: number | null;
+    inputSampleAt: number | null;
+    cameraPresence: ConfirmedPresence;
+    cameraSampleAt: number | null;
     availability: PresenceAvailability;
     confirmedPresence: ConfirmedPresence;
     lastSuccessfulAt: number | null;
@@ -87,6 +95,11 @@ function initialPresenceState(): PresenceState {
     return {
         ...DEFAULT_PRESENCE_PREFERENCES,
         platform: 'other',
+        inputActivityAvailability: 'disabled',
+        inputIdleMs: null,
+        inputSampleAt: null,
+        cameraPresence: 'unknown',
+        cameraSampleAt: null,
         availability: 'disabled',
         confirmedPresence: 'unknown',
         lastSuccessfulAt: null,
@@ -120,11 +133,11 @@ function capabilityState(
             ? capability.availability
             : null,
         ...(becameUnavailable
-            ? { notice: notice('摄像头不可用，自动控制暂不可用') }
+            ? { notice: notice('摄像头不可用，摄像头自动控制暂不可用') }
             : {}),
         ...(capability.availability === 'ready'
             ? {}
-            : { consecutiveAbsentSamples: 0 }),
+            : { consecutiveAbsentSamples: 0, cameraPresence: 'unknown', cameraSampleAt: null }),
     };
 }
 
@@ -166,6 +179,11 @@ export function createPresenceStore(opts: { isSettingsWindow: boolean }): Presen
             const normalized = normalizePresencePreferences(preferences);
             set((state) => ({
                 ...normalized,
+                inputActivityAvailability: normalized.inputActivityEnabled ? 'waiting' : 'disabled',
+                inputIdleMs: null,
+                inputSampleAt: null,
+                cameraPresence: 'unknown',
+                cameraSampleAt: null,
                 availability: normalized.enabled ? 'checking' : 'disabled',
                 generation: state.generation + 1,
                 confirmedPresence: 'unknown',
@@ -179,6 +197,7 @@ export function createPresenceStore(opts: { isSettingsWindow: boolean }): Presen
             const normalized = normalizePresencePreferences(preferences);
             const previous = get();
             const enabledChanged = previous.enabled !== normalized.enabled;
+            const inputChanged = previous.inputActivityEnabled !== normalized.inputActivityEnabled;
             const cameraChanged = previous.cameraDeviceId !== normalized.cameraDeviceId;
             const intervalChanged = previous.intervalSeconds !== normalized.intervalSeconds;
             const sensitivityChanged = previous.absenceSensitivity
@@ -186,11 +205,17 @@ export function createPresenceStore(opts: { isSettingsWindow: boolean }): Presen
             const monitorChanged = enabledChanged || cameraChanged || intervalChanged;
             set((state) => ({
                 ...normalized,
+                ...(inputChanged ? {
+                    inputActivityAvailability: normalized.inputActivityEnabled ? 'waiting' as const : 'disabled' as const,
+                    inputIdleMs: null,
+                    inputSampleAt: null,
+                } : {}),
+                ...(enabledChanged || cameraChanged ? { cameraPresence: 'unknown' as const, cameraSampleAt: null } : {}),
                 availability: normalized.enabled
                     ? (enabledChanged ? 'checking' : state.availability)
                     : 'disabled',
                 generation: monitorChanged ? state.generation + 1 : state.generation,
-                confirmedPresence: enabledChanged || cameraChanged ? 'unknown' : state.confirmedPresence,
+                confirmedPresence: enabledChanged || cameraChanged || inputChanged ? 'unknown' : state.confirmedPresence,
                 lastSuccessfulAt: enabledChanged || cameraChanged ? null : state.lastSuccessfulAt,
                 lastError: enabledChanged || cameraChanged ? null : state.lastError,
                 inFlight: monitorChanged ? false : state.inFlight,
@@ -198,7 +223,7 @@ export function createPresenceStore(opts: { isSettingsWindow: boolean }): Presen
                     ? 0
                     : state.consecutiveAbsentSamples,
             }));
-            if (previous.enabled && !normalized.enabled) {
+            if ((previous.enabled || previous.inputActivityEnabled) && !normalized.enabled && !normalized.inputActivityEnabled) {
                 usePomodoroStore.getState().clearPresenceAutomationOwnership();
             }
             await savePresencePreferences(normalized);
@@ -283,38 +308,7 @@ export function applyPresenceCapability(
     store.setState((state) => capabilityState(state, capability));
 }
 
-function applyLivePresenceSample(
-    store: PresenceStore,
-    sample: PresenceSample,
-    nowMs: number,
-): void {
-    const current = store.getState();
-    const availabilityChanged = sample.availability !== current.availability;
-    const becameUnavailable = terminalAvailability(sample.availability) && availabilityChanged;
-
-    if (sample.observation === 'unknown') {
-        store.setState({
-            availability: sample.availability,
-            confirmedPresence: 'unknown',
-            lastError: sample.errorCode,
-            inFlight: false,
-            consecutiveAbsentSamples: 0,
-            ...(becameUnavailable
-                ? { notice: notice('摄像头不可用，自动控制暂不可用') }
-                : {}),
-        });
-        return;
-    }
-
-    store.setState({
-        availability: sample.availability,
-        confirmedPresence: sample.observation,
-        lastSuccessfulAt: nowMs,
-        lastError: sample.errorCode,
-        inFlight: false,
-    });
-}
-
+// Each source keeps its own evidence; input polls must never count as camera misses.
 export function applyPresenceSample(
     store: PresenceStore,
     pomodoro: PomodoroStore,
@@ -322,72 +316,82 @@ export function applyPresenceSample(
     nowMs: number,
 ): void {
     const current = store.getState();
+    const required = presenceAbsencePolicy(current.absenceSensitivity).requiredAbsentSamples;
+    const misses = sample.observation === 'absent'
+        ? Math.min(current.consecutiveAbsentSamples + 1, required) : 0;
+    const cameraPresence = sample.observation === 'absent' && misses < required
+        ? current.cameraPresence : sample.observation;
+    store.setState({
+        availability: sample.availability,
+        cameraPresence,
+        cameraSampleAt: nowMs,
+        lastError: sample.errorCode,
+        inFlight: false,
+        consecutiveAbsentSamples: misses,
+        ...(terminalAvailability(sample.availability) && sample.availability !== current.availability
+            ? { notice: notice('摄像头不可用，摄像头自动控制暂不可用') } : {}),
+    });
+    applyCombinedPresence(store, pomodoro, nowMs, sample.observation !== 'absent' || misses >= required
+        || (current.inputActivityEnabled && pomodoro.getState().currentPhase === 'break'));
+}
+
+export function applyInputActivitySample(
+    store: PresenceStore,
+    pomodoro: PomodoroStore,
+    idleMs: number | null,
+    nowMs: number,
+): void {
+    const valid = idleMs !== null && Number.isFinite(idleMs) && idleMs >= 0;
+    store.setState({
+        inputActivityAvailability: valid ? 'ready' : 'error',
+        inputIdleMs: valid ? idleMs : null,
+        inputSampleAt: nowMs,
+    });
+    applyCombinedPresence(store, pomodoro, nowMs);
+}
+
+export function applyCombinedPresence(store: PresenceStore, pomodoro: PomodoroStore, nowMs: number, control = true): void {
+    const current = store.getState();
     const pomo = pomodoro.getState();
-
-    if (sample.observation === 'unknown') {
-        applyLivePresenceSample(store, sample, nowMs);
-        return;
+    let observation = current.enabled ? current.cameraPresence : 'unknown';
+    const inputEnabled = current.inputActivityEnabled && pomo.currentPhase === 'break';
+    if (inputEnabled) {
+        const cameraFresh = current.cameraSampleAt !== null
+            && nowMs - current.cameraSampleAt <= current.intervalSeconds * 1000 + SAMPLE_TIMEOUT_MS;
+        const camera = current.enabled && cameraFresh ? current.cameraPresence : 'unknown';
+        const inputFresh = current.inputSampleAt !== null && nowMs - current.inputSampleAt <= 10_000;
+        const input = current.inputActivityAvailability === 'ready' && inputFresh && current.inputIdleMs !== null
+            ? (current.inputIdleMs + nowMs - current.inputSampleAt! < INPUT_ACTIVITY_RECENT_MS ? 'present' : 'absent')
+            : 'unknown';
+        observation = camera === 'present' || input === 'present' ? 'present'
+            : input === 'absent' && (!current.enabled || camera === 'absent') ? 'absent' : 'unknown';
     }
-
-    if (sample.observation === 'absent') {
-        const requiredSamples = presenceAbsencePolicy(
-            current.absenceSensitivity,
-        ).requiredAbsentSamples;
-        const consecutiveAbsentSamples = Math.min(
-            current.consecutiveAbsentSamples + 1,
-            requiredSamples,
-        );
-        const confirmed = consecutiveAbsentSamples >= requiredSamples;
-        store.setState({
-            availability: sample.availability,
-            confirmedPresence: confirmed ? 'absent' : current.confirmedPresence,
-            lastSuccessfulAt: nowMs,
-            lastError: sample.errorCode,
-            inFlight: false,
-            consecutiveAbsentSamples,
-        });
-        if (!confirmed) return;
+    store.setState({
+        confirmedPresence: observation,
+        ...(observation !== 'unknown' ? { lastSuccessfulAt: nowMs } : {}),
+    });
+    if (!control || observation === 'unknown') return;
+    if (observation === 'absent') {
         if (pomo.currentPhase === 'break') {
-            const resumed = pomodoro.getState().resumeBreakFromPresence();
-            if (resumed) {
+            if (pomodoro.getState().resumeBreakFromPresence()) {
                 store.setState({ notice: notice('检测到离开，已继续休息') });
             }
-            return;
-        }
-        if (pomo.currentPhase !== 'focus' || !pomo.isRunning) return;
-        const paused = pomodoro.getState().pauseFocusFromPresence();
-        if (paused) {
+        } else if (pomo.currentPhase === 'focus' && pomo.isRunning
+            && pomodoro.getState().pauseFocusFromPresence()) {
             store.setState({ notice: notice('检测到离开，已暂停专注') });
         }
         return;
     }
-
-    store.setState({
-        availability: sample.availability,
-        confirmedPresence: 'present',
-        lastSuccessfulAt: nowMs,
-        lastError: sample.errorCode,
-        inFlight: false,
-        consecutiveAbsentSamples: 0,
-    });
-
     if (pomo.currentPhase === 'break') {
-        const paused = pomodoro.getState().pauseBreakFromPresence();
-        if (paused) {
+        if (pomodoro.getState().pauseBreakFromPresence()) {
             store.setState({ notice: notice('仍在工位，已暂停休息') });
         }
         return;
     }
-
     const focusStarted = pomodoro.getState().startFocusFromPresence();
-    const focusResumed = !focusStarted
-        && pomodoro.getState().resumeFocusFromPresence();
+    const focusResumed = !focusStarted && pomodoro.getState().resumeFocusFromPresence();
     if (focusStarted || focusResumed) {
-        store.setState({
-            notice: notice(focusStarted
-                ? '检测到在场，已开始专注'
-                : '检测到返回，已继续专注'),
-        });
+        store.setState({ notice: notice(focusStarted ? '检测到在场，已开始专注' : '检测到返回，已继续专注') });
     }
 }
 

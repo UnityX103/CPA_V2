@@ -22,6 +22,7 @@ describe('presence persistence', () => {
     it('defaults to disabled when no value exists', async () => {
         await expect(persistence.loadPresencePreferences()).resolves.toEqual({
             enabled: false,
+            inputActivityEnabled: false,
             cameraDeviceId: null,
             intervalSeconds: 10,
             absenceSensitivity: 'strict',
@@ -40,6 +41,7 @@ describe('presence persistence', () => {
 
         await expect(persistence.loadPresencePreferences()).resolves.toEqual({
             enabled: true,
+            inputActivityEnabled: false,
             cameraDeviceId: null,
             intervalSeconds: 45,
             absenceSensitivity: 'strict',
@@ -61,6 +63,7 @@ describe('presence persistence', () => {
 
             await expect(persistence.loadPresencePreferences()).resolves.toEqual({
                 enabled: true,
+                inputActivityEnabled: false,
                 cameraDeviceId: null,
                 intervalSeconds: 10,
                 absenceSensitivity,
@@ -82,6 +85,7 @@ describe('presence persistence', () => {
 
         await expect(persistence.loadPresencePreferences()).resolves.toEqual({
             enabled: true,
+            inputActivityEnabled: false,
             cameraDeviceId: null,
             intervalSeconds: 10,
             absenceSensitivity: 'strict',
@@ -99,6 +103,7 @@ describe('presence persistence', () => {
 
         await expect(persistence.loadPresencePreferences()).resolves.toEqual({
             enabled: true,
+            inputActivityEnabled: false,
             cameraDeviceId: null,
             intervalSeconds: 5,
             absenceSensitivity: 'strict',
@@ -109,12 +114,13 @@ describe('presence persistence', () => {
 
     it('falls back for unsupported schemas', async () => {
         storeData.set('presencePreferences', {
-            schemaVersion: 5,
+            schemaVersion: 999,
             enabled: true,
             intervalSeconds: 30,
         });
         await expect(persistence.loadPresencePreferences()).resolves.toEqual({
             enabled: false,
+            inputActivityEnabled: false,
             cameraDeviceId: null,
             intervalSeconds: 10,
             absenceSensitivity: 'strict',
@@ -123,9 +129,10 @@ describe('presence persistence', () => {
         });
     });
 
-    it('saves only device-local v4 settings', async () => {
+    it('saves only device-local v5 settings', async () => {
         await persistence.savePresencePreferences({
             enabled: true,
+            inputActivityEnabled: false,
             cameraDeviceId: 'camera-usb',
             intervalSeconds: 30,
             absenceSensitivity: 'relaxed',
@@ -134,8 +141,9 @@ describe('presence persistence', () => {
         });
 
         expect(storeData.get('presencePreferences')).toEqual({
-            schemaVersion: 4,
+            schemaVersion: 5,
             enabled: true,
+            inputActivityEnabled: false,
             cameraDeviceId: 'camera-usb',
             intervalSeconds: 30,
             absenceSensitivity: 'relaxed',
@@ -149,6 +157,7 @@ describe('presence persistence', () => {
         storeData.set('presencePreferences', {
             schemaVersion: 4,
             enabled: true,
+            inputActivityEnabled: false,
             cameraDeviceId: 'camera-usb',
             intervalSeconds: 10,
             absenceSensitivity: 'balanced',
@@ -158,6 +167,7 @@ describe('presence persistence', () => {
 
         await expect(persistence.loadPresencePreferences()).resolves.toEqual({
             enabled: true,
+            inputActivityEnabled: false,
             cameraDeviceId: 'camera-usb',
             intervalSeconds: 10,
             absenceSensitivity: 'balanced',
@@ -165,4 +175,13 @@ describe('presence persistence', () => {
             restDeskReminderMode: 'cockroachInvasion',
         });
     });
+});
+
+
+it('migrates older settings without input consent and persists explicit v5 opt-in', async () => {
+    storeData.set('presencePreferences', { schemaVersion: 4, enabled: true });
+    expect((await persistence.loadPresencePreferences()).inputActivityEnabled).toBe(false);
+    await persistence.savePresencePreferences({ ...persistence.DEFAULT_PRESENCE_PREFERENCES, inputActivityEnabled: true });
+    expect(await persistence.loadPresencePreferences()).toMatchObject({ enabled: false, inputActivityEnabled: true });
+    expect(storeData.get('presencePreferences')).toMatchObject({ schemaVersion: 5, inputActivityEnabled: true });
 });

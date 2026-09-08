@@ -109,7 +109,7 @@ export function createPomodoroBroadcast(
         totalRounds: state.totalRounds,
         remainingSeconds: state.remainingSeconds,
         reason,
-        workstationPresence: presence.getState().enabled ? presence.getState().confirmedPresence : 'unknown',
+        workstationPresence: (presence.getState().enabled || (presence.getState().inputActivityEnabled && state.currentPhase === 'break')) ? presence.getState().confirmedPresence : 'unknown',
     });
 
     const publish = (event: PomodoroBroadcastEvent) => {
@@ -138,7 +138,7 @@ export function createPomodoroBroadcast(
                 ));
             });
             unsubscribePresence = presence.subscribe((state, previous) => {
-                if (state.enabled !== previous.enabled || state.confirmedPresence !== previous.confirmedPresence) {
+                if (state.enabled !== previous.enabled || state.inputActivityEnabled !== previous.inputActivityEnabled || state.confirmedPresence !== previous.confirmedPresence) {
                     publish(build(store.getState(), 'presence.changed', null, 'presence', true));
                 }
             });

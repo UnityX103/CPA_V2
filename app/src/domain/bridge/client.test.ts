@@ -36,11 +36,13 @@ function snapshot(): BridgeSnapshot {
         },
         presence: {
             enabled: true,
+            inputActivityEnabled: true,
             cameraDeviceId: 'camera-usb',
             intervalSeconds: 30,
             absenceSensitivity: 'relaxed',
             restDeskReminderEnabled: true,
             restDeskReminderMode: 'cockroachInvasion',
+            inputActivityAvailability: 'ready',
             platform: 'macos',
             availability: 'ready',
             confirmedPresence: 'present',
@@ -111,12 +113,14 @@ describe('bridge client', () => {
         }));
         expect(usePresenceStore.getState()).toEqual(expect.objectContaining({
             enabled: true,
+            inputActivityEnabled: true,
             cameraDeviceId: 'camera-usb',
             intervalSeconds: 30,
             absenceSensitivity: 'relaxed',
             restDeskReminderEnabled: true,
             restDeskReminderMode: 'cockroachInvasion',
             availability: 'ready',
+            inputActivityAvailability: 'ready',
             confirmedPresence: 'present',
         }));
     });

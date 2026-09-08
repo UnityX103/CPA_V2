@@ -5,6 +5,7 @@ import { useAppUpdateStore } from './domain/appUpdate';
 import { useNetworkStore } from './domain/network';
 import { usePomodoroStore } from './domain/pomodoro';
 import { useSettingsStore } from './domain/settings';
+import { defaultUserPreferencesSnapshot } from './domain/userPreferences';
 
 const mocks = vi.hoisted(() => ({
     loadSettings: vi.fn(),
@@ -13,7 +14,6 @@ const mocks = vi.hoisted(() => ({
     savePreferences: vi.fn(),
 }));
 
-vi.mock('./ui/PomodoroPanel', () => ({ PomodoroPanel: () => <div>timer</div> }));
 vi.mock('./ui/PomodoroEndActionLayer', () => ({ PomodoroEndActionLayer: () => null }));
 vi.mock('./ui/AppUpdateReadyNotice', () => ({ AppUpdateReadyNotice: () => null }));
 vi.mock('./domain/stateSync', () => ({ useStateSync: vi.fn() }));
@@ -43,6 +43,8 @@ vi.mock('@tauri-apps/api/event', () => ({
 }));
 
 beforeEach(() => {
+    vi.stubGlobal('requestAnimationFrame', vi.fn(() => 1));
+    vi.stubGlobal('cancelAnimationFrame', vi.fn());
     mocks.loadSettings.mockReset().mockResolvedValue({
         uiScale: 1.25,
         autostartEnabled: false,
@@ -69,12 +71,56 @@ beforeEach(() => {
         hydrate: vi.fn(async () => {}),
         startAutomaticChecks: vi.fn(() => () => {}),
     });
-    usePomodoroStore.setState({ lastEndEvent: null, isPinned: false, pinSource: null });
+    usePomodoroStore.setState(usePomodoroStore.getInitialState());
 });
 
-afterEach(cleanup);
+afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+});
 
 describe('App startup', () => {
+    it.each(['local', 'cloud'] as const)('initializes the timer and empty ring from %s preferences', async (source) => {
+        const snapshot = defaultUserPreferencesSnapshot();
+        snapshot.pomodoro.focusDurationSeconds = 30 * 60;
+        snapshot.pomodoro.breakDurationSeconds = 10 * 60;
+        if (source === 'local') {
+            mocks.loadPreferences.mockResolvedValue(snapshot);
+        } else {
+            useNetworkStore.setState({
+                accountStatus: 'loggedIn',
+                cloudSyncStatus: 'synced',
+                cloudData: snapshot,
+            });
+        }
+
+        const { container } = render(<App />);
+        await waitFor(() => expect(mocks.savePreferences).toHaveBeenCalled());
+
+        expect(usePomodoroStore.getState()).toMatchObject({
+            focusDurationSeconds: 30 * 60,
+            remainingSeconds: 30 * 60,
+            currentPhase: 'focus',
+            currentRound: 1,
+            isRunning: false,
+        });
+        expect(container.querySelector('.pomo-clock-time')?.textContent).toBe('30:00');
+        const ring = container.querySelector('circle[stroke-dashoffset]')!;
+        expect(ring.getAttribute('stroke-dashoffset')).toBe(ring.getAttribute('stroke-dasharray'));
+
+        act(() => {
+            usePomodoroStore.getState().start();
+            usePomodoroStore.getState().tick(60);
+        });
+        expect(container.querySelector('.pomo-clock-time')?.textContent).toBe('29:00');
+        expect(Number(ring.getAttribute('stroke-dashoffset'))).toBeCloseTo(
+            Number(ring.getAttribute('stroke-dasharray')) * 29 / 30,
+        );
+        act(() => usePomodoroStore.getState().reset());
+        expect(container.querySelector('.pomo-clock-time')?.textContent).toBe('30:00');
+        expect(ring.getAttribute('stroke-dashoffset')).toBe(ring.getAttribute('stroke-dasharray'));
+    });
+
     it('hydrates retained settings and saves one unified snapshot', async () => {
         render(<App />);
 

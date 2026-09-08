@@ -115,6 +115,8 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
         },
         presence: {
             enabled: presence.enabled,
+            inputActivityEnabled: presence.inputActivityEnabled,
+            inputActivityAvailability: presence.inputActivityAvailability,
             cameraDeviceId: presence.cameraDeviceId,
             intervalSeconds: presence.intervalSeconds,
             absenceSensitivity: presence.absenceSensitivity,
@@ -334,6 +336,8 @@ export function pomoSig(s: {
 
 export function presenceSig(s: {
     enabled: boolean;
+    inputActivityEnabled: boolean;
+    inputActivityAvailability: string;
     cameraDeviceId: string | null;
     intervalSeconds: number;
     absenceSensitivity: PresenceAbsenceSensitivity;
@@ -347,6 +351,8 @@ export function presenceSig(s: {
 }): string {
     return JSON.stringify([
         s.enabled,
+        s.inputActivityEnabled,
+        s.inputActivityAvailability,
         s.cameraDeviceId,
         s.intervalSeconds,
         s.absenceSensitivity,

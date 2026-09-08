@@ -180,8 +180,8 @@
     "semantic_hash": "a5965f46475e54a0d9d73de3212ad7df"
   },
   "app/package.json": {
-    "mtime": 1788572520.9853005,
-    "ast_hash": "69619a904f7a1cd337f0a88bce4fc1ac",
+    "mtime": 1788832616.8378205,
+    "ast_hash": "46cdf455125f3761f0a463e953349ade",
     "semantic_hash": ""
   },
   "app/public/sounds/pomodoro/manifest.json": {
@@ -265,8 +265,8 @@
     "semantic_hash": "00b844b36e6ef810e0132492f83c131b"
   },
   "app/src-tauri/src/lib.rs": {
-    "mtime": 1788571753.7767308,
-    "ast_hash": "b801f6fcb67394d2644b9dc9fc8a6233",
+    "mtime": 1788677875.6060052,
+    "ast_hash": "f764751d7b6a7a03c0d14220030738ff",
     "semantic_hash": ""
   },
   "app/src-tauri/src/main.rs": {
@@ -345,8 +345,8 @@
     "semantic_hash": "cfa124a91cc09e1a2c209025e198a71f"
   },
   "app/src-tauri/tauri.conf.json": {
-    "mtime": 1788572520.9872184,
-    "ast_hash": "8fabc400ee64992a8b50818f454f10bc",
+    "mtime": 1788832616.840058,
+    "ast_hash": "3781a57cc70fe9b4e45b969de17c53b0",
     "semantic_hash": ""
   },
   "app/src-tauri/tests/focus_restore_regression.rs": {
@@ -360,13 +360,13 @@
     "semantic_hash": "e5f60a128d3bd6d58f1276a2d92458c3"
   },
   "app/src/App.test.tsx": {
-    "mtime": 1788501852.2542498,
-    "ast_hash": "9f27cb9e31375489440775620f6a3107",
+    "mtime": 1788831764.2572253,
+    "ast_hash": "47c7832e8433109675d69c64021b5662",
     "semantic_hash": ""
   },
   "app/src/App.tsx": {
-    "mtime": 1788502937.5713277,
-    "ast_hash": "1912fe5e84a05f8e6bc4a092e68a8731",
+    "mtime": 1788831798.3105185,
+    "ast_hash": "3920f363c5566e2bceb6d24c214ad14d",
     "semantic_hash": ""
   },
   "app/src/DevAlignApp.tsx": {
@@ -485,13 +485,13 @@
     "semantic_hash": "3bdd321e29ded30ef92a5dda736ace25"
   },
   "app/src/domain/bridge/client.test.ts": {
-    "mtime": 1788499301.1364017,
-    "ast_hash": "12b55f0436e17ba05c24754e9056f733",
+    "mtime": 1788678420.5133827,
+    "ast_hash": "a7e539629c1e59fa780a196a12e42f96",
     "semantic_hash": ""
   },
   "app/src/domain/bridge/client.ts": {
-    "mtime": 1788499324.0743692,
-    "ast_hash": "3e1c23a392cc0cf12d81dd69127948da",
+    "mtime": 1788677875.6079009,
+    "ast_hash": "06ec5b44bb7b082c411127f195522a86",
     "semantic_hash": ""
   },
   "app/src/domain/bridge/dispatch.test.ts": {
@@ -505,28 +505,28 @@
     "semantic_hash": "9a46a2830dd5e4340f902054b0a7e036"
   },
   "app/src/domain/bridge/host.test.ts": {
-    "mtime": 1788499301.1371942,
-    "ast_hash": "69bd3ee5d33a838be150dd8d0df9ec8f",
+    "mtime": 1788678420.5135098,
+    "ast_hash": "e236684e80e6663613c2caea01a0a026",
     "semantic_hash": ""
   },
   "app/src/domain/bridge/host.ts": {
-    "mtime": 1788499324.0747814,
-    "ast_hash": "7b05da2f6476a48e6fa0d6b4e821d851",
+    "mtime": 1788677875.6076474,
+    "ast_hash": "708510b93bdb0259909d11e98ee78c39",
     "semantic_hash": ""
   },
   "app/src/domain/bridge/protocol.test.ts": {
-    "mtime": 1788499301.1366653,
-    "ast_hash": "0ae3eb5bcf8e41b7391743c1d0e9991b",
+    "mtime": 1788678012.3091109,
+    "ast_hash": "be0421d3f9c67b1719082b6cf9de32c6",
     "semantic_hash": ""
   },
   "app/src/domain/bridge/protocol.ts": {
-    "mtime": 1788184232.0265524,
-    "ast_hash": "cec9d898765d95aba5a574254ac17e47",
+    "mtime": 1788677875.608226,
+    "ast_hash": "c53a38e8f2eee6c283c69e805ec0416d",
     "semantic_hash": ""
   },
   "app/src/domain/cloudAccountData.test.ts": {
-    "mtime": 1788182205.165458,
-    "ast_hash": "98332539a6776f7042b9191a293bcd0f",
+    "mtime": 1788831798.31096,
+    "ast_hash": "a5e454b4c96526f708d295dd035ddd11",
     "semantic_hash": ""
   },
   "app/src/domain/cloudAccountData.ts": {
@@ -625,23 +625,23 @@
     "semantic_hash": "dac108c9f4472abbb50cfe70c7c2251c"
   },
   "app/src/domain/presence.test.ts": {
-    "mtime": 1788499429.6526792,
-    "ast_hash": "000c2034d90fff39697a8730b110b5d0",
+    "mtime": 1788678012.3075035,
+    "ast_hash": "2a429257b01260f6b2baa2a4283d7197",
     "semantic_hash": ""
   },
   "app/src/domain/presence.ts": {
-    "mtime": 1788500115.4600914,
-    "ast_hash": "c4ad54d880f03b9a8535a21b894c3613",
+    "mtime": 1788678420.5132332,
+    "ast_hash": "b5c7e6dd2f65f24502f4de91197660e5",
     "semantic_hash": ""
   },
   "app/src/domain/presencePersistence.test.ts": {
-    "mtime": 1788499066.830693,
-    "ast_hash": "09b29d5efe7c8376352f221db9faf630",
+    "mtime": 1788678153.6598964,
+    "ast_hash": "c413cd227be8741246e64538c0fd4dcf",
     "semantic_hash": ""
   },
   "app/src/domain/presencePersistence.ts": {
-    "mtime": 1788499066.8304198,
-    "ast_hash": "f73db961fc8f202b68c6be6c76da397c",
+    "mtime": 1788677794.2359076,
+    "ast_hash": "b82b61a484d33bf67b5e0dbb32fa6cd5",
     "semantic_hash": ""
   },
   "app/src/domain/presencePolicy.ts": {
@@ -730,8 +730,8 @@
     "semantic_hash": "f84cba11181150ddca3d86b2ddd7f86b"
   },
   "app/src/domain/userPreferences.ts": {
-    "mtime": 1788184232.0270271,
-    "ast_hash": "e33d6ec2fcea1917130109bf68d3c3ee",
+    "mtime": 1788831798.3101075,
+    "ast_hash": "5034db4b205b5fda4ef91e777d415121",
     "semantic_hash": ""
   },
   "app/src/domain/userPreferencesPersistence.test.ts": {
@@ -830,9 +830,9 @@
     "semantic_hash": "161262617bf8365803d84580bc28c95b"
   },
   "app/src/ui/PomodoroPanel.tsx": {
-    "mtime": 1787663044.827579,
-    "ast_hash": "fb27694fb904b1ea08f80500522f972c",
-    "semantic_hash": "fb27694fb904b1ea08f80500522f972c"
+    "mtime": 1788678012.3061576,
+    "ast_hash": "6db5086fc882d1a8cac6f14a7e1c5cf6",
+    "semantic_hash": ""
   },
   "app/src/ui/PresenceNotice.tsx": {
     "mtime": 1786697981.7590466,
@@ -850,13 +850,13 @@
     "semantic_hash": "5e59f78377d4ccba9b695d67a7e3482d"
   },
   "app/src/ui/SettingsPanel.test.tsx": {
-    "mtime": 1788572037.733825,
-    "ast_hash": "4d78d0fb7a21087876b9ef7f33250750",
+    "mtime": 1788832052.032426,
+    "ast_hash": "4cdac6c0697054c331cabfb91013937d",
     "semantic_hash": ""
   },
   "app/src/ui/SettingsPanel.tsx": {
-    "mtime": 1788571753.777552,
-    "ast_hash": "31c877578254cce5c60471c4d42bb75c",
+    "mtime": 1788832148.3694959,
+    "ast_hash": "5ec76477303ee458606e3b3385cae553",
     "semantic_hash": ""
   },
   "app/src/ui/presenceAuthorization.test.ts": {
@@ -1870,23 +1870,23 @@
     "semantic_hash": ""
   },
   "app/src-tauri/src/cockroach_module.rs": {
-    "mtime": 1788570947.1074955,
-    "ast_hash": "f437ba1238fa756c0191f0649fd7d208",
+    "mtime": 1788589335.1837947,
+    "ast_hash": "bb1373587e96d2fa376937a8f45d8ba9",
     "semantic_hash": ""
   },
   "app/src-tauri/src/cockroach_module/macos.rs": {
-    "mtime": 1788308710.1389794,
-    "ast_hash": "ba0919eb6c72b9fc082643677771dbe1",
+    "mtime": 1788588889.7059069,
+    "ast_hash": "161a0aedc5a6817ad7060ce15cfcf83e",
     "semantic_hash": ""
   },
   "app/src-tauri/src/cockroach_module/unsupported.rs": {
-    "mtime": 1788308710.139733,
-    "ast_hash": "61e94248681d17a3ac32d8d6e9972327",
+    "mtime": 1788588889.7062283,
+    "ast_hash": "d2152c489da0bde306ad0f7b23af0484",
     "semantic_hash": ""
   },
   "app/src-tauri/src/cockroach_module/windows.rs": {
-    "mtime": 1788308710.1393604,
-    "ast_hash": "366acda47e1a06d956a273004657c312",
+    "mtime": 1788589254.069455,
+    "ast_hash": "2ed41a50c77778f068ae58fe0c220339",
     "semantic_hash": ""
   },
   "app/src-tauri/src/video_editor_module.rs": {
@@ -1920,13 +1920,13 @@
     "semantic_hash": ""
   },
   "app/src/ui/CockroachModulePanel.test.tsx": {
-    "mtime": 1788501394.346111,
-    "ast_hash": "2a3edf88c240a76dc6a67bbdf6387046",
+    "mtime": 1788832052.0328357,
+    "ast_hash": "93fd7e7520d11f811a3eaabdc8fcc941",
     "semantic_hash": ""
   },
   "app/src/ui/CockroachModulePanel.tsx": {
-    "mtime": 1788570042.631418,
-    "ast_hash": "e42e279a9cedc2295e078629aa14cb16",
+    "mtime": 1788832148.3702643,
+    "ast_hash": "7a61964d671f097e598f3038a8faebf6",
     "semantic_hash": ""
   },
   "app/src/videoEditorModuleConfig.test.ts": {
@@ -1980,18 +1980,18 @@
     "semantic_hash": ""
   },
   "video-editor-module/scripts/build_runtime.py": {
-    "mtime": 1788270245.6543434,
-    "ast_hash": "8f968bbd0736364ed886ad3c7d8a2a95",
+    "mtime": 1788575324.3781295,
+    "ast_hash": "48c44d55c3670d03b816d3b80f43a683",
     "semantic_hash": ""
   },
   "video-editor-module/scripts/package_layers.py": {
-    "mtime": 1788272026.2428217,
-    "ast_hash": "2d889296c7feb7320ddebf9886b03a5f",
+    "mtime": 1788575324.3795855,
+    "ast_hash": "e02acbc502c49424dd0338ff7474363a",
     "semantic_hash": ""
   },
   "video-editor-module/scripts/package_module.py": {
-    "mtime": 1788229576.0477247,
-    "ast_hash": "bfcd938826e7c931f3b02dee5402f9c8",
+    "mtime": 1788575324.3788254,
+    "ast_hash": "edeb2836c8b07cddd7a9eb4bef666b73",
     "semantic_hash": ""
   },
   "video-editor-module/scripts/prepare_models.py": {
@@ -2000,8 +2000,8 @@
     "semantic_hash": ""
   },
   "video-editor-module/tests/test_contract.py": {
-    "mtime": 1788568715.6817856,
-    "ast_hash": "397eb251f392608482d1e1316b095eaa",
+    "mtime": 1788575324.3801136,
+    "ast_hash": "248007a7249f5189bf28cacfd453999c",
     "semantic_hash": ""
   },
   "video-editor-module/video_editor_host.py": {
@@ -2040,8 +2040,8 @@
     "semantic_hash": ""
   },
   ".agents/skills/cpa-v2-release-publish/references/video-module-layered.md": {
-    "mtime": 1788271817.3878028,
-    "ast_hash": "f3e4544f01dc7924897390f296133b14",
+    "mtime": 1788575593.864989,
+    "ast_hash": "198d3b9c295d071ffdd76d0486b961cb",
     "semantic_hash": ""
   },
   "README.md": {
@@ -2050,8 +2050,8 @@
     "semantic_hash": ""
   },
   "cockroach-electron-module/README.md": {
-    "mtime": 1788570576.7359958,
-    "ast_hash": "b3be3eec285e7272fa38c3d6f61bae8b",
+    "mtime": 1788664115.936769,
+    "ast_hash": "c099f01f2a0036e3b2f2dddbcf1082a5",
     "semantic_hash": ""
   },
   "cockroach-electron-module/licenses/CockroachPet-MIT.txt": {
@@ -2080,13 +2080,13 @@
     "semantic_hash": ""
   },
   "video-editor-module/BUILD_MATRIX.md": {
-    "mtime": 1788326523.0263474,
-    "ast_hash": "666a4f65a1e6e75762a4e763ecb85305",
+    "mtime": 1788575593.8646333,
+    "ast_hash": "1cbd152bb6175bf11ffc0aab8d770438",
     "semantic_hash": ""
   },
   "video-editor-module/README.md": {
-    "mtime": 1788571289.021405,
-    "ast_hash": "20223c776b8042398be4118efabbe16b",
+    "mtime": 1788575593.8640037,
+    "ast_hash": "3790d82a9a02d8de3301a0654e4f60ef",
     "semantic_hash": ""
   },
   "video-editor-module/licenses/LIBVPX-LICENSE.txt": {
@@ -2160,8 +2160,8 @@
     "semantic_hash": ""
   },
   "app/src/domain/pomodoroBroadcast.ts": {
-    "mtime": 1788569810.0818667,
-    "ast_hash": "b777b1932dc155e59c25bb59310d5b7e",
+    "mtime": 1788677875.6088903,
+    "ast_hash": "693de504b1707495b3464b33b1e95fa5",
     "semantic_hash": ""
   },
   "app/src/extensionPackConfig.test.ts": {
@@ -2245,8 +2245,8 @@
     "semantic_hash": ""
   },
   "app/src-tauri/src/cockroach_module/automation.rs": {
-    "mtime": 1788570947.108001,
-    "ast_hash": "b111626fb9ef4f129ccbec1939b896db",
+    "mtime": 1788664115.7478087,
+    "ast_hash": "e038143051b117244590b6424670a5a1",
     "semantic_hash": ""
   },
   "app/src/domain/cockroachAutomation.ts": {
@@ -2255,18 +2255,18 @@
     "semantic_hash": ""
   },
   "app/src/domain/pomodoroEvents.test.ts": {
-    "mtime": 1788570861.4144385,
-    "ast_hash": "a89c4b3ce3e900ac8b24f7e7ed7ee5b2",
+    "mtime": 1788574677.9672694,
+    "ast_hash": "9454466048f3e379d8f8522de4924bb2",
     "semantic_hash": ""
   },
   "app/src/domain/pomodoroEvents.ts": {
-    "mtime": 1788570861.414323,
-    "ast_hash": "ee1b176f733f53c3df2a26a75da54bc2",
+    "mtime": 1788574607.4592834,
+    "ast_hash": "2992995fa1984c6966cf99718be328c7",
     "semantic_hash": ""
   },
   "app/src/extensions/cockroachInvasion/controller.test.ts": {
-    "mtime": 1788570617.3495584,
-    "ast_hash": "35b755a7f6a9fc32dd5b85e86dd24437",
+    "mtime": 1788574567.6267982,
+    "ast_hash": "5203b1e846c6754c6de06f82957b07ae",
     "semantic_hash": ""
   },
   "app/src/ui/CockroachAutomationRules.test.tsx": {
@@ -2275,8 +2275,8 @@
     "semantic_hash": ""
   },
   "app/src/ui/CockroachAutomationRules.tsx": {
-    "mtime": 1788570042.6119945,
-    "ast_hash": "bf690081407cfaedfa6e443da56333bf",
+    "mtime": 1788678153.6601582,
+    "ast_hash": "9237abb07c292e8c1cdc17df8a176eca",
     "semantic_hash": ""
   },
   "cockroach-electron-module/tests/test_control_actions.py": {
@@ -2285,13 +2285,68 @@
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-09-05-cockroach-event-action-rules.md": {
-    "mtime": 1788570523.5003703,
-    "ast_hash": "e499957c9bfab2db37aadd72987f3a33",
+    "mtime": 1788664115.9370143,
+    "ast_hash": "7aa4dcb52ab87275d9f87865b3feb54b",
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-09-05-owned-pomodoro-video.md": {
     "mtime": 1788572125.3231966,
     "ast_hash": "4b4a9c3acefad1566c78cb4e60915882",
+    "semantic_hash": ""
+  },
+  "video-editor-module/scripts/windows_runtime.py": {
+    "mtime": 1788575324.3772552,
+    "ast_hash": "292a909e2b57840958bc27b9cbb53ada",
+    "semantic_hash": ""
+  },
+  "video-editor-module/tests/test_windows_runtime.py": {
+    "mtime": 1788575389.8348317,
+    "ast_hash": "e8f6240ae9fabba400a8722eec105ff7",
+    "semantic_hash": ""
+  },
+  "app/src-tauri/src/cockroach_module/windows_process_tests.rs": {
+    "mtime": 1788589254.0701408,
+    "ast_hash": "1b5a63e397d5bbaaa4c6b9e75570b3e7",
+    "semantic_hash": ""
+  },
+  "app/src-tauri/src/input_activity/macos.rs": {
+    "mtime": 1788677875.4692464,
+    "ast_hash": "af27eed47f32fd56438ba8ffe2567464",
+    "semantic_hash": ""
+  },
+  "app/src-tauri/src/input_activity/mod.rs": {
+    "mtime": 1788677875.4690657,
+    "ast_hash": "b59af09af05554dbaee3f7f3b302b61b",
+    "semantic_hash": ""
+  },
+  "app/src-tauri/src/input_activity/windows.rs": {
+    "mtime": 1788677875.4693928,
+    "ast_hash": "30a3fa0dc9b49a42acffb2373d66a3fd",
+    "semantic_hash": ""
+  },
+  "app/src/domain/inputActivity.test.ts": {
+    "mtime": 1788678097.2667325,
+    "ast_hash": "e8cec4a24a775a49f93afff509cfcd48",
+    "semantic_hash": ""
+  },
+  "app/src/domain/inputActivity.ts": {
+    "mtime": 1788677986.7257752,
+    "ast_hash": "4f4e7b597390d3df5a0ed1c8e60285b1",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-09-06-break-input-presence.md": {
+    "mtime": 1788678420.513663,
+    "ast_hash": "16bf23902c06ea590b8b8101a95bbe33",
+    "semantic_hash": ""
+  },
+  "app/src/ui/TextInput.test.tsx": {
+    "mtime": 1788832209.750748,
+    "ast_hash": "5af0fca6daaa2f7275c22c9de6d1bf2d",
+    "semantic_hash": ""
+  },
+  "app/src/ui/TextInput.tsx": {
+    "mtime": 1788832148.3687022,
+    "ast_hash": "49afe34fa57befe7b3c471a6ba752c0b",
     "semantic_hash": ""
   }
 }

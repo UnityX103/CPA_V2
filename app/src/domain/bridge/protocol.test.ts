@@ -33,11 +33,13 @@ describe('bridge protocol', () => {
             },
             presence: {
                 enabled: true,
+                inputActivityEnabled: false,
                 cameraDeviceId: 'camera-built-in',
                 intervalSeconds: 60,
                 absenceSensitivity: 'strict',
                 restDeskReminderEnabled: true,
                 restDeskReminderMode: 'cockroachInvasion',
+                inputActivityAvailability: 'disabled',
                 platform: 'macos',
                 availability: 'ready',
                 confirmedPresence: 'present',
@@ -93,6 +95,7 @@ describe('bridge protocol', () => {
             }] },
             { v: BRIDGE_VERSION, store: 'presence', action: 'applySettings', args: [{
                 enabled: true,
+                inputActivityEnabled: false,
                 cameraDeviceId: 'camera-built-in',
                 intervalSeconds: 60,
                 absenceSensitivity: 'strict',

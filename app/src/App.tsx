@@ -27,6 +27,7 @@ import {
     savePersistedUserPreferences,
 } from './domain/userPreferencesPersistence';
 import type { CloudAccountData } from './domain/cloudAccountData';
+import { useInputActivityMonitor } from './domain/inputActivity';
 import { usePresenceMonitor, usePresenceStore } from './domain/presence';
 import { loadPresencePreferences } from './domain/presencePersistence';
 import { PresenceNotice } from './ui/PresenceNotice';
@@ -158,6 +159,7 @@ export default function App() {
     useBridgeHost();
     usePomodoroBroadcastSource();
     usePresenceMonitor({ enabled: localHydrated });
+    useInputActivityMonitor(localHydrated);
     useInputCounterWindowController();
     useRemotePlayerWindowController();
     useExtensionRuntimeContributions({ enabled: localHydrated });
@@ -268,6 +270,7 @@ export default function App() {
                 if (cloudArchive) {
                     hydrateUserPreferencesSnapshot({
                         stores,
+                        resetProgress: true,
                         snapshot: {
                             ...cloudArchive,
                             settings: {
@@ -279,6 +282,7 @@ export default function App() {
                 } else if (preferences) {
                     hydrateUserPreferencesSnapshot({
                         stores,
+                        resetProgress: true,
                         snapshot: {
                             ...preferences,
                             settings: {

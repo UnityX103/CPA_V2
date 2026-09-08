@@ -372,8 +372,6 @@
 
 /* ===== 表单控件: Input/TextSuffix 0cT2B / Input/Text brmHc / Input/Dropdown Frjkw ===== */
 
-.text-input,
-.num-input,
 .dropdown {
     display: flex;
     align-items: center;
@@ -384,44 +382,6 @@
     font-family: var(--font-cn);
     color: var(--input-text);
     box-sizing: border-box;
-}
-
-.text-input {
-    width: 100%;
-    font-size: var(--input-text-size);
-    font-weight: 500;
-    outline: none;
-}
-
-.text-input::placeholder { color: var(--input-placeholder); }
-.text-input:focus { border-color: var(--btn-primary-bg-idle); }
-
-.num-input {
-    justify-content: space-between;
-    width: 100%;
-}
-
-.num-input input {
-    flex: 1;
-    border: none;
-    outline: none;
-    background: transparent;
-    font-family: inherit;
-    font-size: var(--input-num-size);
-    font-weight: var(--input-num-weight);
-    color: var(--input-text);
-    min-width: 0;
-}
-
-.num-input input::-webkit-outer-spin-button,
-.num-input input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-.num-input input { -moz-appearance: textfield; }
-
-.num-suffix {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--input-suffix-color);
-    margin-left: 8px;
 }
 
 .dropdown {
@@ -1197,3 +1157,8 @@
     }
 }
 .pet-settings-pane { gap: 12px; }
+
+.input-activity-settings { display: flex; flex-direction: column; gap: 8px; }
+.input-activity-settings .pomo-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; padding: 0; }
+.input-activity-detail { margin: 0; color: var(--text-muted); font-size: 12px; line-height: 1.6; }
+.input-activity-status { color: var(--text-subtle); font-size: 12px; }

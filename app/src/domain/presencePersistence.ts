@@ -11,6 +11,7 @@ export type RestDeskReminderMode = 'cockroachInvasion';
 
 export interface PresencePreferences {
     enabled: boolean;
+    inputActivityEnabled: boolean;
     cameraDeviceId: string | null;
     intervalSeconds: number;
     absenceSensitivity: PresenceAbsenceSensitivity;
@@ -20,6 +21,7 @@ export interface PresencePreferences {
 
 export const DEFAULT_PRESENCE_PREFERENCES: PresencePreferences = {
     enabled: false,
+    inputActivityEnabled: false,
     cameraDeviceId: null,
     intervalSeconds: 10,
     absenceSensitivity: DEFAULT_PRESENCE_ABSENCE_SENSITIVITY,
@@ -64,6 +66,7 @@ export function normalizePresencePreferences(value: unknown): PresencePreference
         : DEFAULT_PRESENCE_PREFERENCES.enabled;
     return {
         enabled,
+        inputActivityEnabled: persisted.inputActivityEnabled === true,
         cameraDeviceId: normalizeCameraDeviceId(persisted.cameraDeviceId),
         intervalSeconds: normalizeSeconds(
             persisted.intervalSeconds,
@@ -87,7 +90,7 @@ export async function loadPresencePreferences(): Promise<PresencePreferences> {
             return { ...DEFAULT_PRESENCE_PREFERENCES };
         }
         const schemaVersion = (value as { schemaVersion?: unknown }).schemaVersion;
-        if (schemaVersion !== 1 && schemaVersion !== 2 && schemaVersion !== 3 && schemaVersion !== 4) {
+        if (schemaVersion !== 1 && schemaVersion !== 2 && schemaVersion !== 3 && schemaVersion !== 4 && schemaVersion !== 5) {
             return { ...DEFAULT_PRESENCE_PREFERENCES };
         }
         return normalizePresencePreferences(value);
@@ -101,7 +104,7 @@ export async function savePresencePreferences(preferences: PresencePreferences):
     try {
         const store = await openStore();
         await store.set(STORE_KEY, {
-            schemaVersion: 4,
+            schemaVersion: 5,
             ...normalizePresencePreferences(preferences),
         });
         await store.save();

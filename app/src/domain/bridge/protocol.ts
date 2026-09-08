@@ -41,6 +41,7 @@ export interface BridgeSnapshot {
         endSounds: PomodoroEndSounds;
     };
     presence: PresencePreferences & {
+        inputActivityAvailability: import('../presence').InputActivityAvailability;
         platform: PresencePlatform;
         availability: PresenceAvailability;
         confirmedPresence: ConfirmedPresence;

@@ -57,8 +57,8 @@ export function PomodoroPanel() {
     const clockState = clockStateOf(state.currentPhase, state.isRunning);
     const startLabel = state.isRunning ? '暂停' : '开始';
     const showSkip = state.isRunning && state.currentPhase !== 'completed';
-    const confirmedPresence = presence.enabled
-        && (presence.availability === 'ready' || presence.availability === 'checking')
+    const confirmedPresence = (presence.enabled || (presence.inputActivityEnabled && state.currentPhase === 'break'))
+        && (presence.inputActivityAvailability === 'ready' || presence.availability === 'ready' || presence.availability === 'checking')
         && presence.lastSuccessfulAt != null
         && presence.confirmedPresence !== 'unknown'
         ? presence.confirmedPresence

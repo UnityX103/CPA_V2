@@ -4,6 +4,7 @@ mod audio;
 mod cockroach_module;
 mod extension_packs;
 mod key_counter;
+mod input_activity;
 mod presence_detection;
 mod scaled_window;
 mod sound_files;
@@ -631,6 +632,7 @@ pub fn run() {
             accessibility::key_counter_health,
             accessibility::restart_key_counter_listener,
             accessibility::request_accessibility_permission,
+            input_activity::sample_input_activity,
             presence_detection::camera_presence_status,
             presence_detection::list_camera_devices,
             presence_detection::request_camera_presence_access,

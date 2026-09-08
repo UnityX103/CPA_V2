@@ -87,6 +87,7 @@ describe('bridge host', () => {
             action: 'applySettings',
             args: [{
                 enabled: true,
+                inputActivityEnabled: false,
                 cameraDeviceId: 'camera-usb',
                 intervalSeconds: 30,
                 absenceSensitivity: 'balanced',
@@ -97,6 +98,7 @@ describe('bridge host', () => {
 
         expect(applySettings).toHaveBeenCalledWith({
             enabled: true,
+            inputActivityEnabled: false,
             cameraDeviceId: 'camera-usb',
             intervalSeconds: 30,
             absenceSensitivity: 'balanced',
@@ -111,6 +113,12 @@ describe('bridge host', () => {
 
         expect(settingsSig(settings)).not.toBe(settingsSig({ ...settings, autostartEnabled: true }));
         expect(pomoSig(pomodoro)).not.toBe(pomoSig({ ...pomodoro, autoPinAfterFocus: false }));
+        expect(presenceSig(usePresenceStore.getState())).not.toBe(presenceSig({
+            ...usePresenceStore.getState(), inputActivityEnabled: true,
+        }));
+        expect(presenceSig(usePresenceStore.getState())).not.toBe(presenceSig({
+            ...usePresenceStore.getState(), inputActivityAvailability: 'error',
+        }));
         expect(presenceSig(usePresenceStore.getState())).not.toBe(presenceSig({
             ...usePresenceStore.getState(),
             availability: 'ready',

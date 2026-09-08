@@ -178,15 +178,16 @@ export function buildUserPreferencesSnapshot(stores: UserPreferencesStores): Use
     };
 }
 
-export function hydrateUserPreferencesSnapshot({ stores, snapshot }: {
+export function hydrateUserPreferencesSnapshot({ stores, snapshot, resetProgress = false }: {
     stores: UserPreferencesStores;
     snapshot: UserPreferencesSnapshot;
+    resetProgress?: boolean;
 }): void {
     stores.pomodoro.getState().applySettings(
         snapshot.pomodoro.focusDurationSeconds,
         snapshot.pomodoro.breakDurationSeconds,
         snapshot.pomodoro.totalRounds,
-        false,
+        resetProgress,
         snapshot.pomodoro.autoStartBreak,
     );
     stores.pomodoro.getState().setAutoPinAfterFocus(snapshot.pomodoro.autoPinAfterFocus);
