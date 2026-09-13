@@ -130,3 +130,8 @@ button:focus-visible {
     overflow: hidden;
     zoom: var(--app-ui-scale);
 }
+
+/* Docking owns the window size; Windows scrollbars must not reduce its viewport. */
+.app-scale-root:has(.pomo-dock) {
+    overflow: clip;
+}

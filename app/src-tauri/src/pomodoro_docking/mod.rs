@@ -40,6 +40,7 @@ struct Inner {
     phase: Option<String>,
     keep_open_until_blur: bool,
     monitor_origin: Option<(i32, i32)>,
+    notice_generation: u64,
 }
 impl Default for Inner {
     fn default() -> Self {
@@ -52,6 +53,7 @@ impl Default for Inner {
             phase: None,
             keep_open_until_blur: false,
             monitor_origin: None,
+            notice_generation: 0,
         }
     }
 }
@@ -61,6 +63,7 @@ impl Inner {
             .phase
             .as_ref()
             .is_some_and(|previous| *previous != phase);
+        if changed { self.notice_generation = self.notice_generation.wrapping_add(1); }
         self.phase = Some(phase);
         if changed && self.view.side.is_some() {
             self.keep_open_until_blur = true;
@@ -68,6 +71,7 @@ impl Inner {
         changed
     }
     fn update_pause(&mut self, paused: bool) {
+        if self.paused != paused { self.notice_generation = self.notice_generation.wrapping_add(1); }
         if self.paused && !paused && self.view.side.is_some() {
             self.keep_open_until_blur = true;
         }
@@ -76,7 +80,22 @@ impl Inner {
     fn expanded_for_hover(&self, hovered: bool) -> bool {
         hovered || self.paused || self.keep_open_until_blur
     }
+    fn gain_focus(&mut self) {
+        self.notice_generation = self.notice_generation.wrapping_add(1);
+    }
+    fn focus_notice_token(&self, focused: bool) -> Option<u64> {
+        (self.phase.as_deref() == Some("focus") && !self.paused && !focused
+            && self.view.side.is_some() && self.keep_open_until_blur && !self.view.dragging)
+            .then_some(self.notice_generation)
+    }
+    fn expire_focus_notice(&mut self, token: u64, focused: bool) -> bool {
+        if self.focus_notice_token(focused) != Some(token) { return false; }
+        self.keep_open_until_blur = false;
+        self.view.expanded = false;
+        true
+    }
     fn lose_focus(&mut self) {
+        self.gain_focus();
         self.keep_open_until_blur = false;
     }
 }
@@ -158,8 +177,8 @@ fn geometry(w: &tauri::WebviewWindow, s: &Inner, x: f64, y: f64) -> Result<(), S
     )))
     .map_err(|e| e.to_string())?;
     let size = PhysicalSize::new(
-        (width * zoom).round() as u32,
-        (height * zoom).round() as u32,
+        (width * zoom).ceil() as u32,
+        (height * zoom).ceil() as u32,
     );
     let old_size = w.outer_size().map_err(|e| e.to_string())?;
     let old_pos = w.outer_position().map_err(|e| e.to_string())?;
@@ -224,7 +243,7 @@ fn snap(w: &tauri::WebviewWindow, s: &mut Inner, nearest: bool) -> Result<(), St
     }
     s.view.expanded = s.expanded_for_hover(false);
     let zoom = m.scale_factor() * s.scale;
-    let width = dock_frame_width(s.view.expanded) * zoom;
+    let width = (dock_frame_width(s.view.expanded) * zoom).ceil();
     let x = if s.view.side == Some(Side::Left) {
         left
     } else {
@@ -290,6 +309,7 @@ pub async fn configure_pomodoro_docking(
     auto_dock: bool,
     paused: bool,
     phase: String,
+    scale: f64,
 ) -> Result<Snapshot, String> {
     tauri::async_runtime::spawn_blocking(move || {
         let w = window(&app)?;
@@ -298,8 +318,14 @@ pub async fn configure_pomodoro_docking(
         if !matches!(phase.as_str(), "focus" | "break" | "completed") {
             return Err("invalid pomodoro phase".into());
         }
+        if !scale.is_finite() || scale <= 0.0 {
+            return Err("invalid UI scale".into());
+        }
+        let scale_changed = s.scale != scale;
+        s.scale = scale;
         let phase_changed = s.update_phase(phase);
-        let changed = s.paused != paused || phase_changed;
+        let pause_changed = s.paused != paused;
+        let changed = pause_changed || phase_changed || scale_changed;
         s.auto_dock = auto_dock;
         s.update_pause(paused);
         if !s.restored {
@@ -331,10 +357,31 @@ pub async fn configure_pomodoro_docking(
         if changed && s.view.side.is_some() && !s.view.dragging {
             snap(&w, &mut s, false)?;
         }
+        if phase_changed || pause_changed {
+            if let Some(token) = s.focus_notice_token(w.is_focused().unwrap_or(true)) {
+                schedule_focus_notice_collapse(app.clone(), token);
+            }
+        }
         Ok(s.view)
     })
     .await
     .map_err(|e| e.to_string())?
+}
+
+const FOCUS_NOTICE_DURATION: std::time::Duration = std::time::Duration::from_secs(5);
+fn schedule_focus_notice_collapse(app: tauri::AppHandle, token: u64) {
+    tauri::async_runtime::spawn(async move {
+        tokio::time::sleep(FOCUS_NOTICE_DURATION).await;
+        let _ = tauri::async_runtime::spawn_blocking(move || {
+            let state = app.state::<Docking>();
+            if state.stop.load(Ordering::Relaxed) { return; }
+            let Ok(w) = window(&app) else { return; };
+            let Ok(mut s) = state.inner.lock() else { return; };
+            if s.expire_focus_notice(token, w.is_focused().unwrap_or(true)) {
+                emit(&w, &s);
+            }
+        }).await;
+    });
 }
 #[tauri::command]
 pub async fn hover_pomodoro_docking(
@@ -377,6 +424,7 @@ pub async fn drag_pomodoro_window(app: tauri::AppHandle) -> Result<(), String> {
             } else {
                 c.x - p.x as f64
             };
+            s.gain_focus();
             s.view.dragging = true;
             emit(&w, &s);
             (c, ax / z, (c.y - p.y as f64) / z)
@@ -441,6 +489,12 @@ pub fn install(app: &tauri::AppHandle) {
     if let Ok(w) = window(app) {
         let app = app.clone();
         w.on_window_event(move |e| {
+            if matches!(e, tauri::WindowEvent::Focused(true)) {
+                let app = app.clone();
+                tauri::async_runtime::spawn_blocking(move || {
+                    if let Ok(mut s) = app.state::<Docking>().inner.lock() { s.gain_focus(); }
+                });
+            }
             if matches!(e, tauri::WindowEvent::Focused(false)) {
                 let app = app.clone();
                 tauri::async_runtime::spawn_blocking(move || {
@@ -684,5 +738,67 @@ mod corner_tests {
             assert_eq!(radius(22.0 * scale, 156.0 * scale), Some(expected));
             assert_eq!(radius(56.0 * scale, 156.0 * scale), Some(expected));
         }
+    }
+}
+
+#[cfg(test)]
+mod focus_notice_timeout_tests {
+    use super::*;
+    fn notice() -> Inner {
+        let mut s = Inner::default();
+        s.view.side = Some(Side::Right);
+        s.update_phase("break".into());
+        s.update_phase("focus".into());
+        s.view.expanded = true;
+        s
+    }
+    #[test]
+    fn unattended_focus_notice_collapses_when_timer_expires() {
+        let mut s = notice();
+        let token = s.focus_notice_token(false).unwrap();
+        assert!(s.view.expanded);
+        assert!(s.expire_focus_notice(token, false));
+        assert!(!s.view.expanded);
+        assert!(!s.expanded_for_hover(false));
+    }
+    #[test]
+    fn gaining_focus_cancels_timeout_and_preserves_blur_behavior() {
+        let mut s = notice();
+        let token = s.focus_notice_token(false).unwrap();
+        assert!(!s.expire_focus_notice(token, true));
+        s.gain_focus();
+        assert!(!s.expire_focus_notice(token, false));
+        assert!(s.view.expanded);
+        s.lose_focus();
+        assert!(!s.expanded_for_hover(false));
+    }
+    #[test]
+    fn break_pause_and_resume_ignore_old_focus_timeout() {
+        for phase in ["break", "completed"] {
+            let mut s = notice();
+            let token = s.focus_notice_token(false).unwrap();
+            s.update_phase(phase.into());
+            assert!(!s.expire_focus_notice(token, false));
+            assert!(s.view.expanded);
+        }
+        let mut s = notice();
+        let token = s.focus_notice_token(false).unwrap();
+        s.update_pause(true);
+        assert!(!s.expire_focus_notice(token, false));
+        s.update_pause(false);
+        assert!(!s.expire_focus_notice(token, false));
+        assert!(s.view.expanded);
+    }
+    #[test]
+    fn dragging_and_subsequent_phase_changes_invalidate_old_timeout() {
+        let mut s = notice();
+        let token = s.focus_notice_token(false).unwrap();
+        s.view.dragging = true;
+        assert!(!s.expire_focus_notice(token, false));
+        s.view.dragging = false;
+        s.update_phase("break".into());
+        s.update_phase("focus".into());
+        assert!(!s.expire_focus_notice(token, false));
+        assert!(s.expire_focus_notice(s.focus_notice_token(false).unwrap(), false));
     }
 }

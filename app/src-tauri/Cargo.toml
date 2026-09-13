@@ -1,6 +1,6 @@
 [package]
 name = "app"
-version = "0.2.1"
+version = "0.2.2"
 description = "桌宠番茄钟 (Tauri 2 重写)"
 authors = ["NanZhai"]
 repository = "https://github.com/UnityX103/CPA_V2"

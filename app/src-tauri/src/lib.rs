@@ -429,11 +429,15 @@ async fn focus_app_window(app: tauri::AppHandle, label: String) -> Result<(), St
 }
 
 #[tauri::command]
-fn resize_scaled_window(
+async fn resize_scaled_window(
     app: tauri::AppHandle,
     args: scaled_window::ResizeScaledWindowArgs,
 ) -> Result<(), String> {
-    scaled_window::resize_scaled_window(app, args)
+    // Docking can hold its lock while waiting for native window operations.
+    // Never wait for that lock on the UI thread (notably on Windows).
+    tauri::async_runtime::spawn_blocking(move || scaled_window::resize_scaled_window(app, args))
+        .await
+        .map_err(|error| error.to_string())?
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

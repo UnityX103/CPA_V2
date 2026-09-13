@@ -265,8 +265,8 @@
     "semantic_hash": "00b844b36e6ef810e0132492f83c131b"
   },
   "app/src-tauri/src/lib.rs": {
-    "mtime": 1789278756.2606065,
-    "ast_hash": "4d2c19103941c8137296717368e713c3",
+    "mtime": 1789285562.3733413,
+    "ast_hash": "d08ccaadd602886f8580de79a5d977ba",
     "semantic_hash": ""
   },
   "app/src-tauri/src/main.rs": {
@@ -365,8 +365,8 @@
     "semantic_hash": ""
   },
   "app/src/App.tsx": {
-    "mtime": 1788831798.3105185,
-    "ast_hash": "3920f363c5566e2bceb6d24c214ad14d",
+    "mtime": 1789285562.372425,
+    "ast_hash": "3584d2570d172f717468df60b49850f9",
     "semantic_hash": ""
   },
   "app/src/DevAlignApp.tsx": {
@@ -435,13 +435,13 @@
     "semantic_hash": "b78e210addeb88c48497aaa85978b45d"
   },
   "app/src/domain/appUpdate.test.ts": {
-    "mtime": 1789283461.52819,
-    "ast_hash": "003d54c5dcf59454dc7ca7bdbc851ffb",
+    "mtime": 1789284175.564227,
+    "ast_hash": "aeeb3ed4f9a5625c4a1df14c116b70d4",
     "semantic_hash": ""
   },
   "app/src/domain/appUpdate.ts": {
-    "mtime": 1789283595.4727266,
-    "ast_hash": "4a99513ef989ae655b6b4fbe7bcc0e4f",
+    "mtime": 1789284175.5638342,
+    "ast_hash": "41eee8e7ea96377689897cb4c9683d9d",
     "semantic_hash": ""
   },
   "app/src/domain/appUpdatePersistence.test.ts": {
@@ -830,8 +830,8 @@
     "semantic_hash": ""
   },
   "app/src/ui/PomodoroPanel.tsx": {
-    "mtime": 1789281269.741296,
-    "ast_hash": "98cf0337922f8f74894d70db3fd3a644",
+    "mtime": 1789285562.372058,
+    "ast_hash": "cb9ff4ae87b1383f4d925875824d86d8",
     "semantic_hash": ""
   },
   "app/src/ui/PresenceNotice.tsx": {
@@ -2425,8 +2425,8 @@
     "semantic_hash": ""
   },
   "app/src-tauri/src/pomodoro_docking/mod.rs": {
-    "mtime": 1789281590.3146708,
-    "ast_hash": "bdef7ab0a388fe54a25f9a617d090946",
+    "mtime": 1789287587.217031,
+    "ast_hash": "f8e5027b67af24360538bf232979f4dd",
     "semantic_hash": ""
   },
   "app/src-tauri/src/pomodoro_docking/windows.rs": {
@@ -2440,18 +2440,18 @@
     "semantic_hash": ""
   },
   "app/src/ui/usePomodoroDocking.ts": {
-    "mtime": 1789281269.7407491,
-    "ast_hash": "7226abe1575c0bac1c4d78c0b51e5823",
+    "mtime": 1789285562.37145,
+    "ast_hash": "f25bdcdfbabd9d9b1949bd704d18fc86",
     "semantic_hash": ""
   },
   "app/src/ui/usePomodoroDocking.test.tsx": {
-    "mtime": 1789280777.7545245,
-    "ast_hash": "d7456a561286e5de2b25d2ebb318055d",
+    "mtime": 1789285513.5882676,
+    "ast_hash": "1ae174ce72146cfdd04b6f1fe37c1b78",
     "semantic_hash": ""
   },
   "app/src/ui/AppUpdatePreview.tsx": {
-    "mtime": 1789283595.4731061,
-    "ast_hash": "a567d4ed32d0452b5f0fd34ee742ac00",
+    "mtime": 1789283716.789488,
+    "ast_hash": "1f14d5c7c632a9b6ccc3c014d7706c8d",
     "semantic_hash": ""
   },
   "docs/deployment/release-0.2.1.md": {

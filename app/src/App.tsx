@@ -340,7 +340,7 @@ export default function App() {
     return (
         <div className="app-scale-root" style={{ '--app-ui-scale': String(uiScale) } as CSSProperties}>
             <div className="app-root">
-                <PomodoroPanel />
+                <PomodoroPanel preferencesReady={localHydrated} />
                 <PomodoroEndActionLayer />
                 <PresenceNotice />
                 <AppUpdateReadyNotice />

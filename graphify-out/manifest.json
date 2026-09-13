@@ -180,8 +180,8 @@
     "semantic_hash": "a5965f46475e54a0d9d73de3212ad7df"
   },
   "app/package.json": {
-    "mtime": 1789283525.323244,
-    "ast_hash": "77658c4aafc899bf452da14c33be1ced",
+    "mtime": 1789287684.9913826,
+    "ast_hash": "202f1bf080441131e37d9603e7ff1a65",
     "semantic_hash": ""
   },
   "app/public/sounds/pomodoro/manifest.json": {
@@ -265,8 +265,8 @@
     "semantic_hash": "00b844b36e6ef810e0132492f83c131b"
   },
   "app/src-tauri/src/lib.rs": {
-    "mtime": 1789278756.2606065,
-    "ast_hash": "4d2c19103941c8137296717368e713c3",
+    "mtime": 1789285562.3733413,
+    "ast_hash": "d08ccaadd602886f8580de79a5d977ba",
     "semantic_hash": ""
   },
   "app/src-tauri/src/main.rs": {
@@ -345,8 +345,8 @@
     "semantic_hash": ""
   },
   "app/src-tauri/tauri.conf.json": {
-    "mtime": 1789283525.3246884,
-    "ast_hash": "47ff32c59503111c0a8b8585b5886748",
+    "mtime": 1789287684.9928095,
+    "ast_hash": "966848177ea637a29f57e6a9b434ccdf",
     "semantic_hash": ""
   },
   "app/src-tauri/tests/focus_restore_regression.rs": {
@@ -365,8 +365,8 @@
     "semantic_hash": ""
   },
   "app/src/App.tsx": {
-    "mtime": 1788831798.3105185,
-    "ast_hash": "3920f363c5566e2bceb6d24c214ad14d",
+    "mtime": 1789285562.372425,
+    "ast_hash": "3584d2570d172f717468df60b49850f9",
     "semantic_hash": ""
   },
   "app/src/DevAlignApp.tsx": {
@@ -830,8 +830,8 @@
     "semantic_hash": ""
   },
   "app/src/ui/PomodoroPanel.tsx": {
-    "mtime": 1789281269.741296,
-    "ast_hash": "98cf0337922f8f74894d70db3fd3a644",
+    "mtime": 1789285562.372058,
+    "ast_hash": "cb9ff4ae87b1383f4d925875824d86d8",
     "semantic_hash": ""
   },
   "app/src/ui/PresenceNotice.tsx": {
@@ -2425,8 +2425,8 @@
     "semantic_hash": ""
   },
   "app/src-tauri/src/pomodoro_docking/mod.rs": {
-    "mtime": 1789281590.3146708,
-    "ast_hash": "bdef7ab0a388fe54a25f9a617d090946",
+    "mtime": 1789287587.217031,
+    "ast_hash": "f8e5027b67af24360538bf232979f4dd",
     "semantic_hash": ""
   },
   "app/src-tauri/src/pomodoro_docking/windows.rs": {
@@ -2440,13 +2440,13 @@
     "semantic_hash": ""
   },
   "app/src/ui/usePomodoroDocking.ts": {
-    "mtime": 1789281269.7407491,
-    "ast_hash": "7226abe1575c0bac1c4d78c0b51e5823",
+    "mtime": 1789285562.37145,
+    "ast_hash": "f25bdcdfbabd9d9b1949bd704d18fc86",
     "semantic_hash": ""
   },
   "app/src/ui/usePomodoroDocking.test.tsx": {
-    "mtime": 1789280777.7545245,
-    "ast_hash": "d7456a561286e5de2b25d2ebb318055d",
+    "mtime": 1789285513.5882676,
+    "ast_hash": "1ae174ce72146cfdd04b6f1fe37c1b78",
     "semantic_hash": ""
   },
   "app/src/ui/AppUpdatePreview.tsx": {
@@ -2457,6 +2457,11 @@
   "docs/deployment/release-0.2.1.md": {
     "mtime": 1789283525.3313758,
     "ast_hash": "1a305cfcf92dd40f8ad015320da70942",
+    "semantic_hash": ""
+  },
+  "docs/deployment/release-0.2.2.md": {
+    "mtime": 1789287684.9986885,
+    "ast_hash": "8144ffb0a8185e0bf5247ffc28453a46",
     "semantic_hash": ""
   }
 }

@@ -21,3 +21,25 @@ it('keeps rapid hover enter/leave in order while native resize is pending', asyn
     await act(async () => finishEnter());
     await waitFor(() => expect(invoke).toHaveBeenLastCalledWith('hover_pomodoro_docking', { hovered: false }));
 });
+
+it('waits for restored preferences and configures the dock with the saved scale', async () => {
+    vi.stubGlobal('__TAURI_INTERNALS__', {});
+    invoke.mockResolvedValue({ side: 'right', expanded: false, dragging: false });
+    const { useSettingsStore } = await import('../domain/settings');
+    const previousScale = useSettingsStore.getState().uiScale;
+    const { rerender } = renderHook(({ ready }) => usePomodoroDocking(true, false, 'focus', ready), {
+        initialProps: { ready: false },
+    });
+    await act(async () => {});
+    expect(invoke).not.toHaveBeenCalled();
+    act(() => useSettingsStore.setState({ uiScale: 2.4 }));
+    rerender({ ready: true });
+    await waitFor(() => expect(invoke).toHaveBeenCalledWith('configure_pomodoro_docking', {
+        autoDock: true, paused: false, phase: 'focus', scale: 2.4,
+    }));
+    act(() => useSettingsStore.setState({ uiScale: 1.5 }));
+    await waitFor(() => expect(invoke).toHaveBeenLastCalledWith('configure_pomodoro_docking', {
+        autoDock: true, paused: false, phase: 'focus', scale: 1.5,
+    }));
+    act(() => useSettingsStore.setState({ uiScale: previousScale }));
+});

@@ -21,7 +21,7 @@ function phaseLabel(phase: PomodoroPhase, isRunning: boolean): string {
     return phase === 'focus' ? '专注中' : '休息中';
 }
 
-export function PomodoroPanel() {
+export function PomodoroPanel({ preferencesReady = true }: { preferencesReady?: boolean } = {}) {
     const state = usePomodoroStore();
     const presence = usePresenceStore();
     const tickRef = useRef<number | null>(null);
@@ -93,7 +93,7 @@ export function PomodoroPanel() {
     const showPauseOverlay = !state.isRunning && state.currentPhase !== 'completed'
         && (pausedDuringSession || state.remainingSeconds < totalSeconds || automaticPause);
     const showStartOverlay = !state.isRunning && !showPauseOverlay && state.currentPhase !== 'completed';
-    const docking = usePomodoroDocking(autoDock, showPauseOverlay, state.currentPhase);
+    const docking = usePomodoroDocking(autoDock, showPauseOverlay, state.currentPhase, preferencesReady);
     const windowMode = autoDock ? '停靠' : state.isPinned ? '置顶' : '取消置顶';
 
     useEffect(() => {
