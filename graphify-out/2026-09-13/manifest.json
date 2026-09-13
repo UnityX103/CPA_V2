@@ -180,8 +180,8 @@
     "semantic_hash": "a5965f46475e54a0d9d73de3212ad7df"
   },
   "app/package.json": {
-    "mtime": 1789283525.323244,
-    "ast_hash": "77658c4aafc899bf452da14c33be1ced",
+    "mtime": 1789287684.9913826,
+    "ast_hash": "202f1bf080441131e37d9603e7ff1a65",
     "semantic_hash": ""
   },
   "app/public/sounds/pomodoro/manifest.json": {
@@ -345,8 +345,8 @@
     "semantic_hash": ""
   },
   "app/src-tauri/tauri.conf.json": {
-    "mtime": 1789283525.3246884,
-    "ast_hash": "47ff32c59503111c0a8b8585b5886748",
+    "mtime": 1789287684.9928095,
+    "ast_hash": "966848177ea637a29f57e6a9b434ccdf",
     "semantic_hash": ""
   },
   "app/src-tauri/tests/focus_restore_regression.rs": {
@@ -2457,6 +2457,11 @@
   "docs/deployment/release-0.2.1.md": {
     "mtime": 1789283525.3313758,
     "ast_hash": "1a305cfcf92dd40f8ad015320da70942",
+    "semantic_hash": ""
+  },
+  "docs/deployment/release-0.2.2.md": {
+    "mtime": 1789287684.9986885,
+    "ast_hash": "8144ffb0a8185e0bf5247ffc28453a46",
     "semantic_hash": ""
   }
 }

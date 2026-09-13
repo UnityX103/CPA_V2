@@ -10,6 +10,10 @@
 - GitHub 自动测试、构建三套安装包、验证签名与架构、汇总四个 updater 平台键，最后公开 Release 并设为 Latest。
 - CNB 每 15 分钟匿名检查 GitHub Latest，也可在 main 分支页面点击“同步 GitHub 最新发布”或“检查镜像来源”。
 
+## 面向用户的更新说明
+
+`docs/deployment/release-X.Y.Z.md` 同时用于软件内更新预览和 GitHub Release 正文。仅写简短的功能、体验改进和问题修复列表，说明用户能感知的变化。不要重复版本标题，也不要包含构建平台、签名、公证、流水线、锁、线程等实现或发布细节；这些信息保留在本部署文档和工程报告中。
+
 ## 凭据边界
 
 CNB 凭据不得进入 GitHub 的源码、历史、Secrets、Variables、工作流输入、日志或制品；仓库中 CNB 专用脚本的 `CNB_TOKEN` 变量名不是密钥值。
