@@ -1,14 +1,11 @@
-import { execFile } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { createReadStream } from 'node:fs';
 import { readFile, stat } from 'node:fs/promises';
 import { basename, resolve } from 'node:path';
 import { Transform } from 'node:stream';
-import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { DEFAULT_CNB_REPO } from './prepare-cnb-release.mjs';
 
-const execFileAsync = promisify(execFile);
 const PROGRESS_BYTES = 64 * 1024 * 1024;
 
 export function parseCnbEnvelope(stdout, context, allowedStatuses = []) {
@@ -57,27 +54,8 @@ export function parseVerificationUrl(value) {
     return { uploadToken, assetPath };
 }
 
-async function runCnb(args, context, allowedStatuses = []) {
-    let stdout = '';
-    try {
-        ({ stdout } = await execFileAsync('cnb', [...args, '--verbose'], {
-            maxBuffer: 8 * 1024 * 1024,
-            env: process.env,
-        }));
-    } catch (error) {
-        stdout = error?.stdout ?? '';
-        if (!stdout) throw new Error(`${context} failed: ${error?.message ?? error}`);
-    }
-    return parseCnbEnvelope(stdout, context, allowedStatuses);
-}
-
-async function getRelease(repo, tag) {
-    const envelope = await runCnb(
-        ['releases', 'get-release-by-tag', '--repo', repo, '--tag', tag],
-        `Read CNB release ${tag}`,
-        [404],
-    );
-    return Number(envelope.status) === 404 ? null : envelope.data;
+export async function getRelease(repo, tag) {
+    return requestCnbApi('GET', cnbApiUrl(repo, `/tags/${encodeURIComponent(tag)}`), undefined, 'Read CNB release', [404]);
 }
 
 export function cnbApiUrl(repo, suffix) {
@@ -85,11 +63,14 @@ export function cnbApiUrl(repo, suffix) {
     return `https://api.cnb.cool/${encodedRepo}/-/releases${suffix}`;
 }
 
-async function requestCnbApi(method, url, body, context) {
+export async function requestCnbApi(method, url, body, context, allowedStatuses = []) {
+    if (new URL(url).origin !== 'https://api.cnb.cool') throw new Error('Unexpected CNB API origin');
     const token = process.env.CNB_TOKEN;
     if (!token) throw new Error(`${context} requires CNB_TOKEN`);
     const response = await fetch(url, {
         method,
+        redirect: 'error',
+        signal: AbortSignal.timeout(60000),
         headers: {
             accept: 'application/vnd.cnb.api+json',
             authorization: `Bearer ${token}`,
@@ -98,13 +79,14 @@ async function requestCnbApi(method, url, body, context) {
         body: body === undefined ? undefined : JSON.stringify(body),
     });
     const text = await response.text();
+    if (allowedStatuses.includes(response.status)) return null;
     if (!response.ok) {
-        throw new Error(`${context} failed: HTTP ${response.status} ${text.slice(0, 500)}`);
+        throw new Error(`${context} failed: HTTP ${response.status} `);
     }
     return text ? JSON.parse(text) : null;
 }
 
-async function ensureRelease({ repo, tag, target, title, notesFile }) {
+export async function ensureRelease({ repo, tag, target, title, notesFile }) {
     const existing = await getRelease(repo, tag);
     if (existing) return existing;
     const body = await readFile(notesFile, 'utf8');
@@ -141,29 +123,14 @@ function progressTransform(name, size, hashes) {
     });
 }
 
-async function uploadAsset({ repo, releaseId, path }) {
+export async function uploadAsset({ repo, releaseId, path }) {
     const name = basename(path);
     const info = await stat(path);
     if (!info.isFile() || info.size <= 0) throw new Error(`Release asset is invalid: ${path}`);
-    const upload = await runCnb(
-        [
-            'releases',
-            'post-release-asset-upload-url',
-            '--repo',
-            repo,
-            '--release-id',
-            releaseId,
-            '--asset-name',
-            name,
-            '--size',
-            String(info.size),
-            '--ttl',
-            '0',
-            '--overwrite',
-        ],
-        `Create upload URL for ${name}`,
-    );
-    const { upload_url: uploadUrl, verify_url: verifyUrl } = upload.data ?? {};
+    const upload = await requestCnbApi('POST',
+        cnbApiUrl(repo, `/${encodeURIComponent(releaseId)}/asset-upload-url`),
+        { asset_name: name, size: info.size, ttl: 0, overwrite: true }, 'Create CNB upload URL');
+    const { upload_url: uploadUrl, verify_url: verifyUrl } = upload ?? {};
     if (!uploadUrl || !verifyUrl) throw new Error(`CNB did not return upload URLs for ${name}`);
 
     const sha256 = createHash('sha256');
@@ -177,32 +144,18 @@ async function uploadAsset({ repo, releaseId, path }) {
         duplex: 'half',
     });
     if (!response.ok) {
-        const detail = (await response.text()).slice(0, 500);
-        throw new Error(`Upload ${name} failed: HTTP ${response.status} ${detail}`);
+        await response.body?.cancel();
+        throw new Error(`Upload ${name} failed: HTTP ${response.status}`);
     }
     const hashes = { sha256: sha256.digest('hex'), md5: md5.digest('hex') };
     const verification = parseVerificationUrl(verifyUrl);
-    await runCnb(
-        [
-            'releases',
-            'post-release-asset-upload-confirmation',
-            '--repo',
-            repo,
-            '--release-id',
-            releaseId,
-            '--upload-token',
-            verification.uploadToken,
-            '--asset-path',
-            verification.assetPath,
-            '--ttl',
-            '0',
-        ],
-        `Confirm upload for ${name}`,
-    );
+    await requestCnbApi('POST', cnbApiUrl(repo,
+        `/${encodeURIComponent(releaseId)}/asset-upload-confirmation/${encodeURIComponent(verification.uploadToken)}/${verification.assetPath.split('/').map(encodeURIComponent).join('/')}?ttl=0`),
+        undefined, 'Confirm CNB upload');
     return { name, size: info.size, hashes };
 }
 
-function verifyUploadedAsset(release, expected) {
+export function verifyUploadedAsset(release, expected) {
     const asset = release.assets?.find((candidate) => candidate.name === expected.name);
     if (!asset) throw new Error(`CNB release is missing ${expected.name}`);
     if (Number(asset.size) !== expected.size) {
@@ -210,12 +163,12 @@ function verifyUploadedAsset(release, expected) {
     }
     const algorithm = String(asset.hash_algo ?? '').toLowerCase().replace('-', '');
     const remoteHash = String(asset.hash_value ?? '').toLowerCase();
-    if (remoteHash && expected.hashes[algorithm] && remoteHash !== expected.hashes[algorithm]) {
+    if (!remoteHash || !expected.hashes[algorithm] || remoteHash !== expected.hashes[algorithm]) {
         throw new Error(`CNB release hash mismatch for ${expected.name}`);
     }
 }
 
-export async function publishCnbRelease(repo, releaseId, title, notesFile) {
+export async function publishCnbRelease(repo, releaseId, title, notesFile, makeLatest = true) {
     const body = await readFile(notesFile, 'utf8');
     await requestCnbApi(
         'PATCH',
@@ -223,7 +176,7 @@ export async function publishCnbRelease(repo, releaseId, title, notesFile) {
         {
             body,
             draft: false,
-            make_latest: 'true',
+            make_latest: String(makeLatest),
             name: title,
             prerelease: false,
         },

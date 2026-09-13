@@ -1,0 +1,9 @@
+branch:
+  - reg: '^main$'
+    buttons:
+      - name: 同步 GitHub 最新发布
+        description: 匿名读取 GitHub，验证后同步到 CNB
+        event: web_trigger_mirror
+      - name: 检查镜像来源
+        description: 仅检查公开 Release，不上传或发布
+        event: web_trigger_mirror_check

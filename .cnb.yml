@@ -1,0 +1,28 @@
+main:
+  "crontab: */15 * * * *":
+    - &mirror
+      name: Mirror public GitHub Latest
+      runner:
+        cpus: 1
+      docker:
+        image: node:22-bookworm
+      lock:
+        key: github-release-mirror
+        wait: false
+      stages:
+        - name: Synchronize published release and verify downloads
+          script: node app/scripts/mirror-github-release.mjs
+          timeout: 7200
+  web_trigger_mirror:
+    - *mirror
+  api_trigger_mirror:
+    - *mirror
+  web_trigger_mirror_check:
+    - name: Check public GitHub without publishing
+      runner:
+        cpus: 1
+      docker:
+        image: node:22-bookworm
+      stages:
+        - name: Inspect upstream
+          script: node app/scripts/mirror-github-release.mjs --dry-run
