@@ -6,7 +6,7 @@
 
 - 推送 main、codex 分支和提交 PR：GitHub `CI` 测试前端、服务端，以及 macOS ARM64、macOS Intel、Windows x64 的 Rust 单元测试。
 - 网页 Actions → Release → Run workflow，默认 `publish=false`：验证三平台安装包构建，不创建 Release。
-- 正式发布：先在 main 同步修改 app/package.json、package-lock.json、src-tauri/tauri.conf.json、Cargo.toml 和 Cargo.lock 中本应用版本，然后选择 `publish=true`，或推送相同版本的 `vX.Y.Z` tag。已发布版本不可覆盖。
+- 正式发布：先在 main 同步修改 app/package.json、package-lock.json、src-tauri/tauri.conf.json、Cargo.toml 和 Cargo.lock 中本应用版本，并添加对应的 `docs/deployment/release-X.Y.Z.md` 更新说明，然后选择 `publish=true`，或推送相同版本的 `vX.Y.Z` tag。已发布版本不可覆盖。
 - GitHub 自动测试、构建三套安装包、验证签名与架构、汇总四个 updater 平台键，最后公开 Release 并设为 Latest。
 - CNB 每 15 分钟匿名检查 GitHub Latest，也可在 main 分支页面点击“同步 GitHub 最新发布”或“检查镜像来源”。
 

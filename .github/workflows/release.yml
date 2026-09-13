@@ -39,6 +39,10 @@ jobs:
           const p=JSON.parse(fs.readFileSync('app/package.json'));
           const t=JSON.parse(fs.readFileSync('app/src-tauri/tauri.conf.json'));
           if(p.version!==t.version || !/^\d+\.\d+\.\d+$/.test(p.version)) throw Error('Invalid release version');
+          const lock=JSON.parse(fs.readFileSync('app/package-lock.json'));
+          const cargo=fs.readFileSync('app/src-tauri/Cargo.toml','utf8');
+          const cargoLock=fs.readFileSync('app/src-tauri/Cargo.lock','utf8');
+          if(lock.version!==p.version || lock.packages[''].version!==p.version || !cargo.includes(`version = "${p.version}"`) || !cargoLock.includes(`name = "app"\nversion = "${p.version}"`)) throw Error('Version files are out of sync');
           const tag=`v${p.version}`;
           const publish=process.env.WANT_PUBLISH==='true';
           if(publish) {
@@ -50,6 +54,36 @@ jobs:
             if(r.status!==404) throw Error(`Release preflight HTTP ${r.status}`);
           }
           fs.appendFileSync(process.env.GITHUB_OUTPUT,`tag=${tag}\npublish=${publish}\n`);
+          JS
+  signing-check:
+    needs: prepare
+    if: github.ref == 'refs/heads/main' || needs.prepare.outputs.publish == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts
+        working-directory: app
+      - name: Verify existing updater key without publishing
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          node --input-type=module <<'JS'
+          import {writeFile,readFile} from 'node:fs/promises';
+          import {execFileSync} from 'node:child_process';
+          import {verifySignature} from './app/scripts/release-integrity.mjs';
+          const path=process.env.RUNNER_TEMP+'/signing-probe.txt';
+          await writeFile(path,'CPA_V2 cloud signing verification');
+          execFileSync('./app/node_modules/.bin/tauri',['signer','sign',path],{stdio:'pipe'});
+          const config=JSON.parse(await readFile('./app/src-tauri/tauri.conf.json'));
+          await verifySignature(path,await readFile(path+'.sig','utf8'),config.plugins.updater.pubkey);
+          console.log('Cloud signing key matches the installed client public key');
           JS
   build:
     needs: [tests, prepare]
@@ -133,7 +167,7 @@ jobs:
           if-no-files-found: error
   publish:
     if: needs.prepare.outputs.publish == 'true'
-    needs: [prepare, build]
+    needs: [prepare, build, signing-check]
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:
@@ -162,7 +196,7 @@ jobs:
           RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
         shell: bash
         run: |
-          gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "CPA_V2 $RELEASE_TAG" --generate-notes --draft
+          gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "CPA_V2 $RELEASE_TAG" --notes-file "docs/deployment/release-${RELEASE_TAG#v}.md" --draft
           gh release upload "$RELEASE_TAG" '${{ runner.temp }}/assets/'* --repo "$GITHUB_REPOSITORY"
           gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft=false --latest
           curl --fail --retry 5 --retry-all-errors --location "https://github.com/$GITHUB_REPOSITORY/releases/download/$RELEASE_TAG/latest.json" -o '${{ runner.temp }}/online.json'

@@ -1,4 +1,4 @@
-import { cp, mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readdir, readFile, writeFile, rm } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { prepareUpdaterRelease } from './prepare-updater-release.mjs';
@@ -26,6 +26,7 @@ if (command === 'stage') {
         if (dmgs.length !== 1) throw new Error('Expected exactly one DMG');
         await cp(join(bundle, 'dmg', dmgs[0]), join(assets, `CPA_V2_${version}_${platform === 'darwin-aarch64' ? 'arm64' : 'x64'}.dmg`));
     }
+    await rm(join(output, 'stable'), { recursive: true, force: true });
 } else if (command === 'assemble') {
     const input = resolve(process.argv[4]);
     await mkdir(output, { recursive: true });

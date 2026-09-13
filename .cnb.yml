@@ -12,7 +12,7 @@ main:
       stages:
         - name: Synchronize published release and verify downloads
           script: node app/scripts/mirror-github-release.mjs
-          timeout: 7200
+          timeout: 7200000
   web_trigger_mirror:
     - *mirror
   api_trigger_mirror:
