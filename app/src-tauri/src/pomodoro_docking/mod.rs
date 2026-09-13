@@ -41,6 +41,8 @@ struct Inner {
     keep_open_until_blur: bool,
     monitor_origin: Option<(i32, i32)>,
     notice_generation: u64,
+    suspended: bool,
+    suspended_origin: Option<(f64, f64)>,
 }
 impl Default for Inner {
     fn default() -> Self {
@@ -54,6 +56,8 @@ impl Default for Inner {
             keep_open_until_blur: false,
             monitor_origin: None,
             notice_generation: 0,
+            suspended: false,
+            suspended_origin: None,
         }
     }
 }
@@ -80,12 +84,15 @@ impl Inner {
     fn expanded_for_hover(&self, hovered: bool) -> bool {
         hovered || self.paused || self.keep_open_until_blur
     }
+    fn displayed_view(&self) -> Snapshot {
+        if self.suspended { Snapshot::default() } else { self.view }
+    }
     fn gain_focus(&mut self) {
         self.notice_generation = self.notice_generation.wrapping_add(1);
     }
     fn focus_notice_token(&self, focused: bool) -> Option<u64> {
         (self.phase.as_deref() == Some("focus") && !self.paused && !focused
-            && self.view.side.is_some() && self.keep_open_until_blur && !self.view.dragging)
+            && self.view.side.is_some() && self.keep_open_until_blur && !self.view.dragging && !self.suspended)
             .then_some(self.notice_generation)
     }
     fn expire_focus_notice(&mut self, token: u64, focused: bool) -> bool {
@@ -111,7 +118,7 @@ pub fn transient(app: &tauri::AppHandle) -> bool {
     state
         .inner
         .try_lock()
-        .map(|s| s.view.side.is_some() || s.view.dragging)
+        .map(|s| s.view.side.is_some() || s.view.dragging || s.suspended)
         .unwrap_or(true)
 }
 pub fn radius(width: f64, height: f64) -> Option<f64> {
@@ -149,7 +156,7 @@ fn dock_frame_width(_expanded: bool) -> f64 {
 }
 fn emit(w: &tauri::WebviewWindow, s: &Inner) {
     HIT_MODE.store(
-        match s.view.side {
+        match s.displayed_view().side {
             None => 0,
             Some(_) if s.view.expanded => 3,
             Some(Side::Left) => 1,
@@ -157,7 +164,7 @@ fn emit(w: &tauri::WebviewWindow, s: &Inner) {
         },
         Ordering::Relaxed,
     );
-    let _ = w.emit("pomodoro-docking", s.view);
+    let _ = w.emit("pomodoro-docking", s.displayed_view());
 }
 fn geometry(w: &tauri::WebviewWindow, s: &Inner, x: f64, y: f64) -> Result<(), String> {
     let dpi = if s.view.side.is_some() {
@@ -166,7 +173,7 @@ fn geometry(w: &tauri::WebviewWindow, s: &Inner, x: f64, y: f64) -> Result<(), S
         w.scale_factor().map_err(|e| e.to_string())?
     };
     let zoom = dpi * s.scale;
-    let (width, height) = if s.view.side.is_some() {
+    let (width, height) = if s.view.side.is_some() && !s.suspended {
         (dock_frame_width(s.view.expanded), 156.0)
     } else {
         (215.0, 187.0)
@@ -243,7 +250,7 @@ fn snap(w: &tauri::WebviewWindow, s: &mut Inner, nearest: bool) -> Result<(), St
     }
     s.view.expanded = s.expanded_for_hover(false);
     let zoom = m.scale_factor() * s.scale;
-    let width = (dock_frame_width(s.view.expanded) * zoom).ceil();
+    let width = (if s.suspended { 215.0 } else { dock_frame_width(s.view.expanded) } * zoom).ceil();
     let x = if s.view.side == Some(Side::Left) {
         left
     } else {
@@ -251,7 +258,7 @@ fn snap(w: &tauri::WebviewWindow, s: &mut Inner, nearest: bool) -> Result<(), St
     };
     let y = (p.y as f64).clamp(
         r.position.y as f64,
-        (r.position.y as f64 + r.size.height as f64 - 156.0 * zoom).max(r.position.y as f64),
+        (r.position.y as f64 + r.size.height as f64 - if s.suspended { 187.0 } else { 156.0 } * zoom).max(r.position.y as f64),
     );
     geometry(w, s, x, y)
 }
@@ -310,6 +317,7 @@ pub async fn configure_pomodoro_docking(
     paused: bool,
     phase: String,
     scale: f64,
+    suspended: bool,
 ) -> Result<Snapshot, String> {
     tauri::async_runtime::spawn_blocking(move || {
         let w = window(&app)?;
@@ -331,6 +339,20 @@ pub async fn configure_pomodoro_docking(
         if !s.restored {
             s.restored = true;
             restore(&app, &w, &mut s)?;
+        }
+        let suspension_changed = s.suspended != suspended;
+        if suspension_changed {
+            s.gain_focus();
+            if suspended && s.view.side.is_some() {
+                let p = w.outer_position().map_err(|e| e.to_string())?;
+                s.suspended_origin = Some((p.x as f64, p.y as f64));
+            }
+            s.suspended = suspended;
+            if !suspended {
+                if let Some((x, y)) = s.suspended_origin.take() {
+                    if s.auto_dock && s.view.side.is_some() { geometry(&w, &s, x, y)?; }
+                }
+            }
         }
         if !s.auto_dock && s.view.side.is_some() && !s.view.dragging {
             let side = s.view.side.unwrap();
@@ -354,7 +376,7 @@ pub async fn configure_pomodoro_docking(
             geometry(&w, &s, x, p.y as f64)?;
             save(&app, &w, &s)?;
         }
-        if changed && s.view.side.is_some() && !s.view.dragging {
+        if (changed || suspension_changed) && s.view.side.is_some() && !s.view.dragging {
             snap(&w, &mut s, false)?;
         }
         if phase_changed || pause_changed {
@@ -362,7 +384,7 @@ pub async fn configure_pomodoro_docking(
                 schedule_focus_notice_collapse(app.clone(), token);
             }
         }
-        Ok(s.view)
+        Ok(s.displayed_view())
     })
     .await
     .map_err(|e| e.to_string())?
@@ -392,7 +414,7 @@ pub async fn hover_pomodoro_docking(
         let w = window(&app)?;
         let state = app.state::<Docking>();
         let mut s = state.inner.lock().map_err(|e| e.to_string())?;
-        if s.view.side.is_some() && !s.view.dragging {
+        if s.view.side.is_some() && !s.view.dragging && !s.suspended {
             let expanded = s.expanded_for_hover(hovered);
             if expanded != s.view.expanded {
                 s.view.expanded = expanded;
@@ -400,7 +422,7 @@ pub async fn hover_pomodoro_docking(
                 emit(&w, &s);
             }
         }
-        Ok(s.view)
+        Ok(s.displayed_view())
     })
     .await
     .map_err(|e| e.to_string())?
@@ -410,6 +432,8 @@ pub async fn drag_pomodoro_window(app: tauri::AppHandle) -> Result<(), String> {
     tauri::async_runtime::spawn_blocking(move || {
         let w = window(&app)?;
         let state = app.state::<Docking>();
+        let suspended = state.inner.lock().map_err(|e| e.to_string())?.suspended;
+        if suspended { return w.start_dragging().map_err(|e| e.to_string()); }
         let (start, anchor_x, anchor_y) = {
             let mut s = state.inner.lock().map_err(|e| e.to_string())?;
             if s.view.dragging {
@@ -503,7 +527,7 @@ pub fn install(app: &tauri::AppHandle) {
                         return;
                     };
                     s.lose_focus();
-                    if s.auto_dock && !s.view.dragging {
+                    if s.auto_dock && !s.view.dragging && !s.suspended {
                         if let Ok(w) = window(&app) {
                             if let Err(e) = snap(&w, &mut s, true).and_then(|()| save(&app, &w, &s))
                             {
@@ -548,6 +572,7 @@ fn saved_path(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
     Ok(dir.join("pomodoro-docking.json"))
 }
 fn save(app: &tauri::AppHandle, w: &tauri::WebviewWindow, s: &Inner) -> Result<(), String> {
+    if s.suspended { return Ok(()); }
     let m = docking_monitor(w, s)?;
     let r = m.work_area();
     let p = w.outer_position().map_err(|e| e.to_string())?;
@@ -800,5 +825,38 @@ mod focus_notice_timeout_tests {
         s.update_phase("focus".into());
         assert!(!s.expire_focus_notice(token, false));
         assert!(s.expire_focus_notice(s.focus_notice_token(false).unwrap(), false));
+    }
+}
+
+#[cfg(test)]
+mod notice_suspension_tests {
+    use super::*;
+    #[test]
+    fn full_notification_preserves_original_dock_on_both_edges() {
+        for side in [Side::Left, Side::Right] {
+            let mut s = Inner::default();
+            s.view.side = Some(side);
+            s.monitor_origin = Some((-1920, 0));
+            s.suspended_origin = Some((-56.0, 420.0));
+            s.suspended = true;
+            assert!(s.displayed_view().side.is_none());
+            assert_eq!(s.view.side, Some(side));
+            s.lose_focus();
+            assert!(s.displayed_view().side.is_none());
+            s.suspended = false;
+            assert_eq!(s.displayed_view().side, Some(side));
+            assert_eq!(s.suspended_origin, Some((-56.0, 420.0)));
+            assert_eq!(s.monitor_origin, Some((-1920, 0)));
+        }
+    }
+    #[test]
+    fn focus_timer_cannot_collapse_a_full_notification() {
+        let mut s = Inner::default();
+        s.view.side = Some(Side::Right);
+        s.update_phase("break".into());
+        s.update_phase("focus".into());
+        let token = s.focus_notice_token(false).unwrap();
+        s.suspended = true;
+        assert!(!s.expire_focus_notice(token, false));
     }
 }

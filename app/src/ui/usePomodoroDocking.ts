@@ -2,10 +2,12 @@ import { useEffect, useState, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { useSettingsStore } from '../domain/settings';
+import { useDockNoticeSuspension } from './useDockNoticeSuspension';
 
 export interface DockView { side: 'left' | 'right' | null; expanded: boolean; dragging: boolean }
 const full: DockView = { side: null, expanded: false, dragging: false };
 export function usePomodoroDocking(autoDock: boolean, paused: boolean, phase = 'focus', enabled = true) {
+    const suspended = useDockNoticeSuspension();
     const scale = useSettingsStore((state) => state.uiScale);
     const commands = useRef<Promise<unknown>>(Promise.resolve());
     // Preserve enter/leave and mode-change order even when native window resizing is asynchronous.
@@ -27,11 +29,11 @@ export function usePomodoroDocking(autoDock: boolean, paused: boolean, phase = '
         if (!('__TAURI_INTERNALS__' in window)) return;
         if (!enabled) return;
         let cancelled = false;
-        void enqueue<DockView>('configure_pomodoro_docking', { autoDock, paused, phase, scale })
+        void enqueue<DockView>('configure_pomodoro_docking', { autoDock, paused, phase, scale, suspended })
             .then(value => { if (!cancelled) setView(value); })
             .catch(error => console.error('[docking] configure', error));
         return () => { cancelled = true; };
-    }, [autoDock, paused, phase, scale, enabled]);
+    }, [autoDock, paused, phase, scale, enabled, suspended]);
     const hover = (hovered: boolean) => {
         if (!('__TAURI_INTERNALS__' in window)) return;
         void enqueue('hover_pomodoro_docking', { hovered })

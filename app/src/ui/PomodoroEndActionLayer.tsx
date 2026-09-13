@@ -134,7 +134,7 @@ export function PomodoroEndActionLayer() {
     return (
         <>
             {popup && (
-                <div className="pomo-end-popup" role="status">
+                <div className="pomo-end-popup" role="status" data-dock-compatible="true">
                     {popup}
                 </div>
             )}

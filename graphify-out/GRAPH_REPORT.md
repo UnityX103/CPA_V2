@@ -1,16 +1,16 @@
 # Graph Report - CPA_V2  (2026-09-13)
 
 ## Corpus Check
-- 404 files · ~490,460 words
+- 406 files · ~490,952 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3677 nodes · 7499 edges · 213 communities (183 shown, 30 thin omitted)
+- 3685 nodes · 7524 edges · 215 communities (185 shown, 30 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 81 edges (avg confidence: 0.74)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `cd915402`
+- Built from commit: `122f2451`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -18,7 +18,7 @@
 - index.js
 - accessibility/mod.rs
 - presence.ts
-- App.tsx
+- userPreferences.ts
 - lib.rs
 - prepare-updater-release.mjs
 - window_helpers/mod.rs
@@ -46,11 +46,11 @@
 - NativeError
 - cockroach_module.rs
 - video_editor_module.rs
-- FakeWebSocket
+- pomodoro.ts
 - compilerOptions
 - window_layout.rs
 - AuthStore.js
-- runtime.ts
+- App.tsx
 - 摄像头工位在场自动控制设计
 - OnlineSettingsPanel.tsx
 - remotePlayerWindows.ts
@@ -136,8 +136,8 @@
 - Windows Update Publish Implementation Plan
 - Four-platform latest.json gate
 - CPA_V2 HTML entry point
-- TextInput.tsx
-- ui/PomodoroPanel.tsx
+- inputActivity.ts
+- ui/PlayerCard.tsx
 - @vitest/coverage-v8
 - Tauri React TypeScript app template
 - next-env.d.ts
@@ -203,6 +203,7 @@
 - replace_file_atomically
 - extensionPackConfig.test.ts
 - extensions/README.md
+- VideoPlayerApp.tsx
 - automation.rs
 - 2026-09-05-owned-pomodoro-video.md
 - latency.test.js
@@ -215,6 +216,7 @@
 - sample_input_activity
 - idle_milliseconds
 - release-0.1.32.md
+- presencePersistence.test.ts
 
 ## God Nodes (most connected - your core abstractions)
 1. `NativeError` - 41 edges
@@ -226,7 +228,7 @@
 7. `BridgeSnapshot` - 23 edges
 8. `VideoEditorModuleContractTests` - 23 edges
 9. `download_layered_module()` - 22 edges
-10. `摄像头工位在场自动控制设计` - 22 edges
+10. `Inner` - 22 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `normalizeDataFile()` --indirect_call--> `snapshot()`  [INFERRED]
@@ -241,20 +243,20 @@
   app/src-tauri/src/cockroach_module/automation.rs → app/src-tauri/src/cockroach_module.rs
 
 ## Import Cycles
+- 3-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/network.ts -> app/src/domain/bridge/dispatch.ts`
+- 3-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/pomodoro.ts -> app/src/domain/bridge/dispatch.ts`
+- 3-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/presence.ts -> app/src/domain/bridge/dispatch.ts`
+- 3-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/settings.ts -> app/src/domain/bridge/dispatch.ts`
 - 3-file cycle: `app/src/domain/appUpdate.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/appUpdate.ts`
 - 3-file cycle: `app/src/domain/bindingKey.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/bindingKey.ts`
-- 3-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/settings.ts -> app/src/domain/bridge/dispatch.ts`
-- 3-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/network.ts -> app/src/domain/bridge/dispatch.ts`
-- 3-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/presence.ts -> app/src/domain/bridge/dispatch.ts`
-- 3-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/pomodoro.ts -> app/src/domain/bridge/dispatch.ts`
 - 4-file cycle: `app/src/domain/appUpdate.ts -> app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/appUpdate.ts`
 - 4-file cycle: `app/src/domain/bindingKey.ts -> app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/bindingKey.ts`
 - 4-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/network.ts -> app/src/domain/bridge/dispatch.ts`
 - 4-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/pomodoro.ts -> app/src/domain/bridge/dispatch.ts`
 - 4-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/settings.ts -> app/src/domain/bridge/dispatch.ts`
+- 4-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/presence.ts -> app/src/domain/pomodoro.ts -> app/src/domain/bridge/dispatch.ts`
 - 4-file cycle: `app/src/domain/appUpdate.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/userPreferences.ts -> app/src/domain/appUpdate.ts`
 - 4-file cycle: `app/src/domain/bindingKey.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/userPreferences.ts -> app/src/domain/bindingKey.ts`
-- 4-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/presence.ts -> app/src/domain/pomodoro.ts -> app/src/domain/bridge/dispatch.ts`
 - 5-file cycle: `app/src/domain/appUpdate.ts -> app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/userPreferences.ts -> app/src/domain/appUpdate.ts`
 - 5-file cycle: `app/src/domain/bindingKey.ts -> app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/userPreferences.ts -> app/src/domain/bindingKey.ts`
 - 5-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/userPreferences.ts -> app/src/domain/network.ts -> app/src/domain/bridge/dispatch.ts`
@@ -273,7 +275,7 @@
 - **Check-in Lifecycle Control Flow** — docs_superpowers_plans_2026_05_23_checkin_global_toggle_checkin_enabled, docs_superpowers_plans_2026_06_16_settings_plan_panel_and_pet_removal_plan_panel_enabled, docs_superpowers_plans_2026_06_16_checkin_system_lifecycle_checkin_subsystem_lifecycle, docs_superpowers_plans_2026_06_16_checkin_system_lifecycle_mirror_panel_unmount [EXTRACTED 1.00]
 - **Native Window Interaction Controls** — docs_superpowers_specs_2026_05_15_overlay_hit_passthrough_design_native_hit_test_passthrough, docs_superpowers_specs_2026_05_15_settings_panel_drag_and_pixel_parity_design_settings_webview_window, docs_superpowers_specs_2026_05_16_main_window_pin_design_main_window_pin_command, docs_superpowers_plans_2026_05_21_temporary_focus_windows_temporary_focus_command [INFERRED 0.85]
 
-## Communities (213 total, 30 thin omitted)
+## Communities (215 total, 30 thin omitted)
 
 ### Community 0 - "index.js"
 Cohesion: 0.13
@@ -284,12 +286,12 @@ Cohesion: 0.10
 Nodes (43): AccessibilityStatus, accessibility_status(), AccessibilityChangedPayload, AccessibilityStatus, app_bundle_root(), bundle_identifier(), code_sign_identifier(), current_status() (+35 more)
 
 ### Community 2 - "presence.ts"
-Cohesion: 0.05
-Nodes (62): createDispatchRequestId(), dispatchConfirmed(), defaultRuntime, INPUT_ACTIVITY_POLL_MS, InputActivityRuntime, startInputActivityMonitor(), fixture(), monitor() (+54 more)
+Cohesion: 0.07
+Nodes (41): createDispatchRequestId(), dispatchConfirmed(), presenceAutomationContextSignature(), applyPresenceCapability(), capabilityState(), createPresenceStore(), defaultMonitorRuntime, initialPresenceState() (+33 more)
 
-### Community 3 - "App.tsx"
-Cohesion: 0.06
-Nodes (68): App(), buildStartupSettingsSnapshot(), clampStartupScale(), getStartupSettingsState(), StartupArchiveSource, mocks, userPreferenceStores(), waitForAccountRestoreAttempt() (+60 more)
+### Community 3 - "userPreferences.ts"
+Cohesion: 0.10
+Nodes (41): AppUpdateSnapshot, AppUpdateStore, BindingKeyStore, cloneBindingKey(), cloneBindingKeyEntry(), CloudStores, mergeCloudAccountDataConflict(), NetworkStore (+33 more)
 
 ### Community 4 - "lib.rs"
 Cohesion: 0.11
@@ -321,15 +323,15 @@ Nodes (33): description, identifier, main, permissions, $schema, windows, autost
 
 ### Community 11 - "audio.rs"
 Cohesion: 0.12
-Nodes (31): ActivePlayback, AudioOutputDevice, AudioPlaybackResult, AudioPlaybackState, AudioReader, builtin_sound_bytes(), list_audio_output_devices(), normalize_volume() (+23 more)
+Nodes (30): ActivePlayback, AudioOutputDevice, AudioPlaybackResult, AudioPlaybackState, AudioReader, builtin_sound_bytes(), list_audio_output_devices(), normalize_volume() (+22 more)
 
 ### Community 12 - "pomodoro_docking/mod.rs"
-Cohesion: 0.09
-Nodes (52): break_pause_and_resume_ignore_old_focus_timeout(), collapsed_transparent_space_passes_through_on_both_sides(), configure_pomodoro_docking(), dock_frame_width(), dock_hit_region(), dock_origin(), Docking, docking_monitor() (+44 more)
+Cohesion: 0.08
+Nodes (54): break_pause_and_resume_ignore_old_focus_timeout(), collapsed_transparent_space_passes_through_on_both_sides(), configure_pomodoro_docking(), dock_frame_width(), dock_hit_region(), dock_origin(), Docking, docking_monitor() (+46 more)
 
 ### Community 13 - "settings.ts"
 Cohesion: 0.12
-Nodes (25): applyAutostartEnabled(), readAutostartEnabled(), plugin, dispatch(), BreakPetMode, clampScale(), clampSoundVolume(), createDangerousChangeId() (+17 more)
+Nodes (24): applyAutostartEnabled(), readAutostartEnabled(), plugin, dispatch(), BreakPetMode, clampScale(), clampSoundVolume(), createDangerousChangeId() (+16 more)
 
 ### Community 14 - "UserDataStore.js"
 Cohesion: 0.12
@@ -340,8 +342,8 @@ Cohesion: 0.13
 Nodes (30): availability_for_error(), classify_camera_error(), create_face_detector(), generic_camera_errors_keep_their_safe_pipeline_stage(), list_devices(), map_camera_error_at(), open_camera(), open_privacy_settings() (+22 more)
 
 ### Community 16 - "network.ts"
-Cohesion: 0.08
-Nodes (28): clearPersistedAccountSession(), isPersistedAccountSessionV1(), loadPersistedAccountSession(), openStore(), PersistedAccountSession, PersistedAccountSessionV1, savePersistedAccountSession(), store (+20 more)
+Cohesion: 0.06
+Nodes (37): mocks, clearPersistedAccountSession(), isPersistedAccountSessionV1(), loadPersistedAccountSession(), openStore(), PersistedAccountSession, PersistedAccountSessionV1, savePersistedAccountSession() (+29 more)
 
 ### Community 17 - "PomodoroEndActionLayer.tsx"
 Cohesion: 0.07
@@ -368,24 +370,24 @@ Cohesion: 0.18
 Nodes (15): assert_tree_stops(), dropping_module_terminates_entire_process_tree(), fixture_command(), host_termination_terminates_entire_process_tree(), process_fixture(), ProcessProbe, Command, Drop (+7 more)
 
 ### Community 23 - "useSettingsStore"
-Cohesion: 0.09
-Nodes (31): isVisibleBindingEntry(), useBridgeClient(), saveRemotePlayerCardPosition(), INPUT_COUNTER_BASE_HEIGHT, INPUT_COUNTER_BASE_WIDTH, MAIN_WINDOW_BASE_SIZE, ScaledWindowSizeOptions, SETTINGS_WINDOW_BASE_SIZE (+23 more)
+Cohesion: 0.17
+Nodes (18): useBridgeClient(), INPUT_COUNTER_BASE_HEIGHT, INPUT_COUNTER_BASE_WIDTH, MAIN_WINDOW_BASE_SIZE, ScaledWindowSizeOptions, SETTINGS_WINDOW_BASE_SIZE, SETTINGS_WINDOW_MIN_SIZE, { invokeMock } (+10 more)
 
 ### Community 24 - "ui/SettingsPanel.tsx"
 Cohesion: 0.05
-Nodes (55): AudioOutputDevice, AudioPlaybackResult, listAudioOutputDevices(), playSound(), SoundSource, invoke, CameraDevice, listCameraDevices() (+47 more)
+Nodes (59): AudioOutputDevice, AudioPlaybackResult, listAudioOutputDevices(), playSound(), SoundSource, invoke, CameraDevice, listCameraDevices() (+51 more)
 
 ### Community 25 - "bindingKey.ts"
 Cohesion: 0.07
-Nodes (41): AccessibilityStatus, applyHealth(), BindingInput, BindingKeyActions, BindingKeyPlatform, BindingKeyState, BindingKeyStore, createBindingKeyStore() (+33 more)
+Nodes (44): ActiveAppState, useActiveAppStore, AccessibilityStatus, applyHealth(), BindingInput, BindingKeyActions, BindingKeyPlatform, BindingKeyState (+36 more)
 
 ### Community 26 - "pomodoroBroadcast.ts"
-Cohesion: 0.16
-Nodes (17): PomodoroPhase, createPomodoroBroadcast(), eventTypeFor(), POMODORO_BROADCAST_EVENT, POMODORO_BROADCAST_SNAPSHOT_REQUEST_EVENT, POMODORO_BROADCAST_VERSION, PomodoroBroadcast, PomodoroBroadcastEvent (+9 more)
+Cohesion: 0.15
+Nodes (19): createPomodoroStore(), freshStore(), createPomodoroBroadcast(), eventTypeFor(), POMODORO_BROADCAST_EVENT, POMODORO_BROADCAST_SNAPSHOT_REQUEST_EVENT, POMODORO_BROADCAST_VERSION, PomodoroBroadcast (+11 more)
 
 ### Community 27 - "extension_packs.rs"
-Cohesion: 0.17
-Nodes (41): dependent_id(), emit_statuses(), execute_extension_pack_action(), extension_pack_statuses(), ExtensionEventRules, ExtensionPackPreferences, ExtensionPackStatus, ExtensionPackStatusChanged (+33 more)
+Cohesion: 0.16
+Nodes (42): T, dependent_id(), emit_statuses(), execute_extension_pack_action(), extension_pack_statuses(), ExtensionEventRules, ExtensionPackPreferences, ExtensionPackStatus (+34 more)
 
 ### Community 28 - "NativeError"
 Cohesion: 0.17
@@ -393,11 +395,15 @@ Nodes (27): availability_for_error(), camera_index(), classify_camera_error(), d
 
 ### Community 29 - "cockroach_module.rs"
 Cohesion: 0.07
-Nodes (131): accepts_noncommercial_layered_runtime_and_logic_index(), accepts_the_base64_wrapped_signature_emitted_by_tauri_signer(), accepts_the_expected_module_contract(), activate_layered_installation(), execute_action(), child_is_running(), cockroach_module_status(), CockroachModuleSettings (+123 more)
+Nodes (130): accepts_noncommercial_layered_runtime_and_logic_index(), accepts_the_base64_wrapped_signature_emitted_by_tauri_signer(), accepts_the_expected_module_contract(), activate_layered_installation(), child_is_running(), cockroach_module_status(), CockroachModuleSettings, CockroachModuleState (+122 more)
 
 ### Community 30 - "video_editor_module.rs"
 Cohesion: 0.07
 Nodes (123): accepts_the_base64_wrapped_signature_emitted_by_tauri_signer(), accepts_the_expected_module_contract(), activate_layered_installation(), begin_module_update(), bundled_tool_path(), child_is_running(), common_pack_state(), ComponentFile (+115 more)
+
+### Community 31 - "pomodoro.ts"
+Cohesion: 0.08
+Nodes (22): DEFAULT_END_ACTION_VIDEO, formatMmSs(), PomodoroActions, PomodoroEndActionSourceKind, PomodoroPhase, PomodoroPinSource, PresenceAutomationState, usePomodoroStore (+14 more)
 
 ### Community 32 - "compilerOptions"
 Cohesion: 0.09
@@ -411,9 +417,9 @@ Nodes (19): apply_layout(), empty_snapshot(), install_tracking(), is_supported_w
 Cohesion: 0.19
 Nodes (11): AuthStore, AuthStoreError, createSession(), createSessionToken(), DEFAULT_FILE_PATH, hashPassword(), normalizeAccountInput(), normalizeDataFile() (+3 more)
 
-### Community 35 - "runtime.ts"
-Cohesion: 0.15
-Nodes (15): extensionPackCatalog, ExtensionPackId, ExtensionPackProgress, ExtensionRuntimeContribution, useExtensionPackStore, EventDrivenRuntimeAdapter, ActiveRuntimeEntry, ExtensionRuntimeModule (+7 more)
+### Community 35 - "App.tsx"
+Cohesion: 0.12
+Nodes (27): App(), buildStartupSettingsSnapshot(), clampStartupScale(), getStartupSettingsState(), StartupArchiveSource, userPreferenceStores(), waitForAccountRestoreAttempt(), waitForNetworkStartupResult() (+19 more)
 
 ### Community 36 - "摄像头工位在场自动控制设计"
 Cohesion: 0.04
@@ -425,7 +431,7 @@ Nodes (7): DEFAULT_HISTORY, DEFAULT_ROOM, OnlinePhase, OnlineSettingsPanelProps,
 
 ### Community 38 - "remotePlayerWindows.ts"
 Cohesion: 0.09
-Nodes (27): isRemotePlayerCardPosition(), loadRemotePlayerCardPositions(), normalizePositions(), openStore(), PersistedRemotePlayerCardPositionsV1, RemotePlayerCardPosition, RemotePlayerCardPositions, saveQueue (+19 more)
+Nodes (28): isRemotePlayerCardPosition(), loadRemotePlayerCardPositions(), normalizePositions(), openStore(), PersistedRemotePlayerCardPositionsV1, RemotePlayerCardPosition, RemotePlayerCardPositions, saveQueue (+20 more)
 
 ### Community 39 - "dependencies"
 Cohesion: 0.11
@@ -532,8 +538,8 @@ Cohesion: 0.20
 Nodes (9): description, identifier, main, permissions, $schema, windows, process:allow-restart, updater:allow-check (+1 more)
 
 ### Community 65 - "extensionPacks.ts"
-Cohesion: 0.11
-Nodes (24): createExtensionPackStore(), emptyRevisions(), emptyStatus(), emptyStatuses(), errorText(), ExtensionPackDescriptor, ExtensionPackKind, extensionPackRegistry (+16 more)
+Cohesion: 0.06
+Nodes (43): createExtensionPackStore(), emptyRevisions(), emptyStatus(), emptyStatuses(), errorText(), extensionPackCatalog, ExtensionPackDescriptor, ExtensionPackId (+35 more)
 
 ### Community 66 - "windowPinConfig.test.ts"
 Cohesion: 0.20
@@ -711,17 +717,17 @@ Nodes (3): Settings Panel Drag and Pixel-Parity Implementation Plan, Native sett
 Cohesion: 1.00
 Nodes (3): Windows Update Publish Implementation Plan, GitHub Releases Updater, Windows x64 NSIS Release
 
-### Community 121 - "TextInput.tsx"
-Cohesion: 0.47
-Nodes (3): NumberInput(), NumberInputProps, TextInput()
+### Community 121 - "inputActivity.ts"
+Cohesion: 0.25
+Nodes (13): defaultRuntime, INPUT_ACTIVITY_POLL_MS, InputActivityRuntime, startInputActivityMonitor(), fixture(), monitor(), useInputActivityMonitor(), PomodoroStore (+5 more)
 
-### Community 122 - "ui/PomodoroPanel.tsx"
-Cohesion: 0.05
-Nodes (31): DevAlignApp(), initialMode(), initialTargetId(), MOCK_PLAYER, Mode, PaneProps, Target, TARGETS (+23 more)
+### Community 122 - "ui/PlayerCard.tsx"
+Cohesion: 0.10
+Nodes (18): DevAlignApp(), initialMode(), initialTargetId(), MOCK_PLAYER, Mode, PaneProps, Target, TARGETS (+10 more)
 
 ### Community 134 - "CockroachModulePanel.tsx"
-Cohesion: 0.19
-Nodes (14): CockroachModuleSettings, CockroachModuleStatus, killAllCockroaches(), launchCockroachModule(), readCockroachModuleStatus(), saveCockroachModuleSettings(), ExtensionSettingsRenderer, CockroachModulePanel() (+6 more)
+Cohesion: 0.14
+Nodes (17): CockroachModuleSettings, CockroachModuleStatus, killAllCockroaches(), launchCockroachModule(), readCockroachModuleStatus(), saveCockroachModuleSettings(), ExtensionSettingsRenderer, CockroachModulePanel() (+9 more)
 
 ### Community 135 - "Mouse Input Counter Design"
 Cohesion: 0.11
@@ -812,8 +818,8 @@ Cohesion: 0.17
 Nodes (11): Check-in Global Toggle Design, Context, Data Flow, Error Handling, Goals, Non-Goals, Pencil Requirements, Product Behavior (+3 more)
 
 ### Community 157 - "host.ts"
-Cohesion: 0.06
-Nodes (65): ActiveAppInfo, ActiveAppState, useActiveAppStore, BindingKeyEntry, { listenMock, invokeMock }, applySnapshotToMirrors(), cloneActiveAppForMirror(), cloneDangerousChange() (+57 more)
+Cohesion: 0.07
+Nodes (54): ActiveAppInfo, BindingKeyEntry, { listenMock, invokeMock }, applySnapshotToMirrors(), cloneActiveAppForMirror(), cloneDangerousChange(), cloneEntries(), clonePlayer() (+46 more)
 
 ### Community 158 - "ModuleChild"
 Cohesion: 0.09
@@ -927,9 +933,13 @@ Nodes (4): replace_file_atomically(), Path, Result, String
 Cohesion: 0.50
 Nodes (4): replace_file_atomically(), Path, Result, String
 
+### Community 198 - "VideoPlayerApp.tsx"
+Cohesion: 0.60
+Nodes (3): closePlayerWindow(), close, VideoPlayerApp()
+
 ### Community 199 - "automation.rs"
-Cohesion: 0.31
-Nodes (16): CockroachAction, CockroachRule, default_rules(), read_cockroach_automation_rules(), read_rules(), AppHandle, Path, PathBuf (+8 more)
+Cohesion: 0.30
+Nodes (17): CockroachAction, CockroachRule, default_rules(), execute_action(), read_cockroach_automation_rules(), read_rules(), AppHandle, Path (+9 more)
 
 ### Community 201 - "latency.test.js"
 Cohesion: 0.40
@@ -965,8 +975,8 @@ _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `snapshot()` connect `UserDataStore.js` to `host.ts`?**
   _High betweenness centrality (0.016) - this node is a cross-community bridge._
-- **Why does `T` connect `audio.rs` to `extension_packs.rs`, `cockroach_module.rs`, `video_editor_module.rs`, `app_update.rs`?**
-  _High betweenness centrality (0.014) - this node is a cross-community bridge._
+- **Why does `T` connect `extension_packs.rs` to `audio.rs`, `cockroach_module.rs`, `video_editor_module.rs`, `app_update.rs`?**
+  _High betweenness centrality (0.015) - this node is a cross-community bridge._
 - **What connects `metadata`, `STATE_LABELS`, `ClockProps` to the rest of the system?**
   _1034 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `index.js` be split into smaller, more focused modules?**
@@ -974,6 +984,6 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `accessibility/mod.rs` be split into smaller, more focused modules?**
   _Cohesion score 0.09800362976406533 - nodes in this community are weakly interconnected._
 - **Should `presence.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.052614052614052616 - nodes in this community are weakly interconnected._
-- **Should `App.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.063568010936432 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07265306122448979 - nodes in this community are weakly interconnected._
+- **Should `userPreferences.ts` be split into smaller, more focused modules?**
+  _Cohesion score 0.10188261351052048 - nodes in this community are weakly interconnected._

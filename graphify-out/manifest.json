@@ -820,9 +820,9 @@
     "semantic_hash": "a52dbe6446e58ba2e19febfb0d065fc2"
   },
   "app/src/ui/PomodoroEndActionLayer.tsx": {
-    "mtime": 1787299222.9803722,
-    "ast_hash": "8f62a9d03dd7a691cd76c4c93b325748",
-    "semantic_hash": "8f62a9d03dd7a691cd76c4c93b325748"
+    "mtime": 1789289099.5264175,
+    "ast_hash": "bbbcf562255e836b83ee8cb85e2a9e89",
+    "semantic_hash": ""
   },
   "app/src/ui/PomodoroPanel.test.tsx": {
     "mtime": 1789278900.8965604,
@@ -835,9 +835,9 @@
     "semantic_hash": ""
   },
   "app/src/ui/PresenceNotice.tsx": {
-    "mtime": 1786697981.7590466,
-    "ast_hash": "0a8cb6a38e2d0f338bafc2ba5d0fdaae",
-    "semantic_hash": "0a8cb6a38e2d0f338bafc2ba5d0fdaae"
+    "mtime": 1789289099.526032,
+    "ast_hash": "0e7f75ce254623c99b90174c436bfa7a",
+    "semantic_hash": ""
   },
   "app/src/ui/RemoteRoster.tsx": {
     "mtime": 1786594517.8338437,
@@ -2425,8 +2425,8 @@
     "semantic_hash": ""
   },
   "app/src-tauri/src/pomodoro_docking/mod.rs": {
-    "mtime": 1789287587.217031,
-    "ast_hash": "f8e5027b67af24360538bf232979f4dd",
+    "mtime": 1789289161.2908845,
+    "ast_hash": "d4b66591015d0245624b50586a6a823f",
     "semantic_hash": ""
   },
   "app/src-tauri/src/pomodoro_docking/windows.rs": {
@@ -2440,13 +2440,13 @@
     "semantic_hash": ""
   },
   "app/src/ui/usePomodoroDocking.ts": {
-    "mtime": 1789285562.37145,
-    "ast_hash": "f25bdcdfbabd9d9b1949bd704d18fc86",
+    "mtime": 1789289099.5255163,
+    "ast_hash": "fa15ebb25d14d2dc57553ceb2660b992",
     "semantic_hash": ""
   },
   "app/src/ui/usePomodoroDocking.test.tsx": {
-    "mtime": 1789285513.5882676,
-    "ast_hash": "1ae174ce72146cfdd04b6f1fe37c1b78",
+    "mtime": 1789289099.526855,
+    "ast_hash": "1098eaf64d611128566f0402bf449a86",
     "semantic_hash": ""
   },
   "app/src/ui/AppUpdatePreview.tsx": {
@@ -2462,6 +2462,16 @@
   "docs/deployment/release-0.2.2.md": {
     "mtime": 1789288565.5877178,
     "ast_hash": "1cf1d54224adaa8cdc7ff51430c09134",
+    "semantic_hash": ""
+  },
+  "app/src/ui/useDockNoticeSuspension.test.tsx": {
+    "mtime": 1789289161.288382,
+    "ast_hash": "a4ecaa88e7e5be9ad6e5fc0c00634646",
+    "semantic_hash": ""
+  },
+  "app/src/ui/useDockNoticeSuspension.ts": {
+    "mtime": 1789289193.4825938,
+    "ast_hash": "4bed1e4837fef4dd0bbdb5d00f096265",
     "semantic_hash": ""
   }
 }

@@ -35,11 +35,11 @@ it('waits for restored preferences and configures the dock with the saved scale'
     act(() => useSettingsStore.setState({ uiScale: 2.4 }));
     rerender({ ready: true });
     await waitFor(() => expect(invoke).toHaveBeenCalledWith('configure_pomodoro_docking', {
-        autoDock: true, paused: false, phase: 'focus', scale: 2.4,
+        autoDock: true, paused: false, phase: 'focus', scale: 2.4, suspended: false,
     }));
     act(() => useSettingsStore.setState({ uiScale: 1.5 }));
     await waitFor(() => expect(invoke).toHaveBeenLastCalledWith('configure_pomodoro_docking', {
-        autoDock: true, paused: false, phase: 'focus', scale: 1.5,
+        autoDock: true, paused: false, phase: 'focus', scale: 1.5, suspended: false,
     }));
     act(() => useSettingsStore.setState({ uiScale: previousScale }));
 });
