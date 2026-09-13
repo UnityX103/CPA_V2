@@ -586,7 +586,7 @@ fn resolve_video_core(root: &Path) -> Result<Option<VideoCorePointer>, String> {
         &core.engine.version,
         &core.target,
         None,
-        true,
+        false,
     )?;
     validate_layered_component_directory(
         &models_directory,
@@ -594,7 +594,7 @@ fn resolve_video_core(root: &Path) -> Result<Option<VideoCorePointer>, String> {
         &core.models.version,
         &core.target,
         None,
-        true,
+        false,
     )?;
     Ok(Some(core))
 }
@@ -740,6 +740,33 @@ fn resolve_installed_module(root: &Path) -> Result<Option<ResolvedVideoEditorMod
         arguments: Vec::new(),
         environment: HashMap::new(),
     }))
+}
+
+// Status reads only inspect pointers/manifests. Full payload verification belongs
+// to opening the editor and must finish before any optional code is executed.
+fn resolve_module_for_launch(root: &Path) -> Result<Option<ResolvedVideoEditorModule>, String> {
+    let resolved = resolve_installed_module(root)?;
+    if resolved.is_none() {
+        return Ok(None);
+    }
+    let value: serde_json::Value = read_json_manifest(&pointer_path(root), "状态")?;
+    if value.get("schemaVersion").and_then(serde_json::Value::as_u64)
+        == Some(LAYERED_INDEX_SCHEMA_VERSION as u64)
+    {
+        let pointer: LayeredInstalledPointer = serde_json::from_value(value)
+            .map_err(|error| format!("分层视频编辑模块状态损坏：{error}"))?;
+        for (component, kind) in [
+            (&pointer.engine, LayeredComponentKind::Engine),
+            (&pointer.models, LayeredComponentKind::Models),
+            (&pointer.logic, LayeredComponentKind::Logic),
+        ] {
+            let directory = resolve_component_directory(root, component, kind, &pointer.target)?;
+            validate_layered_component_directory(
+                &directory, kind, &component.version, &pointer.target, None, true,
+            )?;
+        }
+    }
+    Ok(resolved)
 }
 
 fn resolve_layered_module(
@@ -2152,7 +2179,10 @@ pub async fn launch_video_editor_module(
         return Ok(());
     }
     let root = module_root(&app)?;
-    let Some(resolved) = resolve_installed_module(&root)? else {
+    let resolved = tauri::async_runtime::spawn_blocking(move || resolve_module_for_launch(&root))
+        .await
+        .map_err(|error| format!("视频编辑模块校验任务失败：{error}"))??;
+    let Some(resolved) = resolved else {
         return Err("请先下载视频编辑模块".to_string());
     };
     stop_child(&state);
@@ -2643,6 +2673,16 @@ mod tests {
             resolved.environment.get("CPA_VIDEO_EDITOR_MODEL_ROOT"),
             Some(&models.join("models").to_string_lossy().into_owned())
         );
+
+        assert!(super::resolve_module_for_launch(root).unwrap().is_some());
+        let model_file = models.join("models/sam2/checkpoint.pt");
+        std::fs::write(&model_file, b"wrong").unwrap();
+        assert!(super::resolve_video_core(root).unwrap().is_some(),
+            "status lookup must not read/hash optional model payloads");
+        assert!(resolve_installed_module(root).unwrap().is_some());
+        let error = super::resolve_module_for_launch(root).err().expect("reject tampered model on open");
+        assert!(error.contains("SHA-256"), "{error}");
+        std::fs::write(&model_file, b"model").unwrap();
 
         let current_before_failure = std::fs::read(root.join("current.json")).unwrap();
         std::fs::write(

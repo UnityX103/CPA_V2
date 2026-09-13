@@ -1,3 +1,4 @@
+import { SettingsHelp } from './SettingsHelp';
 import { useEffect, useState } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { POMODORO_RULE_EVENTS } from '../domain/pomodoroEvents';
@@ -38,7 +39,7 @@ export function CockroachAutomationRules() {
     return (
         <section className="cockroach-rules" aria-label="蟑螂事件规则">
             <div className="cockroach-rules-heading">
-                <strong>事件与操作</strong>
+                <strong>事件与操作<SettingsHelp label="事件与操作">同一事件按列表顺序执行。在工位事件使用摄像头检测，休息期间也支持已授权的键鼠活动检测；每次因在场检测而暂停休息时触发一次。</SettingsHelp></strong>
                 <button type="button" className="btn btn-secondary" disabled={!ready || saving || rows.length >= 32}
                     onClick={() => { setRows((current) => [...current, { key: crypto.randomUUID(), event: 'break.present', action: 'spawn-one' }]); setSaved(false); }}>
                     添加规则
@@ -60,7 +61,7 @@ export function CockroachAutomationRules() {
                 </div>
             ))}
             {ready && rows.length === 0 ? <p className="cockroach-rules-empty">暂无规则，蟑螂不会自动出现。点击“添加规则”设置触发方式。</p> : null}
-            <p className="cockroach-rules-hint">同一事件按列表顺序执行。在工位事件使用摄像头检测，休息期间也支持已授权的键鼠活动检测；每次因在场检测而暂停休息时触发一次。</p>
+
             <div className="cockroach-rules-save">
                 <button type="button" className="btn btn-primary" disabled={!ready || saving} onClick={() => { void save(); }}>{saving ? '保存中…' : '保存规则'}</button>
                 {saved ? <span role="status">规则已保存</span> : null}

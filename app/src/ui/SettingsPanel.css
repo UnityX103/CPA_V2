@@ -207,6 +207,19 @@
 
 .card-grid > .card { flex: 1 1 140px; }
 
+.pomodoro-timing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
+}
+
+.pomodoro-rounds-heading {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
 .card-row {
     display: flex;
     align-items: center;

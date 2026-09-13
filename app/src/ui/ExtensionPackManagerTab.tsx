@@ -1,3 +1,4 @@
+import { SettingsHelp } from './SettingsHelp';
 import {
     extensionPackCatalog,
     extensionPackRegistry,
@@ -43,7 +44,7 @@ export function ExtensionPackManagerTab() {
                     <span className="extension-pack-icon" aria-hidden="true">{descriptor.icon}</span>
                     <div className="extension-pack-title-block">
                         <div className="extension-pack-title-row">
-                            <h3>{descriptor.name}</h3>
+                            <h3>{descriptor.name}<SettingsHelp label={descriptor.name}>{descriptor.description}</SettingsHelp></h3>
                             <span className={`extension-pack-status ${status.enabled ? 'enabled' : status.installed ? 'disabled' : ''}`}>
                                 {status.enabled ? '已启用' : status.installed ? '已禁用' : '未安装'}
                             </span>
@@ -55,7 +56,6 @@ export function ExtensionPackManagerTab() {
                         </span>
                     </div>
                 </div>
-                <p className="extension-pack-description">{descriptor.description}</p>
                 <div className="extension-pack-contents">{descriptor.contents}</div>
 
                 {status.installed ? (
@@ -151,8 +151,7 @@ export function ExtensionPackManagerTab() {
                 </div>
 
                 <div className="extension-manager-group-heading">
-                    <strong>通用运行时</strong>
-                    <span>依赖保护会阻止误禁用或误卸载</span>
+                    <strong>通用运行时<SettingsHelp label="通用运行时">依赖保护会阻止误禁用或误卸载</SettingsHelp></strong>
                 </div>
                 <div className="extension-common-list">
                     {COMMON_PACKS.map((pack) => renderPack(pack.id))}

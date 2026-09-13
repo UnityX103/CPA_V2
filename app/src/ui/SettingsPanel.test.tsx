@@ -68,6 +68,7 @@ beforeEach(() => {
     usePomodoroStore.setState({
         focusDurationSeconds: 1500,
         breakDurationSeconds: 300,
+        totalRounds: 4,
         autoStartBreak: false,
         autoPinAfterFocus: true,
         endActionMode: 'playVideo',
@@ -114,6 +115,31 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('SettingsPanel', () => {
+    it('applies round changes only on Apply and resets the current cycle', () => {
+        usePomodoroStore.setState({ currentRound: 3, currentPhase: 'break', remainingSeconds: 70, isRunning: true });
+        render(<SettingsPanel />);
+        const rounds = screen.getByRole('spinbutton', { name: '循环轮次' }) as HTMLInputElement;
+        expect(rounds.value).toBe('4');
+        fireEvent.change(rounds, { target: { value: '6' } });
+        expect(usePomodoroStore.getState().totalRounds).toBe(4);
+        fireEvent.click(screen.getByRole('button', { name: '应用' }));
+        expect(usePomodoroStore.getState()).toEqual(expect.objectContaining({
+            totalRounds: 6, currentRound: 1, currentPhase: 'focus', remainingSeconds: 1500, isRunning: false,
+        }));
+    });
+
+    it('receives round updates without overwriting a locally edited round count', () => {
+        render(<SettingsPanel />);
+        const rounds = screen.getByRole('spinbutton', { name: '循环轮次' }) as HTMLInputElement;
+        act(() => usePomodoroStore.setState({ totalRounds: 8 }));
+        expect(rounds.value).toBe('8');
+        fireEvent.change(rounds, { target: { value: '6' } });
+        act(() => usePomodoroStore.setState({ totalRounds: 10 }));
+        expect(rounds.value).toBe('6');
+        fireEvent.click(screen.getByRole('button', { name: '应用' }));
+        expect(usePomodoroStore.getState().totalRounds).toBe(6);
+    });
+
     it('allows clearing and replacing the focus duration without inserting zero', () => {
         render(<SettingsPanel />);
         const input = screen.getAllByRole('spinbutton')[0] as HTMLInputElement;
@@ -129,7 +155,7 @@ describe('SettingsPanel', () => {
         render(<SettingsPanel />);
 
         expect(screen.getByRole('button', { name: '番茄钟' })).toBeTruthy();
-        expect(screen.getByRole('button', { name: '联机' })).toBeTruthy();
+        expect(screen.queryByRole('button', { name: '联机' })).toBeNull();
         expect(screen.getByRole('button', { name: '扩展包' })).toBeTruthy();
         expect(screen.getByRole('button', { name: '全局' })).toBeTruthy();
         expect(screen.queryByRole('button', { name: '蟑螂入侵' })).toBeNull();
@@ -528,9 +554,9 @@ describe('SettingsPanel', () => {
 
         fireEvent.click(screen.getByRole('button', { name: '摄像头自动控制' }));
         const inputs = screen.getAllByRole('spinbutton');
-        expect(inputs).toHaveLength(3);
-        expect(inputs[2].getAttribute('min')).toBe('5');
-        fireEvent.change(inputs[2], { target: { value: '5' } });
+        expect(inputs).toHaveLength(4);
+        expect(inputs[3].getAttribute('min')).toBe('5');
+        fireEvent.change(inputs[3], { target: { value: '5' } });
         fireEvent.change(screen.getByRole('combobox', { name: '离席判定阈值' }), {
             target: { value: 'balanced' },
         });

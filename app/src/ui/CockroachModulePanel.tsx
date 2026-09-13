@@ -1,3 +1,4 @@
+import { SettingsHelp } from './SettingsHelp';
 import { CockroachAutomationRules } from './CockroachAutomationRules';
 import { NumberInput } from './TextInput';
 import { useEffect, useState } from 'react';
@@ -62,8 +63,7 @@ export function CockroachModulePanel() {
         <section className="card cockroach-module-card" aria-label="蟑螂入侵模块设置">
             <div className="cockroach-module-heading">
                 <div>
-                    <strong>蟑螂入侵模块</strong>
-                    <span>基于 CockroachPet-Public-Electron，作为独立进程按需安装与运行。</span>
+                    <strong>蟑螂入侵模块<SettingsHelp label="蟑螂入侵模块">基于 CockroachPet-Public-Electron，作为独立进程按需安装与运行。安装、升级、启停与卸载请前往“扩展包”。</SettingsHelp></strong>
                 </div>
                 <span className={`cockroach-module-badge ${installed ? 'installed' : ''}`}>
                     {installed ? (status?.running ? '运行中' : '已启用') : '不可用'}
@@ -132,9 +132,7 @@ export function CockroachModulePanel() {
                             {busy === 'kill' ? '处理中…' : '杀死所有'}
                         </button>
                     </div>
-                    <span className="cockroach-module-lifecycle-note">
-                        安装、升级、启停与卸载请前往“扩展包”。
-                    </span>
+
                 </div>
             )}
             {error ? <div className="cockroach-module-error" role="alert">{error}</div> : null}

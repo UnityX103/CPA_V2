@@ -1,3 +1,4 @@
+import { SettingsHelp } from './SettingsHelp';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { invoke } from '@tauri-apps/api/core';
@@ -70,7 +71,6 @@ import './SettingsPanel.css';
 
 const CORE_TABS: Array<{ id: SettingsTab; label: string }> = [
     { id: 'pomodoro', label: '番茄钟' },
-    { id: 'online', label: '联机' },
     { id: 'extensions', label: '扩展包' },
 ];
 
@@ -219,6 +219,7 @@ function PomodoroTab({ onApplyStateChange }: {
     });
     const [focusMin, setFocusMin] = useState(Math.round(pomo.focusDurationSeconds / 60));
     const [breakMin, setBreakMin] = useState(Math.round(pomo.breakDurationSeconds / 60));
+    const [totalRounds, setTotalRounds] = useState(pomo.totalRounds);
     const [autoStartBreak, setAutoStartBreak] = useState(pomo.autoStartBreak);
     const [autoPinAfterFocus, setAutoPinAfterFocus] = useState(pomo.autoPinAfterFocus);
     const [endActionMode, setEndActionMode] = useState<PomodoroEndActionMode>(pomo.endActionMode);
@@ -241,6 +242,7 @@ function PomodoroTab({ onApplyStateChange }: {
     const committedRef = useRef({
         focusDurationSeconds: pomo.focusDurationSeconds,
         breakDurationSeconds: pomo.breakDurationSeconds,
+        totalRounds: pomo.totalRounds,
         autoStartBreak: pomo.autoStartBreak,
         autoPinAfterFocus: pomo.autoPinAfterFocus,
         endActionMode: pomo.endActionMode,
@@ -260,6 +262,7 @@ function PomodoroTab({ onApplyStateChange }: {
         const durationDraftDirty =
             focusMin * 60 !== previous.focusDurationSeconds ||
             breakMin * 60 !== previous.breakDurationSeconds ||
+            totalRounds !== previous.totalRounds ||
             autoStartBreak !== previous.autoStartBreak ||
             autoPinAfterFocus !== previous.autoPinAfterFocus;
         const endActionDraftDirty =
@@ -277,6 +280,7 @@ function PomodoroTab({ onApplyStateChange }: {
         if (!durationDraftDirty) {
             setFocusMin(Math.round(pomo.focusDurationSeconds / 60));
             setBreakMin(Math.round(pomo.breakDurationSeconds / 60));
+            setTotalRounds(pomo.totalRounds);
             setAutoStartBreak(pomo.autoStartBreak);
             setAutoPinAfterFocus(pomo.autoPinAfterFocus);
         }
@@ -308,6 +312,7 @@ function PomodoroTab({ onApplyStateChange }: {
         committedRef.current = {
             focusDurationSeconds: pomo.focusDurationSeconds,
             breakDurationSeconds: pomo.breakDurationSeconds,
+            totalRounds: pomo.totalRounds,
             autoStartBreak: pomo.autoStartBreak,
             autoPinAfterFocus: pomo.autoPinAfterFocus,
             endActionMode: pomo.endActionMode,
@@ -324,6 +329,7 @@ function PomodoroTab({ onApplyStateChange }: {
     }, [
         pomo.focusDurationSeconds,
         pomo.breakDurationSeconds,
+        pomo.totalRounds,
         pomo.autoStartBreak,
         pomo.autoPinAfterFocus,
         pomo.endActionMode,
@@ -345,6 +351,7 @@ function PomodoroTab({ onApplyStateChange }: {
         presence.restDeskReminderMode,
         focusMin,
         breakMin,
+        totalRounds,
         autoStartBreak,
         autoPinAfterFocus,
         endActionMode,
@@ -376,6 +383,7 @@ function PomodoroTab({ onApplyStateChange }: {
     const dirty =
         focusMin * 60 !== pomo.focusDurationSeconds ||
         breakMin * 60 !== pomo.breakDurationSeconds ||
+        totalRounds !== pomo.totalRounds ||
         autoStartBreak !== pomo.autoStartBreak ||
         autoPinAfterFocus !== pomo.autoPinAfterFocus ||
         endActionMode !== pomo.endActionMode ||
@@ -404,6 +412,7 @@ function PomodoroTab({ onApplyStateChange }: {
         const durationChanged =
             focusSeconds !== pomo.focusDurationSeconds ||
             breakSeconds !== pomo.breakDurationSeconds ||
+            totalRounds !== pomo.totalRounds ||
             autoStartBreak !== pomo.autoStartBreak;
         const autoPinAfterFocusChanged = autoPinAfterFocus !== pomo.autoPinAfterFocus;
         const endActionChanged =
@@ -420,7 +429,7 @@ function PomodoroTab({ onApplyStateChange }: {
             || restDeskReminderMode !== presence.restDeskReminderMode;
 
         if (durationChanged) {
-            pomo.applySettings(focusSeconds, breakSeconds, pomo.totalRounds, true, autoStartBreak);
+            pomo.applySettings(focusSeconds, breakSeconds, totalRounds, true, autoStartBreak);
         }
         if (autoPinAfterFocusChanged) {
             pomo.setAutoPinAfterFocus(autoPinAfterFocus);
@@ -457,6 +466,7 @@ function PomodoroTab({ onApplyStateChange }: {
         canApply,
         focusMin,
         breakMin,
+        totalRounds,
         autoStartBreak,
         autoPinAfterFocus,
         endActionMode,
@@ -556,7 +566,7 @@ function PomodoroTab({ onApplyStateChange }: {
             <div className="settings-content-scroll">
                 <div className="tab-pane">
                     {/* pomoGrid aIr3d */}
-                    <div className="card card-grid">
+                    <div className="card card-grid pomodoro-timing-grid">
                         <div className="card">
                             <span className="card-label">专注时长</span>
                             <NumberInput aria-label="专注时长" value={focusMin} onChange={setFocusMin} min={1} max={120} suffix="分钟" />
@@ -566,6 +576,16 @@ function PomodoroTab({ onApplyStateChange }: {
                             <NumberInput aria-label="休息时长"
                                 value={breakMin} onChange={setBreakMin} min={0} max={60} suffix="分钟"
                                 variant="warning"
+                            />
+                        </div>
+                        <div className="card">
+                            <div className="pomodoro-rounds-heading">
+                                <span className="card-label">循环轮次</span>
+                                <SettingsHelp label="循环轮次">1 轮 = 专注 + 休息 · 默认 4 轮。修改节奏后应用，将重置本组计时。</SettingsHelp>
+                            </div>
+                            <NumberInput aria-label="循环轮次"
+                                value={totalRounds} onChange={setTotalRounds}
+                                min={1} max={99} suffix="次"
                             />
                         </div>
                     </div>
@@ -579,7 +599,7 @@ function PomodoroTab({ onApplyStateChange }: {
                         </div>
 
                         <div className="card pomo-row">
-                            <span className="pomo-row-label">摄像头自动控制</span>
+                            <span className="pomo-row-label">摄像头自动控制<SettingsHelp label="摄像头自动控制">通过摄像头判断是否在工位：专注时离席自动暂停，回到工位自动恢复；休息时在工位暂停计时，离席后继续。手动暂停不会自动恢复。开启后点击“应用”生效。</SettingsHelp></span>
                             <Toggle
                                 checked={presenceEnabled}
                                 onChange={(enabled) => {
@@ -626,11 +646,15 @@ function PomodoroTab({ onApplyStateChange }: {
 
                         <div className="card input-activity-settings">
                             <div className="pomo-row">
-                                <span className="pomo-row-label">允许检测键盘和鼠标活动</span>
+                                <span className="pomo-row-label">
+                                    允许检测键盘和鼠标活动
+                                    <SettingsHelp label="键盘和鼠标活动">
+                                        <p>仅在休息中每 5 秒检查一次。最近 30 秒有键鼠活动视为在工位，不读取或保存按键内容、鼠标位置；无需额外系统输入权限。开启后点击“应用”生效。</p>
+                                        <p>可单独使用；同时开启摄像头时，任一检测到在场都会暂停休息。无输入满 30 秒且摄像头确认离场（或未启用）后继续休息。手动暂停和专注期间不检测。</p>
+                                    </SettingsHelp>
+                                </span>
                                 <Toggle checked={inputActivityEnabled} onChange={setInputActivityEnabled} ariaLabel="允许检测键盘和鼠标活动" />
                             </div>
-                            <p className="input-activity-detail">仅在休息中每 5 秒检查一次。最近 30 秒有键鼠活动视为在工位，不读取或保存按键内容、鼠标位置；无需额外系统输入权限。开启后点击“应用”生效。</p>
-                            {inputActivityEnabled && <p className="input-activity-detail">可单独使用；同时开启摄像头时，任一检测到在场都会暂停休息。无输入满 30 秒且摄像头确认离场（或未启用）后继续休息。手动暂停和专注期间不检测。</p>}
                             {presence.inputActivityEnabled && <span className="input-activity-status" role="status">{presence.inputActivityAvailability === 'error' ? '键鼠活动检测暂不可用，将自动重试。' : presence.inputActivityAvailability === 'ready' ? '键鼠活动检测可用' : '已允许，休息时检测'}</span>}
                         </div>
 
@@ -925,7 +949,7 @@ function PresenceAuthorizationControl({
             aria-label="摄像头授权状态"
         >
             <div className="presence-auth-copy" role="status" aria-live="polite">
-                <span className="presence-auth-label">摄像头授权</span>
+                <span className="presence-auth-label">摄像头授权<SettingsHelp label="摄像头授权">{view.detail}</SettingsHelp></span>
                 <span className="presence-auth-status">{view.status}</span>
             </div>
             <div className="presence-auth-actions" aria-label="摄像头授权操作">
@@ -939,7 +963,6 @@ function PresenceAuthorizationControl({
                     </button>
                 ))}
             </div>
-            <span className="presence-auth-detail">{view.detail}</span>
         </div>
     );
 }
@@ -1353,12 +1376,10 @@ function GlobalTab() {
                         </div>
                     )}
                     <div className="card-row">
-                        <span className="card-label">按键计数</span>
+                        <span className="card-label">按键计数<SettingsHelp label="按键计数">添加按键监听绑定；启用某一项后弹出独立的输入计数面板；最多 1 个标记为同步到远端。</SettingsHelp></span>
                         <Toggle checked={bk.panelEnabled} onChange={bk.setPanelEnabled} ariaLabel="按键计数" />
                     </div>
-                    <p className="bk-desc">
-                        添加按键监听绑定；启用某一项后弹出独立的输入计数面板；最多 1 个标记为同步到远端。
-                    </p>
+
                     {bk.entries.length > 0 && (
                         <div className="member-list" style={{ gap: 8 }}>
                             {bk.entries.map((entry) => (

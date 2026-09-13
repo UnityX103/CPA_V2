@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { invoke } from '@tauri-apps/api/core';
 import { usePomodoroStore, formatMmSs, type PomodoroPhase } from '../domain/pomodoro';
@@ -24,6 +24,23 @@ export function PomodoroPanel() {
     const state = usePomodoroStore();
     const presence = usePresenceStore();
     const tickRef = useRef<number | null>(null);
+    const resumeRef = useRef<HTMLButtonElement>(null);
+    const startRef = useRef<HTMLButtonElement>(null);
+    const [pausedDuringSession, setPausedDuringSession] = useState(false);
+    const [touchActions, setTouchActions] = useState(false);
+
+    useEffect(() => usePomodoroStore.subscribe((next, previous) => {
+        if (next.isRunning || next.currentPhase !== previous.currentPhase
+            || next.currentRound !== previous.currentRound
+            || next.remainingSeconds !== previous.remainingSeconds
+            || next.totalRounds !== previous.totalRounds
+            || next.focusDurationSeconds !== previous.focusDurationSeconds
+            || next.breakDurationSeconds !== previous.breakDurationSeconds) {
+            setPausedDuringSession(false);
+        } else if (previous.isRunning && !next.isRunning) {
+            setPausedDuringSession(true);
+        }
+    }), []);
 
     useEffect(() => {
         let last = performance.now();
@@ -63,6 +80,24 @@ export function PomodoroPanel() {
         && presence.confirmedPresence !== 'unknown'
         ? presence.confirmedPresence
         : null;
+    const cameraAvailable = presence.enabled
+        && (presence.availability === 'ready' || presence.availability === 'checking');
+    const inputAvailable = presence.inputActivityEnabled && presence.inputActivityAvailability === 'ready';
+    const automaticPause = state.currentPhase === 'focus'
+        ? cameraAvailable && state.presenceAutomationState === 'focusPaused'
+        : (cameraAvailable || inputAvailable)
+            && (state.presenceAutomationState === 'breakPaused'
+                || (state.presenceAutomationState === 'breakResumeEligible' && confirmedPresence === 'present'));
+    const showPauseOverlay = !state.isRunning && state.currentPhase !== 'completed'
+        && (pausedDuringSession || state.remainingSeconds < totalSeconds || automaticPause);
+    const showStartOverlay = !state.isRunning && !showPauseOverlay && state.currentPhase !== 'completed';
+    const phaseName = state.currentPhase === 'break' ? '休息' : '专注';
+
+    useEffect(() => {
+        if (showPauseOverlay && !automaticPause && document.activeElement === startRef.current) {
+            resumeRef.current?.focus();
+        }
+    }, [showPauseOverlay, automaticPause]);
 
     const onStartClick = () => {
         const s = usePomodoroStore.getState();
@@ -87,33 +122,29 @@ export function PomodoroPanel() {
         >
             <div className="pomo-content">
                 <div className="pomo-header">
-                    <div className="pomo-title">
-                        <span className="pomo-title-text">番茄钟</span>
-                        <button
-                            className="pomo-icon-btn"
-                            aria-label="设置"
-                            title="设置"
-                            onClick={() => { void invoke('open_settings_window'); }}
-                        >
-                            <SettingsIcon />
-                        </button>
-                    </div>
                     <div className="pomo-streak">
                         <span className="pomo-streak-label">连续专注</span>
                         <span className="pomo-streak-num">{state.consecutiveCompletedFocus} 次</span>
                     </div>
                 </div>
 
-                <div className="pomo-body">
+                {!showStartOverlay && <div className="pomo-body" inert={showPauseOverlay} data-no-window-drag
+                    data-show-actions={touchActions || undefined}
+                    onPointerDown={(event) => {
+                        if (event.pointerType === 'touch') setTouchActions(true);
+                    }}
+                    onPointerLeave={() => setTouchActions(false)}
+                >
                     <ClockRing
                         progress={progress}
                         label={formatMmSs(state.remainingSeconds)}
-                        sub={phaseLabel(state.currentPhase, state.isRunning)}
+                        sub={!state.isRunning && !showPauseOverlay && state.currentPhase !== 'completed' ? '待开始' : phaseLabel(state.currentPhase, state.isRunning)}
                         clockState={clockState}
                     />
                     <div className="pomo-actions">
                         <button
                             className="btn btn-primary"
+                            ref={startRef}
                             data-timer-state={state.isRunning ? 'running' : 'idle'}
                             onClick={onStartClick}
                         >
@@ -127,11 +158,13 @@ export function PomodoroPanel() {
                             跳过
                         </button>
                     </div>
-                </div>
-                {confirmedPresence && (
-                    <ConfirmedPresenceStatus presence={confirmedPresence} />
-                )}
+                </div>}
             </div>
+            <button className="pomo-icon-btn" aria-label="设置" title="设置"
+                onClick={() => { void invoke('open_settings_window'); }}>
+                <SettingsIcon />
+            </button>
+            {confirmedPresence && <ConfirmedPresenceStatus presence={confirmedPresence} />}
             <button
                 className={`pomo-pin ${state.isPinned ? 'is-pinned' : ''}`}
                 onClick={onTogglePin}
@@ -140,6 +173,42 @@ export function PomodoroPanel() {
             >
                 <PinIcon active={state.isPinned} />
             </button>
+            {showStartOverlay && (
+                <div className="pomo-pause-overlay pomo-start-overlay" role="region" aria-label="番茄钟待开始">
+                    <div className="pomo-pause-title">待开始</div>
+                    <dl className="pomo-start-summary">
+                        <div><dt>专注轮次</dt><dd>{state.totalRounds}<span>次</span></dd></div>
+                        <div><dt>每次专注</dt><dd>{state.focusDurationSeconds / 60}<span>分钟</span></dd></div>
+                        <div><dt>每次休息</dt><dd>{state.breakDurationSeconds / 60}<span>分钟</span></dd></div>
+                    </dl>
+                    <button className="btn pomo-resume" onClick={() => {
+                        setTouchActions(false);
+                        usePomodoroStore.getState().start();
+                    }}>开始</button>
+                </div>
+            )}
+            {showPauseOverlay && (
+                <div className="pomo-pause-overlay" role="region" aria-label="番茄钟已暂停">
+                    <div className="pomo-pause-bars" aria-hidden="true"><span /><span /></div>
+                    <div className="pomo-pause-title">
+                        {automaticPause ? (state.currentPhase === 'focus' ? '已离开工位' : '你还在工位上') : '已暂停'}
+                    </div>
+                    <div className="pomo-pause-detail">{phaseName} · 剩余 {formatMmSs(state.remainingSeconds)}</div>
+                    {automaticPause ? (
+                        <div className="pomo-pause-auto">
+                            {state.currentPhase === 'focus' ? '回到工位后自动恢复专注' : '离开工位后自动恢复休息'}
+                        </div>
+                    ) : (
+                        <button className="btn pomo-resume" ref={resumeRef} onClick={() => {
+                            setTouchActions(false);
+                            usePomodoroStore.getState().start();
+                        }}>恢复{phaseName}</button>
+                    )}
+                    <div className="pomo-pause-note">
+                        {automaticPause ? '等待工位状态变化 · 计时已暂停' : '计时已冻结 · 点击恢复后继续'}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

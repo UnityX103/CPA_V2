@@ -39,12 +39,16 @@ function resetPomodoro() {
         isPinned: false,
         autoStartBreak: true,
         consecutiveCompletedFocus: 0,
+        presenceAutomationState: 'none',
+        lastEndEvent: null,
     });
 }
 
 function resetPresence() {
     usePresenceStore.setState({
         enabled: false,
+        inputActivityEnabled: false,
+        inputActivityAvailability: 'disabled',
         absenceSensitivity: 'strict',
         availability: 'disabled',
         confirmedPresence: 'unknown',
@@ -126,6 +130,55 @@ describe('PomodoroPanel scale root', () => {
 
         expect(css).toMatch(/\.app-scale-root\s*\{[^}]*--app-ui-scale:\s*1/);
         expect(css).toMatch(/\.app-root\s*\{[^}]*zoom:\s*var\(--app-ui-scale\)/);
+    });
+});
+
+describe('PomodoroPanel pause overlay', () => {
+    it('pauses immediately, freezes time, and resumes from the central button', () => {
+        const { container } = render(<PomodoroPanel />);
+        expect(screen.queryByRole('region', { name: '番茄钟已暂停' })).toBeNull();
+        fireEvent.click(screen.getByRole('button', { name: '开始' }));
+        fireEvent.click(screen.getByRole('button', { name: '暂停' }));
+        expect(screen.getByRole('region', { name: '番茄钟已暂停' })).toBeTruthy();
+        expect(container.querySelector('.pomo-body')?.hasAttribute('inert')).toBe(true);
+        act(() => usePomodoroStore.getState().tick(10));
+        expect(usePomodoroStore.getState().remainingSeconds).toBe(1500);
+        fireEvent.click(screen.getByRole('button', { name: '恢复专注' }));
+        expect(screen.queryByRole('region', { name: '番茄钟已暂停' })).toBeNull();
+        act(() => usePomodoroStore.getState().tick(1));
+        expect(usePomodoroStore.getState().remainingSeconds).toBe(1499);
+    });
+
+    it.each(['focus', 'break'] as const)('shows the existing automatic %s recovery condition', (phase) => {
+        usePomodoroStore.setState({ currentPhase: phase, isRunning: true, remainingSeconds: phase === 'focus' ? 1500 : 300 });
+        usePresenceStore.setState({ enabled: true, availability: 'ready', confirmedPresence: phase === 'focus' ? 'absent' : 'present', lastSuccessfulAt: 1000 });
+        render(<PomodoroPanel />);
+        act(() => {
+            const store = usePomodoroStore.getState();
+            if (phase === 'focus') store.pauseFocusFromPresence(); else store.pauseBreakFromPresence();
+        });
+        expect(screen.getByText(phase === 'focus' ? '回到工位后自动恢复专注' : '离开工位后自动恢复休息')).toBeTruthy();
+        expect(screen.queryByRole('button', { name: /^恢复/ })).toBeNull();
+        act(() => {
+            const store = usePomodoroStore.getState();
+            if (phase === 'focus') store.resumeFocusFromPresence(); else store.resumeBreakFromPresence();
+        });
+        expect(screen.queryByRole('region', { name: '番茄钟已暂停' })).toBeNull();
+        expect(usePomodoroStore.getState().isRunning).toBe(true);
+    });
+
+    it('keeps settings and pin available when camera access becomes unavailable during a pause', () => {
+        usePomodoroStore.setState({ isRunning: true });
+        usePresenceStore.setState({ enabled: true, availability: 'ready' });
+        render(<PomodoroPanel />);
+        act(() => usePomodoroStore.getState().pauseFocusFromPresence());
+        act(() => usePresenceStore.setState({ availability: 'permissionDenied' }));
+        expect(screen.getByRole('button', { name: '恢复专注' })).toBeTruthy();
+        fireEvent.click(screen.getByRole('button', { name: '设置' }));
+        expect(invokeMock).toHaveBeenCalledWith('open_settings_window');
+        fireEvent.click(screen.getByRole('button', { name: '置顶' }));
+        expect(usePomodoroStore.getState().isPinned).toBe(true);
+        expect(screen.getByRole('region', { name: '番茄钟已暂停' })).toBeTruthy();
     });
 });
 

@@ -33,10 +33,10 @@ describe('main window fit-panel layout', () => {
         const main = conf.app.windows.find((w: { label?: string }) => w.label === 'main');
 
         expect(main).toBeTruthy();
-        expect(main.width).toBe(233);
-        expect(main.height).toBe(155);
-        expect(main.minWidth).toBe(233);
-        expect(main.minHeight).toBe(155);
+        expect(main.width).toBe(215);
+        expect(main.height).toBe(187);
+        expect(main.minWidth).toBe(215);
+        expect(main.minHeight).toBe(187);
         expect(main.resizable).toBe(false);
     });
 

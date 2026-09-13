@@ -40,10 +40,10 @@ const MOCK_PLAYER: RemotePlayer = {
 const TARGETS: Target[] = [
     {
         id: 'YRqeB',
-        label: '番茄面板 YRqeB (233×155)',
+        label: '番茄面板 YRqeB (215×187)',
         image: 'dev-align/YRqeB.png',
-        width: 233,
-        height: 155,
+        width: 215,
+        height: 187,
         render: () => <PomodoroPanel />,
     },
     {

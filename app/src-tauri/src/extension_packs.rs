@@ -217,8 +217,18 @@ fn remove_preference(preferences: &mut ExtensionPackPreferences, pack_id: &str) 
 }
 
 #[tauri::command]
-pub fn extension_pack_statuses(app: tauri::AppHandle) -> Result<Vec<ExtensionPackStatus>, String> {
-    statuses_internal(&app)
+pub async fn extension_pack_statuses(app: tauri::AppHandle) -> Result<Vec<ExtensionPackStatus>, String> {
+    run_status_check(move || statuses_internal(&app)).await
+}
+
+async fn run_status_check<T: Send + 'static>(
+    check: impl FnOnce() -> Result<T, String> + Send + 'static,
+) -> Result<T, String> {
+    // Installed runtimes/models can be several GB. Hashing them on the IPC
+    // thread freezes native window events; do not skip verification to avoid it.
+    tauri::async_runtime::spawn_blocking(check)
+        .await
+        .map_err(|error| format!("扩展包状态检查任务失败：{error}"))?
 }
 
 #[tauri::command]
@@ -393,6 +403,19 @@ fn validate_transition(
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn status_checks_run_off_the_calling_thread_and_preserve_errors() {
+        let caller = std::thread::current().id();
+        let worker = tauri::async_runtime::block_on(super::run_status_check(|| {
+            Ok(std::thread::current().id())
+        })).unwrap();
+        assert_ne!(caller, worker, "extension file verification must not block the UI thread");
+        let result = tauri::async_runtime::block_on(super::run_status_check(|| {
+            Err::<(), _>("invalid package hash".to_string())
+        }));
+        assert_eq!(result, Err("invalid package hash".to_string()));
+    }
+
     use super::{
         validate_transition, ExtensionPackStatus, ProtectedTransition, COCKROACH_ID, PET_CORE_ID,
         VIDEO_CORE_ID, VIDEO_EDITOR_ID,

@@ -1,203 +1,4 @@
-/* PomodoroPanel ←→ PUI.pen YRqeB
- * 外壳 233x155, padding 12, radius 24, stroke 1px #EFDCCD, fill #FFFDFBEE
- * 内容 BTIJv: layout vertical, gap 18, height 121
- *   ├─ head S3Nbk: horizontal, justify space_between, align center
- *   ├─ contentRow DiaNW: gap 22, vertical padding 16
- *       ├─ ClockRing nNt9z: 78x78
- *       └─ chipsRow p4kgU: vertical, gap 8 (startBtn / skipBtn 各占满列宽)
- *   └─ presenceStatus uJiuO: absolute x=128 y=2, 20x20 round
- * pp-pin-btn HApJ0: root absolute x=205 y=123, 22x22 round
- */
-
-.pomo-panel {
-    width: 233px;
-    height: 155px;
-    background: var(--panel-bg);
-    border: 1px solid var(--panel-stroke);
-    border-radius: var(--panel-radius-lg);
-    padding: var(--panel-padding);
-    box-shadow: var(--shadow-panel);
-    position: relative;
-    box-sizing: border-box;
-}
-
-.pomo-content {
-    display: flex;
-    flex-direction: column;
-    gap: var(--panel-gap);
-    height: 100%;
-    position: relative;
-}
-
-/* ----- head ----- */
-
-.pomo-header {
-    position: relative;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    -webkit-app-region: drag;
-    cursor: grab;
-}
-
-.pomo-header:active { cursor: grabbing; }
-
-.pomo-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.pomo-title-text {
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--text-brand-dark);
-    line-height: 1;
-    letter-spacing: 0.2px;
-}
-
-/* 4qNnO pp-settings-btn: absolute x=66 y=3, w=37 h=18, padding [2,0], radius 17,
- * 内嵌 lucide settings icon (#8c5830) fill_container 后 = 33x14 */
-.pomo-icon-btn {
-    position: absolute;
-    left: 66px;
-    top: 3px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 37px;
-    height: 18px;
-    padding: 2px 0;
-    border-radius: 17px;
-    background: var(--btn-icon-bg);
-    color: #8c5830;
-    -webkit-app-region: no-drag;
-    box-sizing: border-box;
-}
-
-.pomo-icon-btn:hover {
-    background: #E8D4BE;
-}
-
-.pomo-icon-btn svg { display: block; }
-
-/* statBadge XcJUF: vertical, gap 1, align end */
-.pomo-streak {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 1px;
-    -webkit-app-region: no-drag;
-}
-
-.pomo-streak-label {
-    font-size: 9px;
-    font-weight: 500;
-    color: var(--stat-label-color);
-    line-height: 1;
-}
-
-.pomo-streak-num {
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--stat-value-color);
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
-}
-
-/* presenceStatus uJiuO + presenceStatusIcon K8G3ut */
-.pomo-presence-status {
-    position: absolute;
-    left: 128px;
-    top: 2px;
-    z-index: 1;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    border: 1px solid;
-    border-radius: 10px;
-    box-sizing: border-box;
-    pointer-events: none;
-}
-
-.pomo-presence-status.is-present {
-    background: #E7F5EA;
-    border-color: #CBE7D2;
-    color: #3D8A58;
-}
-
-.pomo-presence-status.is-absent {
-    background: #FBE8E2;
-    border-color: #EEC8BD;
-    color: #C65D46;
-}
-
-.pomo-presence-status svg { display: block; }
-
-/* ----- contentRow ----- */
-
-.pomo-body {
-    display: flex;
-    align-items: center;
-    gap: 22px;
-    padding: 0 16px 0 0;
-    flex: 1;
-    position: relative;
-}
-
-.pomo-clock {
-    position: relative;
-    width: 78px;
-    height: 78px;
-    flex-shrink: 0;
-}
-
-.pomo-clock svg { display: block; }
-
-.pomo-clock-text {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-}
-
-.pomo-clock-time {
-    position: absolute;
-    left: 14px;
-    top: 21px;
-    width: 50px;
-    height: 18px;
-    text-align: center;
-    font-size: 17px;
-    font-weight: 500;
-    color: var(--text-brand-dark);
-    font-variant-numeric: tabular-nums;
-    line-height: 18px;
-    letter-spacing: -0.3px;
-}
-
-.pomo-clock-sub {
-    position: absolute;
-    left: 0;
-    top: 44px;
-    width: 78px;
-    height: 18px;
-    text-align: center;
-    font-size: 13px;
-    font-weight: 500;
-    line-height: 18px;
-}
-
-.pomo-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    flex: 1;
-    min-width: 0;
-}
-
-/* Button/Primary (Za5wE) + Button/Secondary (RPLJq) */
+/* Shared button styling used by the settings and other existing panels. */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -241,27 +42,105 @@
     background: #FFF7EE;
 }
 
-/* pp-pin-btn HApJ0 (cM79C): root absolute x=205 y=123, 22x22, radius 11. */
-.pomo-pin {
+/* Approved timer: 124px clock slightly below center in a 215 × 187px panel. */
+.pomo-panel {
+    width: 215px;
+    height: 187px;
+    position: relative;
+    box-sizing: border-box;
+    padding: var(--panel-padding);
+    border: 1px solid var(--panel-stroke);
+    border-radius: var(--panel-radius-lg);
+    background: var(--panel-bg);
+    box-shadow: var(--shadow-panel);
+    font-family: var(--font-cn);
+}
+
+.pomo-panel[data-clock-state="focus"] {
+    --panel-bg: #FFF8F2;
+    --panel-stroke: #E8C4A8;
+    --clock-focus-ring-bg: #FFD9C5;
+}
+
+.pomo-panel[data-clock-state="rest"] {
+    --panel-bg: #F1F8F0;
+    --panel-stroke: #C8DDC8;
+    --clock-rest-ring-bg: #BFE3C7;
+}
+
+.pomo-content { position: relative; height: 100%; }
+.pomo-header { cursor: grab; -webkit-app-region: drag; }
+.pomo-header:active { cursor: grabbing; }
+.pomo-streak { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; }
+.pomo-streak-label { font-size: 9px; font-weight: 500; color: var(--stat-label-color); line-height: 1; }
+.pomo-streak-num { font-size: 14px; font-weight: 700; color: var(--stat-value-color); line-height: 1; font-variant-numeric: tabular-nums; }
+
+.pomo-body {
     position: absolute;
-    left: 205px;
-    top: 123px;
-    width: 22px;
-    height: 22px;
-    border-radius: 11px;
-    background: var(--btn-pin-bg);
-    border: 1px solid var(--btn-pin-stroke);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--btn-pin-icon-default);
-    -webkit-app-region: no-drag;
+    width: 124px;
+    height: 124px;
+    left: 50%;
+    top: calc(50% + 6px);
+    transform: translate(-50%, -50%);
+}
+.pomo-clock { position: relative; width: 124px; height: 124px; }
+.pomo-clock > svg { display: block; width: 124px; height: 124px; }
+.pomo-clock-text { position: absolute; inset: 0; pointer-events: none; transition: opacity .15s; }
+.pomo-clock-time { position: absolute; left: 0; top: 35px; width: 124px; height: 30px; line-height: 30px; text-align: center; font-size: 27px; font-weight: 500; color: var(--text-brand-dark); font-variant-numeric: tabular-nums; letter-spacing: -.3px; }
+.pomo-clock-sub { position: absolute; left: 0; top: 70px; width: 124px; height: 20px; line-height: 20px; text-align: center; font-size: 16px; font-weight: 500; }
+
+.pomo-actions {
+    position: absolute;
+    inset: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border: 1px solid #E8C4A8;
+    border-radius: 50%;
+    background: #FFF3E9;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .15s;
+}
+.pomo-body:is(:hover, :has(.btn:focus-visible), [data-show-actions="true"]) .pomo-actions { opacity: 1; pointer-events: auto; }
+.pomo-body:is(:hover, :has(.btn:focus-visible), [data-show-actions="true"]) .pomo-clock-text { opacity: 0; }
+.pomo-actions .btn { width: 100%; flex: 1; min-height: 0; border: 0; border-radius: 0; background: transparent; padding: 0; color: #B65A36; font-size: 14px; }
+.pomo-actions .btn-secondary { border-top: 1px solid #E8C4A8; color: #8F7766; font-size: 12px; }
+.pomo-actions .btn:hover:not(:disabled) { background: #F5D7C3; }
+.pomo-actions .btn:focus-visible { outline-offset: -4px; }
+.pomo-panel[data-clock-state="rest"] .pomo-actions { background: #E7F5EA; border-color: #C8DDC8; }
+.pomo-panel[data-clock-state="rest"] .pomo-actions .btn { color: #3D8A58; border-color: #C8DDC8; }
+.pomo-panel[data-clock-state="rest"] .pomo-actions .btn:hover:not(:disabled) { background: #C8EDD5; }
+
+/* Original icon artwork and colors; aligned centers, equal bottom/right pin inset. */
+.pomo-icon-btn, .pomo-pin, .pomo-presence-status { position: absolute; display: flex; align-items: center; justify-content: center; box-sizing: border-box; z-index: 3; }
+.pomo-icon-btn, .pomo-pin { width: 22px; height: 22px; right: 5px; -webkit-app-region: no-drag; }
+.pomo-icon-btn { bottom: 35px; padding: 2px; border-radius: 17px; background: var(--btn-icon-bg); color: #8c5830; }
+.pomo-icon-btn:hover { background: #E8D4BE; }
+.pomo-icon-btn svg { display: block; }
+.pomo-pin { bottom: 5px; border-radius: 11px; background: var(--btn-pin-bg); border: 1px solid var(--btn-pin-stroke); color: var(--btn-pin-icon-default); }
+.pomo-pin.is-pinned { color: var(--btn-pin-icon-active); }
+.pomo-pin:hover { filter: brightness(.96); }
+.pomo-presence-status { right: 6px; bottom: 66px; width: 20px; height: 20px; border: 1px solid; border-radius: 10px; pointer-events: none; }
+.pomo-presence-status.is-present { background: #E7F5EA; border-color: #CBE7D2; color: #3D8A58; }
+.pomo-presence-status.is-absent { background: #FBE8E2; border-color: #EEC8BD; color: #C65D46; }
+.pomo-presence-status svg { display: block; }
+
+.pomo-pause-overlay { position: absolute; inset: 0; z-index: 2; border-radius: var(--panel-radius-lg); background: #FFF8EDF5; backdrop-filter: blur(7px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: var(--text-brand-dark); text-align: center; }
+.pomo-pause-bars { display: flex; gap: 5px; margin-bottom: 2px; }
+.pomo-pause-bars span { width: 5px; height: 16px; border-radius: 2px; background: #E08C10; }
+.pomo-pause-title { font-size: 18px; line-height: 1.2; color: #A66E1F; }
+.pomo-pause-detail, .pomo-pause-note { font-size: 11px; line-height: 1.3; color: #8F7766; }
+.pomo-pause-auto { font-size: 13px; line-height: 1.3; color: #A66E1F; }
+.pomo-resume { font-size: 12px; padding: 8px 22px; margin: 3px 0; background: #D15F3D; color: #FFFFFF; }
+
+@media (prefers-reduced-motion: reduce) {
+    .pomo-actions, .pomo-clock-text { transition: none; }
 }
 
-.pomo-pin.is-pinned {
-    color: var(--btn-pin-icon-active);
-}
-
-.pomo-pin:hover {
-    filter: brightness(0.96);
-}
+.pomo-start-overlay { padding-top: 12px; box-sizing: border-box; gap: 12px; }
+.pomo-start-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin: 0; width: 158px; }
+.pomo-start-summary dt { font-size: 9px; line-height: 1.5; color: #8F7766; white-space: nowrap; }
+.pomo-start-summary dd { margin: 3px 0 0; font-size: 17px; line-height: 1.2; color: var(--text-brand-dark); }
+.pomo-start-summary dd span { margin-left: 2px; font-size: 9px; color: #8F7766; }

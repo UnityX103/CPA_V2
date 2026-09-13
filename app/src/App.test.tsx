@@ -22,7 +22,7 @@ vi.mock('./domain/bridge/host', () => ({ useBridgeHost: vi.fn() }));
 vi.mock('./domain/inputCounterWindow', () => ({ useInputCounterWindowController: vi.fn() }));
 vi.mock('./domain/remotePlayerWindows', () => ({ useRemotePlayerWindowController: vi.fn() }));
 vi.mock('./domain/scaledWindow', () => ({
-    MAIN_WINDOW_BASE_SIZE: { width: 233, height: 155 },
+    MAIN_WINDOW_BASE_SIZE: { width: 215, height: 187 },
     useScaledWindowSize: vi.fn(),
 }));
 vi.mock('./domain/cloudAccountSync', () => ({ useCloudAccountSync: vi.fn() }));
@@ -80,7 +80,7 @@ afterEach(() => {
 });
 
 describe('App startup', () => {
-    it.each(['local', 'cloud'] as const)('initializes the timer and empty ring from %s preferences', async (source) => {
+    it.each(['local', 'cloud'] as const)('initializes the start summary and timer from %s preferences', async (source) => {
         const snapshot = defaultUserPreferencesSnapshot();
         snapshot.pomodoro.focusDurationSeconds = 30 * 60;
         snapshot.pomodoro.breakDurationSeconds = 10 * 60;
@@ -104,7 +104,10 @@ describe('App startup', () => {
             currentRound: 1,
             isRunning: false,
         });
-        expect(container.querySelector('.pomo-clock-time')?.textContent).toBe('30:00');
+        expect(container.querySelector('.pomo-clock')).toBeNull();
+        expect(container.querySelector('.pomo-start-summary')?.textContent).toContain('30分钟');
+        expect(container.querySelector('.pomo-start-summary')?.textContent).toContain('10分钟');
+        act(() => usePomodoroStore.getState().start());
         const ring = container.querySelector('circle[stroke-dashoffset]')!;
         expect(ring.getAttribute('stroke-dashoffset')).toBe(ring.getAttribute('stroke-dasharray'));
 
@@ -117,8 +120,8 @@ describe('App startup', () => {
             Number(ring.getAttribute('stroke-dasharray')) * 29 / 30,
         );
         act(() => usePomodoroStore.getState().reset());
-        expect(container.querySelector('.pomo-clock-time')?.textContent).toBe('30:00');
-        expect(ring.getAttribute('stroke-dashoffset')).toBe(ring.getAttribute('stroke-dasharray'));
+        expect(container.querySelector('.pomo-clock')).toBeNull();
+        expect(container.querySelector('.pomo-start-summary')?.textContent).toContain('30分钟');
     });
 
     it('hydrates retained settings and saves one unified snapshot', async () => {

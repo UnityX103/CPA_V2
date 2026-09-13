@@ -1,7 +1,7 @@
 use tauri::WebviewWindow;
 
-pub(crate) const MAIN_PANEL_BASE_WIDTH: f64 = 233.0;
-pub(crate) const MAIN_PANEL_BASE_HEIGHT: f64 = 155.0;
+pub(crate) const MAIN_PANEL_BASE_WIDTH: f64 = 215.0;
+pub(crate) const MAIN_PANEL_BASE_HEIGHT: f64 = 187.0;
 pub(crate) const MAIN_PANEL_CORNER_RADIUS: f64 = 24.0;
 
 #[cfg(target_os = "macos")]
@@ -153,20 +153,20 @@ mod tests {
 
     #[test]
     fn main_panel_hit_test_follows_rounded_panel_edges() {
-        assert!(point_in_rounded_rect(233.0, 155.0, 24.0, 116.5, 77.5));
-        assert!(point_in_rounded_rect(233.0, 155.0, 24.0, 0.0, 24.0));
-        assert!(point_in_rounded_rect(233.0, 155.0, 24.0, 233.0, 131.0));
-        assert!(!point_in_rounded_rect(233.0, 155.0, 24.0, 0.0, 0.0));
-        assert!(!point_in_rounded_rect(233.0, 155.0, 24.0, 232.0, 1.0));
-        assert!(!point_in_rounded_rect(233.0, 155.0, 24.0, -0.1, 77.5));
+        assert!(point_in_rounded_rect(215.0, 187.0, 24.0, 107.5, 93.5));
+        assert!(point_in_rounded_rect(215.0, 187.0, 24.0, 0.0, 24.0));
+        assert!(point_in_rounded_rect(215.0, 187.0, 24.0, 215.0, 163.0));
+        assert!(!point_in_rounded_rect(215.0, 187.0, 24.0, 0.0, 0.0));
+        assert!(!point_in_rounded_rect(215.0, 187.0, 24.0, 214.0, 1.0));
+        assert!(!point_in_rounded_rect(215.0, 187.0, 24.0, -0.1, 93.5));
     }
 
     #[test]
     fn main_panel_hit_test_scales_with_the_window() {
-        let radius = main_panel_corner_radius(466.0, 310.0);
+        let radius = main_panel_corner_radius(430.0, 374.0);
         assert_eq!(radius, 48.0);
-        assert!(point_in_rounded_rect(466.0, 310.0, radius, 0.0, 48.0));
-        assert!(!point_in_rounded_rect(466.0, 310.0, radius, 0.0, 0.0));
+        assert!(point_in_rounded_rect(430.0, 374.0, radius, 0.0, 48.0));
+        assert!(!point_in_rounded_rect(430.0, 374.0, radius, 0.0, 0.0));
     }
 
     #[cfg(target_os = "macos")]

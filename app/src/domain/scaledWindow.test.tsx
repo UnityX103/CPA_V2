@@ -53,7 +53,7 @@ afterEach(() => {
 
 describe('useScaledWindowSize', () => {
     it('uses the exact Pomodoro panel bounds for the main window hit area', () => {
-        expect(MAIN_WINDOW_BASE_SIZE).toEqual({ width: 233, height: 155 });
+        expect(MAIN_WINDOW_BASE_SIZE).toEqual({ width: 215, height: 187 });
     });
 
     it('invokes the shared native resize command with current scale', async () => {
