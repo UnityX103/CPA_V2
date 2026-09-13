@@ -3,6 +3,7 @@ name = "app"
 version = "0.1.32"
 description = "桌宠番茄钟 (Tauri 2 重写)"
 authors = ["NanZhai"]
+repository = "https://github.com/UnityX103/CPA_V2"
 edition = "2021"
 
 [lib]
@@ -23,6 +24,7 @@ tauri-plugin-updater = "2"
 tokio = { version = "1", features = ["time", "fs", "io-util"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+semver = "1"
 base64 = "0.22"
 futures-util = "0.3"
 minisign-verify = "0.2.5"

@@ -1,7 +1,8 @@
 import { create, type StoreApi, type UseBoundStore } from 'zustand';
-import { check, type DownloadEvent, type Update } from '@tauri-apps/plugin-updater';
+import { type DownloadEvent, Update } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
 import { getVersion } from '@tauri-apps/api/app';
+import { invoke } from '@tauri-apps/api/core';
 import {
     loadPersistedAppUpdateSettings,
     savePersistedAppUpdateSettings,
@@ -74,7 +75,10 @@ function errorToMessage(err: unknown): string {
 
 function createDefaultDeps(): AppUpdateDeps {
     return {
-        checkForUpdate: () => check({ timeout: APP_UPDATE_REQUEST_TIMEOUT_MS }),
+        checkForUpdate: async () => {
+            const metadata = await invoke<ConstructorParameters<typeof Update>[0] | null>('check_app_update');
+            return metadata ? new Update(metadata) : null;
+        },
         relaunchApp: () => relaunch(),
         getVersion,
         loadSettings: loadPersistedAppUpdateSettings,

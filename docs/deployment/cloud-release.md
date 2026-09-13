@@ -12,6 +12,8 @@
 
 ## 凭据边界
 
+CNB 凭据不得进入 GitHub 的源码、历史、Secrets、Variables、工作流输入、日志或制品；仓库中 CNB 专用脚本的 `CNB_TOKEN` 变量名不是密钥值。
+
 GitHub 使用本次任务的 GITHUB_TOKEN 创建自己的 Release，不需要 CNB 令牌、CNB 写权限或个人 GitHub PAT。公开源码、已公开 Release 元数据与附件支持匿名读取；匿名 API 一般每出口 IP 每小时 60 次，CNB 共享出口也可能限流。脚本遇限流失败退出，下一轮重试，不自动引入凭据。
 
 GitHub 正式发布需要以下仓库 Secrets：
@@ -37,7 +39,7 @@ CNB 脚本仅用内置 CNB_TOKEN 写 CNB Release 和导入相应 Git tag，GitHu
 - 最新索引引用的旧 tag 大文件也会补齐到对应 CNB tag，按大小和哈希跳过已有内容，不把它们复制到新的 app Release。
 - 流水线从 CNB main 运行固定脚本，导入源码只推送版本 tag，不自动覆盖 CNB main，也不执行下载的源码或包。
 - 上传每个文件后验证远端大小及哈希。包先于索引、latest.json 最后上传；完成后再切换 CNB Latest，在线核对 updater，最后写同步收据。收据记录上游版本和附件指纹，无变化直接退出。
-- 同步任务串行加锁。同步期间上游发生变更则失败重试；旧版 CNB 继续可用。CNB 的首选 updater 端点保持不变，镜像尚未跟上时用户可能晚一个调度周期看到更新，200 响应不会触发 GitHub 后备端点。
+- 同步任务串行加锁。同步期间上游发生变更则失败重试；旧版 CNB 继续可用。客户端通过 `app/src-tauri/src/app_update.rs` 并行查询两个固定公开清单，各限时 10 秒：版本相同优先 CNB，GitHub 版本更新则选择 GitHub；CNB 无可用更新或出错时仍检查 GitHub。GitHub 不可达时可使用 CNB 已有的可用更新；无法确认最新且没有可用更新时显示检查失败。下载和签名校验沿用 Tauri updater。此代码修正需随下一次客户端版本发布，已发布 0.1.32 仍只有原生端点失败回退。
 
 ## 故障与成本
 

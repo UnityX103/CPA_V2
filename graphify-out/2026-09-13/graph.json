@@ -2330,8 +2330,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "server_bin_test_server",
-      "community": 188,
-      "community_name": "createPomodoroServer",
+      "community": 0,
+      "community_name": "index.js",
       "norm_label": "test-server.js"
     },
     {
@@ -2342,8 +2342,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_bin_test_server_shutdown",
-      "community": 188,
-      "community_name": "createPomodoroServer",
+      "community": 0,
+      "community_name": "index.js",
       "norm_label": "shutdown()"
     },
     {
@@ -3603,8 +3603,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_index_createpomodoroserver",
-      "community": 188,
-      "community_name": "createPomodoroServer",
+      "community": 0,
+      "community_name": "index.js",
       "norm_label": "createpomodoroserver()"
     },
     {
@@ -3615,8 +3615,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_index_clearconnectioninittimeout",
-      "community": 188,
-      "community_name": "createPomodoroServer",
+      "community": 0,
+      "community_name": "index.js",
       "norm_label": "clearconnectioninittimeout()"
     },
     {
@@ -3843,8 +3843,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_index_handleknownerror",
-      "community": 188,
-      "community_name": "createPomodoroServer",
+      "community": 0,
+      "community_name": "index.js",
       "norm_label": "handleknownerror()"
     },
     {
@@ -3879,8 +3879,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_index_waitforlistening",
-      "community": 188,
-      "community_name": "createPomodoroServer",
+      "community": 0,
+      "community_name": "index.js",
       "norm_label": "waitforlistening()"
     },
     {
@@ -3891,8 +3891,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_index_installprocessguards",
-      "community": 188,
-      "community_name": "createPomodoroServer",
+      "community": 0,
+      "community_name": "index.js",
       "norm_label": "installprocessguards()"
     },
     {
@@ -4057,8 +4057,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_protocol_createerrormessage",
-      "community": 188,
-      "community_name": "createPomodoroServer",
+      "community": 0,
+      "community_name": "index.js",
       "norm_label": "createerrormessage()"
     },
     {
@@ -4297,8 +4297,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_protocol_normalizeerrorcode",
-      "community": 188,
-      "community_name": "createPomodoroServer",
+      "community": 0,
+      "community_name": "index.js",
       "norm_label": "normalizeerrorcode()"
     },
     {
@@ -4391,7 +4391,7 @@
       "_origin": "ast",
       "id": "server_test_integration_test",
       "community": 188,
-      "community_name": "createPomodoroServer",
+      "community_name": "integration.test.js",
       "norm_label": "integration.test.js"
     },
     {
@@ -4403,7 +4403,7 @@
       "_origin": "ast",
       "id": "server_test_integration_test_openclient",
       "community": 188,
-      "community_name": "createPomodoroServer",
+      "community_name": "integration.test.js",
       "norm_label": "openclient()"
     },
     {
@@ -4415,7 +4415,7 @@
       "_origin": "ast",
       "id": "server_test_integration_test_sendjson",
       "community": 188,
-      "community_name": "createPomodoroServer",
+      "community_name": "integration.test.js",
       "norm_label": "sendjson()"
     },
     {
@@ -4427,7 +4427,7 @@
       "_origin": "ast",
       "id": "server_test_integration_test_createmessagecollector",
       "community": 188,
-      "community_name": "createPomodoroServer",
+      "community_name": "integration.test.js",
       "norm_label": "createmessagecollector()"
     },
     {
@@ -4439,7 +4439,7 @@
       "_origin": "ast",
       "id": "server_test_integration_test_authclient",
       "community": 188,
-      "community_name": "createPomodoroServer",
+      "community_name": "integration.test.js",
       "norm_label": "authclient()"
     },
     {
@@ -4451,7 +4451,7 @@
       "_origin": "ast",
       "id": "server_test_integration_test_validuserdatapayload",
       "community": 188,
-      "community_name": "createPomodoroServer",
+      "community_name": "integration.test.js",
       "norm_label": "validuserdatapayload()"
     },
     {
@@ -4463,7 +4463,7 @@
       "_origin": "ast",
       "id": "server_test_integration_test_createtestserver",
       "community": 188,
-      "community_name": "createPomodoroServer",
+      "community_name": "integration.test.js",
       "norm_label": "createtestserver()"
     },
     {
@@ -4473,8 +4473,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "server_test_latency_test",
-      "community": 188,
-      "community_name": "createPomodoroServer",
+      "community": 202,
+      "community_name": "latency.test.js",
       "norm_label": "latency.test.js"
     },
     {
@@ -4485,8 +4485,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_test_latency_test_openclient",
-      "community": 188,
-      "community_name": "createPomodoroServer",
+      "community": 202,
+      "community_name": "latency.test.js",
       "norm_label": "openclient()"
     },
     {
@@ -4497,8 +4497,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_test_latency_test_sendjson",
-      "community": 188,
-      "community_name": "createPomodoroServer",
+      "community": 202,
+      "community_name": "latency.test.js",
       "norm_label": "sendjson()"
     },
     {
@@ -4509,8 +4509,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_test_latency_test_createmessagecollector",
-      "community": 188,
-      "community_name": "createPomodoroServer",
+      "community": 202,
+      "community_name": "latency.test.js",
       "norm_label": "createmessagecollector()"
     },
     {
@@ -4521,8 +4521,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_test_latency_test_authclient",
-      "community": 188,
-      "community_name": "createPomodoroServer",
+      "community": 202,
+      "community_name": "latency.test.js",
       "norm_label": "authclient()"
     },
     {
@@ -4533,8 +4533,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "server_test_latency_test_createtestserver",
-      "community": 188,
-      "community_name": "createPomodoroServer",
+      "community": 202,
+      "community_name": "latency.test.js",
       "norm_label": "createtestserver()"
     },
     {
@@ -5033,8 +5033,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "app_package_devdependencies_tauri_apps_cli",
-      "community": 159,
-      "community_name": "@tauri-apps/cli",
+      "community": 40,
+      "community_name": "devDependencies",
       "norm_label": "@tauri-apps/cli"
     },
     {
@@ -5044,8 +5044,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "tauri_apps_cli",
-      "community": 159,
-      "community_name": "@tauri-apps/cli",
+      "community": 40,
+      "community_name": "devDependencies",
       "norm_label": "@tauri-apps/cli"
     },
     {
@@ -5209,8 +5209,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "app_package_devdependencies_jsdom",
-      "community": 40,
-      "community_name": "devDependencies",
+      "community": 204,
+      "community_name": "jsdom",
       "norm_label": "jsdom"
     },
     {
@@ -5220,8 +5220,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "jsdom",
-      "community": 40,
-      "community_name": "devDependencies",
+      "community": 204,
+      "community_name": "jsdom",
       "norm_label": "jsdom"
     },
     {
@@ -5346,6 +5346,73 @@
       "norm_label": "sounds"
     },
     {
+      "label": "cloud-release.mjs",
+      "file_type": "code",
+      "source_file": "app/scripts/cloud-release.mjs",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "app_scripts_cloud_release",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "cloud-release.mjs"
+    },
+    {
+      "label": "appRoot",
+      "file_type": "code",
+      "source_file": "app/scripts/cloud-release.mjs",
+      "source_location": "L8",
+      "_origin": "ast",
+      "id": "app_scripts_cloud_release_approot",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "approot"
+    },
+    {
+      "label": "config",
+      "file_type": "code",
+      "source_file": "app/scripts/cloud-release.mjs",
+      "source_location": "L9",
+      "_origin": "ast",
+      "id": "app_scripts_cloud_release_config",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "config"
+    },
+    {
+      "label": "output",
+      "file_type": "code",
+      "source_file": "app/scripts/cloud-release.mjs",
+      "source_location": "L12",
+      "_origin": "ast",
+      "id": "app_scripts_cloud_release_output",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "output"
+    },
+    {
+      "label": "cloud-release.test.mjs",
+      "file_type": "code",
+      "source_file": "app/scripts/cloud-release.test.mjs",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "app_scripts_cloud_release_test",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "cloud-release.test.mjs"
+    },
+    {
+      "label": "signed()",
+      "file_type": "code",
+      "source_file": "app/scripts/cloud-release.test.mjs",
+      "source_location": "L13",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "app_scripts_cloud_release_test_signed",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "signed()"
+    },
+    {
       "label": "compare-player-card.mjs",
       "file_type": "code",
       "source_file": "app/scripts/compare-player-card.mjs",
@@ -5379,6 +5446,147 @@
       "norm_label": "outhtml"
     },
     {
+      "label": "github-public.mjs",
+      "file_type": "code",
+      "source_file": "app/scripts/github-public.mjs",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "app_scripts_github_public",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "github-public.mjs"
+    },
+    {
+      "label": "githubJson()",
+      "file_type": "code",
+      "source_file": "app/scripts/github-public.mjs",
+      "source_location": "L7",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "app_scripts_github_public_githubjson",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "githubjson()"
+    },
+    {
+      "label": "download()",
+      "file_type": "code",
+      "source_file": "app/scripts/github-public.mjs",
+      "source_location": "L16",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "app_scripts_github_public_download",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "download()"
+    },
+    {
+      "label": "mirror-github-release.mjs",
+      "file_type": "code",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "app_scripts_mirror_github_release",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "mirror-github-release.mjs"
+    },
+    {
+      "label": "exec",
+      "file_type": "code",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L13",
+      "_origin": "ast",
+      "id": "app_scripts_mirror_github_release_exec",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "exec"
+    },
+    {
+      "label": "releaseFingerprint()",
+      "file_type": "code",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L15",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "app_scripts_mirror_github_release_releasefingerprint",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "releasefingerprint()"
+    },
+    {
+      "label": "validateRelease()",
+      "file_type": "code",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L19",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "app_scripts_mirror_github_release_validaterelease",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "validaterelease()"
+    },
+    {
+      "label": "publicCnbText()",
+      "file_type": "code",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L30",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "app_scripts_mirror_github_release_publiccnbtext",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "publiccnbtext()"
+    },
+    {
+      "label": "importTag()",
+      "file_type": "code",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L35",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "app_scripts_mirror_github_release_importtag",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "importtag()"
+    },
+    {
+      "label": "uploadVerified()",
+      "file_type": "code",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L56",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "app_scripts_mirror_github_release_uploadverified",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "uploadverified()"
+    },
+    {
+      "label": "latestRelease()",
+      "file_type": "code",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L63",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "app_scripts_mirror_github_release_latestrelease",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "latestrelease()"
+    },
+    {
+      "label": "mirrorLatest()",
+      "file_type": "code",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L75",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "app_scripts_mirror_github_release_mirrorlatest",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "mirrorlatest()"
+    },
+    {
       "label": "prepare-cnb-release.mjs",
       "file_type": "code",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
@@ -5386,7 +5594,7 @@
       "_origin": "ast",
       "id": "app_scripts_prepare_cnb_release",
       "community": 46,
-      "community_name": "sync-cnb-release.mjs",
+      "community_name": "mirror-github-release.mjs",
       "norm_label": "prepare-cnb-release.mjs"
     },
     {
@@ -5397,7 +5605,7 @@
       "_origin": "ast",
       "id": "app_scripts_prepare_cnb_release_default_cnb_repo",
       "community": 46,
-      "community_name": "sync-cnb-release.mjs",
+      "community_name": "mirror-github-release.mjs",
       "norm_label": "default_cnb_repo"
     },
     {
@@ -5409,7 +5617,7 @@
       "_origin": "ast",
       "id": "app_scripts_prepare_cnb_release_assertsaferepo",
       "community": 46,
-      "community_name": "sync-cnb-release.mjs",
+      "community_name": "mirror-github-release.mjs",
       "norm_label": "assertsaferepo()"
     },
     {
@@ -5421,7 +5629,7 @@
       "_origin": "ast",
       "id": "app_scripts_prepare_cnb_release_assertsafetag",
       "community": 46,
-      "community_name": "sync-cnb-release.mjs",
+      "community_name": "mirror-github-release.mjs",
       "norm_label": "assertsafetag()"
     },
     {
@@ -5433,7 +5641,7 @@
       "_origin": "ast",
       "id": "app_scripts_prepare_cnb_release_assetnamefromurl",
       "community": 46,
-      "community_name": "sync-cnb-release.mjs",
+      "community_name": "mirror-github-release.mjs",
       "norm_label": "assetnamefromurl()"
     },
     {
@@ -5445,7 +5653,7 @@
       "_origin": "ast",
       "id": "app_scripts_prepare_cnb_release_releasetagfromurl",
       "community": 46,
-      "community_name": "sync-cnb-release.mjs",
+      "community_name": "mirror-github-release.mjs",
       "norm_label": "releasetagfromurl()"
     },
     {
@@ -5457,7 +5665,7 @@
       "_origin": "ast",
       "id": "app_scripts_prepare_cnb_release_cnbtaggedasseturl",
       "community": 46,
-      "community_name": "sync-cnb-release.mjs",
+      "community_name": "mirror-github-release.mjs",
       "norm_label": "cnbtaggedasseturl()"
     },
     {
@@ -5469,7 +5677,7 @@
       "_origin": "ast",
       "id": "app_scripts_prepare_cnb_release_cnblatestasseturl",
       "community": 46,
-      "community_name": "sync-cnb-release.mjs",
+      "community_name": "mirror-github-release.mjs",
       "norm_label": "cnblatestasseturl()"
     },
     {
@@ -5481,7 +5689,7 @@
       "_origin": "ast",
       "id": "app_scripts_prepare_cnb_release_transformupdatermanifest",
       "community": 46,
-      "community_name": "sync-cnb-release.mjs",
+      "community_name": "mirror-github-release.mjs",
       "norm_label": "transformupdatermanifest()"
     },
     {
@@ -5493,7 +5701,7 @@
       "_origin": "ast",
       "id": "app_scripts_prepare_cnb_release_transformreleaseartifact",
       "community": 46,
-      "community_name": "sync-cnb-release.mjs",
+      "community_name": "mirror-github-release.mjs",
       "norm_label": "transformreleaseartifact()"
     },
     {
@@ -5505,7 +5713,7 @@
       "_origin": "ast",
       "id": "app_scripts_prepare_cnb_release_transformmoduleindex",
       "community": 46,
-      "community_name": "sync-cnb-release.mjs",
+      "community_name": "mirror-github-release.mjs",
       "norm_label": "transformmoduleindex()"
     },
     {
@@ -5517,7 +5725,7 @@
       "_origin": "ast",
       "id": "app_scripts_prepare_cnb_release_transformcockroachmoduleindex",
       "community": 46,
-      "community_name": "sync-cnb-release.mjs",
+      "community_name": "mirror-github-release.mjs",
       "norm_label": "transformcockroachmoduleindex()"
     },
     {
@@ -5529,7 +5737,7 @@
       "_origin": "ast",
       "id": "app_scripts_prepare_cnb_release_preparecnbrelease",
       "community": 46,
-      "community_name": "sync-cnb-release.mjs",
+      "community_name": "mirror-github-release.mjs",
       "norm_label": "preparecnbrelease()"
     },
     {
@@ -5541,7 +5749,7 @@
       "_origin": "ast",
       "id": "app_scripts_prepare_cnb_release_parseargs",
       "community": 46,
-      "community_name": "sync-cnb-release.mjs",
+      "community_name": "mirror-github-release.mjs",
       "norm_label": "parseargs()"
     },
     {
@@ -5552,7 +5760,7 @@
       "_origin": "ast",
       "id": "app_scripts_prepare_cnb_release_test",
       "community": 46,
-      "community_name": "sync-cnb-release.mjs",
+      "community_name": "mirror-github-release.mjs",
       "norm_label": "prepare-cnb-release.test.mjs"
     },
     {
@@ -6006,6 +6214,111 @@
       "norm_label": "fixtureproject()"
     },
     {
+      "label": "release-integrity.mjs",
+      "file_type": "code",
+      "source_file": "app/scripts/release-integrity.mjs",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "app_scripts_release_integrity",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "release-integrity.mjs"
+    },
+    {
+      "label": "GITHUB_REPO",
+      "file_type": "code",
+      "source_file": "app/scripts/release-integrity.mjs",
+      "source_location": "L5",
+      "_origin": "ast",
+      "id": "app_scripts_release_integrity_github_repo",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "github_repo"
+    },
+    {
+      "label": "INDEX_NAMES",
+      "file_type": "code",
+      "source_file": "app/scripts/release-integrity.mjs",
+      "source_location": "L6",
+      "_origin": "ast",
+      "id": "app_scripts_release_integrity_index_names",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "index_names"
+    },
+    {
+      "label": "safeAssetName()",
+      "file_type": "code",
+      "source_file": "app/scripts/release-integrity.mjs",
+      "source_location": "L7",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "app_scripts_release_integrity_safeassetname",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "safeassetname()"
+    },
+    {
+      "label": "githubAsset()",
+      "file_type": "code",
+      "source_file": "app/scripts/release-integrity.mjs",
+      "source_location": "L11",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "app_scripts_release_integrity_githubasset",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "githubasset()"
+    },
+    {
+      "label": "hashes()",
+      "file_type": "code",
+      "source_file": "app/scripts/release-integrity.mjs",
+      "source_location": "L17",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "app_scripts_release_integrity_hashes",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "hashes()"
+    },
+    {
+      "label": "verifySignature()",
+      "file_type": "code",
+      "source_file": "app/scripts/release-integrity.mjs",
+      "source_location": "L24",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "app_scripts_release_integrity_verifysignature",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "verifysignature()"
+    },
+    {
+      "label": "moduleComponents()",
+      "file_type": "code",
+      "source_file": "app/scripts/release-integrity.mjs",
+      "source_location": "L45",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "app_scripts_release_integrity_modulecomponents",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "modulecomponents()"
+    },
+    {
+      "label": "assertUpdater()",
+      "file_type": "code",
+      "source_file": "app/scripts/release-integrity.mjs",
+      "source_location": "L55",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "app_scripts_release_integrity_assertupdater",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "assertupdater()"
+    },
+    {
       "label": "sync-cnb-release.mjs",
       "file_type": "code",
       "source_file": "app/scripts/sync-cnb-release.mjs",
@@ -6013,186 +6326,163 @@
       "_origin": "ast",
       "id": "app_scripts_sync_cnb_release",
       "community": 46,
-      "community_name": "sync-cnb-release.mjs",
+      "community_name": "mirror-github-release.mjs",
       "norm_label": "sync-cnb-release.mjs"
-    },
-    {
-      "label": "execFileAsync",
-      "file_type": "code",
-      "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L11",
-      "_origin": "ast",
-      "id": "app_scripts_sync_cnb_release_execfileasync",
-      "community": 46,
-      "community_name": "sync-cnb-release.mjs",
-      "norm_label": "execfileasync"
     },
     {
       "label": "parseCnbEnvelope()",
       "file_type": "code",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L14",
+      "source_location": "L11",
       "_callable": true,
       "_origin": "ast",
       "id": "app_scripts_sync_cnb_release_parsecnbenvelope",
       "community": 46,
-      "community_name": "sync-cnb-release.mjs",
+      "community_name": "mirror-github-release.mjs",
       "norm_label": "parsecnbenvelope()"
     },
     {
       "label": "orderedAssetPaths()",
       "file_type": "code",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L29",
+      "source_location": "L26",
       "_callable": true,
       "_origin": "ast",
       "id": "app_scripts_sync_cnb_release_orderedassetpaths",
       "community": 46,
-      "community_name": "sync-cnb-release.mjs",
+      "community_name": "mirror-github-release.mjs",
       "norm_label": "orderedassetpaths()"
     },
     {
       "label": "parseVerificationUrl()",
       "file_type": "code",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L48",
+      "source_location": "L45",
       "_callable": true,
       "_origin": "ast",
       "id": "app_scripts_sync_cnb_release_parseverificationurl",
       "community": 46,
-      "community_name": "sync-cnb-release.mjs",
+      "community_name": "mirror-github-release.mjs",
       "norm_label": "parseverificationurl()"
-    },
-    {
-      "label": "runCnb()",
-      "file_type": "code",
-      "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L60",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "app_scripts_sync_cnb_release_runcnb",
-      "community": 46,
-      "community_name": "sync-cnb-release.mjs",
-      "norm_label": "runcnb()"
     },
     {
       "label": "getRelease()",
       "file_type": "code",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L74",
+      "source_location": "L57",
       "_callable": true,
       "_origin": "ast",
       "id": "app_scripts_sync_cnb_release_getrelease",
       "community": 46,
-      "community_name": "sync-cnb-release.mjs",
+      "community_name": "mirror-github-release.mjs",
       "norm_label": "getrelease()"
     },
     {
       "label": "cnbApiUrl()",
       "file_type": "code",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L83",
+      "source_location": "L61",
       "_callable": true,
       "_origin": "ast",
       "id": "app_scripts_sync_cnb_release_cnbapiurl",
       "community": 46,
-      "community_name": "sync-cnb-release.mjs",
+      "community_name": "mirror-github-release.mjs",
       "norm_label": "cnbapiurl()"
     },
     {
       "label": "requestCnbApi()",
       "file_type": "code",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L88",
+      "source_location": "L66",
       "_callable": true,
       "_origin": "ast",
       "id": "app_scripts_sync_cnb_release_requestcnbapi",
       "community": 46,
-      "community_name": "sync-cnb-release.mjs",
+      "community_name": "mirror-github-release.mjs",
       "norm_label": "requestcnbapi()"
     },
     {
       "label": "ensureRelease()",
       "file_type": "code",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L107",
+      "source_location": "L89",
       "_callable": true,
       "_origin": "ast",
       "id": "app_scripts_sync_cnb_release_ensurerelease",
       "community": 46,
-      "community_name": "sync-cnb-release.mjs",
+      "community_name": "mirror-github-release.mjs",
       "norm_label": "ensurerelease()"
     },
     {
       "label": "progressTransform()",
       "file_type": "code",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L128",
+      "source_location": "L110",
       "_callable": true,
       "_origin": "ast",
       "id": "app_scripts_sync_cnb_release_progresstransform",
       "community": 46,
-      "community_name": "sync-cnb-release.mjs",
+      "community_name": "mirror-github-release.mjs",
       "norm_label": "progresstransform()"
     },
     {
       "label": "uploadAsset()",
       "file_type": "code",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L144",
+      "source_location": "L126",
       "_callable": true,
       "_origin": "ast",
       "id": "app_scripts_sync_cnb_release_uploadasset",
       "community": 46,
-      "community_name": "sync-cnb-release.mjs",
+      "community_name": "mirror-github-release.mjs",
       "norm_label": "uploadasset()"
     },
     {
       "label": "verifyUploadedAsset()",
       "file_type": "code",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L205",
+      "source_location": "L158",
       "_callable": true,
       "_origin": "ast",
       "id": "app_scripts_sync_cnb_release_verifyuploadedasset",
       "community": 46,
-      "community_name": "sync-cnb-release.mjs",
+      "community_name": "mirror-github-release.mjs",
       "norm_label": "verifyuploadedasset()"
     },
     {
       "label": "publishCnbRelease()",
       "file_type": "code",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L218",
+      "source_location": "L171",
       "_callable": true,
       "_origin": "ast",
       "id": "app_scripts_sync_cnb_release_publishcnbrelease",
       "community": 46,
-      "community_name": "sync-cnb-release.mjs",
+      "community_name": "mirror-github-release.mjs",
       "norm_label": "publishcnbrelease()"
     },
     {
       "label": "syncCnbRelease()",
       "file_type": "code",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L234",
+      "source_location": "L187",
       "_callable": true,
       "_origin": "ast",
       "id": "app_scripts_sync_cnb_release_synccnbrelease",
       "community": 46,
-      "community_name": "sync-cnb-release.mjs",
+      "community_name": "mirror-github-release.mjs",
       "norm_label": "synccnbrelease()"
     },
     {
       "label": "parseArgs()",
       "file_type": "code",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L254",
+      "source_location": "L207",
       "_callable": true,
       "_origin": "ast",
       "id": "app_scripts_sync_cnb_release_parseargs",
       "community": 46,
-      "community_name": "sync-cnb-release.mjs",
+      "community_name": "mirror-github-release.mjs",
       "norm_label": "parseargs()"
     },
     {
@@ -6203,7 +6493,7 @@
       "_origin": "ast",
       "id": "app_scripts_sync_cnb_release_test",
       "community": 46,
-      "community_name": "sync-cnb-release.mjs",
+      "community_name": "mirror-github-release.mjs",
       "norm_label": "sync-cnb-release.test.mjs"
     },
     {
@@ -17255,8 +17545,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_devalignapp",
-      "community": 177,
-      "community_name": "DevAlignApp.tsx",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "devalignapp.tsx"
     },
     {
@@ -17268,8 +17558,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_devalignapp_target",
-      "community": 177,
-      "community_name": "DevAlignApp.tsx",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "target"
     },
     {
@@ -17279,8 +17569,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "app_src_devalignapp_mock_player",
-      "community": 177,
-      "community_name": "DevAlignApp.tsx",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "mock_player"
     },
     {
@@ -17290,8 +17580,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "app_src_devalignapp_targets",
-      "community": 177,
-      "community_name": "DevAlignApp.tsx",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "targets"
     },
     {
@@ -17303,8 +17593,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_devalignapp_mode",
-      "community": 177,
-      "community_name": "DevAlignApp.tsx",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "mode"
     },
     {
@@ -17315,8 +17605,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_devalignapp_initialtargetid",
-      "community": 177,
-      "community_name": "DevAlignApp.tsx",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "initialtargetid()"
     },
     {
@@ -17327,8 +17617,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_devalignapp_initialmode",
-      "community": 177,
-      "community_name": "DevAlignApp.tsx",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "initialmode()"
     },
     {
@@ -17339,8 +17629,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_devalignapp_devalignapp",
-      "community": 177,
-      "community_name": "DevAlignApp.tsx",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "devalignapp()"
     },
     {
@@ -17352,8 +17642,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_devalignapp_paneprops",
-      "community": 177,
-      "community_name": "DevAlignApp.tsx",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "paneprops"
     },
     {
@@ -17364,8 +17654,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_devalignapp_paneframe",
-      "community": 177,
-      "community_name": "DevAlignApp.tsx",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "paneframe()"
     },
     {
@@ -17420,8 +17710,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_remoteplayercardapp",
-      "community": 16,
-      "community_name": "network.ts",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "remoteplayercardapp.tsx"
     },
     {
@@ -17432,8 +17722,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_remoteplayercardapp_routeplayerid",
-      "community": 16,
-      "community_name": "network.ts",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "routeplayerid()"
     },
     {
@@ -17444,8 +17734,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_remoteplayercardapp_remoteplayercardapp",
-      "community": 16,
-      "community_name": "network.ts",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "remoteplayercardapp()"
     },
     {
@@ -17501,7 +17791,7 @@
       "_origin": "ast",
       "id": "app_src_videoplayerapp_test",
       "community": 177,
-      "community_name": "DevAlignApp.tsx",
+      "community_name": "VideoPlayerApp.tsx",
       "norm_label": "videoplayerapp.test.tsx"
     },
     {
@@ -17512,7 +17802,7 @@
       "_origin": "ast",
       "id": "app_src_videoplayerapp_test_close",
       "community": 177,
-      "community_name": "DevAlignApp.tsx",
+      "community_name": "VideoPlayerApp.tsx",
       "norm_label": "close"
     },
     {
@@ -17523,7 +17813,7 @@
       "_origin": "ast",
       "id": "app_src_videoplayerapp",
       "community": 177,
-      "community_name": "DevAlignApp.tsx",
+      "community_name": "VideoPlayerApp.tsx",
       "norm_label": "videoplayerapp.tsx"
     },
     {
@@ -17535,7 +17825,7 @@
       "_origin": "ast",
       "id": "app_src_videoplayerapp_closeplayerwindow",
       "community": 177,
-      "community_name": "DevAlignApp.tsx",
+      "community_name": "VideoPlayerApp.tsx",
       "norm_label": "closeplayerwindow()"
     },
     {
@@ -17547,7 +17837,7 @@
       "_origin": "ast",
       "id": "app_src_videoplayerapp_videoplayerapp",
       "community": 177,
-      "community_name": "DevAlignApp.tsx",
+      "community_name": "VideoPlayerApp.tsx",
       "norm_label": "videoplayerapp()"
     },
     {
@@ -17823,8 +18113,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_activeapp",
-      "community": 24,
-      "community_name": "bindingKey.ts",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "activeapp.ts"
     },
     {
@@ -17837,7 +18127,7 @@
       "_origin": "ast",
       "id": "app_src_domain_activeapp_activeappinfo",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "activeappinfo"
     },
     {
@@ -17849,8 +18139,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_activeapp_activeappstate",
-      "community": 24,
-      "community_name": "bindingKey.ts",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "activeappstate"
     },
     {
@@ -17860,8 +18150,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "app_src_domain_activeapp_useactiveappstore",
-      "community": 24,
-      "community_name": "bindingKey.ts",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "useactiveappstore"
     },
     {
@@ -17965,8 +18255,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_appupdate_appupdatesnapshot",
-      "community": 35,
-      "community_name": "userPreferences.ts",
+      "community": 121,
+      "community_name": "host.ts",
       "norm_label": "appupdatesnapshot"
     },
     {
@@ -18042,8 +18332,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_appupdate_defaultisreleasebuild",
-      "community": 17,
-      "community_name": "appUpdate.ts",
+      "community": 143,
+      "community_name": "appUpdatePersistence.ts",
       "norm_label": "defaultisreleasebuild()"
     },
     {
@@ -18066,8 +18356,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_appupdate_createdefaultdeps",
-      "community": 17,
-      "community_name": "appUpdate.ts",
+      "community": 143,
+      "community_name": "appUpdatePersistence.ts",
       "norm_label": "createdefaultdeps()"
     },
     {
@@ -18125,8 +18415,8 @@
       "source_location": "L269",
       "_origin": "ast",
       "id": "app_src_domain_appupdate_useappupdatestore",
-      "community": 26,
-      "community_name": "App.tsx",
+      "community": 17,
+      "community_name": "appUpdate.ts",
       "norm_label": "useappupdatestore"
     },
     {
@@ -18136,8 +18426,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_appupdatepersistence_test",
-      "community": 17,
-      "community_name": "appUpdate.ts",
+      "community": 143,
+      "community_name": "appUpdatePersistence.ts",
       "norm_label": "appupdatepersistence.test.ts"
     },
     {
@@ -18147,8 +18437,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "app_src_domain_appupdatepersistence_test_storedata",
-      "community": 17,
-      "community_name": "appUpdate.ts",
+      "community": 143,
+      "community_name": "appUpdatePersistence.ts",
       "norm_label": "storedata"
     },
     {
@@ -18158,8 +18448,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "app_src_domain_appupdatepersistence_test_save",
-      "community": 17,
-      "community_name": "appUpdate.ts",
+      "community": 143,
+      "community_name": "appUpdatePersistence.ts",
       "norm_label": "save"
     },
     {
@@ -18169,8 +18459,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_appupdatepersistence",
-      "community": 17,
-      "community_name": "appUpdate.ts",
+      "community": 143,
+      "community_name": "appUpdatePersistence.ts",
       "norm_label": "appupdatepersistence.ts"
     },
     {
@@ -18195,8 +18485,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_appupdatepersistence_persistedappupdatesettingsv1",
-      "community": 17,
-      "community_name": "appUpdate.ts",
+      "community": 143,
+      "community_name": "appUpdatePersistence.ts",
       "norm_label": "persistedappupdatesettingsv1"
     },
     {
@@ -18207,8 +18497,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_appupdatepersistence_ispersistedappupdatesettingsv1",
-      "community": 17,
-      "community_name": "appUpdate.ts",
+      "community": 143,
+      "community_name": "appUpdatePersistence.ts",
       "norm_label": "ispersistedappupdatesettingsv1()"
     },
     {
@@ -18219,8 +18509,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_appupdatepersistence_openstore",
-      "community": 17,
-      "community_name": "appUpdate.ts",
+      "community": 143,
+      "community_name": "appUpdatePersistence.ts",
       "norm_label": "openstore()"
     },
     {
@@ -18231,8 +18521,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_appupdatepersistence_loadpersistedappupdatesettings",
-      "community": 17,
-      "community_name": "appUpdate.ts",
+      "community": 143,
+      "community_name": "appUpdatePersistence.ts",
       "norm_label": "loadpersistedappupdatesettings()"
     },
     {
@@ -18243,8 +18533,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_appupdatepersistence_savepersistedappupdatesettings",
-      "community": 17,
-      "community_name": "appUpdate.ts",
+      "community": 143,
+      "community_name": "appUpdatePersistence.ts",
       "norm_label": "savepersistedappupdatesettings()"
     },
     {
@@ -18408,7 +18698,7 @@
       "_origin": "ast",
       "id": "app_src_domain_bindingkey_test",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "bindingkey.test.ts"
     },
     {
@@ -18419,7 +18709,7 @@
       "_origin": "ast",
       "id": "app_src_domain_bindingkey_test_listenmock_invokemock",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "{ listenmock, invokemock }"
     },
     {
@@ -18481,8 +18771,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_bindingkey_bindinginput",
-      "community": 24,
-      "community_name": "bindingKey.ts",
+      "community": 35,
+      "community_name": "userPreferences.ts",
       "norm_label": "bindinginput"
     },
     {
@@ -18533,8 +18823,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_bindingkey_bindingkeyentry",
-      "community": 35,
-      "community_name": "userPreferences.ts",
+      "community": 121,
+      "community_name": "host.ts",
       "norm_label": "bindingkeyentry"
     },
     {
@@ -18676,8 +18966,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_bindingkey_isvisiblebindingentry",
-      "community": 24,
-      "community_name": "bindingKey.ts",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "isvisiblebindingentry()"
     },
     {
@@ -18688,8 +18978,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_bindingkey_hasvisibleinputcounterentries",
-      "community": 24,
-      "community_name": "bindingKey.ts",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "hasvisibleinputcounterentries()"
     },
     {
@@ -18748,8 +19038,8 @@
       "source_location": "L289",
       "_origin": "ast",
       "id": "app_src_domain_bindingkey_usebindingkeystore",
-      "community": 24,
-      "community_name": "bindingKey.ts",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "usebindingkeystore"
     },
     {
@@ -18796,7 +19086,7 @@
       "_origin": "ast",
       "id": "app_src_domain_bridge_client_test",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "client.test.ts"
     },
     {
@@ -18819,7 +19109,7 @@
       "_origin": "ast",
       "id": "app_src_domain_bridge_client",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "client.ts"
     },
     {
@@ -18831,7 +19121,7 @@
       "_origin": "ast",
       "id": "app_src_domain_bridge_client_cloneplayer",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "cloneplayer()"
     },
     {
@@ -18843,7 +19133,7 @@
       "_origin": "ast",
       "id": "app_src_domain_bridge_client_cloneplayers",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "cloneplayers()"
     },
     {
@@ -18855,7 +19145,7 @@
       "_origin": "ast",
       "id": "app_src_domain_bridge_client_cloneentries",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "cloneentries()"
     },
     {
@@ -18867,7 +19157,7 @@
       "_origin": "ast",
       "id": "app_src_domain_bridge_client_clonedangerouschange",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "clonedangerouschange()"
     },
     {
@@ -18879,7 +19169,7 @@
       "_origin": "ast",
       "id": "app_src_domain_bridge_client_hasicondataproperty",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "hasicondataproperty()"
     },
     {
@@ -18891,7 +19181,7 @@
       "_origin": "ast",
       "id": "app_src_domain_bridge_client_sameactiveappidentity",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "sameactiveappidentity()"
     },
     {
@@ -18903,7 +19193,7 @@
       "_origin": "ast",
       "id": "app_src_domain_bridge_client_cloneactiveappformirror",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "cloneactiveappformirror()"
     },
     {
@@ -18915,7 +19205,7 @@
       "_origin": "ast",
       "id": "app_src_domain_bridge_client_applysnapshottomirrors",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "applysnapshottomirrors()"
     },
     {
@@ -18938,7 +19228,7 @@
       "_origin": "ast",
       "id": "app_src_domain_bridge_dispatch_test",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "dispatch.test.ts"
     },
     {
@@ -18949,7 +19239,7 @@
       "_origin": "ast",
       "id": "app_src_domain_bridge_dispatch",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "dispatch.ts"
     },
     {
@@ -18974,7 +19264,7 @@
       "_origin": "ast",
       "id": "app_src_domain_bridge_dispatch_confirmeddispatchoptions",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "confirmeddispatchoptions"
     },
     {
@@ -18985,8 +19275,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_bridge_dispatch_dispatchconfirmed",
-      "community": 121,
-      "community_name": "protocol.ts",
+      "community": 198,
+      "community_name": "pomodoro.ts",
       "norm_label": "dispatchconfirmed()"
     },
     {
@@ -18997,8 +19287,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_bridge_dispatch_createdispatchrequestid",
-      "community": 121,
-      "community_name": "protocol.ts",
+      "community": 198,
+      "community_name": "pomodoro.ts",
       "norm_label": "createdispatchrequestid()"
     },
     {
@@ -19008,7 +19298,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_bridge_host_test",
-      "community": 160,
+      "community": 121,
       "community_name": "host.ts",
       "norm_label": "host.test.ts"
     },
@@ -19019,7 +19309,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_bridge_host",
-      "community": 160,
+      "community": 121,
       "community_name": "host.ts",
       "norm_label": "host.ts"
     },
@@ -19031,7 +19321,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_bridge_host_cloneplayer",
-      "community": 160,
+      "community": 121,
       "community_name": "host.ts",
       "norm_label": "cloneplayer()"
     },
@@ -19043,7 +19333,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_bridge_host_cloneplayers",
-      "community": 160,
+      "community": 121,
       "community_name": "host.ts",
       "norm_label": "cloneplayers()"
     },
@@ -19055,7 +19345,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_bridge_host_cloneentries",
-      "community": 160,
+      "community": 121,
       "community_name": "host.ts",
       "norm_label": "cloneentries()"
     },
@@ -19067,7 +19357,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_bridge_host_clonedangerouschange",
-      "community": 160,
+      "community": 121,
       "community_name": "host.ts",
       "norm_label": "clonedangerouschange()"
     },
@@ -19080,7 +19370,7 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_bridge_host_buildsnapshotoptions",
-      "community": 160,
+      "community": 121,
       "community_name": "host.ts",
       "norm_label": "buildsnapshotoptions"
     },
@@ -19092,7 +19382,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_bridge_host_cloneactiveapp",
-      "community": 160,
+      "community": 121,
       "community_name": "host.ts",
       "norm_label": "cloneactiveapp()"
     },
@@ -19104,7 +19394,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_bridge_host_appupdatesnapshot",
-      "community": 160,
+      "community": 121,
       "community_name": "host.ts",
       "norm_label": "appupdatesnapshot()"
     },
@@ -19116,7 +19406,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_bridge_host_buildsnapshot",
-      "community": 160,
+      "community": 121,
       "community_name": "host.ts",
       "norm_label": "buildsnapshot()"
     },
@@ -19128,7 +19418,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_bridge_host_applydispatch",
-      "community": 160,
+      "community": 121,
       "community_name": "host.ts",
       "norm_label": "applydispatch()"
     },
@@ -19140,7 +19430,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_bridge_host_isconfirmeddispatchrequest",
-      "community": 160,
+      "community": 121,
       "community_name": "host.ts",
       "norm_label": "isconfirmeddispatchrequest()"
     },
@@ -19152,7 +19442,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_bridge_host_handledispatchevent",
-      "community": 160,
+      "community": 121,
       "community_name": "host.ts",
       "norm_label": "handledispatchevent()"
     },
@@ -19163,7 +19453,7 @@
       "source_location": "L271",
       "_origin": "ast",
       "id": "app_src_domain_bridge_host_mirror_window_labels",
-      "community": 160,
+      "community": 121,
       "community_name": "host.ts",
       "norm_label": "mirror_window_labels"
     },
@@ -19175,7 +19465,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_bridge_host_sendsnapshot",
-      "community": 160,
+      "community": 121,
       "community_name": "host.ts",
       "norm_label": "sendsnapshot()"
     },
@@ -19187,7 +19477,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_bridge_host_settingssig",
-      "community": 160,
+      "community": 121,
       "community_name": "host.ts",
       "norm_label": "settingssig()"
     },
@@ -19199,7 +19489,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_bridge_host_pomosig",
-      "community": 160,
+      "community": 121,
       "community_name": "host.ts",
       "norm_label": "pomosig()"
     },
@@ -19211,7 +19501,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_bridge_host_presencesig",
-      "community": 160,
+      "community": 121,
       "community_name": "host.ts",
       "norm_label": "presencesig()"
     },
@@ -19223,7 +19513,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_bridge_host_networksig",
-      "community": 160,
+      "community": 121,
       "community_name": "host.ts",
       "norm_label": "networksig()"
     },
@@ -19235,7 +19525,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_bridge_host_bindingkeysig",
-      "community": 160,
+      "community": 121,
       "community_name": "host.ts",
       "norm_label": "bindingkeysig()"
     },
@@ -19247,7 +19537,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_bridge_host_appupdatesig",
-      "community": 160,
+      "community": 121,
       "community_name": "host.ts",
       "norm_label": "appupdatesig()"
     },
@@ -19259,7 +19549,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_bridge_host_activeappsig",
-      "community": 160,
+      "community": 121,
       "community_name": "host.ts",
       "norm_label": "activeappsig()"
     },
@@ -19271,7 +19561,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_bridge_host_activeappidentitysig",
-      "community": 160,
+      "community": 121,
       "community_name": "host.ts",
       "norm_label": "activeappidentitysig()"
     },
@@ -19283,7 +19573,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_bridge_host_usebridgehost",
-      "community": 160,
+      "community": 121,
       "community_name": "host.ts",
       "norm_label": "usebridgehost()"
     },
@@ -19295,7 +19585,7 @@
       "_origin": "ast",
       "id": "app_src_domain_bridge_protocol_test",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "protocol.test.ts"
     },
     {
@@ -19306,7 +19596,7 @@
       "_origin": "ast",
       "id": "app_src_domain_bridge_protocol",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "protocol.ts"
     },
     {
@@ -19317,7 +19607,7 @@
       "_origin": "ast",
       "id": "app_src_domain_bridge_protocol_evt_state_request",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "evt_state_request"
     },
     {
@@ -19328,7 +19618,7 @@
       "_origin": "ast",
       "id": "app_src_domain_bridge_protocol_evt_state",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "evt_state"
     },
     {
@@ -19339,7 +19629,7 @@
       "_origin": "ast",
       "id": "app_src_domain_bridge_protocol_evt_dispatch",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "evt_dispatch"
     },
     {
@@ -19350,7 +19640,7 @@
       "_origin": "ast",
       "id": "app_src_domain_bridge_protocol_evt_dispatch_result",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "evt_dispatch_result"
     },
     {
@@ -19361,7 +19651,7 @@
       "_origin": "ast",
       "id": "app_src_domain_bridge_protocol_bridge_version",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "bridge_version"
     },
     {
@@ -19374,7 +19664,7 @@
       "_origin": "ast",
       "id": "app_src_domain_bridge_protocol_bridgesnapshot",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "bridgesnapshot"
     },
     {
@@ -19387,7 +19677,7 @@
       "_origin": "ast",
       "id": "app_src_domain_bridge_protocol_dispatchpayload",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "dispatchpayload"
     },
     {
@@ -19400,7 +19690,7 @@
       "_origin": "ast",
       "id": "app_src_domain_bridge_protocol_confirmeddispatchrequest",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "confirmeddispatchrequest"
     },
     {
@@ -19413,7 +19703,7 @@
       "_origin": "ast",
       "id": "app_src_domain_bridge_protocol_dispatchresult",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "dispatchresult"
     },
     {
@@ -19425,7 +19715,7 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_bridge_protocol_dispatcheventpayload",
-      "community": 160,
+      "community": 121,
       "community_name": "host.ts",
       "norm_label": "dispatcheventpayload"
     },
@@ -19530,7 +19820,7 @@
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountdata_cloudaccountdata",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "cloudaccountdata"
     },
     {
@@ -19926,8 +20216,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_extensionpacks_test",
-      "community": 65,
-      "community_name": "extensionPacks.ts",
+      "community": 157,
+      "community_name": "SettingsPanel.test.tsx",
       "norm_label": "extensionpacks.test.ts"
     },
     {
@@ -19937,8 +20227,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "app_src_domain_extensionpacks_test_invoke",
-      "community": 65,
-      "community_name": "extensionPacks.ts",
+      "community": 157,
+      "community_name": "SettingsPanel.test.tsx",
       "norm_label": "invoke"
     },
     {
@@ -19949,8 +20239,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_extensionpacks_test_status",
-      "community": 65,
-      "community_name": "extensionPacks.ts",
+      "community": 157,
+      "community_name": "SettingsPanel.test.tsx",
       "norm_label": "status()"
     },
     {
@@ -19973,8 +20263,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_extensionpacks_extensionpackid",
-      "community": 3,
-      "community_name": "runtime.ts",
+      "community": 122,
+      "community_name": "eventDrivenRuntime.ts",
       "norm_label": "extensionpackid"
     },
     {
@@ -20038,8 +20328,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_extensionpacks_extensionpackstatus",
-      "community": 65,
-      "community_name": "extensionPacks.ts",
+      "community": 157,
+      "community_name": "SettingsPanel.test.tsx",
       "norm_label": "extensionpackstatus"
     },
     {
@@ -20051,8 +20341,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_extensionpacks_extensionruntimecontribution",
-      "community": 3,
-      "community_name": "runtime.ts",
+      "community": 122,
+      "community_name": "eventDrivenRuntime.ts",
       "norm_label": "extensionruntimecontribution"
     },
     {
@@ -20104,7 +20394,7 @@
       "_origin": "ast",
       "id": "app_src_domain_extensionpacks_extensionpackprogress",
       "community": 3,
-      "community_name": "runtime.ts",
+      "community_name": "ExtensionPackManagerTab.test.tsx",
       "norm_label": "extensionpackprogress"
     },
     {
@@ -20141,7 +20431,7 @@
       "_origin": "ast",
       "id": "app_src_domain_extensionpacks_extensionpackregistry",
       "community": 3,
-      "community_name": "runtime.ts",
+      "community_name": "ExtensionPackManagerTab.test.tsx",
       "norm_label": "extensionpackregistry"
     },
     {
@@ -20152,7 +20442,7 @@
       "_origin": "ast",
       "id": "app_src_domain_extensionpacks_extensionpackcatalog",
       "community": 3,
-      "community_name": "runtime.ts",
+      "community_name": "ExtensionPackManagerTab.test.tsx",
       "norm_label": "extensionpackcatalog"
     },
     {
@@ -20163,8 +20453,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_extensionpacks_settingscontributionsfor",
-      "community": 65,
-      "community_name": "extensionPacks.ts",
+      "community": 157,
+      "community_name": "SettingsPanel.test.tsx",
       "norm_label": "settingscontributionsfor()"
     },
     {
@@ -20246,8 +20536,8 @@
       "source_location": "L282",
       "_origin": "ast",
       "id": "app_src_domain_extensionpacks_useextensionpackstore",
-      "community": 12,
-      "community_name": "ui/SettingsPanel.tsx",
+      "community": 3,
+      "community_name": "ExtensionPackManagerTab.test.tsx",
       "norm_label": "useextensionpackstore"
     },
     {
@@ -20308,8 +20598,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_extensionpacks_useextensionpacksync",
-      "community": 177,
-      "community_name": "DevAlignApp.tsx",
+      "community": 65,
+      "community_name": "extensionPacks.ts",
       "norm_label": "useextensionpacksync()"
     },
     {
@@ -20482,8 +20772,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_inputcounterwindow_test",
-      "community": 24,
-      "community_name": "bindingKey.ts",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "inputcounterwindow.test.ts"
     },
     {
@@ -20493,8 +20783,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "app_src_domain_inputcounterwindow_test_invokemock",
-      "community": 24,
-      "community_name": "bindingKey.ts",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "{ invokemock }"
     },
     {
@@ -20504,8 +20794,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_inputcounterwindow",
-      "community": 24,
-      "community_name": "bindingKey.ts",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "inputcounterwindow.ts"
     },
     {
@@ -20516,8 +20806,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_inputcounterwindow_useinputcounterwindowcontroller",
-      "community": 24,
-      "community_name": "bindingKey.ts",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "useinputcounterwindowcontroller()"
     },
     {
@@ -20758,7 +21048,7 @@
       "_origin": "ast",
       "id": "app_src_domain_network_connectionstatus",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "connectionstatus"
     },
     {
@@ -20771,7 +21061,7 @@
       "_origin": "ast",
       "id": "app_src_domain_network_accountstatus",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "accountstatus"
     },
     {
@@ -20784,7 +21074,7 @@
       "_origin": "ast",
       "id": "app_src_domain_network_cloudsyncstatus",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "cloudsyncstatus"
     },
     {
@@ -20797,7 +21087,7 @@
       "_origin": "ast",
       "id": "app_src_domain_network_accountuser",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "accountuser"
     },
     {
@@ -20976,8 +21266,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_pomodoro_test",
-      "community": 121,
-      "community_name": "protocol.ts",
+      "community": 198,
+      "community_name": "pomodoro.ts",
       "norm_label": "pomodoro.test.ts"
     },
     {
@@ -20988,8 +21278,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodoro_test_freshstore",
-      "community": 121,
-      "community_name": "protocol.ts",
+      "community": 198,
+      "community_name": "pomodoro.ts",
       "norm_label": "freshstore()"
     },
     {
@@ -20999,8 +21289,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_pomodoro",
-      "community": 26,
-      "community_name": "App.tsx",
+      "community": 198,
+      "community_name": "pomodoro.ts",
       "norm_label": "pomodoro.ts"
     },
     {
@@ -21013,7 +21303,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodoro_pomodorophase",
       "community": 198,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "pomodorophase"
     },
     {
@@ -21026,7 +21316,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodoro_pomodoroendactionmode",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "pomodoroendactionmode"
     },
     {
@@ -21038,8 +21328,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodoro_pomodoroendactionsourcekind",
-      "community": 26,
-      "community_name": "App.tsx",
+      "community": 198,
+      "community_name": "pomodoro.ts",
       "norm_label": "pomodoroendactionsourcekind"
     },
     {
@@ -21051,8 +21341,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodoro_pomodoropinsource",
-      "community": 26,
-      "community_name": "App.tsx",
+      "community": 198,
+      "community_name": "pomodoro.ts",
       "norm_label": "pomodoropinsource"
     },
     {
@@ -21064,8 +21354,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodoro_presenceautomationstate",
-      "community": 26,
-      "community_name": "App.tsx",
+      "community": 198,
+      "community_name": "pomodoro.ts",
       "norm_label": "presenceautomationstate"
     },
     {
@@ -21078,7 +21368,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodoro_pomodoroendactionvideo",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "pomodoroendactionvideo"
     },
     {
@@ -21103,8 +21393,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodoro_pomodorostate",
-      "community": 121,
-      "community_name": "protocol.ts",
+      "community": 35,
+      "community_name": "userPreferences.ts",
       "norm_label": "pomodorostate"
     },
     {
@@ -21128,8 +21418,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodoro_pomodoroactions",
-      "community": 121,
-      "community_name": "protocol.ts",
+      "community": 35,
+      "community_name": "userPreferences.ts",
       "norm_label": "pomodoroactions"
     },
     {
@@ -21139,8 +21429,8 @@
       "source_location": "L114",
       "_origin": "ast",
       "id": "app_src_domain_pomodoro_default_end_action_video",
-      "community": 26,
-      "community_name": "App.tsx",
+      "community": 198,
+      "community_name": "pomodoro.ts",
       "norm_label": "default_end_action_video"
     },
     {
@@ -21165,7 +21455,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodoro_createpomodorostore",
       "community": 198,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "createpomodorostore()"
     },
     {
@@ -21176,8 +21466,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodoro_detectissettingswindow",
-      "community": 26,
-      "community_name": "App.tsx",
+      "community": 198,
+      "community_name": "pomodoro.ts",
       "norm_label": "detectissettingswindow()"
     },
     {
@@ -21199,8 +21489,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodoro_formatmmss",
-      "community": 26,
-      "community_name": "App.tsx",
+      "community": 198,
+      "community_name": "pomodoro.ts",
       "norm_label": "formatmmss()"
     },
     {
@@ -21211,7 +21501,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodorobroadcast_test",
       "community": 198,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "pomodorobroadcast.test.ts"
     },
     {
@@ -21222,7 +21512,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodorobroadcast",
       "community": 198,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "pomodorobroadcast.ts"
     },
     {
@@ -21233,7 +21523,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodorobroadcast_pomodoro_broadcast_version",
       "community": 198,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "pomodoro_broadcast_version"
     },
     {
@@ -21243,8 +21533,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "app_src_domain_pomodorobroadcast_pomodoro_broadcast_event",
-      "community": 198,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 122,
+      "community_name": "eventDrivenRuntime.ts",
       "norm_label": "pomodoro_broadcast_event"
     },
     {
@@ -21254,8 +21544,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "app_src_domain_pomodorobroadcast_pomodoro_broadcast_snapshot_request_event",
-      "community": 198,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 122,
+      "community_name": "eventDrivenRuntime.ts",
       "norm_label": "pomodoro_broadcast_snapshot_request_event"
     },
     {
@@ -21268,7 +21558,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodorobroadcast_pomodorobroadcasttype",
       "community": 198,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "pomodorobroadcasttype"
     },
     {
@@ -21281,7 +21571,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodorobroadcast_pomodorobroadcastreason",
       "community": 198,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "pomodorobroadcastreason"
     },
     {
@@ -21293,8 +21583,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodorobroadcast_pomodorobroadcastevent",
-      "community": 85,
-      "community_name": "controller.ts",
+      "community": 198,
+      "community_name": "pomodoro.ts",
       "norm_label": "pomodorobroadcastevent"
     },
     {
@@ -21307,7 +21597,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodorobroadcast_pomodorobroadcast",
       "community": 198,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "pomodorobroadcast"
     },
     {
@@ -21319,7 +21609,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodorobroadcast_reasonfor",
       "community": 198,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "reasonfor()"
     },
     {
@@ -21331,7 +21621,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodorobroadcast_eventtypefor",
       "community": 198,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "eventtypefor()"
     },
     {
@@ -21343,7 +21633,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodorobroadcast_createpomodorobroadcast",
       "community": 198,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "createpomodorobroadcast()"
     },
     {
@@ -21476,7 +21766,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodoroevents_test",
       "community": 198,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "pomodoroevents.test.ts"
     },
     {
@@ -21488,7 +21778,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodoroevents_test_fixture",
       "community": 198,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "fixture()"
     },
     {
@@ -21498,8 +21788,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_pomodoroevents",
-      "community": 85,
-      "community_name": "controller.ts",
+      "community": 198,
+      "community_name": "pomodoro.ts",
       "norm_label": "pomodoroevents.ts"
     },
     {
@@ -21522,8 +21812,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodoroevents_pomodororuleevent",
-      "community": 85,
-      "community_name": "controller.ts",
+      "community": 198,
+      "community_name": "pomodoro.ts",
       "norm_label": "pomodororuleevent"
     },
     {
@@ -21535,7 +21825,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodoroevents_createpomodoroeventdetector",
       "community": 198,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "createpomodoroeventdetector()"
     },
     {
@@ -21608,8 +21898,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodorosounds_pomodoroendsounds",
-      "community": 121,
-      "community_name": "protocol.ts",
+      "community": 35,
+      "community_name": "userPreferences.ts",
       "norm_label": "pomodoroendsounds"
     },
     {
@@ -21666,8 +21956,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodorosounds_clonepomodoroendsounds",
-      "community": 121,
-      "community_name": "protocol.ts",
+      "community": 35,
+      "community_name": "userPreferences.ts",
       "norm_label": "clonepomodoroendsounds()"
     },
     {
@@ -21774,8 +22064,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodorosounds_playpomodoroendsound",
-      "community": 195,
-      "community_name": "PomodoroEndActionLayer.tsx",
+      "community": 12,
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "playpomodoroendsound()"
     },
     {
@@ -22083,7 +22373,7 @@
       "_origin": "ast",
       "id": "app_src_domain_presence_presenceplatform",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "presenceplatform"
     },
     {
@@ -22134,8 +22424,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_presence_confirmedpresence",
-      "community": 121,
-      "community_name": "protocol.ts",
+      "community": 198,
+      "community_name": "pomodoro.ts",
       "norm_label": "confirmedpresence"
     },
     {
@@ -22309,7 +22599,7 @@
       "_origin": "ast",
       "id": "app_src_domain_presence_usepresencestore",
       "community": 198,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "usepresencestore"
     },
     {
@@ -22415,8 +22705,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_presencepersistence_test",
-      "community": 2,
-      "community_name": "presence.ts",
+      "community": 203,
+      "community_name": "presencePersistence.test.ts",
       "norm_label": "presencepersistence.test.ts"
     },
     {
@@ -22426,8 +22716,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "app_src_domain_presencepersistence_test_storedata",
-      "community": 2,
-      "community_name": "presence.ts",
+      "community": 203,
+      "community_name": "presencePersistence.test.ts",
       "norm_label": "storedata"
     },
     {
@@ -22437,8 +22727,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "app_src_domain_presencepersistence_test_save",
-      "community": 2,
-      "community_name": "presence.ts",
+      "community": 203,
+      "community_name": "presencePersistence.test.ts",
       "norm_label": "save"
     },
     {
@@ -22672,8 +22962,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_presencesettingsbridge_test",
-      "community": 121,
-      "community_name": "protocol.ts",
+      "community": 2,
+      "community_name": "presence.ts",
       "norm_label": "presencesettingsbridge.test.ts"
     },
     {
@@ -22683,8 +22973,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "app_src_domain_presencesettingsbridge_test_dispatch",
-      "community": 121,
-      "community_name": "protocol.ts",
+      "community": 2,
+      "community_name": "presence.ts",
       "norm_label": "dispatch"
     },
     {
@@ -22694,8 +22984,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "app_src_domain_presencesettingsbridge_test_dispatchconfirmed",
-      "community": 121,
-      "community_name": "protocol.ts",
+      "community": 2,
+      "community_name": "presence.ts",
       "norm_label": "dispatchconfirmed"
     },
     {
@@ -22837,8 +23127,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_remoteplayercardpositions_saveremoteplayercardposition",
-      "community": 16,
-      "community_name": "network.ts",
+      "community": 38,
+      "community_name": "remotePlayerWindows.ts",
       "norm_label": "saveremoteplayercardposition()"
     },
     {
@@ -22977,8 +23267,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_remoteplayerwindows_syncremoteplayerwindowsinput",
-      "community": 16,
-      "community_name": "network.ts",
+      "community": 38,
+      "community_name": "remotePlayerWindows.ts",
       "norm_label": "syncremoteplayerwindowsinput"
     },
     {
@@ -23144,8 +23434,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_remoteplayerwindows_useremoteplayerwindowcontroller",
-      "community": 38,
-      "community_name": "remotePlayerWindows.ts",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "useremoteplayerwindowcontroller()"
     },
     {
@@ -23304,8 +23594,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_settings_settingstab",
-      "community": 13,
-      "community_name": "settings.ts",
+      "community": 12,
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "settingstab"
     },
     {
@@ -23344,7 +23634,7 @@
       "_origin": "ast",
       "id": "app_src_domain_settings_dangerouschange",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "dangerouschange"
     },
     {
@@ -23747,8 +24037,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_statesync_test",
-      "community": 24,
-      "community_name": "bindingKey.ts",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "statesync.test.ts"
     },
     {
@@ -23758,8 +24048,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_statesync",
-      "community": 24,
-      "community_name": "bindingKey.ts",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "statesync.ts"
     },
     {
@@ -23769,8 +24059,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_src_domain_statesync_phase_to_int",
-      "community": 24,
-      "community_name": "bindingKey.ts",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "phase_to_int"
     },
     {
@@ -23781,8 +24071,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_statesync_buildremotestate",
-      "community": 24,
-      "community_name": "bindingKey.ts",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "buildremotestate()"
     },
     {
@@ -23793,8 +24083,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_statesync_buildremotestatefortest",
-      "community": 24,
-      "community_name": "bindingKey.ts",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "buildremotestatefortest()"
     },
     {
@@ -23805,8 +24095,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_statesync_usestatesync",
-      "community": 24,
-      "community_name": "bindingKey.ts",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "usestatesync()"
     },
     {
@@ -23829,8 +24119,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_userpreferences_persistedbindingkeyentry",
-      "community": 24,
-      "community_name": "bindingKey.ts",
+      "community": 35,
+      "community_name": "userPreferences.ts",
       "norm_label": "persistedbindingkeyentry"
     },
     {
@@ -23843,7 +24133,7 @@
       "_origin": "ast",
       "id": "app_src_domain_userpreferences_userpreferencessnapshot",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "userpreferencessnapshot"
     },
     {
@@ -23868,8 +24158,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_userpreferences_pomodorostoreshape",
-      "community": 121,
-      "community_name": "protocol.ts",
+      "community": 35,
+      "community_name": "userPreferences.ts",
       "norm_label": "pomodorostoreshape"
     },
     {
@@ -23894,8 +24184,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_userpreferences_appupdatestoreshape",
-      "community": 35,
-      "community_name": "userPreferences.ts",
+      "community": 121,
+      "community_name": "host.ts",
       "norm_label": "appupdatestoreshape"
     },
     {
@@ -24027,8 +24317,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_userpreferences_normalizeendsounds",
-      "community": 12,
-      "community_name": "ui/SettingsPanel.tsx",
+      "community": 35,
+      "community_name": "userPreferences.ts",
       "norm_label": "normalizeendsounds()"
     },
     {
@@ -24170,8 +24460,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_userpreferencespersistence_test",
-      "community": 35,
-      "community_name": "userPreferences.ts",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "userpreferencespersistence.test.ts"
     },
     {
@@ -24181,8 +24471,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "app_src_domain_userpreferencespersistence_test_store",
-      "community": 35,
-      "community_name": "userPreferences.ts",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "store"
     },
     {
@@ -24192,8 +24482,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_userpreferencespersistence",
-      "community": 35,
-      "community_name": "userPreferences.ts",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "userpreferencespersistence.ts"
     },
     {
@@ -24205,8 +24495,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_userpreferencespersistence_persisteduserpreferencesv1",
-      "community": 35,
-      "community_name": "userPreferences.ts",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "persisteduserpreferencesv1"
     },
     {
@@ -24217,8 +24507,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_userpreferencespersistence_openstore",
-      "community": 35,
-      "community_name": "userPreferences.ts",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "openstore()"
     },
     {
@@ -24229,8 +24519,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_userpreferencespersistence_loadpersisteduserpreferences",
-      "community": 35,
-      "community_name": "userPreferences.ts",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "loadpersisteduserpreferences()"
     },
     {
@@ -24241,8 +24531,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_userpreferencespersistence_savepersisteduserpreferences",
-      "community": 35,
-      "community_name": "userPreferences.ts",
+      "community": 26,
+      "community_name": "App.tsx",
       "norm_label": "savepersisteduserpreferences()"
     },
     {
@@ -24252,8 +24542,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_videoeditormodule_test",
-      "community": 157,
-      "community_name": "videoEditorModule.ts",
+      "community": 65,
+      "community_name": "extensionPacks.ts",
       "norm_label": "videoeditormodule.test.ts"
     },
     {
@@ -24263,8 +24553,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_src_domain_videoeditormodule_test_invoke",
-      "community": 157,
-      "community_name": "videoEditorModule.ts",
+      "community": 65,
+      "community_name": "extensionPacks.ts",
       "norm_label": "invoke"
     },
     {
@@ -24274,8 +24564,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_videoeditormodule",
-      "community": 157,
-      "community_name": "videoEditorModule.ts",
+      "community": 65,
+      "community_name": "extensionPacks.ts",
       "norm_label": "videoeditormodule.ts"
     },
     {
@@ -24287,8 +24577,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_videoeditormodule_videoeditormodulestatus",
-      "community": 157,
-      "community_name": "videoEditorModule.ts",
+      "community": 65,
+      "community_name": "extensionPacks.ts",
       "norm_label": "videoeditormodulestatus"
     },
     {
@@ -24299,8 +24589,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_videoeditormodule_readvideoeditormodulestatus",
-      "community": 157,
-      "community_name": "videoEditorModule.ts",
+      "community": 65,
+      "community_name": "extensionPacks.ts",
       "norm_label": "readvideoeditormodulestatus()"
     },
     {
@@ -24311,8 +24601,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_videoeditormodule_launchvideoeditormodule",
-      "community": 157,
-      "community_name": "videoEditorModule.ts",
+      "community": 65,
+      "community_name": "extensionPacks.ts",
       "norm_label": "launchvideoeditormodule()"
     },
     {
@@ -24438,8 +24728,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_extensions_cockroachinvasion_controller_test",
-      "community": 85,
-      "community_name": "controller.ts",
+      "community": 198,
+      "community_name": "pomodoro.ts",
       "norm_label": "controller.test.ts"
     },
     {
@@ -24509,7 +24799,7 @@
       "_origin": "ast",
       "id": "app_src_extensions_eventdrivenruntime_test",
       "community": 198,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "eventdrivenruntime.test.ts"
     },
     {
@@ -24519,8 +24809,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_extensions_eventdrivenruntime",
-      "community": 198,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 122,
+      "community_name": "eventDrivenRuntime.ts",
       "norm_label": "eventdrivenruntime.ts"
     },
     {
@@ -24532,8 +24822,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_extensions_eventdrivenruntime_eventdrivenruntimeadapter",
-      "community": 3,
-      "community_name": "runtime.ts",
+      "community": 122,
+      "community_name": "eventDrivenRuntime.ts",
       "norm_label": "eventdrivenruntimeadapter"
     },
     {
@@ -24543,8 +24833,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "app_src_extensions_eventdrivenruntime_defaultadapter",
-      "community": 198,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 122,
+      "community_name": "eventDrivenRuntime.ts",
       "norm_label": "defaultadapter"
     },
     {
@@ -24555,8 +24845,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_extensions_eventdrivenruntime_activationgatematches",
-      "community": 198,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 122,
+      "community_name": "eventDrivenRuntime.ts",
       "norm_label": "activationgatematches()"
     },
     {
@@ -24567,8 +24857,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_extensions_eventdrivenruntime_starteventdrivenruntime",
-      "community": 198,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 122,
+      "community_name": "eventDrivenRuntime.ts",
       "norm_label": "starteventdrivenruntime()"
     },
     {
@@ -24578,8 +24868,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_extensions_pomodorobroadcastclient",
-      "community": 198,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 122,
+      "community_name": "eventDrivenRuntime.ts",
       "norm_label": "pomodorobroadcastclient.ts"
     },
     {
@@ -24590,8 +24880,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_extensions_pomodorobroadcastclient_neutralsnapshot",
-      "community": 198,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 122,
+      "community_name": "eventDrivenRuntime.ts",
       "norm_label": "neutralsnapshot()"
     },
     {
@@ -24601,8 +24891,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "app_src_extensions_pomodorobroadcastclient_extensionpomodorobroadcast",
-      "community": 198,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 122,
+      "community_name": "eventDrivenRuntime.ts",
       "norm_label": "extensionpomodorobroadcast"
     },
     {
@@ -24612,8 +24902,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_extensions_runtime",
-      "community": 3,
-      "community_name": "runtime.ts",
+      "community": 122,
+      "community_name": "eventDrivenRuntime.ts",
       "norm_label": "runtime.ts"
     },
     {
@@ -24625,8 +24915,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_extensions_runtime_extensionruntimemodule",
-      "community": 3,
-      "community_name": "runtime.ts",
+      "community": 122,
+      "community_name": "eventDrivenRuntime.ts",
       "norm_label": "extensionruntimemodule"
     },
     {
@@ -24638,8 +24928,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_extensions_runtime_activeruntimeentry",
-      "community": 3,
-      "community_name": "runtime.ts",
+      "community": 122,
+      "community_name": "eventDrivenRuntime.ts",
       "norm_label": "activeruntimeentry"
     },
     {
@@ -24649,8 +24939,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "app_src_extensions_runtime_runtime_loaders",
-      "community": 3,
-      "community_name": "runtime.ts",
+      "community": 122,
+      "community_name": "eventDrivenRuntime.ts",
       "norm_label": "runtime_loaders"
     },
     {
@@ -24661,8 +24951,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_extensions_runtime_useextensionruntimecontributions",
-      "community": 26,
-      "community_name": "App.tsx",
+      "community": 122,
+      "community_name": "eventDrivenRuntime.ts",
       "norm_label": "useextensionruntimecontributions()"
     },
     {
@@ -24738,8 +25028,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_main",
-      "community": 177,
-      "community_name": "DevAlignApp.tsx",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "main.tsx"
     },
     {
@@ -24749,8 +25039,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "app_src_main_which",
-      "community": 177,
-      "community_name": "DevAlignApp.tsx",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "which"
     },
     {
@@ -24761,8 +25051,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_main_windowroot",
-      "community": 177,
-      "community_name": "DevAlignApp.tsx",
+      "community": 65,
+      "community_name": "extensionPacks.ts",
       "norm_label": "windowroot()"
     },
     {
@@ -24862,8 +25152,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_ui_appupdatereadynotice_test",
-      "community": 26,
-      "community_name": "App.tsx",
+      "community": 17,
+      "community_name": "appUpdate.ts",
       "norm_label": "appupdatereadynotice.test.tsx"
     },
     {
@@ -24873,8 +25163,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_ui_appupdatereadynotice",
-      "community": 26,
-      "community_name": "App.tsx",
+      "community": 17,
+      "community_name": "appUpdate.ts",
       "norm_label": "appupdatereadynotice.tsx"
     },
     {
@@ -24885,8 +25175,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_appupdatereadynotice_titletext",
-      "community": 26,
-      "community_name": "App.tsx",
+      "community": 17,
+      "community_name": "appUpdate.ts",
       "norm_label": "titletext()"
     },
     {
@@ -24897,8 +25187,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_appupdatereadynotice_appupdatereadynotice",
-      "community": 26,
-      "community_name": "App.tsx",
+      "community": 17,
+      "community_name": "appUpdate.ts",
       "norm_label": "appupdatereadynotice()"
     },
     {
@@ -25057,7 +25347,7 @@
       "_origin": "ast",
       "id": "app_src_ui_extensionpackmanagertab_test",
       "community": 3,
-      "community_name": "runtime.ts",
+      "community_name": "ExtensionPackManagerTab.test.tsx",
       "norm_label": "extensionpackmanagertab.test.tsx"
     },
     {
@@ -25068,7 +25358,7 @@
       "_origin": "ast",
       "id": "app_src_ui_extensionpackmanagertab_test_invoke",
       "community": 3,
-      "community_name": "runtime.ts",
+      "community_name": "ExtensionPackManagerTab.test.tsx",
       "norm_label": "invoke"
     },
     {
@@ -25079,7 +25369,7 @@
       "_origin": "ast",
       "id": "app_src_ui_extensionpackmanagertab_test_listeners",
       "community": 3,
-      "community_name": "runtime.ts",
+      "community_name": "ExtensionPackManagerTab.test.tsx",
       "norm_label": "listeners"
     },
     {
@@ -25091,7 +25381,7 @@
       "_origin": "ast",
       "id": "app_src_ui_extensionpackmanagertab_test_status",
       "community": 3,
-      "community_name": "runtime.ts",
+      "community_name": "ExtensionPackManagerTab.test.tsx",
       "norm_label": "status()"
     },
     {
@@ -25102,7 +25392,7 @@
       "_origin": "ast",
       "id": "app_src_ui_extensionpackmanagertab",
       "community": 3,
-      "community_name": "runtime.ts",
+      "community_name": "ExtensionPackManagerTab.test.tsx",
       "norm_label": "extensionpackmanagertab.tsx"
     },
     {
@@ -25113,7 +25403,7 @@
       "_origin": "ast",
       "id": "app_src_ui_extensionpackmanagertab_feature_packs",
       "community": 3,
-      "community_name": "runtime.ts",
+      "community_name": "ExtensionPackManagerTab.test.tsx",
       "norm_label": "feature_packs"
     },
     {
@@ -25124,7 +25414,7 @@
       "_origin": "ast",
       "id": "app_src_ui_extensionpackmanagertab_common_packs",
       "community": 3,
-      "community_name": "runtime.ts",
+      "community_name": "ExtensionPackManagerTab.test.tsx",
       "norm_label": "common_packs"
     },
     {
@@ -25135,8 +25425,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_extensionpackmanagertab_extensionpackmanagertab",
-      "community": 12,
-      "community_name": "ui/SettingsPanel.tsx",
+      "community": 3,
+      "community_name": "ExtensionPackManagerTab.test.tsx",
       "norm_label": "extensionpackmanagertab()"
     },
     {
@@ -25193,8 +25483,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_ui_inputbindingbadge_inputbindingbadgeprops",
-      "community": 24,
-      "community_name": "bindingKey.ts",
+      "community": 35,
+      "community_name": "userPreferences.ts",
       "norm_label": "inputbindingbadgeprops"
     },
     {
@@ -25251,8 +25541,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_ui_inputcounterpanel_test",
-      "community": 24,
-      "community_name": "bindingKey.ts",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "inputcounterpanel.test.tsx"
     },
     {
@@ -25262,8 +25552,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "app_src_ui_inputcounterpanel_test_startdraggingmock_invokemock",
-      "community": 24,
-      "community_name": "bindingKey.ts",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "{ startdraggingmock, invokemock }"
     },
     {
@@ -25273,8 +25563,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_ui_inputcounterpanel",
-      "community": 24,
-      "community_name": "bindingKey.ts",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "ui/inputcounterpanel.tsx"
     },
     {
@@ -25285,8 +25575,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_inputcounterpanel_windowheightforpills",
-      "community": 24,
-      "community_name": "bindingKey.ts",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "windowheightforpills()"
     },
     {
@@ -25297,8 +25587,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_inputcounterpanel_inputcounterpanel",
-      "community": 24,
-      "community_name": "bindingKey.ts",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "inputcounterpanel()"
     },
     {
@@ -25321,8 +25611,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_inputcounterpanel_pinicon",
-      "community": 24,
-      "community_name": "bindingKey.ts",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "pinicon()"
     },
     {
@@ -25333,8 +25623,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_inputcounterpanel_appwindowicon",
-      "community": 24,
-      "community_name": "bindingKey.ts",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "appwindowicon()"
     },
     {
@@ -25600,8 +25890,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_test",
-      "community": 26,
-      "community_name": "App.tsx",
+      "community": 198,
+      "community_name": "pomodoro.ts",
       "norm_label": "pomodoropanel.test.tsx"
     },
     {
@@ -25611,8 +25901,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_test_startdragging_invokemock",
-      "community": 26,
-      "community_name": "App.tsx",
+      "community": 198,
+      "community_name": "pomodoro.ts",
       "norm_label": "{ startdragging, invokemock }"
     },
     {
@@ -25623,8 +25913,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_test_resetpomodoro",
-      "community": 26,
-      "community_name": "App.tsx",
+      "community": 198,
+      "community_name": "pomodoro.ts",
       "norm_label": "resetpomodoro()"
     },
     {
@@ -25635,8 +25925,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_test_resetpresence",
-      "community": 26,
-      "community_name": "App.tsx",
+      "community": 198,
+      "community_name": "pomodoro.ts",
       "norm_label": "resetpresence()"
     },
     {
@@ -25647,8 +25937,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_test_pincalls",
-      "community": 26,
-      "community_name": "App.tsx",
+      "community": 198,
+      "community_name": "pomodoro.ts",
       "norm_label": "pincalls()"
     },
     {
@@ -25659,8 +25949,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_test_deferred",
-      "community": 26,
-      "community_name": "App.tsx",
+      "community": 198,
+      "community_name": "pomodoro.ts",
       "norm_label": "deferred()"
     },
     {
@@ -25670,8 +25960,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel",
-      "community": 26,
-      "community_name": "App.tsx",
+      "community": 198,
+      "community_name": "pomodoro.ts",
       "norm_label": "ui/pomodoropanel.tsx"
     },
     {
@@ -25683,8 +25973,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_clockstate",
-      "community": 26,
-      "community_name": "App.tsx",
+      "community": 198,
+      "community_name": "pomodoro.ts",
       "norm_label": "clockstate"
     },
     {
@@ -25695,8 +25985,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_clockstateof",
-      "community": 26,
-      "community_name": "App.tsx",
+      "community": 198,
+      "community_name": "pomodoro.ts",
       "norm_label": "clockstateof()"
     },
     {
@@ -25707,8 +25997,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_phaselabel",
-      "community": 26,
-      "community_name": "App.tsx",
+      "community": 198,
+      "community_name": "pomodoro.ts",
       "norm_label": "phaselabel()"
     },
     {
@@ -25719,8 +26009,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_pomodoropanel",
-      "community": 26,
-      "community_name": "App.tsx",
+      "community": 198,
+      "community_name": "pomodoro.ts",
       "norm_label": "pomodoropanel()"
     },
     {
@@ -25731,8 +26021,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_confirmedpresencestatus",
-      "community": 26,
-      "community_name": "App.tsx",
+      "community": 198,
+      "community_name": "pomodoro.ts",
       "norm_label": "confirmedpresencestatus()"
     },
     {
@@ -25744,8 +26034,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_clockringprops",
-      "community": 26,
-      "community_name": "App.tsx",
+      "community": 198,
+      "community_name": "pomodoro.ts",
       "norm_label": "clockringprops"
     },
     {
@@ -25756,8 +26046,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_clockring",
-      "community": 26,
-      "community_name": "App.tsx",
+      "community": 198,
+      "community_name": "pomodoro.ts",
       "norm_label": "clockring()"
     },
     {
@@ -25768,8 +26058,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_settingsicon",
-      "community": 26,
-      "community_name": "App.tsx",
+      "community": 198,
+      "community_name": "pomodoro.ts",
       "norm_label": "settingsicon()"
     },
     {
@@ -25780,8 +26070,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_pinicon",
-      "community": 26,
-      "community_name": "App.tsx",
+      "community": 198,
+      "community_name": "pomodoro.ts",
       "norm_label": "pinicon()"
     },
     {
@@ -25792,7 +26082,7 @@
       "_origin": "ast",
       "id": "app_src_ui_presencenotice",
       "community": 198,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "presencenotice.tsx"
     },
     {
@@ -25804,7 +26094,7 @@
       "_origin": "ast",
       "id": "app_src_ui_presencenotice_presencenotice",
       "community": 198,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "presencenotice()"
     },
     {
@@ -25838,7 +26128,7 @@
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_settingswindow_test",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "settingspanel.settingswindow.test.tsx"
     },
     {
@@ -25849,7 +26139,7 @@
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_settingswindow_test_invoke",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "invoke"
     },
     {
@@ -25860,7 +26150,7 @@
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_settingswindow_test_emit",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "emit"
     },
     {
@@ -25871,7 +26161,7 @@
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_settingswindow_test_getbylabel",
       "community": 121,
-      "community_name": "protocol.ts",
+      "community_name": "host.ts",
       "norm_label": "getbylabel"
     },
     {
@@ -25881,8 +26171,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_test",
-      "community": 23,
-      "community_name": "useSettingsStore",
+      "community": 157,
+      "community_name": "SettingsPanel.test.tsx",
       "norm_label": "settingspanel.test.tsx"
     },
     {
@@ -25892,8 +26182,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_test_invoke",
-      "community": 23,
-      "community_name": "useSettingsStore",
+      "community": 157,
+      "community_name": "SettingsPanel.test.tsx",
       "norm_label": "invoke"
     },
     {
@@ -25903,8 +26193,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_test_listen",
-      "community": 23,
-      "community_name": "useSettingsStore",
+      "community": 157,
+      "community_name": "SettingsPanel.test.tsx",
       "norm_label": "listen"
     },
     {
@@ -25914,8 +26204,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_test_open",
-      "community": 23,
-      "community_name": "useSettingsStore",
+      "community": 157,
+      "community_name": "SettingsPanel.test.tsx",
       "norm_label": "open"
     },
     {
@@ -25925,8 +26215,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_test_message",
-      "community": 23,
-      "community_name": "useSettingsStore",
+      "community": 157,
+      "community_name": "SettingsPanel.test.tsx",
       "norm_label": "message"
     },
     {
@@ -25937,8 +26227,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_test_packstatus",
-      "community": 23,
-      "community_name": "useSettingsStore",
+      "community": 157,
+      "community_name": "SettingsPanel.test.tsx",
       "norm_label": "packstatus()"
     },
     {
@@ -26308,8 +26598,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_ui_textinput_test",
-      "community": 12,
-      "community_name": "ui/SettingsPanel.tsx",
+      "community": 160,
+      "community_name": "TextInput.tsx",
       "norm_label": "textinput.test.tsx"
     },
     {
@@ -26320,8 +26610,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_textinput_test_numberfield",
-      "community": 12,
-      "community_name": "ui/SettingsPanel.tsx",
+      "community": 160,
+      "community_name": "TextInput.tsx",
       "norm_label": "numberfield()"
     },
     {
@@ -26331,8 +26621,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_ui_textinput",
-      "community": 12,
-      "community_name": "ui/SettingsPanel.tsx",
+      "community": 160,
+      "community_name": "TextInput.tsx",
       "norm_label": "textinput.tsx"
     },
     {
@@ -26343,8 +26633,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_textinput_textinput",
-      "community": 12,
-      "community_name": "ui/SettingsPanel.tsx",
+      "community": 160,
+      "community_name": "TextInput.tsx",
       "norm_label": "textinput()"
     },
     {
@@ -26356,8 +26646,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_ui_textinput_numberinputprops",
-      "community": 12,
-      "community_name": "ui/SettingsPanel.tsx",
+      "community": 160,
+      "community_name": "TextInput.tsx",
       "norm_label": "numberinputprops"
     },
     {
@@ -26368,8 +26658,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_textinput_numberinput",
-      "community": 12,
-      "community_name": "ui/SettingsPanel.tsx",
+      "community": 160,
+      "community_name": "TextInput.tsx",
       "norm_label": "numberinput()"
     },
     {
@@ -26427,8 +26717,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_ui_windowdrag",
-      "community": 16,
-      "community_name": "network.ts",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "windowdrag.ts"
     },
     {
@@ -26438,8 +26728,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_ui_windowdrag_no_window_drag_selector",
-      "community": 16,
-      "community_name": "network.ts",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "no_window_drag_selector"
     },
     {
@@ -26450,8 +26740,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_windowdrag_shouldstartwindowdrag",
-      "community": 16,
-      "community_name": "network.ts",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "shouldstartwindowdrag()"
     },
     {
@@ -30874,6 +31164,105 @@
       "community": 70,
       "community_name": "CPA_V2",
       "norm_label": "third-party sources"
+    },
+    {
+      "label": "cloud-release.md",
+      "file_type": "document",
+      "source_file": "docs/deployment/cloud-release.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "docs_deployment_cloud_release",
+      "community": 159,
+      "community_name": "GitHub \u4e91\u7aef\u53d1\u5e03\u4e0e CNB \u4e0b\u8f7d\u955c\u50cf",
+      "norm_label": "cloud-release.md"
+    },
+    {
+      "label": "GitHub \u4e91\u7aef\u53d1\u5e03\u4e0e CNB \u4e0b\u8f7d\u955c\u50cf",
+      "file_type": "document",
+      "source_file": "docs/deployment/cloud-release.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "docs_deployment_cloud_release_github_\u4e91\u7aef\u53d1\u5e03\u4e0e_cnb_\u4e0b\u8f7d\u955c\u50cf",
+      "community": 159,
+      "community_name": "GitHub \u4e91\u7aef\u53d1\u5e03\u4e0e CNB \u4e0b\u8f7d\u955c\u50cf",
+      "norm_label": "github \u4e91\u7aef\u53d1\u5e03\u4e0e cnb \u4e0b\u8f7d\u955c\u50cf"
+    },
+    {
+      "label": "\u65e5\u5e38\u64cd\u4f5c",
+      "file_type": "document",
+      "source_file": "docs/deployment/cloud-release.md",
+      "source_location": "L5",
+      "_origin": "ast",
+      "id": "docs_deployment_cloud_release_\u65e5\u5e38\u64cd\u4f5c",
+      "community": 159,
+      "community_name": "GitHub \u4e91\u7aef\u53d1\u5e03\u4e0e CNB \u4e0b\u8f7d\u955c\u50cf",
+      "norm_label": "\u65e5\u5e38\u64cd\u4f5c"
+    },
+    {
+      "label": "\u51ed\u636e\u8fb9\u754c",
+      "file_type": "document",
+      "source_file": "docs/deployment/cloud-release.md",
+      "source_location": "L13",
+      "_origin": "ast",
+      "id": "docs_deployment_cloud_release_\u51ed\u636e\u8fb9\u754c",
+      "community": 159,
+      "community_name": "GitHub \u4e91\u7aef\u53d1\u5e03\u4e0e CNB \u4e0b\u8f7d\u955c\u50cf",
+      "norm_label": "\u51ed\u636e\u8fb9\u754c"
+    },
+    {
+      "label": "\u7b7e\u540d\u3001\u7d22\u5f15\u4e0e\u955c\u50cf",
+      "file_type": "document",
+      "source_file": "docs/deployment/cloud-release.md",
+      "source_location": "L28",
+      "_origin": "ast",
+      "id": "docs_deployment_cloud_release_\u7b7e\u540d_\u7d22\u5f15\u4e0e\u955c\u50cf",
+      "community": 159,
+      "community_name": "GitHub \u4e91\u7aef\u53d1\u5e03\u4e0e CNB \u4e0b\u8f7d\u955c\u50cf",
+      "norm_label": "\u7b7e\u540d\u3001\u7d22\u5f15\u4e0e\u955c\u50cf"
+    },
+    {
+      "label": "\u6545\u969c\u4e0e\u6210\u672c",
+      "file_type": "document",
+      "source_file": "docs/deployment/cloud-release.md",
+      "source_location": "L42",
+      "_origin": "ast",
+      "id": "docs_deployment_cloud_release_\u6545\u969c\u4e0e\u6210\u672c",
+      "community": 159,
+      "community_name": "GitHub \u4e91\u7aef\u53d1\u5e03\u4e0e CNB \u4e0b\u8f7d\u955c\u50cf",
+      "norm_label": "\u6545\u969c\u4e0e\u6210\u672c"
+    },
+    {
+      "label": "\u672c\u5730\u9a8c\u8bc1",
+      "file_type": "document",
+      "source_file": "docs/deployment/cloud-release.md",
+      "source_location": "L49",
+      "_origin": "ast",
+      "id": "docs_deployment_cloud_release_\u672c\u5730\u9a8c\u8bc1",
+      "community": 159,
+      "community_name": "GitHub \u4e91\u7aef\u53d1\u5e03\u4e0e CNB \u4e0b\u8f7d\u955c\u50cf",
+      "norm_label": "\u672c\u5730\u9a8c\u8bc1"
+    },
+    {
+      "label": "release-0.1.32.md",
+      "file_type": "document",
+      "source_file": "docs/deployment/release-0.1.32.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "docs_deployment_release_0_1_32",
+      "community": 210,
+      "community_name": "release-0.1.32.md",
+      "norm_label": "release-0.1.32.md"
+    },
+    {
+      "label": "CPA_V2 0.1.32",
+      "file_type": "document",
+      "source_file": "docs/deployment/release-0.1.32.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "docs_deployment_release_0_1_32_cpa_v2_0_1_32",
+      "community": 210,
+      "community_name": "release-0.1.32.md",
+      "norm_label": "cpa_v2 0.1.32"
     },
     {
       "label": "2026-08-31-sam2-birefnet-cross-platform-commercial-audit.md",
@@ -48986,6 +49375,374 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "app/scripts/cloud-release.mjs",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_cloud_release",
+      "target": "app_scripts_cloud_release_approot",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/cloud-release.mjs",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_cloud_release",
+      "target": "app_scripts_cloud_release_config",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/cloud-release.mjs",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_cloud_release",
+      "target": "app_scripts_cloud_release_output",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/cloud-release.mjs",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_cloud_release",
+      "target": "app_scripts_github_public",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/cloud-release.mjs",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_cloud_release",
+      "target": "app_scripts_github_public_download",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/cloud-release.mjs",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_cloud_release",
+      "target": "app_scripts_github_public_githubjson",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/cloud-release.mjs",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_cloud_release",
+      "target": "app_scripts_prepare_cnb_release",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/cloud-release.mjs",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_cloud_release",
+      "target": "app_scripts_prepare_cnb_release_default_cnb_repo",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/cloud-release.mjs",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_cloud_release",
+      "target": "app_scripts_prepare_cnb_release_transformcockroachmoduleindex",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/cloud-release.mjs",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_cloud_release",
+      "target": "app_scripts_prepare_cnb_release_transformmoduleindex",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/cloud-release.mjs",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_cloud_release",
+      "target": "app_scripts_prepare_updater_release",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/cloud-release.mjs",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_cloud_release",
+      "target": "app_scripts_prepare_updater_release_prepareupdaterrelease",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/cloud-release.mjs",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_cloud_release",
+      "target": "app_scripts_release_integrity",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/cloud-release.mjs",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_cloud_release",
+      "target": "app_scripts_release_integrity_assertupdater",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/cloud-release.mjs",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_cloud_release",
+      "target": "app_scripts_release_integrity_index_names",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/cloud-release.mjs",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_cloud_release",
+      "target": "app_scripts_release_integrity_verifysignature",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/cloud-release.test.mjs",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_cloud_release_test",
+      "target": "app_scripts_cloud_release_test_signed",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/cloud-release.test.mjs",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_cloud_release_test",
+      "target": "app_scripts_github_public",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/cloud-release.test.mjs",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_cloud_release_test",
+      "target": "app_scripts_github_public_githubjson",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/cloud-release.test.mjs",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_cloud_release_test",
+      "target": "app_scripts_mirror_github_release",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/cloud-release.test.mjs",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_cloud_release_test",
+      "target": "app_scripts_mirror_github_release_releasefingerprint",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/cloud-release.test.mjs",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_cloud_release_test",
+      "target": "app_scripts_mirror_github_release_validaterelease",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/cloud-release.test.mjs",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_cloud_release_test",
+      "target": "app_scripts_release_integrity",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/cloud-release.test.mjs",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_cloud_release_test",
+      "target": "app_scripts_release_integrity_assertupdater",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/cloud-release.test.mjs",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_cloud_release_test",
+      "target": "app_scripts_release_integrity_githubasset",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/cloud-release.test.mjs",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_cloud_release_test",
+      "target": "app_scripts_release_integrity_verifysignature",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/cloud-release.test.mjs",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_cloud_release_test",
+      "target": "app_scripts_sync_cnb_release",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/cloud-release.test.mjs",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_cloud_release_test",
+      "target": "app_scripts_sync_cnb_release_getrelease",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/cloud-release.test.mjs",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_cloud_release_test",
+      "target": "app_scripts_sync_cnb_release_requestcnbapi",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/cloud-release.test.mjs",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_cloud_release_test",
+      "target": "app_scripts_sync_cnb_release_uploadasset",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/cloud-release.test.mjs",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_cloud_release_test",
+      "target": "app_scripts_sync_cnb_release_verifyuploadedasset",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "app/scripts/compare-player-card.mjs",
       "source_location": "L4",
       "weight": 1.0,
@@ -49004,6 +49761,776 @@
       "source": "app_scripts_compare_player_card",
       "target": "app_scripts_compare_player_card_outhtml",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/github-public.mjs",
+      "source_location": "L16",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_github_public",
+      "target": "app_scripts_github_public_download",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/github-public.mjs",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_github_public",
+      "target": "app_scripts_github_public_githubjson",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/github-public.mjs",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_github_public",
+      "target": "app_scripts_release_integrity",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/github-public.mjs",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_github_public",
+      "target": "app_scripts_release_integrity_githubasset",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/github-public.mjs",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_github_public",
+      "target": "app_scripts_release_integrity_hashes",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release",
+      "target": "app_scripts_github_public",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release",
+      "target": "app_scripts_github_public_githubjson",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L64",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release_latestrelease",
+      "target": "app_scripts_github_public_githubjson",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/scripts/github-public.mjs",
+      "source_location": "L17",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_github_public_download",
+      "target": "app_scripts_release_integrity_githubasset"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/scripts/github-public.mjs",
+      "source_location": "L21",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_github_public_download",
+      "target": "app_scripts_release_integrity_hashes"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release",
+      "target": "app_scripts_github_public_download",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L99",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release_mirrorlatest",
+      "target": "app_scripts_github_public_download"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release",
+      "target": "app_scripts_mirror_github_release_exec",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L35",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release",
+      "target": "app_scripts_mirror_github_release_importtag",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L63",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release",
+      "target": "app_scripts_mirror_github_release_latestrelease",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L75",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release",
+      "target": "app_scripts_mirror_github_release_mirrorlatest",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L30",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release",
+      "target": "app_scripts_mirror_github_release_publiccnbtext",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L15",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release",
+      "target": "app_scripts_mirror_github_release_releasefingerprint",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L56",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release",
+      "target": "app_scripts_mirror_github_release_uploadverified",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L19",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release",
+      "target": "app_scripts_mirror_github_release_validaterelease",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release",
+      "target": "app_scripts_prepare_cnb_release",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release",
+      "target": "app_scripts_prepare_cnb_release_cnbtaggedasseturl",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release",
+      "target": "app_scripts_prepare_cnb_release_default_cnb_repo",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release",
+      "target": "app_scripts_prepare_cnb_release_transformcockroachmoduleindex",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release",
+      "target": "app_scripts_prepare_cnb_release_transformmoduleindex",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release",
+      "target": "app_scripts_prepare_cnb_release_transformupdatermanifest",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release",
+      "target": "app_scripts_release_integrity",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release",
+      "target": "app_scripts_release_integrity_assertupdater",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release",
+      "target": "app_scripts_release_integrity_github_repo",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release",
+      "target": "app_scripts_release_integrity_githubasset",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release",
+      "target": "app_scripts_release_integrity_hashes",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release",
+      "target": "app_scripts_release_integrity_index_names",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release",
+      "target": "app_scripts_release_integrity_modulecomponents",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release",
+      "target": "app_scripts_release_integrity_safeassetname",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release",
+      "target": "app_scripts_release_integrity_verifysignature",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release",
+      "target": "app_scripts_sync_cnb_release",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release",
+      "target": "app_scripts_sync_cnb_release_ensurerelease",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release",
+      "target": "app_scripts_sync_cnb_release_getrelease",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release",
+      "target": "app_scripts_sync_cnb_release_orderedassetpaths",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release",
+      "target": "app_scripts_sync_cnb_release_publishcnbrelease",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release",
+      "target": "app_scripts_sync_cnb_release_uploadasset",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release",
+      "target": "app_scripts_sync_cnb_release_verifyuploadedasset",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L43",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release_importtag",
+      "target": "app_scripts_mirror_github_release_exec",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L78",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release_mirrorlatest",
+      "target": "app_scripts_mirror_github_release_releasefingerprint",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L72",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release_latestrelease",
+      "target": "app_scripts_mirror_github_release_validaterelease",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L24",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release_validaterelease",
+      "target": "app_scripts_release_integrity_githubasset"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L23",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release_validaterelease",
+      "target": "app_scripts_release_integrity_safeassetname"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L79",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release_mirrorlatest",
+      "target": "app_scripts_mirror_github_release_publiccnbtext",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L31",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release_publiccnbtext",
+      "target": "app_scripts_prepare_cnb_release_cnbtaggedasseturl",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L138",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release_mirrorlatest",
+      "target": "app_scripts_mirror_github_release_importtag",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L140",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release_mirrorlatest",
+      "target": "app_scripts_mirror_github_release_uploadverified",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L57",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release_uploadverified",
+      "target": "app_scripts_release_integrity_hashes",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L58",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release_uploadverified",
+      "target": "app_scripts_sync_cnb_release_getrelease",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L60",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release_uploadverified",
+      "target": "app_scripts_sync_cnb_release_uploadasset",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L59",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release_uploadverified",
+      "target": "app_scripts_sync_cnb_release_verifyuploadedasset",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L77",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release_mirrorlatest",
+      "target": "app_scripts_mirror_github_release_latestrelease",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L146",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release_mirrorlatest",
+      "target": "app_scripts_prepare_cnb_release_transformupdatermanifest"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L102",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release_mirrorlatest",
+      "target": "app_scripts_release_integrity_assertupdater"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L104",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release_mirrorlatest",
+      "target": "app_scripts_release_integrity_githubasset"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L113",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release_mirrorlatest",
+      "target": "app_scripts_release_integrity_modulecomponents"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L106",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release_mirrorlatest",
+      "target": "app_scripts_release_integrity_verifysignature"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L139",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release_mirrorlatest",
+      "target": "app_scripts_sync_cnb_release_ensurerelease"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L132",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release_mirrorlatest",
+      "target": "app_scripts_sync_cnb_release_getrelease"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L148",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release_mirrorlatest",
+      "target": "app_scripts_sync_cnb_release_orderedassetpaths"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L141",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release_mirrorlatest",
+      "target": "app_scripts_sync_cnb_release_publishcnbrelease"
     },
     {
       "relation": "contains",
@@ -49165,7 +50692,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L9",
+      "source_location": "L7",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_sync_cnb_release",
@@ -49177,7 +50704,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L9",
+      "source_location": "L7",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_sync_cnb_release",
@@ -50255,8 +51782,120 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "app/scripts/release-integrity.mjs",
+      "source_location": "L55",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_release_integrity",
+      "target": "app_scripts_release_integrity_assertupdater",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/release-integrity.mjs",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_release_integrity",
+      "target": "app_scripts_release_integrity_github_repo",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/release-integrity.mjs",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_release_integrity",
+      "target": "app_scripts_release_integrity_githubasset",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/release-integrity.mjs",
+      "source_location": "L17",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_release_integrity",
+      "target": "app_scripts_release_integrity_hashes",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/release-integrity.mjs",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_release_integrity",
+      "target": "app_scripts_release_integrity_index_names",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/release-integrity.mjs",
+      "source_location": "L45",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_release_integrity",
+      "target": "app_scripts_release_integrity_modulecomponents",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/release-integrity.mjs",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_release_integrity",
+      "target": "app_scripts_release_integrity_safeassetname",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/release-integrity.mjs",
+      "source_location": "L24",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_release_integrity",
+      "target": "app_scripts_release_integrity_verifysignature",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/release-integrity.mjs",
+      "source_location": "L15",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_release_integrity_githubasset",
+      "target": "app_scripts_release_integrity_safeassetname",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/release-integrity.mjs",
+      "source_location": "L49",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_release_integrity_modulecomponents",
+      "target": "app_scripts_release_integrity_githubasset",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L83",
+      "source_location": "L61",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_sync_cnb_release",
@@ -50267,7 +51906,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L107",
+      "source_location": "L89",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_sync_cnb_release",
@@ -50278,18 +51917,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L11",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "app_scripts_sync_cnb_release",
-      "target": "app_scripts_sync_cnb_release_execfileasync",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L74",
+      "source_location": "L57",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_sync_cnb_release",
@@ -50300,7 +51928,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L29",
+      "source_location": "L26",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_sync_cnb_release",
@@ -50311,7 +51939,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L254",
+      "source_location": "L207",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_sync_cnb_release",
@@ -50322,7 +51950,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L14",
+      "source_location": "L11",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_sync_cnb_release",
@@ -50333,7 +51961,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L48",
+      "source_location": "L45",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_sync_cnb_release",
@@ -50344,7 +51972,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L128",
+      "source_location": "L110",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_sync_cnb_release",
@@ -50355,7 +51983,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L218",
+      "source_location": "L171",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_sync_cnb_release",
@@ -50366,7 +51994,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L88",
+      "source_location": "L66",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_sync_cnb_release",
@@ -50377,18 +52005,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L60",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "app_scripts_sync_cnb_release",
-      "target": "app_scripts_sync_cnb_release_runcnb",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L234",
+      "source_location": "L187",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_sync_cnb_release",
@@ -50399,7 +52016,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L144",
+      "source_location": "L126",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_sync_cnb_release",
@@ -50410,7 +52027,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L205",
+      "source_location": "L158",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_sync_cnb_release",
@@ -50430,30 +52047,6 @@
       "confidence_score": 1.0
     },
     {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L63",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "app_scripts_sync_cnb_release_runcnb",
-      "target": "app_scripts_sync_cnb_release_execfileasync",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L71",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "app_scripts_sync_cnb_release_runcnb",
-      "target": "app_scripts_sync_cnb_release_parsecnbenvelope",
-      "confidence_score": 1.0
-    },
-    {
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -50470,7 +52063,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L244",
+      "source_location": "L197",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_sync_cnb_release_synccnbrelease",
@@ -50506,7 +52099,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L184",
+      "source_location": "L151",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_sync_cnb_release_uploadasset",
@@ -50518,11 +52111,23 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L75",
+      "source_location": "L90",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_sync_cnb_release_ensurerelease",
+      "target": "app_scripts_sync_cnb_release_getrelease",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/sync-cnb-release.mjs",
+      "source_location": "L58",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_sync_cnb_release_getrelease",
-      "target": "app_scripts_sync_cnb_release_runcnb",
+      "target": "app_scripts_sync_cnb_release_cnbapiurl",
       "confidence_score": 1.0
     },
     {
@@ -50530,11 +52135,11 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L148",
+      "source_location": "L58",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "app_scripts_sync_cnb_release_uploadasset",
-      "target": "app_scripts_sync_cnb_release_runcnb",
+      "source": "app_scripts_sync_cnb_release_getrelease",
+      "target": "app_scripts_sync_cnb_release_requestcnbapi",
       "confidence_score": 1.0
     },
     {
@@ -50542,19 +52147,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L108",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "app_scripts_sync_cnb_release_ensurerelease",
-      "target": "app_scripts_sync_cnb_release_getrelease",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L246",
+      "source_location": "L199",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_sync_cnb_release_synccnbrelease",
@@ -50566,7 +52159,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L113",
+      "source_location": "L95",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_sync_cnb_release_ensurerelease",
@@ -50578,7 +52171,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L222",
+      "source_location": "L175",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_sync_cnb_release_publishcnbrelease",
@@ -50602,7 +52195,19 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L111",
+      "source_location": "L131",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_sync_cnb_release_uploadasset",
+      "target": "app_scripts_sync_cnb_release_cnbapiurl",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/sync-cnb-release.mjs",
+      "source_location": "L93",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_sync_cnb_release_ensurerelease",
@@ -50614,7 +52219,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L220",
+      "source_location": "L173",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_sync_cnb_release_publishcnbrelease",
@@ -50626,7 +52231,19 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L242",
+      "source_location": "L130",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_sync_cnb_release_uploadasset",
+      "target": "app_scripts_sync_cnb_release_requestcnbapi",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/sync-cnb-release.mjs",
+      "source_location": "L195",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_sync_cnb_release_synccnbrelease",
@@ -50638,7 +52255,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L172",
+      "source_location": "L139",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_sync_cnb_release_uploadasset",
@@ -50650,7 +52267,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L245",
+      "source_location": "L198",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_sync_cnb_release_synccnbrelease",
@@ -50662,7 +52279,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L247",
+      "source_location": "L200",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_sync_cnb_release_synccnbrelease",
@@ -50674,7 +52291,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/sync-cnb-release.mjs",
-      "source_location": "L250",
+      "source_location": "L203",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_sync_cnb_release_synccnbrelease",
@@ -113721,6 +115338,83 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "docs/deployment/cloud-release.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "docs_deployment_cloud_release",
+      "target": "docs_deployment_cloud_release_github_\u4e91\u7aef\u53d1\u5e03\u4e0e_cnb_\u4e0b\u8f7d\u955c\u50cf",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/deployment/cloud-release.md",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "docs_deployment_cloud_release_github_\u4e91\u7aef\u53d1\u5e03\u4e0e_cnb_\u4e0b\u8f7d\u955c\u50cf",
+      "target": "docs_deployment_cloud_release_\u51ed\u636e\u8fb9\u754c",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/deployment/cloud-release.md",
+      "source_location": "L42",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "docs_deployment_cloud_release_github_\u4e91\u7aef\u53d1\u5e03\u4e0e_cnb_\u4e0b\u8f7d\u955c\u50cf",
+      "target": "docs_deployment_cloud_release_\u6545\u969c\u4e0e\u6210\u672c",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/deployment/cloud-release.md",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "docs_deployment_cloud_release_github_\u4e91\u7aef\u53d1\u5e03\u4e0e_cnb_\u4e0b\u8f7d\u955c\u50cf",
+      "target": "docs_deployment_cloud_release_\u65e5\u5e38\u64cd\u4f5c",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/deployment/cloud-release.md",
+      "source_location": "L49",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "docs_deployment_cloud_release_github_\u4e91\u7aef\u53d1\u5e03\u4e0e_cnb_\u4e0b\u8f7d\u955c\u50cf",
+      "target": "docs_deployment_cloud_release_\u672c\u5730\u9a8c\u8bc1",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/deployment/cloud-release.md",
+      "source_location": "L28",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "docs_deployment_cloud_release_github_\u4e91\u7aef\u53d1\u5e03\u4e0e_cnb_\u4e0b\u8f7d\u955c\u50cf",
+      "target": "docs_deployment_cloud_release_\u7b7e\u540d_\u7d22\u5f15\u4e0e\u955c\u50cf",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/deployment/release-0.1.32.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "docs_deployment_release_0_1_32",
+      "target": "docs_deployment_release_0_1_32_cpa_v2_0_1_32",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "docs/research/2026-08-31-sam2-birefnet-cross-platform-commercial-audit.md",
       "source_location": "L1",
       "weight": 1.0,
@@ -122864,5 +124558,5 @@
       "source_file": "docs/superpowers/plans/2026-05-21-temporary-focus-windows.md"
     }
   ],
-  "built_at_commit": "56bc75a7611e767003782d7b59fa76155a803901"
+  "built_at_commit": "3ae997e5213ec6dcfd4cce4aa1a1de9f2a1d7064"
 }

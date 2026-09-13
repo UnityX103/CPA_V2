@@ -1,4 +1,5 @@
 mod accessibility;
+mod app_update;
 mod active_app;
 mod audio;
 mod cockroach_module;
@@ -614,6 +615,7 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            app_update::check_app_update,
             set_main_window_pinned,
             reassert_window_always_on_top,
             set_input_counter_window_pinned,
