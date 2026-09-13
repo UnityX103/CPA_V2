@@ -1,5 +1,5 @@
 //! GitHub determines the release; CNB is preferred for that exact package.
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::{future::Future, time::Duration};
 use tauri::{ipc::Channel, Manager, Webview};
 use tauri_plugin_updater::{Update, UpdaterExt};
@@ -60,6 +60,47 @@ async fn check_source(webview: &Webview, endpoint: &str) -> Result<Option<Update
         .map_err(|e| e.to_string())
 }
 
+#[derive(Deserialize)]
+struct ReleaseNotes {
+    tag_name: String,
+    body: Option<String>,
+    draft: bool,
+    prerelease: bool,
+}
+
+fn format_release_notes(releases: Vec<ReleaseNotes>, current: &semver::Version, latest: &semver::Version) -> String {
+    let mut entries: Vec<_> = releases.into_iter().filter_map(|release| {
+        let version = semver::Version::parse(release.tag_name.trim_start_matches('v')).ok()?;
+        (!release.draft && !release.prerelease && version > *current && version <= *latest)
+            .then_some((version, release.body.unwrap_or_else(|| "此版本未提供更新说明。".into())))
+    }).collect();
+    entries.sort_by(|a, b| b.0.cmp(&a.0));
+    entries.dedup_by(|a, b| a.0 == b.0);
+    entries.into_iter().map(|(version, body)| format!("## {version}\n{body}"))
+        .collect::<Vec<_>>().join("\n\n")
+}
+
+async fn cumulative_release_notes(current: &str, latest: &str) -> Result<String, String> {
+    let current = semver::Version::parse(current).map_err(|e| e.to_string())?;
+    let latest = semver::Version::parse(latest).map_err(|e| e.to_string())?;
+    let client = reqwest::Client::builder().user_agent("CPA-V2-updater")
+        .timeout(CHECK_TIMEOUT).build().map_err(|e| e.to_string())?;
+    let mut releases = Vec::new();
+    for page in 1..=10 {
+        let batch: Vec<ReleaseNotes> = client.get(format!(
+            "https://api.github.com/repos/UnityX103/CPA_V2/releases?per_page=100&page={page}"))
+            .send().await.map_err(|e| e.to_string())?.error_for_status().map_err(|e| e.to_string())?
+            .json().await.map_err(|e| e.to_string())?;
+        let done = batch.len() < 100;
+        releases.extend(batch);
+        if done {
+            let notes = format_release_notes(releases, &current, &latest);
+            return if notes.is_empty() { Err("No release notes found".into()) } else { Ok(notes) };
+        }
+    }
+    Err("Release history exceeded page limit".into())
+}
+
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateMetadata {
@@ -98,7 +139,12 @@ pub async fn check_app_update(webview: Webview) -> Result<Option<UpdateMetadata>
         Ok(Some(UpdateMetadata {
             current_version: update.current_version.clone(),
             version: update.version.clone(),
-            body: update.body.clone(),
+            body: Some(match tokio::time::timeout(Duration::from_secs(20),
+                cumulative_release_notes(&update.current_version, &update.version)).await {
+                Ok(Ok(notes)) => notes,
+                _ => format!("历史版本说明暂时不可用；以下仅显示最新版本内容。\n\n## {}\n{}",
+                    update.version, update.body.as_deref().unwrap_or("此版本未提供更新说明。")),
+            }),
             rid: webview.resources_table().add(update),
         }))
     } else {
@@ -246,5 +292,18 @@ mod tests {
         ] {
             assert!(package_urls("0.1.33", source).is_err());
         }
+    }
+}
+
+#[cfg(test)]
+mod release_notes_tests {
+    use super::*;
+    #[test]
+    fn notes_cover_only_stable_versions_between_installed_and_latest() {
+        let make = |tag: &str, draft, prerelease| ReleaseNotes { tag_name: tag.into(), body: Some(tag.into()), draft, prerelease };
+        let notes = format_release_notes(vec![make("v0.2.0", false, false), make("v0.2.1", false, false),
+            make("v0.2.2", false, false), make("v0.3.0", false, false), make("v0.2.2-beta.1", false, true),
+            make("v0.2.3", true, false)], &"0.2.0".parse().unwrap(), &"0.2.2".parse().unwrap());
+        assert_eq!(notes, "## 0.2.2\nv0.2.2\n\n## 0.2.1\nv0.2.1");
     }
 }

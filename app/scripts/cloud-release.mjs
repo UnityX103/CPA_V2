@@ -43,7 +43,7 @@ if (command === 'stage') {
             await cp(join(root, 'assets', name), join(output, name), { errorOnExist: true, force: false });
         }
     }
-    const latest = { version, notes: `CPA_V2 ${version}`, pub_date: new Date().toISOString(), platforms };
+    const latest = { version, notes: await readFile(join(appRoot, `../docs/deployment/release-${version}.md`), 'utf8'), pub_date: new Date().toISOString(), platforms };
     assertUpdater(latest, await readdir(output));
     for (const entry of Object.values(platforms)) {
         const name = new URL(entry.url).pathname.split('/').at(-1);

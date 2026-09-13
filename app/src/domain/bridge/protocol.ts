@@ -100,7 +100,7 @@ export type DispatchPayload =
     | { v: typeof BRIDGE_VERSION; store: 'bindingKey'; action: 'completeCapture'; args: [BindingInput, string] }
     | { v: typeof BRIDGE_VERSION; store: 'bindingKey'; action: 'addEntry'; args: [] }
     | { v: typeof BRIDGE_VERSION; store: 'appUpdate';  action: 'setAutoUpdateEnabled'; args: [boolean] }
-    | { v: typeof BRIDGE_VERSION; store: 'appUpdate';  action: 'checkNow' | 'restartForUpdate'; args: [] };
+    | { v: typeof BRIDGE_VERSION; store: 'appUpdate';  action: 'checkNow' | 'restartForUpdate' | 'installUpdate' | 'skipUpdate' | 'remindLater'; args: [] };
 
 export interface ConfirmedDispatchRequest {
     requestId: string;

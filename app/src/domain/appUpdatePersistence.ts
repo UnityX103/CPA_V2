@@ -5,11 +5,15 @@ const STORE_KEY = 'appUpdate';
 
 export interface PersistedAppUpdateSettings {
     autoUpdateEnabled: boolean;
+    skippedVersion?: string;
+    remindAt?: number;
 }
 
 interface PersistedAppUpdateSettingsV1 {
     v: 1;
     autoUpdateEnabled: boolean;
+    skippedVersion?: string;
+    remindAt?: number;
 }
 
 function isPersistedAppUpdateSettingsV1(value: unknown): value is PersistedAppUpdateSettingsV1 {
@@ -29,7 +33,9 @@ export async function loadPersistedAppUpdateSettings(): Promise<PersistedAppUpda
         if (!isPersistedAppUpdateSettingsV1(value)) {
             return { autoUpdateEnabled: true };
         }
-        return { autoUpdateEnabled: value.autoUpdateEnabled };
+        return { autoUpdateEnabled: value.autoUpdateEnabled,
+            skippedVersion: typeof value.skippedVersion === 'string' ? value.skippedVersion : undefined,
+            remindAt: typeof value.remindAt === 'number' && Number.isFinite(value.remindAt) ? value.remindAt : undefined };
     } catch (err) {
         console.warn('[appUpdatePersistence] load failed', err);
         return { autoUpdateEnabled: true };
@@ -40,6 +46,7 @@ export async function savePersistedAppUpdateSettings(settings: PersistedAppUpdat
     try {
         const store = await openStore();
         await store.set(STORE_KEY, {
+            ...settings,
             v: 1,
             autoUpdateEnabled: settings.autoUpdateEnabled,
         } satisfies PersistedAppUpdateSettingsV1);

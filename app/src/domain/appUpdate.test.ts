@@ -141,7 +141,7 @@ describe('app update store', () => {
         expect(store.getState().lastCheckedAt).toBe(1_700_000_000_000);
     });
 
-    it('downloads and installs an available update', async () => {
+    it('previews without downloading until the user chooses update', async () => {
         const downloadAndInstall = vi.fn(async () => {});
         const store = createAppUpdateStore(deps({
             checkForUpdate: vi.fn(async () => ({
@@ -153,6 +153,9 @@ describe('app update store', () => {
             })),
         }));
         await store.getState().checkNow();
+        expect(downloadAndInstall).not.toHaveBeenCalled();
+        expect(store.getState().status).toBe('available');
+        await store.getState().installUpdate();
         expect(downloadAndInstall).toHaveBeenCalledTimes(1);
         expect(store.getState()).toMatchObject({
             status: 'readyToRestart',
@@ -210,6 +213,7 @@ describe('app update store', () => {
         }));
 
         await store.getState().checkNow();
+        await store.getState().installUpdate();
 
         expect(store.getState().status).toBe('readyToRestart');
     });
@@ -258,5 +262,47 @@ describe('app update store', () => {
         store.setState({ status: 'readyToRestart' });
         await store.getState().restartForUpdate();
         expect(relaunchApp).toHaveBeenCalledTimes(1);
+    });
+});
+
+
+describe('update preview choices', () => {
+    const update = () => ({ version: '0.2.2', currentVersion: '0.2.0', body: '## 0.2.2\nFix\n## 0.2.1\nFeature', downloadAndInstall: vi.fn(async () => {}) });
+    it('skips one version across restarts but manual checking can preview it', async () => {
+        const showUpdatePreview = vi.fn(async () => {});
+        const saveSettings = vi.fn(async () => {});
+        const store = createAppUpdateStore(deps({ checkForUpdate: async () => update(), showUpdatePreview, saveSettings }));
+        await store.getState().checkNow(true);
+        await store.getState().skipUpdate();
+        expect(saveSettings).toHaveBeenLastCalledWith(expect.objectContaining({ skippedVersion: '0.2.2' }));
+        const restored = createAppUpdateStore(deps({ checkForUpdate: async () => update(), showUpdatePreview,
+            loadSettings: async () => ({ autoUpdateEnabled: true, skippedVersion: '0.2.2' }) }));
+        await restored.getState().hydrate();
+        await restored.getState().checkNow(true);
+        expect(restored.getState().status).toBe('skipped');
+        await restored.getState().checkNow();
+        expect(restored.getState().status).toBe('available');
+        expect(showUpdatePreview).toHaveBeenCalledTimes(2);
+    });
+    it('a newer version is not suppressed by an earlier skipped version', async () => {
+        const store = createAppUpdateStore(deps({ checkForUpdate: async () => update(),
+            loadSettings: async () => ({ autoUpdateEnabled: true, skippedVersion: '0.2.1' }) }));
+        await store.getState().hydrate();
+        await store.getState().checkNow(true);
+        expect(store.getState().status).toBe('available');
+    });
+    it('persists reminder time and reschedules remaining delay after restart', async () => {
+        const saveSettings = vi.fn(async () => {});
+        const store = createAppUpdateStore(deps({ checkForUpdate: async () => update(), saveSettings }));
+        await store.getState().checkNow();
+        await store.getState().remindLater();
+        expect(saveSettings).toHaveBeenLastCalledWith(expect.objectContaining({ remindAt: 1_700_003_600_000 }));
+        const setTimeoutFn = vi.fn(() => 1);
+        const restored = createAppUpdateStore(deps({ setTimeoutFn, now: () => 1_700_003_000_000,
+            checkForUpdate: async () => update(), loadSettings: async () => ({ autoUpdateEnabled: true, remindAt: 1_700_003_600_000 }) }));
+        await restored.getState().hydrate();
+        expect(setTimeoutFn).toHaveBeenCalledWith(expect.any(Function), 600_000);
+        await restored.getState().checkNow(true);
+        expect(restored.getState().status).toBe('deferred');
     });
 });

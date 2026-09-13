@@ -233,6 +233,9 @@ export async function applyDispatch(payload: DispatchPayload): Promise<void> {
             switch (payload.action) {
                 case 'setAutoUpdateEnabled': await u.setAutoUpdateEnabled(...payload.args); return;
                 case 'checkNow': await u.checkNow(); return;
+                case 'installUpdate': await u.installUpdate(); return;
+                case 'skipUpdate': await u.skipUpdate(); return;
+                case 'remindLater': await u.remindLater(); return;
                 case 'restartForUpdate': await u.restartForUpdate(); return;
             }
             return;

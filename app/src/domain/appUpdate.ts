@@ -11,12 +11,15 @@ import {
 import { dispatch } from './bridge/dispatch';
 import { BRIDGE_VERSION, type DispatchPayload } from './bridge/protocol';
 
-export const APP_UPDATE_STARTUP_DELAY_MS = 30_000;
+export const APP_UPDATE_STARTUP_DELAY_MS = 3_000;
 export const APP_UPDATE_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
 export const APP_UPDATE_REQUEST_TIMEOUT_MS = 30 * 60 * 1000;
 
 export type AppUpdateStatus =
     | 'idle'
+    | 'available'
+    | 'skipped'
+    | 'deferred'
     | 'checking'
     | 'upToDate'
     | 'downloading'
@@ -52,12 +55,16 @@ export interface AppUpdateDeps {
     setIntervalFn: (fn: () => void, ms: number) => TimerId;
     clearIntervalFn: (id: TimerId) => void;
     now: () => number;
+    showUpdatePreview?: () => Promise<void>;
 }
 
 interface AppUpdateActions {
     hydrate: () => Promise<void>;
     setAutoUpdateEnabled: (enabled: boolean) => Promise<void>;
-    checkNow: () => Promise<void>;
+    checkNow: (automatic?: boolean) => Promise<void>;
+    installUpdate: () => Promise<void>;
+    skipUpdate: () => Promise<void>;
+    remindLater: () => Promise<void>;
     startAutomaticChecks: () => () => void;
     restartForUpdate: () => Promise<void>;
     applySnapshot: (snapshot: AppUpdateSnapshot) => void;
@@ -87,6 +94,7 @@ function createDefaultDeps(): AppUpdateDeps {
                 },
             };
         },
+        showUpdatePreview: () => invoke('open_settings_window'),
         relaunchApp: () => relaunch(),
         getVersion,
         loadSettings: loadPersistedAppUpdateSettings,
@@ -100,7 +108,7 @@ function createDefaultDeps(): AppUpdateDeps {
     };
 }
 
-function appUpdateDispatchPayload(action: 'checkNow' | 'restartForUpdate') {
+function appUpdateDispatchPayload(action: 'checkNow' | 'restartForUpdate' | 'installUpdate' | 'skipUpdate' | 'remindLater') {
     return { v: BRIDGE_VERSION, store: 'appUpdate', action, args: [] } satisfies DispatchPayload;
 }
 
@@ -115,6 +123,9 @@ function appUpdateTogglePayload(enabled: boolean) {
 
 export function createAppUpdateStore(deps: AppUpdateDeps): AppUpdateStore {
     let inFlight: Promise<void> | null = null;
+    let pendingUpdate: UpdaterUpdate | null = null;
+    let preferences: PersistedAppUpdateSettings = { autoUpdateEnabled: true };
+    let reminderTimer: TimerId | null = null;
     return create<AppUpdateSnapshot & AppUpdateActions>((set, get) => ({
         autoUpdateEnabled: true,
         status: 'idle',
@@ -130,6 +141,11 @@ export function createAppUpdateStore(deps: AppUpdateDeps): AppUpdateStore {
                 deps.loadSettings(),
                 deps.getVersion().catch(() => null),
             ]);
+            preferences = settings;
+            if ((preferences.remindAt ?? 0) > deps.now()) {
+                if (reminderTimer !== null) deps.clearTimeoutFn(reminderTimer);
+                reminderTimer = deps.setTimeoutFn(() => { void get().checkNow(true); }, preferences.remindAt! - deps.now());
+            }
             const status = get().status;
             set({
                 autoUpdateEnabled: settings.autoUpdateEnabled,
@@ -146,11 +162,12 @@ export function createAppUpdateStore(deps: AppUpdateDeps): AppUpdateStore {
                 downloadedBytes: status === 'readyToRestart' ? get().downloadedBytes : 0,
                 downloadTotalBytes: status === 'readyToRestart' ? get().downloadTotalBytes : null,
             });
-            await deps.saveSettings({ autoUpdateEnabled: enabled });
+            preferences = { ...preferences, autoUpdateEnabled: enabled };
+            await deps.saveSettings(preferences);
         },
-        checkNow: async () => {
+        checkNow: async (automatic = false) => {
             if (inFlight) return inFlight;
-            if (get().status === 'readyToRestart') return;
+            if (['readyToRestart', 'downloading', 'installing'].includes(get().status)) return;
             if (!get().autoUpdateEnabled) {
                 set({ status: 'disabled', errorMessage: null });
                 return;
@@ -172,6 +189,7 @@ export function createAppUpdateStore(deps: AppUpdateDeps): AppUpdateStore {
                     }
                     const checkedAt = deps.now();
                     if (!update) {
+                        pendingUpdate = null;
                         set({
                             status: 'upToDate',
                             lastCheckedAt: checkedAt,
@@ -184,7 +202,7 @@ export function createAppUpdateStore(deps: AppUpdateDeps): AppUpdateStore {
                         return;
                     }
                     set({
-                        status: 'downloading',
+                        status: 'available',
                         currentVersion: update.currentVersion,
                         availableVersion: update.version,
                         releaseNotes: update.body ?? null,
@@ -192,37 +210,12 @@ export function createAppUpdateStore(deps: AppUpdateDeps): AppUpdateStore {
                         downloadedBytes: 0,
                         downloadTotalBytes: null,
                     });
-                    let receivedBytes = 0;
-                    let reportedBytes = 0;
-                    await update.downloadAndInstall((event: DownloadEvent) => {
-                        const state = get();
-                        if (!state.autoUpdateEnabled || state.status === 'disabled') return;
-                        if (event.event === 'Started') {
-                            receivedBytes = 0;
-                            reportedBytes = 0;
-                            set({
-                                status: 'downloading',
-                                downloadedBytes: 0,
-                                downloadTotalBytes: event.data.contentLength ?? null,
-                            });
-                            return;
-                        }
-                        if (event.event === 'Progress') {
-                            receivedBytes += event.data.chunkLength;
-                            const totalBytes = get().downloadTotalBytes;
-                            const crossedReportBoundary = totalBytes && totalBytes > 0
-                                ? Math.floor((receivedBytes / totalBytes) * 100)
-                                    > Math.floor((reportedBytes / totalBytes) * 100)
-                                : receivedBytes - reportedBytes >= 256 * 1024;
-                            if (crossedReportBoundary) {
-                                reportedBytes = receivedBytes;
-                                set({ downloadedBytes: receivedBytes });
-                            }
-                            return;
-                        }
-                        set({ status: 'installing', downloadedBytes: receivedBytes });
-                    }, { timeout: APP_UPDATE_REQUEST_TIMEOUT_MS });
-                    set({ status: 'readyToRestart', errorMessage: null });
+                    pendingUpdate = update;
+                    const suppressed = automatic && (preferences.skippedVersion === update.version
+                        || (preferences.remindAt ?? 0) > deps.now());
+                    set({ status: suppressed ? preferences.skippedVersion === update.version ? 'skipped' : 'deferred' : 'available' });
+                    if (!suppressed) await deps.showUpdatePreview?.().catch(console.warn);
+
                 } catch (err) {
                     const stateAfterError = get();
                     if (stateAfterError.status === 'readyToRestart') return;
@@ -237,13 +230,69 @@ export function createAppUpdateStore(deps: AppUpdateDeps): AppUpdateStore {
             })();
             return inFlight;
         },
+        installUpdate: async () => {
+            if (!pendingUpdate || !['available', 'error'].includes(get().status)) return;
+            const update = pendingUpdate;
+            set({ status: 'downloading', errorMessage: null });
+            try {
+                let receivedBytes = 0;
+                let reportedBytes = 0;
+                await update.downloadAndInstall((event: DownloadEvent) => {
+                    const state = get();
+                    if (!state.autoUpdateEnabled || state.status === 'disabled') return;
+                    if (event.event === 'Started') {
+                        receivedBytes = 0;
+                        reportedBytes = 0;
+                        set({
+                            status: 'downloading',
+                            downloadedBytes: 0,
+                            downloadTotalBytes: event.data.contentLength ?? null,
+                        });
+                        return;
+                    }
+                    if (event.event === 'Progress') {
+                        receivedBytes += event.data.chunkLength;
+                        const totalBytes = get().downloadTotalBytes;
+                        const crossedReportBoundary = totalBytes && totalBytes > 0
+                            ? Math.floor((receivedBytes / totalBytes) * 100)
+                                > Math.floor((reportedBytes / totalBytes) * 100)
+                            : receivedBytes - reportedBytes >= 256 * 1024;
+                        if (crossedReportBoundary) {
+                            reportedBytes = receivedBytes;
+                            set({ downloadedBytes: receivedBytes });
+                        }
+                        return;
+                    }
+                    set({ status: 'installing', downloadedBytes: receivedBytes });
+                }, { timeout: APP_UPDATE_REQUEST_TIMEOUT_MS });
+                set({ status: 'readyToRestart', errorMessage: null });
+            } catch (err) {
+                pendingUpdate = null;
+                set({ status: 'error', errorMessage: errorToMessage(err) });
+            }
+        },
+        skipUpdate: async () => {
+            if (!['available', 'error'].includes(get().status)) return;
+            preferences = { ...preferences, skippedVersion: get().availableVersion ?? undefined, remindAt: 0 };
+            set({ status: 'skipped' });
+            await deps.saveSettings(preferences);
+        },
+        remindLater: async () => {
+            if (!['available', 'error'].includes(get().status)) return;
+            preferences = { ...preferences, remindAt: deps.now() + 60 * 60 * 1000 };
+            set({ status: 'deferred' });
+            await deps.saveSettings(preferences);
+            if (reminderTimer !== null) deps.clearTimeoutFn(reminderTimer);
+            reminderTimer = deps.setTimeoutFn(() => { void get().checkNow(true); }, 60 * 60 * 1000);
+        },
         startAutomaticChecks: () => {
             if (!deps.isReleaseBuild()) return () => {};
-            const timeoutId = deps.setTimeoutFn(() => { void get().checkNow(); }, APP_UPDATE_STARTUP_DELAY_MS);
-            const intervalId = deps.setIntervalFn(() => { void get().checkNow(); }, APP_UPDATE_CHECK_INTERVAL_MS);
+            const timeoutId = deps.setTimeoutFn(() => { void get().checkNow(true); }, APP_UPDATE_STARTUP_DELAY_MS);
+            const intervalId = deps.setIntervalFn(() => { void get().checkNow(true); }, APP_UPDATE_CHECK_INTERVAL_MS);
             return () => {
                 deps.clearTimeoutFn(timeoutId);
                 deps.clearIntervalFn(intervalId);
+                if (reminderTimer !== null) deps.clearTimeoutFn(reminderTimer);
             };
         },
         restartForUpdate: async () => {
@@ -272,6 +321,9 @@ if (detectIsMirrorWindow()) {
         checkNow: async () => {
             await dispatch(appUpdateDispatchPayload('checkNow'));
         },
+        installUpdate: async () => { await dispatch(appUpdateDispatchPayload('installUpdate')); },
+        skipUpdate: async () => { await dispatch(appUpdateDispatchPayload('skipUpdate')); },
+        remindLater: async () => { await dispatch(appUpdateDispatchPayload('remindLater')); },
         restartForUpdate: async () => {
             await dispatch(appUpdateDispatchPayload('restartForUpdate'));
         },

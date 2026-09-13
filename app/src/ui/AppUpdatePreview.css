@@ -1,0 +1,22 @@
+.app-update-preview {
+    box-sizing: border-box;
+    width: min(520px, 90%);
+    max-height: 90%;
+    margin: auto;
+    padding: 20px;
+    overflow: auto;
+    border: 1px solid var(--panel-stroke);
+    border-radius: 18px;
+    color: var(--text-brand-dark);
+    background: var(--panel-bg-strong);
+    font: inherit;
+}
+.app-update-preview::backdrop { background: rgba(64, 44, 28, .28); }
+.app-update-preview h2 { margin: 0; font-size: 20px; overflow-wrap: anywhere; }
+.app-update-preview p { font-size: 12px; }
+.app-update-preview__notes { max-height: 220px; overflow: auto; padding: 4px; }
+.app-update-preview details { margin-bottom: 12px; font-size: 13px; }
+.app-update-preview summary { cursor: pointer; font-weight: 700; }
+.app-update-preview details div { white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 8px; line-height: 1.6; }
+.app-update-preview__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.app-update-preview__actions .btn { padding: 8px 12px; font-size: 12px; }

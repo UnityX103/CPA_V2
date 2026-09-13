@@ -1,3 +1,4 @@
+import { AppUpdatePreview } from './AppUpdatePreview';
 import { SettingsHelp } from './SettingsHelp';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
@@ -150,6 +151,7 @@ export function SettingsPanel() {
             aria-label="设置"
             onPointerDown={onPanelPointerDown}
         >
+            <AppUpdatePreview />
             <div className="settings-head">
                 <h2 className="settings-title">设置</h2>
                 <div className="settings-head-spacer" />
@@ -1520,11 +1522,11 @@ function AppUpdateSettingsRow() {
     return (
         <div className="card app-update-card">
             <div className="card-row">
-                <span className="card-label">自动下载并安装更新</span>
+                <span className="card-label">自动检查更新</span>
                 <Toggle
                     checked={autoUpdateEnabled}
                     onChange={(enabled) => { void setAutoUpdateEnabled(enabled); }}
-                    ariaLabel="自动下载并安装更新"
+                    ariaLabel="自动检查更新"
                 />
             </div>
             <div className="app-update-footer">
@@ -1571,6 +1573,9 @@ function appUpdateStatusText(
 ): string {
     const current = currentVersion ?? '未知版本';
     const available = availableVersion ?? '新版本';
+    if (status === 'available') return `发现版本 ${available} · 等待确认更新`;
+    if (status === 'skipped') return `已跳过版本 ${available} · 可立即检查重新查看`;
+    if (status === 'deferred') return `稍后提醒更新至 ${available}`;
     if (status === 'disabled') return '自动更新已关闭';
     if (status === 'checking') return `当前版本 ${current} · 正在检查`;
     if (status === 'upToDate') return `当前版本 ${current} · 已是最新`;
