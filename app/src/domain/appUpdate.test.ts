@@ -284,6 +284,17 @@ describe('update preview choices', () => {
         expect(restored.getState().status).toBe('available');
         expect(showUpdatePreview).toHaveBeenCalledTimes(2);
     });
+    it('choosing remind later replaces an earlier skip for the same version', async () => {
+        let now = 1_700_000_000_000;
+        const store = createAppUpdateStore(deps({ now: () => now, checkForUpdate: async () => update() }));
+        await store.getState().checkNow();
+        await store.getState().skipUpdate();
+        await store.getState().checkNow();
+        await store.getState().remindLater();
+        now += 60 * 60 * 1000;
+        await store.getState().checkNow(true);
+        expect(store.getState().status).toBe('available');
+    });
     it('a newer version is not suppressed by an earlier skipped version', async () => {
         const store = createAppUpdateStore(deps({ checkForUpdate: async () => update(),
             loadSettings: async () => ({ autoUpdateEnabled: true, skippedVersion: '0.2.1' }) }));

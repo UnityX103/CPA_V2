@@ -435,13 +435,13 @@
     "semantic_hash": "b78e210addeb88c48497aaa85978b45d"
   },
   "app/src/domain/appUpdate.test.ts": {
-    "mtime": 1789283461.52819,
-    "ast_hash": "003d54c5dcf59454dc7ca7bdbc851ffb",
+    "mtime": 1789284175.564227,
+    "ast_hash": "aeeb3ed4f9a5625c4a1df14c116b70d4",
     "semantic_hash": ""
   },
   "app/src/domain/appUpdate.ts": {
-    "mtime": 1789283595.4727266,
-    "ast_hash": "4a99513ef989ae655b6b4fbe7bcc0e4f",
+    "mtime": 1789284175.5638342,
+    "ast_hash": "41eee8e7ea96377689897cb4c9683d9d",
     "semantic_hash": ""
   },
   "app/src/domain/appUpdatePersistence.test.ts": {

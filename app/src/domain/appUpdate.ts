@@ -279,7 +279,7 @@ export function createAppUpdateStore(deps: AppUpdateDeps): AppUpdateStore {
         },
         remindLater: async () => {
             if (!['available', 'error'].includes(get().status)) return;
-            preferences = { ...preferences, remindAt: deps.now() + 60 * 60 * 1000 };
+            preferences = { ...preferences, skippedVersion: undefined, remindAt: deps.now() + 60 * 60 * 1000 };
             set({ status: 'deferred' });
             await deps.saveSettings(preferences);
             if (reminderTimer !== null) deps.clearTimeoutFn(reminderTimer);
