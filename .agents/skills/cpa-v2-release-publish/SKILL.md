@@ -23,7 +23,9 @@ Read [cloud-release.md](../../../docs/deployment/cloud-release.md). GitHub is th
 
 ## Update source policy
 
-`app/src-tauri/src/app_update.rs` queries both public manifests with bounded timeouts and uses semantic versions. At equal versions use CNB; when GitHub has a newer available version use GitHub, including when CNB reports no update for the installed client. If GitHub cannot be reached, use an available CNB update; if freshness cannot be established and neither source provides an update, report the check error instead of claiming the client is current. Retain the plugin's package signature verification. Endpoint order alone does not implement this policy.
+`app/src-tauri/src/app_update.rs` queries GitHub's public Latest manifest first, with a 10-second timeout. Query CNB's Latest manifest only when the GitHub query fails. A successful GitHub "no update" response is final; do not compare both sites or prefer CNB's version.
+
+Once a version is selected, attempt CNB's exact version-tagged package URL first, using the selected manifest's original signature. If downloading or signature validation fails, retry the same package/version on GitHub. Never use CNB Latest to locate a package after selecting the GitHub version. Download attempts reset progress, use bounded connection/idle timeouts, and install only once after a complete signature-verified download. An installation failure must not trigger a second install.
 
 This policy requires a new client build; do not imply previously published 0.1.32 installers contain a later source change.
 

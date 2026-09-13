@@ -1,33 +1,43 @@
-//! Select the freshest usable release while preferring the CNB download mirror.
+//! GitHub determines the release; CNB is preferred for that exact package.
 use serde::Serialize;
-use std::time::Duration;
-use tauri::{Manager, Webview};
+use std::{future::Future, time::Duration};
+use tauri::{ipc::Channel, Manager, Webview};
 use tauri_plugin_updater::{Update, UpdaterExt};
 
 const CNB: &str = "https://cnb.cool/nanzhaigame-xpy/CPA_V2/-/releases/latest/download/latest.json";
 const GITHUB: &str = "https://github.com/UnityX103/CPA_V2/releases/latest/download/latest.json";
 const CHECK_TIMEOUT: Duration = Duration::from_secs(10);
 
-fn select_update<T>(
-    cnb: Result<Option<T>, String>,
-    github: Result<Option<T>, String>,
-    version: impl Fn(&T) -> &str,
-) -> Result<Option<T>, String> {
-    match (cnb, github) {
-        (Ok(Some(cnb)), Ok(Some(github))) => {
-            let cnb_version = semver::Version::parse(version(&cnb)).map_err(|e| e.to_string())?;
-            let github_version =
-                semver::Version::parse(version(&github)).map_err(|e| e.to_string())?;
-            Ok(Some(if github_version > cnb_version {
-                github
-            } else {
-                cnb
-            }))
-        }
-        (Ok(Some(cnb)), _) => Ok(Some(cnb)),
-        (_, Ok(github)) => Ok(github),
-        (_, Err(error)) => Err(error),
+async fn with_fallback<T, A, B>(primary: A, fallback: impl FnOnce() -> B) -> Result<T, String>
+where
+    A: Future<Output = Result<T, String>>,
+    B: Future<Output = Result<T, String>>,
+{
+    match primary.await {
+        Ok(value) => Ok(value),
+        Err(first) => fallback()
+            .await
+            .map_err(|second| format!("Primary source: {first}; fallback source: {second}")),
     }
+}
+
+fn package_urls(version: &str, source: &str) -> Result<(String, String), String> {
+    semver::Version::parse(version).map_err(|e| e.to_string())?;
+    let name = source.rsplit('/').next().unwrap_or_default();
+    if name.is_empty()
+        || !name
+            .bytes()
+            .all(|c| c.is_ascii_alphanumeric() || b"._+-".contains(&c))
+    {
+        return Err("Invalid update package name".into());
+    }
+    let cnb =
+        format!("https://cnb.cool/nanzhaigame-xpy/CPA_V2/-/releases/download/v{version}/{name}");
+    let github = format!("https://github.com/UnityX103/CPA_V2/releases/download/v{version}/{name}");
+    if source != cnb && source != github {
+        return Err("Update package must belong to the selected release and repository".into());
+    }
+    Ok((cnb, github))
 }
 
 async fn check_source(webview: &Webview, endpoint: &str) -> Result<Option<Update>, String> {
@@ -38,6 +48,11 @@ async fn check_source(webview: &Webview, endpoint: &str) -> Result<Option<Update
             .map_err(|e| format!("Invalid update endpoint: {e}"))?])
         .map_err(|e| e.to_string())?
         .timeout(CHECK_TIMEOUT)
+        .configure_client(|client| {
+            client
+                .connect_timeout(CHECK_TIMEOUT)
+                .read_timeout(Duration::from_secs(30))
+        })
         .build()
         .map_err(|e| e.to_string())?
         .check()
@@ -52,87 +67,184 @@ pub struct UpdateMetadata {
     current_version: String,
     version: String,
     body: Option<String>,
-    raw_json: serde_json::Value,
+}
+
+#[derive(Clone, Serialize)]
+#[serde(tag = "event", content = "data")]
+pub enum DownloadEvent {
+    #[serde(rename_all = "camelCase")]
+    Started {
+        content_length: Option<u64>,
+    },
+    #[serde(rename_all = "camelCase")]
+    Progress {
+        chunk_length: usize,
+    },
+    Finished,
 }
 
 #[tauri::command]
 pub async fn check_app_update(webview: Webview) -> Result<Option<UpdateMetadata>, String> {
     if webview.label() != "main" {
-        return Err("Updates can only be checked from the main window".into());
+        return Err("Updates require the main window".into());
     }
-    // Check both small manifests concurrently. Package downloads still use the
-    // selected provider and the updater plugin's existing signature verification.
-    let (cnb, github) =
-        futures_util::future::join(check_source(&webview, CNB), check_source(&webview, GITHUB))
-            .await;
-    let selected = select_update(cnb, github, |update| &update.version)?;
-    Ok(selected.map(|update| UpdateMetadata {
-        current_version: update.current_version.clone(),
-        version: update.version.clone(),
-        body: update.body.clone(),
-        raw_json: update.raw_json.clone(),
-        rid: webview.resources_table().add(update),
-    }))
+    // A successful GitHub response, including no update, is authoritative.
+    let selected = with_fallback(check_source(&webview, GITHUB), || {
+        check_source(&webview, CNB)
+    })
+    .await?;
+    if let Some(update) = selected {
+        package_urls(&update.version, update.download_url.as_str())?;
+        Ok(Some(UpdateMetadata {
+            current_version: update.current_version.clone(),
+            version: update.version.clone(),
+            body: update.body.clone(),
+            rid: webview.resources_table().add(update),
+        }))
+    } else {
+        Ok(None)
+    }
+}
+
+async fn download_from(
+    mut update: Update,
+    url: String,
+    events: &Channel<DownloadEvent>,
+) -> Result<Vec<u8>, String> {
+    update.download_url = url
+        .parse()
+        .map_err(|e| format!("Invalid package URL: {e}"))?;
+    update.timeout = Some(Duration::from_secs(30 * 60));
+    // Reset progress even when the first attempt failed before receiving bytes.
+    let _ = events.send(DownloadEvent::Started {
+        content_length: None,
+    });
+    let mut first_chunk = true;
+    update
+        .download(
+            |chunk_length, content_length| {
+                if first_chunk {
+                    first_chunk = false;
+                    let _ = events.send(DownloadEvent::Started { content_length });
+                }
+                let _ = events.send(DownloadEvent::Progress { chunk_length });
+            },
+            || {},
+        )
+        .await
+        .map_err(|e| e.to_string())
+    // Update::download verifies the original manifest signature before returning.
+}
+
+#[tauri::command]
+pub async fn install_app_update(
+    webview: Webview,
+    rid: tauri::ResourceId,
+    on_event: Channel<DownloadEvent>,
+) -> Result<(), String> {
+    if webview.label() != "main" {
+        return Err("Updates require the main window".into());
+    }
+    let update = webview
+        .resources_table()
+        .get::<Update>(rid)
+        .map_err(|e| e.to_string())?;
+    let _ = webview.resources_table().close(rid);
+    let (cnb, github) = package_urls(&update.version, update.download_url.as_str())?;
+    let bytes = with_fallback(download_from((*update).clone(), cnb, &on_event), || {
+        download_from((*update).clone(), github, &on_event)
+    })
+    .await?;
+    let _ = on_event.send(DownloadEvent::Finished);
+    // Installation happens once, only after a full, signature-verified download.
+    // An installation failure must never trigger a second installation attempt.
+    update.install(bytes).map_err(|e| e.to_string())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    #[derive(Debug, PartialEq)]
-    struct Release(&'static str, &'static str);
-    fn choose(
-        cnb: Result<Option<Release>, String>,
-        github: Result<Option<Release>, String>,
-    ) -> Result<Option<Release>, String> {
-        select_update(cnb, github, |r| r.0)
+    use std::cell::Cell;
+    #[test]
+    fn github_success_never_queries_cnb_even_when_up_to_date() {
+        tauri::async_runtime::block_on(async {
+            let called = Cell::new(false);
+            let result = with_fallback(async { Ok::<Option<&str>, String>(None) }, || {
+                called.set(true);
+                async { Ok(Some("0.1.99")) }
+            })
+            .await
+            .unwrap();
+            assert_eq!(result, None);
+            assert!(!called.get());
+        });
     }
     #[test]
-    fn equal_versions_prefer_cnb() {
+    fn github_failure_queries_cnb() {
+        tauri::async_runtime::block_on(async {
+            assert_eq!(
+                with_fallback(
+                    async { Err::<Option<&str>, _>("timeout".into()) },
+                    || async { Ok(Some("0.1.33")) }
+                )
+                .await
+                .unwrap(),
+                Some("0.1.33")
+            );
+        });
+    }
+    #[test]
+    fn cnb_package_success_skips_github_download() {
+        tauri::async_runtime::block_on(async {
+            let bytes = with_fallback(async { Ok::<_, String>(vec![1, 2]) }, || async {
+                panic!("GitHub must not download")
+            })
+            .await
+            .unwrap();
+            assert_eq!(bytes, vec![1, 2]);
+        });
+    }
+    #[test]
+    fn failed_or_invalid_mirror_download_uses_verified_github_bytes() {
+        tauri::async_runtime::block_on(async {
+            for error in ["404", "timeout", "signature verification failed"] {
+                assert_eq!(
+                    with_fallback(async { Err::<Vec<u8>, _>(error.into()) }, || async {
+                        Ok(vec![3])
+                    })
+                    .await
+                    .unwrap(),
+                    vec![3]
+                );
+            }
+            assert!(
+                with_fallback(async { Err::<Vec<u8>, _>("CNB down".into()) }, || async {
+                    Err("GitHub down".into())
+                })
+                .await
+                .is_err()
+            );
+        });
+    }
+    #[test]
+    fn downloads_use_exact_selected_version_in_both_directions() {
+        let gh = "https://github.com/UnityX103/CPA_V2/releases/download/v0.1.33/app.tar.gz";
+        let (cnb, github) = package_urls("0.1.33", gh).unwrap();
+        assert_eq!(github, gh);
         assert_eq!(
-            choose(
-                Ok(Some(Release("0.1.33", "cnb"))),
-                Ok(Some(Release("0.1.33", "github")))
-            )
-            .unwrap(),
-            Some(Release("0.1.33", "cnb"))
+            cnb,
+            "https://cnb.cool/nanzhaigame-xpy/CPA_V2/-/releases/download/v0.1.33/app.tar.gz"
         );
+        assert_eq!(package_urls("0.1.33", &cnb).unwrap(), (cnb, github));
     }
     #[test]
-    fn stale_cnb_uses_newer_github_even_when_both_have_updates() {
-        assert_eq!(
-            choose(
-                Ok(Some(Release("0.1.9", "cnb"))),
-                Ok(Some(Release("0.1.10", "github")))
-            )
-            .unwrap(),
-            Some(Release("0.1.10", "github"))
-        );
-    }
-    #[test]
-    fn cnb_current_does_not_hide_github_update() {
-        assert_eq!(
-            choose(Ok(None), Ok(Some(Release("0.1.33", "github")))).unwrap(),
-            Some(Release("0.1.33", "github"))
-        );
-    }
-    #[test]
-    fn unavailable_cnb_uses_github() {
-        assert_eq!(
-            choose(Err("timeout".into()), Ok(Some(Release("0.1.33", "github")))).unwrap(),
-            Some(Release("0.1.33", "github"))
-        );
-    }
-    #[test]
-    fn unavailable_github_keeps_usable_cnb_update() {
-        assert_eq!(
-            choose(Ok(Some(Release("0.1.33", "cnb"))), Err("timeout".into())).unwrap(),
-            Some(Release("0.1.33", "cnb"))
-        );
-    }
-    #[test]
-    fn failed_freshness_check_is_not_reported_as_up_to_date() {
-        assert!(choose(Ok(None), Err("timeout".into())).is_err());
-        assert!(choose(Err("timeout".into()), Err("timeout".into())).is_err());
-        assert_eq!(choose(Ok(None), Ok(None)).unwrap(), None);
+    fn rejects_other_versions_repositories_and_latest_package_links() {
+        for source in [
+            "https://github.com/UnityX103/CPA_V2/releases/download/v0.1.32/app.tar.gz",
+            "https://github.com/other/repo/releases/download/v0.1.33/app.tar.gz",
+            "https://cnb.cool/nanzhaigame-xpy/CPA_V2/-/releases/latest/download/app.tar.gz",
+        ] {
+            assert!(package_urls("0.1.33", source).is_err());
+        }
     }
 }

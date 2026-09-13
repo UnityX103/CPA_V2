@@ -616,6 +616,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             app_update::check_app_update,
+            app_update::install_app_update,
             set_main_window_pinned,
             reassert_window_always_on_top,
             set_input_counter_window_pinned,

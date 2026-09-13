@@ -180,7 +180,7 @@
     "semantic_hash": "a5965f46475e54a0d9d73de3212ad7df"
   },
   "app/package.json": {
-    "mtime": 1789263347.107793,
+    "mtime": 1789263447.563566,
     "ast_hash": "5a5aab42eccdcd82f95e8dfffe1ca44e",
     "semantic_hash": ""
   },
@@ -265,8 +265,8 @@
     "semantic_hash": "00b844b36e6ef810e0132492f83c131b"
   },
   "app/src-tauri/src/lib.rs": {
-    "mtime": 1788677875.6060052,
-    "ast_hash": "f764751d7b6a7a03c0d14220030738ff",
+    "mtime": 1789265610.3067043,
+    "ast_hash": "a4e62c6d4e83c001cdae8a6ad26d5cc4",
     "semantic_hash": ""
   },
   "app/src-tauri/src/main.rs": {
@@ -345,7 +345,7 @@
     "semantic_hash": "cfa124a91cc09e1a2c209025e198a71f"
   },
   "app/src-tauri/tauri.conf.json": {
-    "mtime": 1789263347.1085372,
+    "mtime": 1789263447.5650015,
     "ast_hash": "3fe25a5eca10b1550bb08bbeeccc7455",
     "semantic_hash": ""
   },
@@ -440,9 +440,9 @@
     "semantic_hash": "e9bb966e74fd0e011a32db6518048d00"
   },
   "app/src/domain/appUpdate.ts": {
-    "mtime": 1787302017.0529203,
-    "ast_hash": "10bf2a7f6d0a2b4c936b37830b2073ea",
-    "semantic_hash": "10bf2a7f6d0a2b4c936b37830b2073ea"
+    "mtime": 1789265610.3072188,
+    "ast_hash": "1f6bd97f6a02b7e4afbf1e06b395349e",
+    "semantic_hash": ""
   },
   "app/src/domain/appUpdatePersistence.test.ts": {
     "mtime": 1786594517.8268259,
@@ -925,13 +925,13 @@
     "semantic_hash": "a812eff17a5c007f0ba4495b9ea1f215"
   },
   ".agents/skills/cpa-v2-release-publish/SKILL.md": {
-    "mtime": 1789262878.6685383,
-    "ast_hash": "0d31fb033cf219aebd879b789a25951c",
+    "mtime": 1789265687.4710913,
+    "ast_hash": "6b611cedb8ee41e167cae77f87388e1f",
     "semantic_hash": ""
   },
   ".agents/skills/cpa-v2-release-publish/agents/openai.yaml": {
-    "mtime": 1788236818.385888,
-    "ast_hash": "24caace17a86ba1774ca72bc94b871a2",
+    "mtime": 1789265687.4715323,
+    "ast_hash": "4343450c746e4cfd57c451cc1d99d5d0",
     "semantic_hash": ""
   },
   ".agents/skills/cpa-v2-release-publish/references/migration.md": {
@@ -945,8 +945,8 @@
     "semantic_hash": "fbf61b6573dc50a5223a32ca93fc17cf"
   },
   "AGENTS.md": {
-    "mtime": 1789262878.668074,
-    "ast_hash": "0746b74b4a2d4aa86018c33173c9f87b",
+    "mtime": 1789265687.4722967,
+    "ast_hash": "07691e16e7b4bc84f7d111a86738c70b",
     "semantic_hash": ""
   },
   "CLAUDE.md": {
@@ -1860,7 +1860,7 @@
     "semantic_hash": ""
   },
   "app/scripts/sync-cnb-release.mjs": {
-    "mtime": 1789262744.340836,
+    "mtime": 1789263447.564366,
     "ast_hash": "9d9bf9a7422bb6078f0a7fbab3061ba3",
     "semantic_hash": ""
   },
@@ -2350,58 +2350,63 @@
     "semantic_hash": ""
   },
   "app/scripts/cloud-release.mjs": {
-    "mtime": 1789263259.412854,
+    "mtime": 1789263447.5637002,
     "ast_hash": "9b8e63c186fb3b9845e8a5edda86cf90",
     "semantic_hash": ""
   },
   "app/scripts/cloud-release.test.mjs": {
-    "mtime": 1789262744.3460276,
+    "mtime": 1789263447.5638118,
     "ast_hash": "530e1a2cd4a1eb50305c99cb051043fb",
     "semantic_hash": ""
   },
   "app/scripts/github-public.mjs": {
-    "mtime": 1789262402.0667145,
+    "mtime": 1789263447.5639114,
     "ast_hash": "39cda8150d977b34797b2841f62419df",
     "semantic_hash": ""
   },
   "app/scripts/mirror-github-release.mjs": {
-    "mtime": 1789262937.8180463,
+    "mtime": 1789263447.5640655,
     "ast_hash": "8c650e136d7bf1921c17a6ecf22258cf",
     "semantic_hash": ""
   },
   "app/scripts/release-integrity.mjs": {
-    "mtime": 1789262402.0644348,
+    "mtime": 1789263447.5641954,
     "ast_hash": "d027b90ba3a1353e65ae39fb0954c251",
     "semantic_hash": ""
   },
   ".cnb.yml": {
-    "mtime": 1789263192.6458735,
+    "mtime": 1789263447.56234,
     "ast_hash": "de80410659a1d94dae73496869664977",
     "semantic_hash": ""
   },
   ".cnb/web_trigger.yml": {
-    "mtime": 1789262653.3014529,
+    "mtime": 1789263447.562465,
     "ast_hash": "7f7cb345b79fc693b8c86d59298eff7b",
     "semantic_hash": ""
   },
   ".github/workflows/ci.yml": {
-    "mtime": 1789262532.9651542,
+    "mtime": 1789263447.5626302,
     "ast_hash": "59636b9bb16ddc4a9a029586bb3e5d82",
     "semantic_hash": ""
   },
   ".github/workflows/release.yml": {
-    "mtime": 1789263347.1339679,
+    "mtime": 1789263447.562779,
     "ast_hash": "fb72dcfac15ee347bbfd501be3485d55",
     "semantic_hash": ""
   },
   "docs/deployment/cloud-release.md": {
-    "mtime": 1789263347.1343267,
-    "ast_hash": "34b4a550af79f6175e43f300417d87f4",
+    "mtime": 1789265687.4719722,
+    "ast_hash": "4690fa5eb4b1ab53404a37a57467217d",
     "semantic_hash": ""
   },
   "docs/deployment/release-0.1.32.md": {
-    "mtime": 1789263347.1155188,
+    "mtime": 1789263447.5652695,
     "ast_hash": "df2482dfbd30df6694a0ada511b9978e",
+    "semantic_hash": ""
+  },
+  "app/src-tauri/src/app_update.rs": {
+    "mtime": 1789265610.4372683,
+    "ast_hash": "541519cf56bc81d874de924a31dab3b1",
     "semantic_hash": ""
   }
 }

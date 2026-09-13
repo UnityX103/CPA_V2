@@ -265,8 +265,8 @@
     "semantic_hash": "00b844b36e6ef810e0132492f83c131b"
   },
   "app/src-tauri/src/lib.rs": {
-    "mtime": 1789265610.3067043,
-    "ast_hash": "a4e62c6d4e83c001cdae8a6ad26d5cc4",
+    "mtime": 1789266513.4437313,
+    "ast_hash": "24143610a3619c9c8fe13118693b7101",
     "semantic_hash": ""
   },
   "app/src-tauri/src/main.rs": {
@@ -345,8 +345,8 @@
     "semantic_hash": "cfa124a91cc09e1a2c209025e198a71f"
   },
   "app/src-tauri/tauri.conf.json": {
-    "mtime": 1789263447.5650015,
-    "ast_hash": "3fe25a5eca10b1550bb08bbeeccc7455",
+    "mtime": 1789266584.1012542,
+    "ast_hash": "2809efce6e909daae5bf60c93f99f56c",
     "semantic_hash": ""
   },
   "app/src-tauri/tests/focus_restore_regression.rs": {
@@ -440,8 +440,8 @@
     "semantic_hash": "e9bb966e74fd0e011a32db6518048d00"
   },
   "app/src/domain/appUpdate.ts": {
-    "mtime": 1789265610.3072188,
-    "ast_hash": "1f6bd97f6a02b7e4afbf1e06b395349e",
+    "mtime": 1789266513.4440222,
+    "ast_hash": "a209c93f08995504722bd4dd3b8e0bef",
     "semantic_hash": ""
   },
   "app/src/domain/appUpdatePersistence.test.ts": {
@@ -875,8 +875,8 @@
     "semantic_hash": "4cc4c3eac190d3686bcccc97ab752f6f"
   },
   "app/src/updateConfig.test.ts": {
-    "mtime": 1788235552.7609937,
-    "ast_hash": "2ef96e60671bad9fb2ea4d5038baf93b",
+    "mtime": 1789266584.1018047,
+    "ast_hash": "4a1c1f7b503bc56a48ca0a820b2f8486",
     "semantic_hash": ""
   },
   "app/src/vite-env.d.ts": {
@@ -925,8 +925,8 @@
     "semantic_hash": "a812eff17a5c007f0ba4495b9ea1f215"
   },
   ".agents/skills/cpa-v2-release-publish/SKILL.md": {
-    "mtime": 1789265687.4710913,
-    "ast_hash": "6b611cedb8ee41e167cae77f87388e1f",
+    "mtime": 1789266584.100411,
+    "ast_hash": "8024de06d417870686e4d7901a5e3318",
     "semantic_hash": ""
   },
   ".agents/skills/cpa-v2-release-publish/agents/openai.yaml": {
@@ -945,8 +945,8 @@
     "semantic_hash": "fbf61b6573dc50a5223a32ca93fc17cf"
   },
   "AGENTS.md": {
-    "mtime": 1789265687.4722967,
-    "ast_hash": "07691e16e7b4bc84f7d111a86738c70b",
+    "mtime": 1789266584.100901,
+    "ast_hash": "3e70cb552c49c40395430318a24e29ac",
     "semantic_hash": ""
   },
   "CLAUDE.md": {
@@ -2395,8 +2395,8 @@
     "semantic_hash": ""
   },
   "docs/deployment/cloud-release.md": {
-    "mtime": 1789265687.4719722,
-    "ast_hash": "4690fa5eb4b1ab53404a37a57467217d",
+    "mtime": 1789266584.100681,
+    "ast_hash": "c5b300eee7caae269771ba63a023f03c",
     "semantic_hash": ""
   },
   "docs/deployment/release-0.1.32.md": {
@@ -2405,8 +2405,8 @@
     "semantic_hash": ""
   },
   "app/src-tauri/src/app_update.rs": {
-    "mtime": 1789265610.4372683,
-    "ast_hash": "541519cf56bc81d874de924a31dab3b1",
+    "mtime": 1789266513.5778677,
+    "ast_hash": "828066aee31aef17cfeb2cd9eb0dfaea",
     "semantic_hash": ""
   }
 }

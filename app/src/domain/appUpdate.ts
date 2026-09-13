@@ -1,8 +1,8 @@
 import { create, type StoreApi, type UseBoundStore } from 'zustand';
-import { type DownloadEvent, Update } from '@tauri-apps/plugin-updater';
+import type { DownloadEvent, Update } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
 import { getVersion } from '@tauri-apps/api/app';
-import { invoke } from '@tauri-apps/api/core';
+import { Channel, invoke } from '@tauri-apps/api/core';
 import {
     loadPersistedAppUpdateSettings,
     savePersistedAppUpdateSettings,
@@ -76,8 +76,16 @@ function errorToMessage(err: unknown): string {
 function createDefaultDeps(): AppUpdateDeps {
     return {
         checkForUpdate: async () => {
-            const metadata = await invoke<ConstructorParameters<typeof Update>[0] | null>('check_app_update');
-            return metadata ? new Update(metadata) : null;
+            const metadata = await invoke<{ rid: number; version: string; currentVersion: string; body?: string } | null>('check_app_update');
+            if (!metadata) return null;
+            return {
+                ...metadata,
+                downloadAndInstall: async (onEvent) => {
+                    const channel = new Channel<DownloadEvent>();
+                    channel.onmessage = (event) => onEvent?.(event);
+                    await invoke('install_app_update', { rid: metadata.rid, onEvent: channel });
+                },
+            };
         },
         relaunchApp: () => relaunch(),
         getVersion,
