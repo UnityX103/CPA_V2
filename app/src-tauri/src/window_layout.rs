@@ -95,6 +95,7 @@ pub fn save_current_layout(
     if !is_supported_window_label(label) {
         return Ok(());
     }
+    if label == "main" && crate::pomodoro_docking::transient(app) { return Ok(()); }
     let position = window.outer_position().map_err(|e| e.to_string())?;
     let size = window.outer_size().map_err(|e| e.to_string())?;
     let scale = window.scale_factor().map_err(|e| e.to_string())?;

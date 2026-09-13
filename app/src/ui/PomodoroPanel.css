@@ -144,3 +144,76 @@
 .pomo-start-summary dt { font-size: 9px; line-height: 1.5; color: #8F7766; white-space: nowrap; }
 .pomo-start-summary dd { margin: 3px 0 0; font-size: 17px; line-height: 1.2; color: var(--text-brand-dark); }
 .pomo-start-summary dd span { margin-left: 2px; font-size: 9px; color: #8F7766; }
+
+/* Docking uses the same font and icon artwork as the complete timer. */
+.pomo-header { -webkit-app-region: no-drag; }
+.pomo-pin.is-docking { background: #DCE9D0; color: #647C44; }
+.pomo-pin.is-docking::after { content: ''; position: absolute; top: 2px; right: 1px; width: 3px; height: 15px; border-radius: 2px; background: currentColor; }
+.pomo-dock { --dock-paper: #FFF8F2; --dock-stroke: #E8C4A8; --dock-track: #FFD9C5; --dock-accent: #D45F3D; --dock-button: #ED8145; position: relative; width: 22px; height: 156px; background: var(--dock-paper); border: 1px solid var(--dock-stroke); border-radius: 11px; font-family: var(--font-cn); overflow: hidden; cursor: grab; touch-action: none; }
+.pomo-dock[data-expanded] { width: 56px; }
+.pomo-dock[data-phase="break"] { --dock-paper: #F1F8F0; --dock-stroke: #C8DDC8; --dock-track: #BFE3C7; --dock-accent: #3D8A58; --dock-button: #67A878; }
+.pomo-dock[data-paused] { --dock-paper: #FFF8ED; --dock-stroke: #E8C4A8; --dock-button: #D15F3D; }
+.pomo-dock-bar { position: absolute; left: 6px; top: 8px; bottom: 8px; width: 8px; border-radius: 5px; overflow: hidden; background: var(--dock-track); }
+.pomo-dock-bar>div { position: absolute; left: 0; right: 0; bottom: 0; border-radius: 5px; background: var(--dock-accent); }
+.pomo-dock[data-paused] .pomo-dock-bar>div { opacity: .45; }
+.pomo-dock-info { position: absolute; left: 22px; right: 5px; top: 8px; bottom: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; visibility: hidden; }
+.pomo-dock[data-expanded] .pomo-dock-info { visibility: visible; }
+.pomo-dock[data-side="right"] .pomo-dock-bar { left: auto; right: 6px; }
+.pomo-dock[data-side="right"] .pomo-dock-info { left: 5px; right: 22px; }
+.pomo-dock-time-zone { position: relative; min-width: 28px; height: 82px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.pomo-dock-label { writing-mode: vertical-rl; text-orientation: upright; white-space: nowrap; font-size: 17px; line-height: 20px; color: #594535; }
+.pomo-dock-label[data-time] { text-orientation: sideways; font-size: 21px; line-height: 26px; }
+.pomo-dock[data-paused] .pomo-dock-label { color: #A66E1F; }
+.pomo-dock-action { position: absolute; inset: 0; border-radius: 12px; background: var(--dock-button); color: white; writing-mode: vertical-rl; text-orientation: upright; padding: 6px; font-size: 14px; opacity: 0; pointer-events: none; }
+.pomo-dock-time-zone:is(:hover,:has(:focus-visible)) .pomo-dock-action { opacity: 1; pointer-events: auto; }
+.pomo-dock-time-zone:is(:hover,:has(:focus-visible)) .pomo-dock-label { visibility: hidden; }
+.pomo-dock-settings { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border-radius: 50%; background: var(--btn-icon-bg); color: #8C5830; }
+
+/* Docked time: minutes, horizontal dots, seconds. */
+.pomo-dock-label[data-time] { writing-mode: horizontal-tb; text-orientation: mixed; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 19px; line-height: 23px; }
+.pomo-dock-label[data-time] small { font-size: 9px; }
+.pomo-dock-colon { font-family: system-ui, sans-serif; font-size: 17px; line-height: 16px; letter-spacing: 3px; text-indent: 3px; }
+
+.pomo-dock-frame { position: relative; width: 56px; height: 156px; }
+.pomo-dock { position: absolute; left: 0; top: 0; transition: width 180ms cubic-bezier(.2,.8,.2,1); }
+.pomo-dock[data-side="right"] { left: auto; right: 0; }
+/* Never lay text out against the animated panel width. Hide immediately on collapse. */
+.pomo-dock-info { width: 28px; min-width: 28px; max-width: 28px; right: auto; opacity: 0; visibility: hidden; transition: none; }
+.pomo-dock[data-side="right"] .pomo-dock-info { left: auto; right: 22px; }
+.pomo-dock-time-zone { width: 28px; }
+.pomo-dock-label[data-time] { width: 28px; font-variant-numeric: tabular-nums; }
+.pomo-dock-label[data-time] > span { flex-shrink: 0; white-space: nowrap; }
+/* Width finishes at 180ms; show the fixed-size content only after that. */
+.pomo-dock[data-expanded] .pomo-dock-info { visibility: visible; opacity: 1; transition: visibility 0s linear 200ms, opacity 100ms ease 200ms; }
+@media (prefers-reduced-motion: reduce) { .pomo-dock, .pomo-dock-info, .pomo-dock[data-expanded] .pomo-dock-info { transition: none; } }
+.app-root:has(.pomo-dock) {
+    position: relative;
+}
+
+/* Use the dock's logical bounds, including UI zoom, instead of viewport sizing. */
+.app-root:has(.pomo-dock) :is(.presence-notice, .pomo-end-popup) {
+    position: absolute;
+    inset: auto 4px 32px;
+    transform: none;
+    box-sizing: border-box;
+    width: calc(100% - 8px);
+    min-width: 0;
+    max-width: calc(100% - 8px);
+    max-height: calc(100% - 40px);
+    padding: 5px 3px;
+    border-radius: 6px;
+    font-size: 9px;
+    line-height: 1.4;
+    white-space: normal;
+    writing-mode: horizontal-tb;
+    overflow-wrap: anywhere;
+    overflow: auto;
+    text-align: center;
+    pointer-events: none;
+    box-shadow: 0 2px 5px rgba(64, 44, 28, 0.12);
+}
+
+/* A collapsed strip has no room for text; do not paint outside its hit region. */
+.app-root:has(.pomo-dock:not([data-expanded])) :is(.presence-notice, .pomo-end-popup) {
+    visibility: hidden;
+}

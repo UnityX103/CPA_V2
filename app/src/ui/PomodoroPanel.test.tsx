@@ -71,6 +71,7 @@ function deferred<T>() {
 
 beforeEach(() => {
     cleanup();
+    localStorage.clear();
     startDragging.mockReset();
     invokeMock.mockReset();
     invokeMock.mockResolvedValue(undefined);
@@ -143,13 +144,13 @@ describe('PomodoroPanel pause overlay', () => {
         expect(container.querySelector('.pomo-body')?.hasAttribute('inert')).toBe(true);
         act(() => usePomodoroStore.getState().tick(10));
         expect(usePomodoroStore.getState().remainingSeconds).toBe(1500);
-        fireEvent.click(screen.getByRole('button', { name: '恢复专注' }));
+        fireEvent.click(screen.getByRole('button', { name: '恢复' }));
         expect(screen.queryByRole('region', { name: '番茄钟已暂停' })).toBeNull();
         act(() => usePomodoroStore.getState().tick(1));
         expect(usePomodoroStore.getState().remainingSeconds).toBe(1499);
     });
 
-    it.each(['focus', 'break'] as const)('shows the existing automatic %s recovery condition', (phase) => {
+    it.each(['focus', 'break'] as const)('simplifies automatic %s pause without changing automatic recovery', (phase) => {
         usePomodoroStore.setState({ currentPhase: phase, isRunning: true, remainingSeconds: phase === 'focus' ? 1500 : 300 });
         usePresenceStore.setState({ enabled: true, availability: 'ready', confirmedPresence: phase === 'focus' ? 'absent' : 'present', lastSuccessfulAt: 1000 });
         render(<PomodoroPanel />);
@@ -157,8 +158,8 @@ describe('PomodoroPanel pause overlay', () => {
             const store = usePomodoroStore.getState();
             if (phase === 'focus') store.pauseFocusFromPresence(); else store.pauseBreakFromPresence();
         });
-        expect(screen.getByText(phase === 'focus' ? '回到工位后自动恢复专注' : '离开工位后自动恢复休息')).toBeTruthy();
-        expect(screen.queryByRole('button', { name: /^恢复/ })).toBeNull();
+        expect(screen.getByRole('region', { name: '番茄钟已暂停' }).textContent).toBe('已暂停恢复');
+        expect(screen.queryByText(/工位后自动恢复/)).toBeNull();
         act(() => {
             const store = usePomodoroStore.getState();
             if (phase === 'focus') store.resumeFocusFromPresence(); else store.resumeBreakFromPresence();
@@ -173,7 +174,7 @@ describe('PomodoroPanel pause overlay', () => {
         render(<PomodoroPanel />);
         act(() => usePomodoroStore.getState().pauseFocusFromPresence());
         act(() => usePresenceStore.setState({ availability: 'permissionDenied' }));
-        expect(screen.getByRole('button', { name: '恢复专注' })).toBeTruthy();
+        expect(screen.getByRole('button', { name: '恢复' })).toBeTruthy();
         fireEvent.click(screen.getByRole('button', { name: '设置' }));
         expect(invokeMock).toHaveBeenCalledWith('open_settings_window');
         fireEvent.click(screen.getByRole('button', { name: '置顶' }));
@@ -330,6 +331,9 @@ describe('PomodoroPanel HApJ0 pin behaviour', () => {
         await act(async () => {
             fireEvent.click(screen.getByRole('button', { name: '置顶' }));
         });
+        expect(screen.getByRole('button', { name: '置顶' }).title).toContain('停靠；');
+        invokeMock.mockClear();
+        fireEvent.click(screen.getByRole('button', { name: '置顶' }));
         await waitFor(() => {
             expect(pinCalls()).toEqual([['set_main_window_pinned', { onTop: false }]]);
         });

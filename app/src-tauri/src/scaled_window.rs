@@ -168,6 +168,7 @@ pub fn resize_scaled_window(
     };
 
     let target = scaled_size(args.base_width, args.base_height, args.scale)?;
+    if args.label == "main" && crate::pomodoro_docking::resize_if_docked(&app, args.scale)? { return Ok(()); }
     let monitor = monitor_for_window(&app, &window, args.default_center).unwrap_or(None);
     let logical_monitor = monitor.as_ref().map(monitor_logical_rect);
     let saved_layout =

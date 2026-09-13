@@ -46,6 +46,7 @@ define_class!(
             let height = bounds.size.height;
             let x = point.x - bounds.origin.x;
             let y = point.y - bounds.origin.y;
+            let (width,height,x,y)=crate::pomodoro_docking::hit_region(width,height,x,y);
             let radius = main_panel_corner_radius(width, height);
             if point_in_rounded_rect(width, height, radius, x, y) {
                 unsafe { msg_send![super(self), hitTest: point] }

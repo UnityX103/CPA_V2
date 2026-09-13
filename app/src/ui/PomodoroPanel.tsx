@@ -5,6 +5,7 @@ import { usePomodoroStore, formatMmSs, type PomodoroPhase } from '../domain/pomo
 import { usePresenceStore, type ConfirmedPresence } from '../domain/presence';
 import { shouldStartWindowDrag } from './windowDrag';
 import './PomodoroPanel.css';
+import { usePomodoroDocking } from './usePomodoroDocking';
 
 type ClockState = 'focus' | 'rest' | 'paused' | 'off';
 
@@ -27,6 +28,7 @@ export function PomodoroPanel() {
     const resumeRef = useRef<HTMLButtonElement>(null);
     const startRef = useRef<HTMLButtonElement>(null);
     const [pausedDuringSession, setPausedDuringSession] = useState(false);
+    const [autoDock, setAutoDock] = useState(() => localStorage.getItem('pomo-auto-dock') === 'true');
     const [touchActions, setTouchActions] = useState(false);
 
     useEffect(() => usePomodoroStore.subscribe((next, previous) => {
@@ -57,11 +59,11 @@ export function PomodoroPanel() {
     }, []);
 
     useEffect(() => {
-        void invoke('set_main_window_pinned', { onTop: state.isPinned })
+        void invoke('set_main_window_pinned', { onTop: state.isPinned || autoDock })
             .catch((error) => {
                 console.error('[pin] set_main_window_pinned failed', error);
             });
-    }, [state.isPinned]);
+    }, [state.isPinned, autoDock]);
 
     const totalSeconds =
         state.currentPhase === 'break'
@@ -91,7 +93,8 @@ export function PomodoroPanel() {
     const showPauseOverlay = !state.isRunning && state.currentPhase !== 'completed'
         && (pausedDuringSession || state.remainingSeconds < totalSeconds || automaticPause);
     const showStartOverlay = !state.isRunning && !showPauseOverlay && state.currentPhase !== 'completed';
-    const phaseName = state.currentPhase === 'break' ? '休息' : '专注';
+    const docking = usePomodoroDocking(autoDock, showPauseOverlay, state.currentPhase);
+    const windowMode = autoDock ? '停靠' : state.isPinned ? '置顶' : '取消置顶';
 
     useEffect(() => {
         if (showPauseOverlay && !automaticPause && document.activeElement === startRef.current) {
@@ -105,14 +108,53 @@ export function PomodoroPanel() {
     };
 
     const onSkipClick = () => usePomodoroStore.getState().skip();
-    const onTogglePin = () => usePomodoroStore.getState().togglePin();
+    const onTogglePin = () => {
+        if (autoDock) { setAutoDock(false); localStorage.setItem('pomo-auto-dock', 'false'); usePomodoroStore.getState().setPinned(false); }
+        else if (state.isPinned) { setAutoDock(true); localStorage.setItem('pomo-auto-dock', 'true'); }
+        else usePomodoroStore.getState().setPinned(true);
+    };
 
     const onPanelPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
         if (!shouldStartWindowDrag(e.button, e.target)) return;
-        void getCurrentWindow().startDragging().catch(() => {
+        const dragging = ('__TAURI_INTERNALS__' in window) ? invoke('drag_pomodoro_window') : getCurrentWindow().startDragging();
+        void dragging.catch(() => {
             /* drag may fail in non-Tauri/test env; swallow */
         });
     };
+
+    if (docking.side) {
+        const label = showPauseOverlay ? '已暂停' : showStartOverlay ? '待开始'
+            : state.currentPhase === 'completed' ? '已完成' : formatMmSs(state.remainingSeconds);
+        return <div className="pomo-dock-frame"><div className="pomo-dock" data-side={docking.side}
+            data-phase={state.currentPhase} data-paused={showPauseOverlay || undefined}
+            data-expanded={docking.expanded || undefined}
+            onPointerDown={onPanelPointerDown}
+            onPointerEnter={() => docking.hover(true)}
+            onPointerLeave={() => {
+                if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+                docking.hover(false);
+            }}>
+            <div className="pomo-dock-bar" role="progressbar" aria-label="本轮已完成进度"
+                aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)}>
+                <div style={{ height: `${progress * 100}%` }} />
+            </div>
+            <div className="pomo-dock-info" inert={!docking.expanded}>
+                <div className="pomo-dock-time-zone">
+                    <span className="pomo-dock-label" data-time={state.isRunning || undefined}>
+                        {state.isRunning ? <>
+                            <span>{String(Math.floor(state.remainingSeconds / 60)).padStart(2, '0')}</span>
+                            <span className="pomo-dock-colon">··</span>
+                            <span>{String(state.remainingSeconds % 60).padStart(2, '0')}</span>
+                        </> : label}
+                    </span>
+                    <button className="pomo-dock-action" onClick={onStartClick}>
+                        {state.isRunning ? '暂停' : showPauseOverlay ? '恢复' : '开始'}
+                    </button>
+                </div>
+                <button className="pomo-dock-settings" aria-label="设置" onClick={() => { void invoke('open_settings_window'); }}><SettingsIcon /></button>
+            </div>
+        </div></div>;
+    }
 
     return (
         <div
@@ -166,10 +208,10 @@ export function PomodoroPanel() {
             </button>
             {confirmedPresence && <ConfirmedPresenceStatus presence={confirmedPresence} />}
             <button
-                className={`pomo-pin ${state.isPinned ? 'is-pinned' : ''}`}
+                className={`pomo-pin ${state.isPinned ? 'is-pinned' : ''} ${autoDock ? 'is-docking' : ''}`}
                 onClick={onTogglePin}
                 aria-label="置顶"
-                title={state.isPinned ? '取消置顶' : '置顶'}
+                title={`${windowMode}；点击切换为${autoDock ? '取消置顶' : state.isPinned ? '停靠' : '置顶'}`}
             >
                 <PinIcon active={state.isPinned} />
             </button>
@@ -189,24 +231,11 @@ export function PomodoroPanel() {
             )}
             {showPauseOverlay && (
                 <div className="pomo-pause-overlay" role="region" aria-label="番茄钟已暂停">
-                    <div className="pomo-pause-bars" aria-hidden="true"><span /><span /></div>
-                    <div className="pomo-pause-title">
-                        {automaticPause ? (state.currentPhase === 'focus' ? '已离开工位' : '你还在工位上') : '已暂停'}
-                    </div>
-                    <div className="pomo-pause-detail">{phaseName} · 剩余 {formatMmSs(state.remainingSeconds)}</div>
-                    {automaticPause ? (
-                        <div className="pomo-pause-auto">
-                            {state.currentPhase === 'focus' ? '回到工位后自动恢复专注' : '离开工位后自动恢复休息'}
-                        </div>
-                    ) : (
-                        <button className="btn pomo-resume" ref={resumeRef} onClick={() => {
-                            setTouchActions(false);
-                            usePomodoroStore.getState().start();
-                        }}>恢复{phaseName}</button>
-                    )}
-                    <div className="pomo-pause-note">
-                        {automaticPause ? '等待工位状态变化 · 计时已暂停' : '计时已冻结 · 点击恢复后继续'}
-                    </div>
+                    <div className="pomo-pause-title">已暂停</div>
+                    <button className="btn pomo-resume" ref={resumeRef} onClick={() => {
+                        setTouchActions(false);
+                        usePomodoroStore.getState().start();
+                    }}>恢复</button>
                 </div>
             )}
         </div>

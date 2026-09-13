@@ -8,6 +8,7 @@ mod key_counter;
 mod input_activity;
 mod presence_detection;
 mod scaled_window;
+mod pomodoro_docking;
 mod sound_files;
 mod video_editor_module;
 mod video_files;
@@ -466,6 +467,7 @@ pub fn run() {
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             None,
         ))
+        .manage(pomodoro_docking::Docking::default())
         .manage(audio::AudioPlaybackState::default())
         .manage(cockroach_module::CockroachModuleState::default())
         .manage(video_editor_module::VideoEditorModuleState::default())
@@ -480,6 +482,7 @@ pub fn run() {
                 eprintln!("[setup] build_input_counter_window_hidden failed: {e}");
             }
             install_main_window_exit_on_close(app.handle().clone());
+            pomodoro_docking::install(app.handle());
             // Focus restorer: 主窗口拖/resize 末尾把 key 还回 settings (若可见)。
             // 配合 build_settings_window_hidden 一起完成 settings 窗口的 lifecycle 闭环。
             if let Some(window) = app.get_webview_window("main") {
@@ -618,6 +621,9 @@ pub fn run() {
             app_update::check_app_update,
             app_update::install_app_update,
             set_main_window_pinned,
+            pomodoro_docking::configure_pomodoro_docking,
+            pomodoro_docking::hover_pomodoro_docking,
+            pomodoro_docking::drag_pomodoro_window,
             reassert_window_always_on_top,
             set_input_counter_window_pinned,
             get_active_app,
@@ -670,6 +676,7 @@ pub fn run() {
 
     app.run(move |_handle, event| {
         if matches!(event, RunEvent::ExitRequested { .. } | RunEvent::Exit) {
+            _handle.state::<pomodoro_docking::Docking>().stop.store(true, Ordering::Relaxed);
             cockroach_module::stop_for_exit(_handle);
             video_editor_module::stop_for_exit(_handle);
             presence_detection::stop_for_exit();

@@ -48,6 +48,7 @@ pub fn install_main_panel_hit_test(window: &WebviewWindow) {
 }
 
 pub(crate) fn main_panel_corner_radius(width: f64, height: f64) -> f64 {
+    if let Some(radius) = crate::pomodoro_docking::radius(width, height) { return radius; }
     let scale = (width / MAIN_PANEL_BASE_WIDTH)
         .min(height / MAIN_PANEL_BASE_HEIGHT)
         .max(0.0);

@@ -55,8 +55,9 @@ unsafe extern "system" fn main_panel_hit_test_subclass_proc(
             if unsafe { ScreenToClient(hwnd, &mut point) }.as_bool() {
                 let width = (rect.right - rect.left) as f64;
                 let height = (rect.bottom - rect.top) as f64;
+                let (width,height,x,y)=crate::pomodoro_docking::hit_region(width,height,point.x as f64,point.y as f64);
                 let radius = main_panel_corner_radius(width, height);
-                if !point_in_rounded_rect(width, height, radius, point.x as f64, point.y as f64) {
+                if !point_in_rounded_rect(width, height, radius, x, y) {
                     return LRESULT(HTTRANSPARENT as isize);
                 }
             }
