@@ -37,6 +37,7 @@ export interface BridgeSnapshot {
         autoStartBreak: boolean;
         autoPinAfterFocus: boolean;
         endActionMode: PomodoroEndActionMode;
+        playVideoOnBreakEnd: boolean;
         endActionVideo: PomodoroEndActionVideo;
         endSounds: PomodoroEndSounds;
     };
@@ -84,7 +85,7 @@ export type DispatchPayload =
     | { v: typeof BRIDGE_VERSION; store: 'settings';   action: 'applyDangerousChange' | 'revertDangerousChange'; args: [string] }
     | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'applySettings'; args: [number, number, number, boolean, boolean] }
     | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'setAutoPinAfterFocus'; args: [boolean] }
-    | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'applyEndActionSettings'; args: [PomodoroEndActionMode, PomodoroEndActionVideo] }
+    | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'applyEndActionSettings'; args: [PomodoroEndActionMode, PomodoroEndActionVideo, boolean?] }
     | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'applyEndSoundSettings'; args: [PomodoroEndSounds] }
     | { v: typeof BRIDGE_VERSION; store: 'presence';   action: 'applySettings'; args: [PresencePreferences] }
     | { v: typeof BRIDGE_VERSION; store: 'presence';   action: 'requestAccess' | 'retry' | 'openPrivacySettings'; args: [] }

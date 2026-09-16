@@ -160,10 +160,26 @@ test('UserDataStore accepts old v1 snapshots without newer preference sections',
     assert.deepEqual(saved.appUpdate, { autoUpdateEnabled: true });
     assert.deepEqual(saved.network, { autoConnect: false, playerName: '我' });
     assert.deepEqual(saved.bindingKey, { panelEnabled: true, entries: [], syncedKeyId: null });
+    assert.equal(saved.pomodoro.playVideoOnBreakEnd, false);
     assert.deepEqual(saved.pomodoro.endSounds, {
         focus: { sourceKind: 'builtin', builtinSoundId: 'clear-success', customSoundPath: '' },
         break: { sourceKind: 'builtin', builtinSoundId: 'triple-ping', customSoundPath: '' }
     });
+});
+
+test('UserDataStore persists break-end video only for explicit boolean opt-in', async (t) =>
+{
+    const { path, store } = await createTempStore(t);
+    for (const [index, value] of [true, false, undefined, null, 'true', 1].entries())
+    {
+        const userId = `break-video-${index}`;
+        const snapshot = validSnapshot();
+        snapshot.pomodoro.playVideoOnBreakEnd = value;
+        await store.saveUserData({ userId, data: snapshot, baseUpdatedAt: null });
+
+        const reloaded = await new UserDataStore({ filePath: path }).getUserData(userId);
+        assert.equal(reloaded.pomodoro.playVideoOnBreakEnd, value === true);
+    }
 });
 
 test('UserDataStore drops invalid binding entries and clears missing syncedKeyId', async (t) =>

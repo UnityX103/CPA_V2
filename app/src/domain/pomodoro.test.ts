@@ -12,6 +12,8 @@ describe('Pomodoro end action', () => {
         const store = freshStore();
 
         expect(store.getState().endActionMode).toBe('playVideo');
+        expect(store.getState().playVideoOnBreakEnd).toBe(false);
+        expect(createPomodoroStore({ isSettingsWindow: true }).getState().playVideoOnBreakEnd).toBe(false);
         expect(store.getState().endActionVideo).toEqual({
             sourceKind: 'builtin',
             builtinVideoId: 'qianqian',
@@ -53,6 +55,41 @@ describe('Pomodoro end action', () => {
             focus: { sourceKind: 'off', builtinSoundId: 'clear-success', customSoundPath: '' },
             break: { sourceKind: 'custom', builtinSoundId: 'triple-ping', customSoundPath: '/tmp/rest.mp3' },
         });
+    });
+
+    it('enables and disables break-end video without resetting timer progress', async () => {
+        const store = freshStore();
+        store.getState().start();
+        store.getState().tick(10);
+        const video = store.getState().endActionVideo;
+
+        await store.getState().applyEndActionSettings('playVideo', video, true);
+        expect(store.getState().playVideoOnBreakEnd).toBe(true);
+        await store.getState().applyEndActionSettings('topWindow', video);
+        expect(store.getState().playVideoOnBreakEnd).toBe(true);
+        await store.getState().applyEndActionSettings('playVideo', video, false);
+        expect(store.getState().playVideoOnBreakEnd).toBe(false);
+        expect(store.getState().remainingSeconds).toBe(1490);
+        expect(store.getState().isRunning).toBe(true);
+    });
+
+    it('dispatches break-end video settings for confirmation from the settings window', async () => {
+        const dispatch = vi.spyOn(dispatchMod, 'dispatchConfirmed').mockResolvedValue(undefined);
+        try {
+            const store = createPomodoroStore({ isSettingsWindow: true });
+            const video = store.getState().endActionVideo;
+            await store.getState().applyEndActionSettings('playVideo', video, true);
+
+            expect(dispatch).toHaveBeenCalledWith({
+                v: BRIDGE_VERSION,
+                store: 'pomodoro',
+                action: 'applyEndActionSettings',
+                args: ['playVideo', video, true],
+            }, { replyTo: 'settings' });
+            expect(store.getState().playVideoOnBreakEnd).toBe(false);
+        } finally {
+            dispatch.mockRestore();
+        }
     });
 });
 

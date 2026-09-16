@@ -110,6 +110,7 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
             autoStartBreak: p.autoStartBreak,
             autoPinAfterFocus: p.autoPinAfterFocus,
             endActionMode: p.endActionMode,
+            playVideoOnBreakEnd: p.playVideoOnBreakEnd,
             endActionVideo: { ...p.endActionVideo },
             endSounds: clonePomodoroEndSounds(p.endSounds),
         },
@@ -315,6 +316,7 @@ export function pomoSig(s: {
     autoStartBreak: boolean;
     autoPinAfterFocus: boolean;
     endActionMode: string;
+    playVideoOnBreakEnd: boolean;
     endActionVideo: { sourceKind: string; builtinVideoId: string; customVideoPath: string };
     endSounds: PomodoroEndSounds;
 }): string {
@@ -325,6 +327,7 @@ export function pomoSig(s: {
         s.autoStartBreak,
         s.autoPinAfterFocus,
         s.endActionMode,
+        s.playVideoOnBreakEnd,
         s.endActionVideo.sourceKind,
         s.endActionVideo.builtinVideoId,
         s.endActionVideo.customVideoPath,

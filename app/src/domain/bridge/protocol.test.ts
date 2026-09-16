@@ -21,6 +21,7 @@ describe('bridge protocol', () => {
                 autoStartBreak: false,
                 autoPinAfterFocus: true,
                 endActionMode: 'topWindow',
+                playVideoOnBreakEnd: false,
                 endActionVideo: {
                     sourceKind: 'builtin',
                     builtinVideoId: 'qianqian',

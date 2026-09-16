@@ -72,6 +72,7 @@ beforeEach(() => {
         autoStartBreak: false,
         autoPinAfterFocus: true,
         endActionMode: 'playVideo',
+        playVideoOnBreakEnd: false,
         endActionVideo: {
             sourceKind: 'builtin',
             builtinVideoId: 'qianqian',
@@ -476,6 +477,37 @@ describe('SettingsPanel', () => {
         expect(screen.getByRole('option', { name: '复古闹铃' })).toBeTruthy();
         expect(screen.getByRole('button', { name: '选择专注结束声音本机 MP3' })).toBeTruthy();
         expect(screen.getByRole('button', { name: '选择休息结束声音本机 MP3' })).toBeTruthy();
+    });
+
+    it('applies the default-off break-end video toggle without resetting progress', async () => {
+        usePomodoroStore.setState({ isRunning: true, remainingSeconds: 42 });
+        render(<SettingsPanel />);
+        const toggle = screen.getByRole('button', { name: '休息结束时也弹出视频提示' });
+        expect(toggle.getAttribute('aria-pressed')).toBe('false');
+        fireEvent.click(toggle);
+        expect(toggle.getAttribute('aria-pressed')).toBe('true');
+        expect(usePomodoroStore.getState().playVideoOnBreakEnd).toBe(false);
+        fireEvent.click(screen.getByRole('button', { name: '应用' }));
+        await vi.waitFor(() => expect(usePomodoroStore.getState().playVideoOnBreakEnd).toBe(true));
+        expect(usePomodoroStore.getState().remainingSeconds).toBe(42);
+        expect(usePomodoroStore.getState().isRunning).toBe(true);
+
+        fireEvent.click(toggle);
+        fireEvent.click(screen.getByRole('button', { name: '应用' }));
+        await vi.waitFor(() => expect(usePomodoroStore.getState().playVideoOnBreakEnd).toBe(false));
+    });
+
+    it('shows the break-end video toggle only for video mode and preserves its draft', () => {
+        render(<SettingsPanel />);
+        fireEvent.click(screen.getByRole('button', { name: '休息结束时也弹出视频提示' }));
+        fireEvent.change(screen.getByRole('combobox', { name: '计时结束提示' }), {
+            target: { value: 'topWindow' },
+        });
+        expect(screen.queryByRole('button', { name: '休息结束时也弹出视频提示' })).toBeNull();
+        fireEvent.change(screen.getByRole('combobox', { name: '计时结束提示' }), {
+            target: { value: 'playVideo' },
+        });
+        expect(screen.getByRole('button', { name: '休息结束时也弹出视频提示' }).getAttribute('aria-pressed')).toBe('true');
     });
 
     it('selects and applies an independent custom focus-end MP3 path', async () => {

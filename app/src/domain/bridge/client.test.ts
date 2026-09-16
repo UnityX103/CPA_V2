@@ -24,6 +24,7 @@ function snapshot(): BridgeSnapshot {
             autoStartBreak: true,
             autoPinAfterFocus: false,
             endActionMode: 'topWindow',
+            playVideoOnBreakEnd: true,
             endActionVideo: {
                 sourceKind: 'custom',
                 builtinVideoId: 'qianqian',
@@ -101,6 +102,7 @@ describe('bridge client', () => {
             focusDurationSeconds: 900,
             autoPinAfterFocus: false,
             endActionMode: 'topWindow',
+            playVideoOnBreakEnd: true,
             endActionVideo: {
                 sourceKind: 'custom',
                 builtinVideoId: 'qianqian',

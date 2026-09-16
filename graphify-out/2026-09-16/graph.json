@@ -5033,8 +5033,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "app_package_devdependencies_tauri_apps_cli",
-      "community": 40,
-      "community_name": "devDependencies",
+      "community": 202,
+      "community_name": "@tauri-apps/cli",
       "norm_label": "@tauri-apps/cli"
     },
     {
@@ -5044,8 +5044,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "tauri_apps_cli",
-      "community": 40,
-      "community_name": "devDependencies",
+      "community": 202,
+      "community_name": "@tauri-apps/cli",
       "norm_label": "@tauri-apps/cli"
     },
     {
@@ -5209,8 +5209,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "app_package_devdependencies_jsdom",
-      "community": 202,
-      "community_name": "jsdom",
+      "community": 40,
+      "community_name": "devDependencies",
       "norm_label": "jsdom"
     },
     {
@@ -5220,8 +5220,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "jsdom",
-      "community": 202,
-      "community_name": "jsdom",
+      "community": 40,
+      "community_name": "devDependencies",
       "norm_label": "jsdom"
     },
     {
@@ -32745,17 +32745,6 @@
       "community": 219,
       "community_name": "release-0.2.2.md",
       "norm_label": "release-0.2.2.md"
-    },
-    {
-      "label": "release-0.2.3.md",
-      "file_type": "document",
-      "source_file": "docs/deployment/release-0.2.3.md",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "docs_deployment_release_0_2_3",
-      "community": 212,
-      "community_name": "release-0.2.3.md",
-      "norm_label": "release-0.2.3.md"
     },
     {
       "label": "2026-08-31-sam2-birefnet-cross-platform-commercial-audit.md",

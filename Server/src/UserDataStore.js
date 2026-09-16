@@ -162,6 +162,7 @@ function normalizePomodoro(value)
             ? value.autoPinAfterFocus
             : true,
         endActionMode,
+        playVideoOnBreakEnd: value.playVideoOnBreakEnd === true,
         endActionVideo: {
             sourceKind: endActionVideo.sourceKind === 'custom' ? 'custom' : 'builtin',
             builtinVideoId: clampString(endActionVideo.builtinVideoId, 128) || 'qianqian',

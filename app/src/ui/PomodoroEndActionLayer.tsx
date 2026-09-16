@@ -73,7 +73,10 @@ export function PomodoroEndActionLayer() {
                 }, 4000);
             };
 
-            if (event.fromPhase !== 'focus') {
+            if (
+                event.fromPhase !== 'focus'
+                && !(event.fromPhase === 'break' && state.playVideoOnBreakEnd)
+            ) {
                 showTopPopup();
                 return;
             }

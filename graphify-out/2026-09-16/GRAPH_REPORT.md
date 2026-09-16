@@ -1,11 +1,11 @@
 # Graph Report - CPA_V2  (2026-09-16)
 
 ## Corpus Check
-- 407 files · ~491,663 words
+- 406 files · ~491,659 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3686 nodes · 7524 edges · 216 communities (186 shown, 30 thin omitted)
+- 3685 nodes · 7524 edges · 215 communities (185 shown, 30 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 81 edges (avg confidence: 0.74)
 - Token cost: 0 input · 0 output
 
@@ -207,7 +207,7 @@
 - automation.rs
 - 2026-09-05-owned-pomodoro-video.md
 - latency.test.js
-- jsdom
+- @tauri-apps/cli
 - appUpdate.ts
 - RoomManagerError
 - 休息期间键鼠活动辅助在场检测
@@ -243,24 +243,24 @@
   app/src-tauri/src/cockroach_module/automation.rs → app/src-tauri/src/cockroach_module.rs
 
 ## Import Cycles
-- 3-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/presence.ts -> app/src/domain/bridge/dispatch.ts`
-- 3-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/network.ts -> app/src/domain/bridge/dispatch.ts`
-- 3-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/pomodoro.ts -> app/src/domain/bridge/dispatch.ts`
 - 3-file cycle: `app/src/domain/appUpdate.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/appUpdate.ts`
 - 3-file cycle: `app/src/domain/bindingKey.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/bindingKey.ts`
+- 3-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/network.ts -> app/src/domain/bridge/dispatch.ts`
+- 3-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/pomodoro.ts -> app/src/domain/bridge/dispatch.ts`
+- 3-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/presence.ts -> app/src/domain/bridge/dispatch.ts`
 - 3-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/settings.ts -> app/src/domain/bridge/dispatch.ts`
-- 4-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/presence.ts -> app/src/domain/pomodoro.ts -> app/src/domain/bridge/dispatch.ts`
+- 4-file cycle: `app/src/domain/appUpdate.ts -> app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/appUpdate.ts`
+- 4-file cycle: `app/src/domain/bindingKey.ts -> app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/bindingKey.ts`
 - 4-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/network.ts -> app/src/domain/bridge/dispatch.ts`
 - 4-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/pomodoro.ts -> app/src/domain/bridge/dispatch.ts`
-- 4-file cycle: `app/src/domain/appUpdate.ts -> app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/appUpdate.ts`
-- 4-file cycle: `app/src/domain/appUpdate.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/userPreferences.ts -> app/src/domain/appUpdate.ts`
-- 4-file cycle: `app/src/domain/bindingKey.ts -> app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/bindingKey.ts`
 - 4-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/settings.ts -> app/src/domain/bridge/dispatch.ts`
+- 4-file cycle: `app/src/domain/appUpdate.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/userPreferences.ts -> app/src/domain/appUpdate.ts`
 - 4-file cycle: `app/src/domain/bindingKey.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/userPreferences.ts -> app/src/domain/bindingKey.ts`
-- 5-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/userPreferences.ts -> app/src/domain/network.ts -> app/src/domain/bridge/dispatch.ts`
-- 5-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/userPreferences.ts -> app/src/domain/pomodoro.ts -> app/src/domain/bridge/dispatch.ts`
+- 4-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/presence.ts -> app/src/domain/pomodoro.ts -> app/src/domain/bridge/dispatch.ts`
 - 5-file cycle: `app/src/domain/appUpdate.ts -> app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/userPreferences.ts -> app/src/domain/appUpdate.ts`
 - 5-file cycle: `app/src/domain/bindingKey.ts -> app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/userPreferences.ts -> app/src/domain/bindingKey.ts`
+- 5-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/userPreferences.ts -> app/src/domain/network.ts -> app/src/domain/bridge/dispatch.ts`
+- 5-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/userPreferences.ts -> app/src/domain/pomodoro.ts -> app/src/domain/bridge/dispatch.ts`
 - 5-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/userPreferences.ts -> app/src/domain/settings.ts -> app/src/domain/bridge/dispatch.ts`
 - 5-file cycle: `app/src/domain/audioPlayback.ts -> app/src/domain/settings.ts -> app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/pomodoroSounds.ts -> app/src/domain/audioPlayback.ts`
 
@@ -275,7 +275,7 @@
 - **Check-in Lifecycle Control Flow** — docs_superpowers_plans_2026_05_23_checkin_global_toggle_checkin_enabled, docs_superpowers_plans_2026_06_16_settings_plan_panel_and_pet_removal_plan_panel_enabled, docs_superpowers_plans_2026_06_16_checkin_system_lifecycle_checkin_subsystem_lifecycle, docs_superpowers_plans_2026_06_16_checkin_system_lifecycle_mirror_panel_unmount [EXTRACTED 1.00]
 - **Native Window Interaction Controls** — docs_superpowers_specs_2026_05_15_overlay_hit_passthrough_design_native_hit_test_passthrough, docs_superpowers_specs_2026_05_15_settings_panel_drag_and_pixel_parity_design_settings_webview_window, docs_superpowers_specs_2026_05_16_main_window_pin_design_main_window_pin_command, docs_superpowers_plans_2026_05_21_temporary_focus_windows_temporary_focus_command [INFERRED 0.85]
 
-## Communities (216 total, 30 thin omitted)
+## Communities (215 total, 30 thin omitted)
 
 ### Community 0 - "index.js"
 Cohesion: 0.13
@@ -439,7 +439,7 @@ Nodes (19): dependencies, react, react-dom, @tauri-apps/api, @tauri-apps/plugin-
 
 ### Community 40 - "devDependencies"
 Cohesion: 0.11
-Nodes (19): devDependencies, @tauri-apps/cli, @testing-library/jest-dom, @testing-library/react, @types/node, @types/react, @types/react-dom, typescript (+11 more)
+Nodes (19): devDependencies, jsdom, @testing-library/jest-dom, @testing-library/react, @types/node, @types/react, @types/react-dom, typescript (+11 more)
 
 ### Community 41 - "pipeline.py"
 Cohesion: 0.12

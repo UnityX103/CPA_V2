@@ -15,7 +15,7 @@ const stores = {
 };
 
 beforeEach(() => {
-    usePomodoroStore.setState({ endActionMode: 'topWindow', autoPinAfterFocus: true });
+    usePomodoroStore.setState({ endActionMode: 'topWindow', autoPinAfterFocus: true, playVideoOnBreakEnd: false });
     useSettingsStore.setState({ uiScale: 1, committedUiScale: 1, autostartEnabled: false });
     useNetworkStore.setState({ autoConnect: false, playerName: '我' });
 });
@@ -50,11 +50,14 @@ describe('cloud account data', () => {
     it('hydrates the retained account snapshot', () => {
         const snapshot = buildCloudAccountData(stores);
         snapshot.pomodoro.autoPinAfterFocus = false;
+        snapshot.pomodoro.playVideoOnBreakEnd = true;
 
         hydrateCloudAccountData({ stores, data: snapshot });
 
         expect(usePomodoroStore.getState().endActionMode).toBe('topWindow');
         expect(usePomodoroStore.getState().autoPinAfterFocus).toBe(false);
+        expect(usePomodoroStore.getState().playVideoOnBreakEnd).toBe(true);
+        expect(buildCloudAccountData(stores).pomodoro.playVideoOnBreakEnd).toBe(true);
     });
 
     it('uses the normalized server snapshot when resolving conflicts', () => {

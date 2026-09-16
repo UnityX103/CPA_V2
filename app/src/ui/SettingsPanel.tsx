@@ -225,6 +225,7 @@ function PomodoroTab({ onApplyStateChange }: {
     const [autoStartBreak, setAutoStartBreak] = useState(pomo.autoStartBreak);
     const [autoPinAfterFocus, setAutoPinAfterFocus] = useState(pomo.autoPinAfterFocus);
     const [endActionMode, setEndActionMode] = useState<PomodoroEndActionMode>(pomo.endActionMode);
+    const [playVideoOnBreakEnd, setPlayVideoOnBreakEnd] = useState(pomo.playVideoOnBreakEnd);
     const [endActionVideo, setEndActionVideo] = useState<PomodoroEndActionVideo>({ ...pomo.endActionVideo });
     const [importingVideo, setImportingVideo] = useState(false);
     const [videoImportError, setVideoImportError] = useState('');
@@ -248,6 +249,7 @@ function PomodoroTab({ onApplyStateChange }: {
         autoStartBreak: pomo.autoStartBreak,
         autoPinAfterFocus: pomo.autoPinAfterFocus,
         endActionMode: pomo.endActionMode,
+        playVideoOnBreakEnd: pomo.playVideoOnBreakEnd,
         endActionVideo: { ...pomo.endActionVideo },
         endSounds: clonePomodoroEndSounds(pomo.endSounds),
         presenceEnabled: presence.enabled,
@@ -268,6 +270,7 @@ function PomodoroTab({ onApplyStateChange }: {
             autoStartBreak !== previous.autoStartBreak ||
             autoPinAfterFocus !== previous.autoPinAfterFocus;
         const endActionDraftDirty =
+            playVideoOnBreakEnd !== previous.playVideoOnBreakEnd ||
             endActionMode !== previous.endActionMode ||
             !sameEndActionVideo(endActionVideo, previous.endActionVideo);
         const endSoundDraftDirty = !samePomodoroEndSounds(endSounds, previous.endSounds);
@@ -287,6 +290,7 @@ function PomodoroTab({ onApplyStateChange }: {
             setAutoPinAfterFocus(pomo.autoPinAfterFocus);
         }
         if (!endActionDraftDirty) {
+            setPlayVideoOnBreakEnd(pomo.playVideoOnBreakEnd);
             setEndActionMode(pomo.endActionMode);
             setEndActionVideo((current) => (
                 sameEndActionVideo(current, pomo.endActionVideo)
@@ -318,6 +322,7 @@ function PomodoroTab({ onApplyStateChange }: {
             autoStartBreak: pomo.autoStartBreak,
             autoPinAfterFocus: pomo.autoPinAfterFocus,
             endActionMode: pomo.endActionMode,
+            playVideoOnBreakEnd: pomo.playVideoOnBreakEnd,
             endActionVideo: { ...pomo.endActionVideo },
             endSounds: clonePomodoroEndSounds(pomo.endSounds),
             presenceEnabled: presence.enabled,
@@ -335,6 +340,7 @@ function PomodoroTab({ onApplyStateChange }: {
         pomo.autoStartBreak,
         pomo.autoPinAfterFocus,
         pomo.endActionMode,
+        pomo.playVideoOnBreakEnd,
         pomo.endActionVideo.sourceKind,
         pomo.endActionVideo.builtinVideoId,
         pomo.endActionVideo.customVideoPath,
@@ -357,6 +363,7 @@ function PomodoroTab({ onApplyStateChange }: {
         autoStartBreak,
         autoPinAfterFocus,
         endActionMode,
+        playVideoOnBreakEnd,
         endActionVideo,
         endSounds,
         presenceEnabled,
@@ -389,6 +396,7 @@ function PomodoroTab({ onApplyStateChange }: {
         autoStartBreak !== pomo.autoStartBreak ||
         autoPinAfterFocus !== pomo.autoPinAfterFocus ||
         endActionMode !== pomo.endActionMode ||
+        playVideoOnBreakEnd !== pomo.playVideoOnBreakEnd ||
         !sameEndActionVideo(endActionVideo, pomo.endActionVideo) ||
         !samePomodoroEndSounds(endSounds, pomo.endSounds) ||
         presenceEnabled !== presence.enabled ||
@@ -418,6 +426,7 @@ function PomodoroTab({ onApplyStateChange }: {
             autoStartBreak !== pomo.autoStartBreak;
         const autoPinAfterFocusChanged = autoPinAfterFocus !== pomo.autoPinAfterFocus;
         const endActionChanged =
+            playVideoOnBreakEnd !== pomo.playVideoOnBreakEnd ||
             endActionMode !== pomo.endActionMode ||
             !sameEndActionVideo(endActionVideo, pomo.endActionVideo);
         const endSoundsChanged = !samePomodoroEndSounds(endSounds, pomo.endSounds);
@@ -437,7 +446,7 @@ function PomodoroTab({ onApplyStateChange }: {
             pomo.setAutoPinAfterFocus(autoPinAfterFocus);
         }
         if (endActionChanged) {
-            void Promise.resolve(pomo.applyEndActionSettings(endActionMode, endActionVideo))
+            void Promise.resolve(pomo.applyEndActionSettings(endActionMode, endActionVideo, playVideoOnBreakEnd))
                 .catch((error) => {
                     console.warn('[settings] failed to apply Pomodoro end action', error);
                 });
@@ -472,6 +481,7 @@ function PomodoroTab({ onApplyStateChange }: {
         autoStartBreak,
         autoPinAfterFocus,
         endActionMode,
+        playVideoOnBreakEnd,
         endActionVideo,
         endSounds,
         pomo,
@@ -785,6 +795,17 @@ function PomodoroTab({ onApplyStateChange }: {
                                     ))}
                                     <option value="custom">自定义视频</option>
                                 </select>
+                            </div>
+                        )}
+
+                        {showVideoOptions && (
+                            <div className="card pomo-row">
+                                <span className="pomo-row-label">休息结束时也弹出视频提示</span>
+                                <Toggle
+                                    checked={playVideoOnBreakEnd}
+                                    onChange={setPlayVideoOnBreakEnd}
+                                    ariaLabel="休息结束时也弹出视频提示"
+                                />
                             </div>
                         )}
 

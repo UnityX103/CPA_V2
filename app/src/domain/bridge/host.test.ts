@@ -26,6 +26,7 @@ beforeEach(() => {
         autoStartBreak: false,
         autoPinAfterFocus: true,
         endActionMode: 'topWindow',
+        playVideoOnBreakEnd: false,
     });
     usePresenceStore.setState({
         enabled: false,
@@ -107,12 +108,25 @@ describe('bridge host', () => {
         });
     });
 
+    it('dispatches and mirrors the break-end video preference', async () => {
+        await applyDispatch({
+            v: BRIDGE_VERSION,
+            store: 'pomodoro',
+            action: 'applyEndActionSettings',
+            args: ['playVideo', usePomodoroStore.getState().endActionVideo, true],
+        });
+
+        expect(usePomodoroStore.getState().playVideoOnBreakEnd).toBe(true);
+        expect(buildSnapshot().pomodoro.playVideoOnBreakEnd).toBe(true);
+    });
+
     it('signatures ignore transient state and include retained preferences', () => {
         const settings = useSettingsStore.getState();
         const pomodoro = usePomodoroStore.getState();
 
         expect(settingsSig(settings)).not.toBe(settingsSig({ ...settings, autostartEnabled: true }));
         expect(pomoSig(pomodoro)).not.toBe(pomoSig({ ...pomodoro, autoPinAfterFocus: false }));
+        expect(pomoSig(pomodoro)).not.toBe(pomoSig({ ...pomodoro, playVideoOnBreakEnd: true }));
         expect(presenceSig(usePresenceStore.getState())).not.toBe(presenceSig({
             ...usePresenceStore.getState(), inputActivityEnabled: true,
         }));

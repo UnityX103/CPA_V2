@@ -101,6 +101,7 @@ export function useCloudAccountSync(opts: { enabled?: boolean } = {}) {
                 s.autoStartBreak !== p.autoStartBreak ||
                 s.autoPinAfterFocus !== p.autoPinAfterFocus ||
                 s.endActionMode !== p.endActionMode ||
+                s.playVideoOnBreakEnd !== p.playVideoOnBreakEnd ||
                 s.endActionVideo !== p.endActionVideo ||
                 s.endSounds !== p.endSounds
             ) {

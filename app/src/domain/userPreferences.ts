@@ -35,6 +35,7 @@ export interface UserPreferencesSnapshot {
         autoStartBreak: boolean;
         autoPinAfterFocus: boolean;
         endActionMode: PomodoroEndActionMode;
+        playVideoOnBreakEnd: boolean;
         endActionVideo: PomodoroEndActionVideo;
         endSounds: PomodoroEndSounds;
     };
@@ -71,6 +72,7 @@ interface PomodoroStoreShape extends PomodoroState {
     applyEndActionSettings: (
         mode: PomodoroEndActionMode,
         video: PomodoroEndActionVideo,
+        playVideoOnBreakEnd?: boolean,
     ) => Promise<void> | void;
     applyEndSoundSettings: (sounds: PomodoroEndSounds) => Promise<void> | void;
 }
@@ -116,6 +118,7 @@ export function defaultUserPreferencesSnapshot(): UserPreferencesSnapshot {
             autoStartBreak: false,
             autoPinAfterFocus: true,
             endActionMode: DEFAULT_END_ACTION_MODE,
+            playVideoOnBreakEnd: false,
             endActionVideo: { ...DEFAULT_END_ACTION_VIDEO },
             endSounds: clonePomodoroEndSounds(DEFAULT_POMODORO_END_SOUNDS),
         },
@@ -155,6 +158,7 @@ export function buildUserPreferencesSnapshot(stores: UserPreferencesStores): Use
             autoStartBreak: pomodoro.autoStartBreak,
             autoPinAfterFocus: pomodoro.autoPinAfterFocus,
             endActionMode: pomodoro.endActionMode,
+            playVideoOnBreakEnd: pomodoro.playVideoOnBreakEnd,
             endActionVideo: { ...pomodoro.endActionVideo },
             endSounds: clonePomodoroEndSounds(pomodoro.endSounds),
         },
@@ -194,6 +198,7 @@ export function hydrateUserPreferencesSnapshot({ stores, snapshot, resetProgress
     void stores.pomodoro.getState().applyEndActionSettings(
         snapshot.pomodoro.endActionMode,
         { ...snapshot.pomodoro.endActionVideo },
+        snapshot.pomodoro.playVideoOnBreakEnd,
     );
     void stores.pomodoro.getState().applyEndSoundSettings(
         clonePomodoroEndSounds(snapshot.pomodoro.endSounds),
@@ -273,6 +278,9 @@ function normalizePomodoro(
             ? value.endActionMode
             : fallback.endActionMode,
         endActionVideo,
+        playVideoOnBreakEnd: typeof value.playVideoOnBreakEnd === 'boolean'
+            ? value.playVideoOnBreakEnd
+            : false,
         endSounds,
     };
 }
