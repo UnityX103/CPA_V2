@@ -925,8 +925,8 @@
     "semantic_hash": "a812eff17a5c007f0ba4495b9ea1f215"
   },
   ".agents/skills/cpa-v2-release-publish/SKILL.md": {
-    "mtime": 1789266584.100411,
-    "ast_hash": "8024de06d417870686e4d7901a5e3318",
+    "mtime": 1789565002.4741633,
+    "ast_hash": "89fde9cadfb04e654aac80aa665b3ecf",
     "semantic_hash": ""
   },
   ".agents/skills/cpa-v2-release-publish/agents/openai.yaml": {
@@ -945,8 +945,8 @@
     "semantic_hash": "fbf61b6573dc50a5223a32ca93fc17cf"
   },
   "AGENTS.md": {
-    "mtime": 1789266584.100901,
-    "ast_hash": "3e70cb552c49c40395430318a24e29ac",
+    "mtime": 1789565002.4738224,
+    "ast_hash": "0ea3334554035e74c1f820ff424ed991",
     "semantic_hash": ""
   },
   "CLAUDE.md": {
@@ -2375,8 +2375,8 @@
     "semantic_hash": ""
   },
   ".cnb.yml": {
-    "mtime": 1789263447.56234,
-    "ast_hash": "de80410659a1d94dae73496869664977",
+    "mtime": 1789565002.4736376,
+    "ast_hash": "176bc1c7cd796f903182a2dfd3565c2a",
     "semantic_hash": ""
   },
   ".cnb/web_trigger.yml": {
@@ -2395,8 +2395,8 @@
     "semantic_hash": ""
   },
   "docs/deployment/cloud-release.md": {
-    "mtime": 1789288565.622947,
-    "ast_hash": "672694f1917e32945553c230e62a11c8",
+    "mtime": 1789565002.4743657,
+    "ast_hash": "e928ee0bf87468b35ad1e687c830cf84",
     "semantic_hash": ""
   },
   "docs/deployment/release-0.1.32.md": {

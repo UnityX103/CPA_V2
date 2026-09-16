@@ -12,7 +12,7 @@ Read [cloud-release.md](../../../docs/deployment/cloud-release.md). GitHub is th
 - Use `.github/workflows/ci.yml` for frontend, Server and native macOS/Windows tests.
 - Use `.github/workflows/release.yml` for three-target packaging. Manual runs default to validation only. Publishing requires a new matching app version on main or a matching version tag belonging to main.
 - Never silently bump or overwrite an existing public version. Keep partial GitHub uploads as drafts; publish only after all native targets and updater signatures pass.
-- CNB uses `.cnb.yml` to run `app/scripts/mirror-github-release.mjs` every 15 minutes. It reads GitHub anonymously, verifies packages and index signatures, imports matching tags, writes only CNB using its temporary token, and advances its own Latest after verification. CNB failures do not block GitHub publication.
+- CNB uses `.cnb.yml` to run `app/scripts/mirror-github-release.mjs` every 30 minutes. It reads GitHub anonymously, verifies packages and index signatures, imports matching tags, writes only CNB using its temporary token, and advances its own Latest after verification. CNB failures do not block GitHub publication.
 
 ## Cloud-only default
 
