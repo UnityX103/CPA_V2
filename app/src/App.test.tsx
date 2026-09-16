@@ -1,4 +1,5 @@
 import { act, cleanup, render, waitFor } from '@testing-library/react';
+import { StrictMode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
 import { useAppUpdateStore } from './domain/appUpdate';
@@ -80,6 +81,92 @@ afterEach(() => {
 });
 
 describe('App startup', () => {
+    it.each(['local', 'cloud'] as const)('automatically starts once using %s preferences', async (source) => {
+        const snapshot = defaultUserPreferencesSnapshot();
+        snapshot.pomodoro.autoStartOnLaunch = true;
+        snapshot.pomodoro.focusDurationSeconds = 30 * 60;
+        if (source === 'local') {
+            mocks.loadPreferences.mockResolvedValue(snapshot);
+        } else {
+            mocks.loadPreferences.mockResolvedValue(defaultUserPreferencesSnapshot());
+            useNetworkStore.setState({
+                accountStatus: 'loggedIn',
+                cloudSyncStatus: 'synced',
+                cloudData: snapshot,
+            });
+        }
+        const start = vi.fn(usePomodoroStore.getState().start);
+        usePomodoroStore.setState({ start });
+
+        const { rerender } = render(<StrictMode><App /></StrictMode>);
+        await waitFor(() => expect(usePomodoroStore.getState().isRunning).toBe(true));
+        expect(start).toHaveBeenCalledTimes(1);
+        expect(usePomodoroStore.getState()).toMatchObject({
+            currentPhase: 'focus',
+            currentRound: 1,
+            remainingSeconds: 30 * 60,
+        });
+
+        act(() => {
+            usePomodoroStore.getState().tick(60);
+            usePomodoroStore.getState().pause();
+        });
+        rerender(<StrictMode><App /></StrictMode>);
+        expect(usePomodoroStore.getState()).toMatchObject({
+            remainingSeconds: 29 * 60,
+            isRunning: false,
+        });
+        act(() => usePomodoroStore.getState().reset());
+        expect(usePomodoroStore.getState().isRunning).toBe(false);
+        expect(start).toHaveBeenCalledTimes(1);
+    });
+
+    it('uses the cloud opt-out even when local automatic start is enabled', async () => {
+        const local = defaultUserPreferencesSnapshot();
+        local.pomodoro.autoStartOnLaunch = true;
+        mocks.loadPreferences.mockResolvedValue(local);
+        useNetworkStore.setState({
+            accountStatus: 'loggedIn',
+            cloudSyncStatus: 'synced',
+            cloudData: defaultUserPreferencesSnapshot(),
+        });
+
+        render(<App />);
+        await waitFor(() => expect(mocks.savePreferences).toHaveBeenCalled());
+        expect(usePomodoroStore.getState().isRunning).toBe(false);
+        expect(usePomodoroStore.getState().autoStartOnLaunch).toBe(false);
+    });
+
+    it.each([false, true])('waits for preferences and cancels startup after unmount=%s', async (unmountEarly) => {
+        const snapshot = defaultUserPreferencesSnapshot();
+        snapshot.pomodoro.autoStartOnLaunch = true;
+        let resolveLoad!: (value: typeof snapshot) => void;
+        mocks.loadPreferences.mockReturnValue(new Promise((resolve) => { resolveLoad = resolve; }));
+        const { unmount } = render(<App />);
+        expect(usePomodoroStore.getState().isRunning).toBe(false);
+        if (unmountEarly) unmount();
+
+        await act(async () => resolveLoad(snapshot));
+        if (unmountEarly) {
+            expect(usePomodoroStore.getState().isRunning).toBe(false);
+            expect(mocks.savePreferences).not.toHaveBeenCalled();
+        } else {
+            await waitFor(() => expect(usePomodoroStore.getState().isRunning).toBe(true));
+        }
+    });
+
+    it('does not automatically start when the preference is changed after startup', async () => {
+        render(<App />);
+        await waitFor(() => expect(mocks.savePreferences).toHaveBeenCalled());
+        act(() => usePomodoroStore.getState().setAutoStartOnLaunch(true));
+        expect(usePomodoroStore.getState().isRunning).toBe(false);
+        await waitFor(() => expect(mocks.savePreferences).toHaveBeenLastCalledWith(
+            expect.objectContaining({
+                pomodoro: expect.objectContaining({ autoStartOnLaunch: true }),
+            }),
+        ));
+    });
+
     it.each(['local', 'cloud'] as const)('initializes the start summary and timer from %s preferences', async (source) => {
         const snapshot = defaultUserPreferencesSnapshot();
         snapshot.pomodoro.focusDurationSeconds = 30 * 60;

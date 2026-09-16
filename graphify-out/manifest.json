@@ -130,8 +130,8 @@
     "semantic_hash": "9217d95cb77ca9b1e1109d1223974a5c"
   },
   "Server/src/UserDataStore.js": {
-    "mtime": 1789552013.3527548,
-    "ast_hash": "56cdace37103f7884d05d21f7f616b5a",
+    "mtime": 1789559804.1913352,
+    "ast_hash": "4bb7d33446289d5050b307a72a3a922c",
     "semantic_hash": ""
   },
   "Server/src/index.js": {
@@ -175,13 +175,13 @@
     "semantic_hash": "8514e3ccc96d693fd3b6116b8a0597b0"
   },
   "Server/test/user-data-store.test.js": {
-    "mtime": 1789552043.9922454,
-    "ast_hash": "465666a12338d6a2c6fd4676b7381a96",
+    "mtime": 1789559907.0549667,
+    "ast_hash": "cd846630d3e8daed82630ccc4f5b8daf",
     "semantic_hash": ""
   },
   "app/package.json": {
-    "mtime": 1789552368.809862,
-    "ast_hash": "6eaba906e70788524acc1a77093fe009",
+    "mtime": 1789563616.0379431,
+    "ast_hash": "5737b087e21bba2d08ea6d3ec964211c",
     "semantic_hash": ""
   },
   "app/public/sounds/pomodoro/manifest.json": {
@@ -265,7 +265,7 @@
     "semantic_hash": "00b844b36e6ef810e0132492f83c131b"
   },
   "app/src-tauri/src/lib.rs": {
-    "mtime": 1789285562.3733413,
+    "mtime": 1789562985.9112444,
     "ast_hash": "d08ccaadd602886f8580de79a5d977ba",
     "semantic_hash": ""
   },
@@ -295,8 +295,8 @@
     "semantic_hash": ""
   },
   "app/src-tauri/src/scaled_window.rs": {
-    "mtime": 1789278670.0647092,
-    "ast_hash": "592aed725ca848d650578f422d2159f9",
+    "mtime": 1789562839.612731,
+    "ast_hash": "c83e024ea61df39ce92498265fa40dab",
     "semantic_hash": ""
   },
   "app/src-tauri/src/sound_files.rs": {
@@ -345,8 +345,8 @@
     "semantic_hash": ""
   },
   "app/src-tauri/tauri.conf.json": {
-    "mtime": 1789552368.8107727,
-    "ast_hash": "0ac3c849f9626361112973930694abd6",
+    "mtime": 1789563616.0398097,
+    "ast_hash": "09017b876f4dfbd3e651c558661fba0e",
     "semantic_hash": ""
   },
   "app/src-tauri/tests/focus_restore_regression.rs": {
@@ -360,13 +360,13 @@
     "semantic_hash": "e5f60a128d3bd6d58f1276a2d92458c3"
   },
   "app/src/App.test.tsx": {
-    "mtime": 1789271586.5355,
-    "ast_hash": "62d1a5d8008e053f925ae9170d5d1cd5",
+    "mtime": 1789559907.0468895,
+    "ast_hash": "53602254fce0fc693dda698d6bbc001d",
     "semantic_hash": ""
   },
   "app/src/App.tsx": {
-    "mtime": 1789285562.372425,
-    "ast_hash": "3584d2570d172f717468df60b49850f9",
+    "mtime": 1789559804.1917725,
+    "ast_hash": "f6020946a847d6a3ccda4379b15db608",
     "semantic_hash": ""
   },
   "app/src/DevAlignApp.tsx": {
@@ -485,13 +485,13 @@
     "semantic_hash": "3bdd321e29ded30ef92a5dda736ace25"
   },
   "app/src/domain/bridge/client.test.ts": {
-    "mtime": 1789552013.3533487,
-    "ast_hash": "09cc2dab4696e6d8910742d510b0a83f",
+    "mtime": 1789559907.04925,
+    "ast_hash": "1b9cf27cb27ab52efe4de87198d217bf",
     "semantic_hash": ""
   },
   "app/src/domain/bridge/client.ts": {
-    "mtime": 1789551879.1609528,
-    "ast_hash": "30f1124f3bcc917ef2951ea3a499eff2",
+    "mtime": 1789559804.190968,
+    "ast_hash": "ec759660004d93fb5139c4391b9eb2a2",
     "semantic_hash": ""
   },
   "app/src/domain/bridge/dispatch.test.ts": {
@@ -505,28 +505,28 @@
     "semantic_hash": "9a46a2830dd5e4340f902054b0a7e036"
   },
   "app/src/domain/bridge/host.test.ts": {
-    "mtime": 1789552013.354678,
-    "ast_hash": "65376d41d21b7f78d78834ee66b8117b",
+    "mtime": 1789559907.0498207,
+    "ast_hash": "a52918f721a1251d45030bbdf672259a",
     "semantic_hash": ""
   },
   "app/src/domain/bridge/host.ts": {
-    "mtime": 1789551879.1606386,
-    "ast_hash": "10ad713db612f3ed751e39832bef9d91",
+    "mtime": 1789559804.1907814,
+    "ast_hash": "36432f6840f5e00b7e99870dd1e1eab4",
     "semantic_hash": ""
   },
   "app/src/domain/bridge/protocol.test.ts": {
-    "mtime": 1789552013.3538768,
-    "ast_hash": "665cd4317a1e55c4307fe1b4139501d6",
+    "mtime": 1789559907.0496306,
+    "ast_hash": "b006dabaec3820534b8ef164ae8f68c3",
     "semantic_hash": ""
   },
   "app/src/domain/bridge/protocol.ts": {
-    "mtime": 1789551879.1602452,
-    "ast_hash": "52d896caa098c24327d6ec3e5f20199c",
+    "mtime": 1789559804.1904569,
+    "ast_hash": "0984d1ceadd17936c8a5af096195703d",
     "semantic_hash": ""
   },
   "app/src/domain/cloudAccountData.test.ts": {
-    "mtime": 1789552013.3617733,
-    "ast_hash": "e33bce251eaf7f4aa7d2d790411a23bd",
+    "mtime": 1789560122.3168862,
+    "ast_hash": "3de4dd3f857c162b5f340dfc519b8920",
     "semantic_hash": ""
   },
   "app/src/domain/cloudAccountData.ts": {
@@ -540,8 +540,8 @@
     "semantic_hash": ""
   },
   "app/src/domain/cloudAccountSync.ts": {
-    "mtime": 1789551879.1615446,
-    "ast_hash": "e787b8ac8720be416d2be25ebe1ea905",
+    "mtime": 1789559804.1901448,
+    "ast_hash": "acb95a602b527014afab8e14772022cb",
     "semantic_hash": ""
   },
   "app/src/domain/focusWindow.test.ts": {
@@ -565,8 +565,8 @@
     "semantic_hash": "af347fb447f3e7c4cc1fd729e3e1f5d5"
   },
   "app/src/domain/network.test.ts": {
-    "mtime": 1789552013.3542402,
-    "ast_hash": "4380b51f08356a001f8acaee7944ffa0",
+    "mtime": 1789559907.0508726,
+    "ast_hash": "138a614da20bbc946ae42c277025b568",
     "semantic_hash": ""
   },
   "app/src/domain/network.ts": {
@@ -575,13 +575,13 @@
     "semantic_hash": "bd6b2e14dd869adf8e2ce40517ee3f99"
   },
   "app/src/domain/pomodoro.test.ts": {
-    "mtime": 1789552013.3566353,
-    "ast_hash": "22e0f7c075a1534be9dbf6f8a84ce6f6",
+    "mtime": 1789559907.0473018,
+    "ast_hash": "4cc46296c7ac30765a8e0bff1a1145da",
     "semantic_hash": ""
   },
   "app/src/domain/pomodoro.ts": {
-    "mtime": 1789551879.1598644,
-    "ast_hash": "c6d0ab90c860f409bdc3e306b43ff7da",
+    "mtime": 1789559804.1892385,
+    "ast_hash": "33f4f4a2c0d4f384fcea2d2426f6e67d",
     "semantic_hash": ""
   },
   "app/src/domain/pomodoroEndAction.test.ts": {
@@ -730,13 +730,13 @@
     "semantic_hash": "f84cba11181150ddca3d86b2ddd7f86b"
   },
   "app/src/domain/userPreferences.ts": {
-    "mtime": 1789551879.1612532,
-    "ast_hash": "b4b56b19ce63323aab5da03268b4ec88",
+    "mtime": 1789559804.1897833,
+    "ast_hash": "ff198642cff03d41272bd60dedb56823",
     "semantic_hash": ""
   },
   "app/src/domain/userPreferencesPersistence.test.ts": {
-    "mtime": 1789552013.3608,
-    "ast_hash": "819eac96aed2451e0e63b7de70c7eb5f",
+    "mtime": 1789559907.0477355,
+    "ast_hash": "b1c98ae8d5e8a15192b389c9daa2d2bd",
     "semantic_hash": ""
   },
   "app/src/domain/userPreferencesPersistence.ts": {
@@ -825,13 +825,13 @@
     "semantic_hash": ""
   },
   "app/src/ui/PomodoroPanel.test.tsx": {
-    "mtime": 1789278900.8965604,
-    "ast_hash": "3b42f966bb0c86248d69c0cd45009c26",
+    "mtime": 1789562497.7701473,
+    "ast_hash": "5aa1db3bc4c31f21d869b215d0811edd",
     "semantic_hash": ""
   },
   "app/src/ui/PomodoroPanel.tsx": {
-    "mtime": 1789285562.372058,
-    "ast_hash": "cb9ff4ae87b1383f4d925875824d86d8",
+    "mtime": 1789562548.1696029,
+    "ast_hash": "fc4545b02bfc3d8b2db613b9fb0d84d7",
     "semantic_hash": ""
   },
   "app/src/ui/PresenceNotice.tsx": {
@@ -850,13 +850,13 @@
     "semantic_hash": "5e59f78377d4ccba9b695d67a7e3482d"
   },
   "app/src/ui/SettingsPanel.test.tsx": {
-    "mtime": 1789552071.056147,
-    "ast_hash": "3fcec7f0e029a9744f385283564fc605",
+    "mtime": 1789559960.1726108,
+    "ast_hash": "87e1c9142ef162ec2117e570f5c45fea",
     "semantic_hash": ""
   },
   "app/src/ui/SettingsPanel.tsx": {
-    "mtime": 1789551879.1624599,
-    "ast_hash": "a4f28626c5593b9c17080559d9c347ce",
+    "mtime": 1789559804.192334,
+    "ast_hash": "d63739c8fada9d17b6217b3432d3c655",
     "semantic_hash": ""
   },
   "app/src/ui/presenceAuthorization.test.ts": {
@@ -885,8 +885,8 @@
     "semantic_hash": "0352474ba2918efe13895edbc3780d94"
   },
   "app/src/windowLayoutConfig.test.ts": {
-    "mtime": 1789270265.4696152,
-    "ast_hash": "74119631f45dc1bcf353640ac0004b34",
+    "mtime": 1789560670.5354285,
+    "ast_hash": "fc2ed60af7c270c50447a7aac5956580",
     "semantic_hash": ""
   },
   "app/src/windowPinConfig.test.ts": {
@@ -2477,6 +2477,11 @@
   "docs/deployment/release-0.2.3.md": {
     "mtime": 1789552368.811733,
     "ast_hash": "642cc42edcac40d2e09779c045c33832",
+    "semantic_hash": ""
+  },
+  "docs/deployment/release-0.2.4.md": {
+    "mtime": 1789563616.039955,
+    "ast_hash": "c91b358249b156df715dc79339186def",
     "semantic_hash": ""
   }
 }

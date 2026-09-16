@@ -70,6 +70,7 @@ beforeEach(() => {
         breakDurationSeconds: 300,
         totalRounds: 4,
         autoStartBreak: false,
+        autoStartOnLaunch: false,
         autoPinAfterFocus: true,
         endActionMode: 'playVideo',
         playVideoOnBreakEnd: false,
@@ -450,6 +451,31 @@ describe('SettingsPanel', () => {
         expect(screen.getByRole('button', { name: '专注结束后自动置顶' })).toBeTruthy();
         expect(screen.getByText('专注结束后自动置顶')).toBeTruthy();
         expect(screen.queryByText('自动制定')).toBeNull();
+    });
+
+    it('applies automatic start only on confirmation and keeps timer progress', () => {
+        usePomodoroStore.getState().reset();
+        usePomodoroStore.getState().start();
+        usePomodoroStore.getState().tick(10);
+        render(<SettingsPanel />);
+        const toggle = screen.getByRole('button', { name: '自动开始' });
+        expect(toggle.getAttribute('aria-pressed')).toBe('false');
+
+        fireEvent.click(toggle);
+        expect(toggle.getAttribute('aria-pressed')).toBe('true');
+        expect(usePomodoroStore.getState().autoStartOnLaunch).toBe(false);
+        act(() => usePomodoroStore.getState().tick(1));
+        expect(toggle.getAttribute('aria-pressed')).toBe('true');
+        fireEvent.click(screen.getByRole('button', { name: '应用' }));
+        expect(usePomodoroStore.getState()).toMatchObject({
+            autoStartOnLaunch: true,
+            isRunning: true,
+            remainingSeconds: 1489,
+        });
+
+        fireEvent.click(toggle);
+        fireEvent.click(screen.getByRole('button', { name: '应用' }));
+        expect(usePomodoroStore.getState().autoStartOnLaunch).toBe(false);
     });
 
     it('shows focus-end video prompt settings with bundled and custom sources', () => {

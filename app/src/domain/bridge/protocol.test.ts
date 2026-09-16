@@ -19,6 +19,7 @@ describe('bridge protocol', () => {
                 breakDurationSeconds: 300,
                 totalRounds: 4,
                 autoStartBreak: false,
+                autoStartOnLaunch: false,
                 autoPinAfterFocus: true,
                 endActionMode: 'topWindow',
                 playVideoOnBreakEnd: false,

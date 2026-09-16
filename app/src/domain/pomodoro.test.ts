@@ -7,6 +7,41 @@ function freshStore() {
     return createPomodoroStore({ isSettingsWindow: false });
 }
 
+describe('Pomodoro automatic start preference', () => {
+    it('defaults off and preserves a running timer when changed', () => {
+        const store = freshStore();
+        expect(store.getState().autoStartOnLaunch).toBe(false);
+        store.getState().start();
+        store.getState().tick(10);
+        store.getState().setAutoStartOnLaunch(true);
+        expect(store.getState()).toMatchObject({
+            autoStartOnLaunch: true,
+            isRunning: true,
+            remainingSeconds: 1490,
+        });
+        store.getState().setAutoStartOnLaunch(false);
+        expect(store.getState().autoStartOnLaunch).toBe(false);
+    });
+
+    it('dispatches from the settings mirror without starting a timer there', () => {
+        const dispatch = vi.spyOn(dispatchMod, 'dispatch').mockResolvedValue(undefined);
+        try {
+            const store = createPomodoroStore({ isSettingsWindow: true });
+            store.getState().setAutoStartOnLaunch(true);
+            expect(dispatch).toHaveBeenCalledWith({
+                v: BRIDGE_VERSION,
+                store: 'pomodoro',
+                action: 'setAutoStartOnLaunch',
+                args: [true],
+            });
+            expect(store.getState().autoStartOnLaunch).toBe(false);
+            expect(store.getState().isRunning).toBe(false);
+        } finally {
+            dispatch.mockRestore();
+        }
+    });
+});
+
 describe('Pomodoro end action', () => {
     it('defaults to playing the bundled qianqian video', () => {
         const store = freshStore();

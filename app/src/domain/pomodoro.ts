@@ -45,6 +45,7 @@ export interface PomodoroState {
     isPinned: boolean;
     pinSource: PomodoroPinSource;
     autoStartBreak: boolean;
+    autoStartOnLaunch: boolean;
     autoPinAfterFocus: boolean;
     consecutiveCompletedFocus: number;
     endActionMode: PomodoroEndActionMode;
@@ -93,6 +94,7 @@ export interface PomodoroActions {
     setPinned: (isPinned: boolean) => void;
     setPinnedFromFocusEnd: () => void;
     setAutoPinAfterFocus: (enabled: boolean) => void;
+    setAutoStartOnLaunch: (enabled: boolean) => void;
     applySettings: (
         focusSeconds: number,
         breakSeconds: number,
@@ -134,6 +136,7 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
             isPinned: false,
             pinSource: null,
             autoStartBreak: false,
+            autoStartOnLaunch: false,
             autoPinAfterFocus: true,
             consecutiveCompletedFocus: 0,
             endActionMode: DEFAULT_END_ACTION_MODE,
@@ -155,6 +158,14 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
             togglePin: () => {},
             setPinned: () => {},
             setPinnedFromFocusEnd: () => {},
+            setAutoStartOnLaunch: (enabled) => {
+                void dispatch({
+                    v: BRIDGE_VERSION,
+                    store: 'pomodoro',
+                    action: 'setAutoStartOnLaunch',
+                    args: [enabled],
+                });
+            },
             setAutoPinAfterFocus: (enabled) => {
                 void dispatch({
                     v: BRIDGE_VERSION,
@@ -263,6 +274,7 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
             isPinned: false,
             pinSource: null,
             autoStartBreak: false,
+            autoStartOnLaunch: false,
             autoPinAfterFocus: true,
             consecutiveCompletedFocus: 0,
             endActionMode: DEFAULT_END_ACTION_MODE,
@@ -436,6 +448,7 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
                 set({ isPinned: true, pinSource: 'focusEndAuto' });
             },
             setAutoPinAfterFocus: (autoPinAfterFocus) => set({ autoPinAfterFocus }),
+            setAutoStartOnLaunch: (autoStartOnLaunch) => set({ autoStartOnLaunch }),
             applySettings: (focusSeconds, breakSeconds, totalRounds, resetProgress, autoStartBreak) => {
                 set({
                     focusDurationSeconds: focusSeconds,

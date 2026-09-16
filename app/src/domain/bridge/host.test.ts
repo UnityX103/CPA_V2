@@ -24,6 +24,7 @@ beforeEach(() => {
         breakDurationSeconds: 300,
         totalRounds: 4,
         autoStartBreak: false,
+        autoStartOnLaunch: false,
         autoPinAfterFocus: true,
         endActionMode: 'topWindow',
         playVideoOnBreakEnd: false,
@@ -43,6 +44,17 @@ beforeEach(() => {
 });
 
 describe('bridge host', () => {
+    it('dispatches and mirrors automatic start', async () => {
+        await applyDispatch({
+            v: BRIDGE_VERSION,
+            store: 'pomodoro',
+            action: 'setAutoStartOnLaunch',
+            args: [true],
+        });
+        expect(usePomodoroStore.getState().autoStartOnLaunch).toBe(true);
+        expect(buildSnapshot().pomodoro.autoStartOnLaunch).toBe(true);
+    });
+
     it('builds a retained-state snapshot', () => {
         const snapshot = buildSnapshot();
 
@@ -126,6 +138,7 @@ describe('bridge host', () => {
 
         expect(settingsSig(settings)).not.toBe(settingsSig({ ...settings, autostartEnabled: true }));
         expect(pomoSig(pomodoro)).not.toBe(pomoSig({ ...pomodoro, autoPinAfterFocus: false }));
+        expect(pomoSig(pomodoro)).not.toBe(pomoSig({ ...pomodoro, autoStartOnLaunch: true }));
         expect(pomoSig(pomodoro)).not.toBe(pomoSig({ ...pomodoro, playVideoOnBreakEnd: true }));
         expect(presenceSig(usePresenceStore.getState())).not.toBe(presenceSig({
             ...usePresenceStore.getState(), inputActivityEnabled: true,

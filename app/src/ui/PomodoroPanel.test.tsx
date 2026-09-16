@@ -10,6 +10,7 @@ import {
     type PresenceAvailability,
 } from '../domain/presence';
 import { PomodoroPanel } from './PomodoroPanel';
+import { hasFullWindowNotice } from './useDockNoticeSuspension';
 
 const { startDragging, invokeMock } = vi.hoisted(() => ({
     startDragging: vi.fn(),
@@ -184,6 +185,22 @@ describe('PomodoroPanel pause overlay', () => {
 });
 
 describe('PomodoroPanel camera presence status', () => {
+    it.each(['present', 'absent'] as const)('does not suspend docking for the persistent %s indicator', async (confirmedPresence) => {
+        localStorage.setItem('pomo-auto-dock', 'true');
+        usePresenceStore.setState({
+            enabled: true,
+            availability: 'ready',
+            confirmedPresence,
+            lastSuccessfulAt: 1_000,
+        });
+        const { container } = render(
+            <div className="app-scale-root"><PomodoroPanel /></div>,
+        );
+        await act(async () => {});
+        expect(screen.getByRole('status')).toBeTruthy();
+        expect(hasFullWindowNotice(container.querySelector('.app-scale-root')!)).toBe(false);
+    });
+
     it('keeps the present state through one miss and switches away after the default second cycle', () => {
         usePresenceStore.setState({
             enabled: true,

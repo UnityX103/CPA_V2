@@ -108,6 +108,7 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
             breakDurationSeconds: p.breakDurationSeconds,
             totalRounds: p.totalRounds,
             autoStartBreak: p.autoStartBreak,
+            autoStartOnLaunch: p.autoStartOnLaunch,
             autoPinAfterFocus: p.autoPinAfterFocus,
             endActionMode: p.endActionMode,
             playVideoOnBreakEnd: p.playVideoOnBreakEnd,
@@ -183,6 +184,9 @@ export async function applyDispatch(payload: DispatchPayload): Promise<void> {
             }
             if (payload.action === 'setAutoPinAfterFocus') {
                 usePomodoroStore.getState().setAutoPinAfterFocus(...payload.args);
+            }
+            if (payload.action === 'setAutoStartOnLaunch') {
+                usePomodoroStore.getState().setAutoStartOnLaunch(...payload.args);
             }
             if (payload.action === 'applyEndActionSettings') {
                 await usePomodoroStore.getState().applyEndActionSettings(...payload.args);
@@ -314,6 +318,7 @@ export function pomoSig(s: {
     breakDurationSeconds: number;
     totalRounds: number;
     autoStartBreak: boolean;
+    autoStartOnLaunch: boolean;
     autoPinAfterFocus: boolean;
     endActionMode: string;
     playVideoOnBreakEnd: boolean;
@@ -325,6 +330,7 @@ export function pomoSig(s: {
         s.breakDurationSeconds,
         s.totalRounds,
         s.autoStartBreak,
+        s.autoStartOnLaunch,
         s.autoPinAfterFocus,
         s.endActionMode,
         s.playVideoOnBreakEnd,

@@ -15,7 +15,12 @@ const stores = {
 };
 
 beforeEach(() => {
-    usePomodoroStore.setState({ endActionMode: 'topWindow', autoPinAfterFocus: true, playVideoOnBreakEnd: false });
+    usePomodoroStore.setState({
+        endActionMode: 'topWindow',
+        autoPinAfterFocus: true,
+        playVideoOnBreakEnd: false,
+        autoStartOnLaunch: false,
+    });
     useSettingsStore.setState({ uiScale: 1, committedUiScale: 1, autostartEnabled: false });
     useNetworkStore.setState({ autoConnect: false, playerName: '我' });
 });
@@ -29,10 +34,12 @@ describe('cloud account data', () => {
         pomodoro.getState().tick(60);
         if (!isRunning) pomodoro.getState().pause();
         const snapshot = buildCloudAccountData(sessionStores);
+        snapshot.pomodoro.autoStartOnLaunch = true;
 
         hydrateCloudAccountData({ stores: sessionStores, data: snapshot });
 
         expect(pomodoro.getState()).toMatchObject({
+            autoStartOnLaunch: true,
             remainingSeconds: 29 * 60,
             currentPhase: 'focus',
             currentRound: 1,
@@ -49,12 +56,15 @@ describe('cloud account data', () => {
 
     it('hydrates the retained account snapshot', () => {
         const snapshot = buildCloudAccountData(stores);
+        snapshot.pomodoro.autoStartOnLaunch = true;
         snapshot.pomodoro.autoPinAfterFocus = false;
         snapshot.pomodoro.playVideoOnBreakEnd = true;
 
         hydrateCloudAccountData({ stores, data: snapshot });
 
         expect(usePomodoroStore.getState().endActionMode).toBe('topWindow');
+        expect(usePomodoroStore.getState().autoStartOnLaunch).toBe(true);
+        expect(buildCloudAccountData(stores).pomodoro.autoStartOnLaunch).toBe(true);
         expect(usePomodoroStore.getState().autoPinAfterFocus).toBe(false);
         expect(usePomodoroStore.getState().playVideoOnBreakEnd).toBe(true);
         expect(buildCloudAccountData(stores).pomodoro.playVideoOnBreakEnd).toBe(true);

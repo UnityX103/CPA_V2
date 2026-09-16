@@ -300,7 +300,13 @@ export default function App() {
                     useSettingsStore.getState().hydrateSettings(snapshot);
                 }
 
+                const pomodoro = usePomodoroStore.getState();
+                if (pomodoro.autoStartOnLaunch) {
+                    pomodoro.start();
+                }
+
                 const savedSnapshot = await saveLocalSnapshot(stores);
+                if (cancelled) return;
                 const network = useNetworkStore.getState();
                 if (network.accountStatus === 'loggedIn' && !network.cloudData) {
                     network.saveUserData(savedSnapshot, network.cloudDataUpdatedAt);

@@ -19,6 +19,25 @@ beforeEach(() => {
 });
 
 describe('user preferences persistence', () => {
+    it.each([true, false])('persists and reloads automatic start=%s', async (enabled) => {
+        const snapshot = defaultUserPreferencesSnapshot();
+        snapshot.pomodoro.autoStartOnLaunch = enabled;
+        await savePersistedUserPreferences(snapshot);
+        store.get.mockResolvedValue(store.set.mock.calls[0][1]);
+        expect((await loadPersistedUserPreferences())?.pomodoro.autoStartOnLaunch).toBe(enabled);
+    });
+
+    it.each([undefined, null, 'true', 1])('defaults missing or invalid automatic start to false (%s)', (value) => {
+        const snapshot = defaultUserPreferencesSnapshot();
+        const fallback = defaultUserPreferencesSnapshot();
+        fallback.pomodoro.autoStartOnLaunch = true;
+        const legacy = {
+            ...snapshot,
+            pomodoro: { ...snapshot.pomodoro, autoStartOnLaunch: value },
+        };
+        expect(normalizeUserPreferencesSnapshot(legacy, fallback)?.pomodoro.autoStartOnLaunch).toBe(false);
+    });
+
     it('normalizes retained fields', () => {
         const input = {
             ...defaultUserPreferencesSnapshot(),

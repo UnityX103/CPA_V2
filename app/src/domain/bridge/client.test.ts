@@ -22,6 +22,7 @@ function snapshot(): BridgeSnapshot {
             breakDurationSeconds: 180,
             totalRounds: 5,
             autoStartBreak: true,
+            autoStartOnLaunch: true,
             autoPinAfterFocus: false,
             endActionMode: 'topWindow',
             playVideoOnBreakEnd: true,
@@ -100,6 +101,7 @@ describe('bridge client', () => {
         }));
         expect(usePomodoroStore.getState()).toEqual(expect.objectContaining({
             focusDurationSeconds: 900,
+            autoStartOnLaunch: true,
             autoPinAfterFocus: false,
             endActionMode: 'topWindow',
             playVideoOnBreakEnd: true,

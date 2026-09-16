@@ -252,6 +252,7 @@ function ConfirmedPresenceStatus({
         <div
             className={`pomo-presence-status is-${presence}`}
             role="status"
+            data-dock-compatible="true"
             aria-label={present ? '检测到人，在工位' : '未检测到人，已离开'}
             data-confirmed-presence={presence}
         >

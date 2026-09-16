@@ -158,6 +158,7 @@ function normalizePomodoro(value)
         breakDurationSeconds: normalizeNonNegativeInteger(value.breakDurationSeconds),
         totalRounds: normalizePositiveInteger(value.totalRounds),
         autoStartBreak: Boolean(value.autoStartBreak),
+        autoStartOnLaunch: value.autoStartOnLaunch === true,
         autoPinAfterFocus: typeof value.autoPinAfterFocus === 'boolean'
             ? value.autoPinAfterFocus
             : true,

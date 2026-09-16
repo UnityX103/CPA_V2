@@ -87,6 +87,7 @@ export function applySnapshotToMirrors(snap: BridgeSnapshot): void {
         breakDurationSeconds: snap.pomodoro.breakDurationSeconds,
         totalRounds: snap.pomodoro.totalRounds,
         autoStartBreak: snap.pomodoro.autoStartBreak,
+        autoStartOnLaunch: snap.pomodoro.autoStartOnLaunch ?? false,
         autoPinAfterFocus: snap.pomodoro.autoPinAfterFocus,
         endActionMode: snap.pomodoro.endActionMode,
         playVideoOnBreakEnd: snap.pomodoro.playVideoOnBreakEnd ?? false,
