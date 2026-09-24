@@ -8,6 +8,10 @@
 
 **实施来源**：本文是摄像头在场自动控制的唯一实施依据。
 
+**后续变更**：工位区域校准、独立可调离席次数和校准期间的临时画面，以
+`2026-09-24-workstation-region-calibration.md` 为准；本文相应的“全画面 / 首次
+present 立即响应 / 不返回预览画面”约束仅描述最初版本。
+
 ## 文档关系与替代说明
 
 本文基于只读调研 `docs/superpowers/specs/2026-08-14-camera-presence-detection-research.md` 重新核对当前代码后形成。

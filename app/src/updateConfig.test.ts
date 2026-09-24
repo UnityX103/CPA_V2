@@ -55,6 +55,28 @@ describe('updater configuration', () => {
         expect(conf.plugins.updater.windows?.installMode).toBe('passive');
     });
 
+    it('cleans only a verified previous Windows installation when the update changes directories', () => {
+        const conf = readJson(tauriConfPath);
+        const hookPath = conf.bundle?.windows?.nsis?.installerHooks;
+        expect(hookPath).toBe('nsis/cleanup-previous-install.nsh');
+        const hook = readFileSync(path.join(appRoot, 'src-tauri', hookPath), 'utf8');
+        expect(hook).toContain('!macro NSIS_HOOK_PREINSTALL');
+        expect(hook).toContain('${If} $UpdateMode = 1');
+        expect(hook).toContain('ReadRegStr $R0 SHCTX "${MANUPRODUCTKEY}" ""');
+        expect(hook).toContain('ReadRegStr $R1 SHCTX "${UNINSTKEY}" "InstallLocation"');
+        expect(hook).toContain('ReadRegStr $R2 SHCTX "${UNINSTKEY}" "UninstallString"');
+        expect(hook).toContain('ReadRegStr $R3 SHCTX "${UNINSTKEY}" "MainBinaryName"');
+        expect(hook).toContain('${AndIf} $R4 != $R5');
+        expect(hook).toContain('${AndIf} $R6 == $R7');
+        expect(hook).toContain('${AndIf} $R1 == "$\\"$R0$\\""');
+        expect(hook).toContain('${AndIf} $R2 == "$\\"$R0\\uninstall.exe$\\""');
+        expect(hook).toContain('${AndIf} $R3 == "${MAINBINARYNAME}.exe"');
+        expect(hook).toContain('${FileExists} "$R0\\${MAINBINARYNAME}.exe"');
+        expect(hook).toContain('/S /UPDATE _?=$R0');
+        expect(hook).toContain('Abort "$(unableToUninstall)"');
+        expect(hook).not.toMatch(/RMDir\s+\/r/i);
+    });
+
     it('allows production multiplayer websocket connections in the CSP', () => {
         const conf = readJson(tauriConfPath);
         expect(conf.app?.security?.csp).toContain('ws://113.46.152.120:8039');

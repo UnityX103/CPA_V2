@@ -1,4 +1,7 @@
-use super::{CameraDevice, NativeError, NativeErrorKind, PresenceAvailability};
+use super::{
+    crop_to_workstation, encode_calibration_frame, nearby_face, CameraDevice, NativeError,
+    NativeErrorKind, PresenceAvailability, WorkstationRegion,
+};
 use nokhwa::pixel_format::RgbFormat;
 use nokhwa::utils::{ApiBackend, FrameFormat, RequestedFormat, RequestedFormatType};
 use nokhwa::Camera;
@@ -77,11 +80,14 @@ pub(super) fn open_privacy_settings() -> Result<(), String> {
     Ok(())
 }
 
-pub(super) fn sample(camera_device_id: Option<&str>) -> Result<bool, NativeError> {
+pub(super) fn sample(
+    camera_device_id: Option<&str>,
+    region: Option<WorkstationRegion>,
+) -> Result<bool, NativeError> {
     let _winrt = RoInitializeGuard::new();
     let mut camera = open_camera(camera_device_id)?;
     let detector = create_face_detector()?;
-    let detection = sample_open_camera(&mut camera, &detector);
+    let detection = sample_open_camera(&mut camera, &detector, region);
     let stop_result = camera
         .stop_stream()
         .map_err(|error| map_camera_error_at(error, "camera-stream-stop-failed"));
@@ -94,14 +100,34 @@ pub(super) fn sample(camera_device_id: Option<&str>) -> Result<bool, NativeError
 pub(super) fn stream_samples(
     frame_interval: Duration,
     camera_device_id: Option<&str>,
+    region: Option<WorkstationRegion>,
     emit: impl FnMut(Result<bool, NativeError>) -> bool,
 ) -> Result<(), NativeError> {
     super::run_releasing_sample_loop(
         frame_interval,
-        || sample(camera_device_id),
+        || sample(camera_device_id, region),
         emit,
         std::thread::sleep,
     )
+}
+
+pub(super) fn calibration_frame(camera_device_id: Option<&str>) -> Result<String, NativeError> {
+    let _winrt = RoInitializeGuard::new();
+    let mut camera = open_camera(camera_device_id)?;
+    let result = camera
+        .frame()
+        .map_err(|error| map_camera_error_at(error, "camera-frame-read-failed"))
+        .and_then(|frame| {
+            frame
+                .decode_image::<RgbFormat>()
+                .map_err(|error| map_camera_error_at(error, "camera-frame-decode-failed"))
+        })
+        .and_then(encode_calibration_frame);
+    let stopped = camera
+        .stop_stream()
+        .map_err(|error| map_camera_error_at(error, "camera-stream-stop-failed"));
+    stopped?;
+    result
 }
 
 fn probe_camera_access(camera_device_id: Option<&str>) -> Result<(), NativeError> {
@@ -150,13 +176,18 @@ fn create_face_detector() -> Result<FaceDetector, NativeError> {
         .map_err(|_| NativeError::new(NativeErrorKind::Error, "face-detector-unavailable"))
 }
 
-fn sample_open_camera(camera: &mut Camera, detector: &FaceDetector) -> Result<bool, NativeError> {
+fn sample_open_camera(
+    camera: &mut Camera,
+    detector: &FaceDetector,
+    region: Option<WorkstationRegion>,
+) -> Result<bool, NativeError> {
     let frame = camera
         .frame()
         .map_err(|error| map_camera_error_at(error, "camera-frame-read-failed"))?;
     let decoded = frame
         .decode_image::<RgbFormat>()
         .map_err(|error| map_camera_error_at(error, "camera-frame-decode-failed"))?;
+    let decoded = crop_to_workstation(decoded, region);
     let (width, height) = decoded.dimensions();
     let rgb = decoded.into_raw();
 
@@ -177,7 +208,20 @@ fn sample_open_camera(camera: &mut Camera, detector: &FaceDetector) -> Result<bo
         .DetectFacesAsync(&bitmap)
         .and_then(|operation| operation.get())
         .map_err(|_| NativeError::new(NativeErrorKind::Error, "face-detection-failed"))?;
-    Ok(faces.Size().unwrap_or(0) > 0)
+    for face in faces {
+        let bounds = face
+            .FaceBox()
+            .map_err(|_| NativeError::new(NativeErrorKind::Error, "face-detection-failed"))?;
+        if region.is_none()
+            || nearby_face(
+                bounds.Width as f32 / width as f32,
+                bounds.Height as f32 / height as f32,
+            )
+        {
+            return Ok(true);
+        }
+    }
+    Ok(false)
 }
 
 fn availability_for_error(error: &NativeError) -> PresenceAvailability {

@@ -19,10 +19,11 @@ import {
 } from './presencePersistence';
 
 export { PRESENCE_ABSENCE_POLICIES } from './presencePolicy';
-export type { PresenceAbsenceSensitivity } from './presencePolicy';
+export type { PresenceAbsenceSensitivity, PresenceAbsenceThresholds } from './presencePolicy';
 export type {
     PresencePreferences,
     RestDeskReminderMode,
+    WorkstationRegion,
 } from './presencePersistence';
 
 export const INPUT_ACTIVITY_RECENT_MS = 30_000;
@@ -72,6 +73,7 @@ interface PresenceState extends PresencePreferences {
     inFlight: boolean;
     generation: number;
     consecutiveAbsentSamples: number;
+    consecutivePresentSamples: number;
     notice: PresenceNotice | null;
 }
 
@@ -107,6 +109,7 @@ function initialPresenceState(): PresenceState {
         inFlight: false,
         generation: 0,
         consecutiveAbsentSamples: 0,
+        consecutivePresentSamples: 0,
         notice: null,
     };
 }
@@ -191,6 +194,7 @@ export function createPresenceStore(opts: { isSettingsWindow: boolean }): Presen
                 lastError: null,
                 inFlight: false,
                 consecutiveAbsentSamples: 0,
+                consecutivePresentSamples: 0,
             }));
         },
         applySettings: async (preferences) => {
@@ -202,7 +206,9 @@ export function createPresenceStore(opts: { isSettingsWindow: boolean }): Presen
             const intervalChanged = previous.intervalSeconds !== normalized.intervalSeconds;
             const sensitivityChanged = previous.absenceSensitivity
                 !== normalized.absenceSensitivity;
-            const monitorChanged = enabledChanged || cameraChanged || intervalChanged;
+            const regionChanged = JSON.stringify(previous.workstationRegion) !== JSON.stringify(normalized.workstationRegion);
+            const thresholdChanged = JSON.stringify(previous.absenceThresholds) !== JSON.stringify(normalized.absenceThresholds);
+            const monitorChanged = enabledChanged || cameraChanged || intervalChanged || regionChanged;
             set((state) => ({
                 ...normalized,
                 ...(inputChanged ? {
@@ -210,18 +216,19 @@ export function createPresenceStore(opts: { isSettingsWindow: boolean }): Presen
                     inputIdleMs: null,
                     inputSampleAt: null,
                 } : {}),
-                ...(enabledChanged || cameraChanged ? { cameraPresence: 'unknown' as const, cameraSampleAt: null } : {}),
+                ...(enabledChanged || cameraChanged || regionChanged ? { cameraPresence: 'unknown' as const, cameraSampleAt: null } : {}),
                 availability: normalized.enabled
                     ? (enabledChanged ? 'checking' : state.availability)
                     : 'disabled',
                 generation: monitorChanged ? state.generation + 1 : state.generation,
-                confirmedPresence: enabledChanged || cameraChanged || inputChanged ? 'unknown' : state.confirmedPresence,
+                confirmedPresence: enabledChanged || cameraChanged || regionChanged || inputChanged ? 'unknown' : state.confirmedPresence,
                 lastSuccessfulAt: enabledChanged || cameraChanged ? null : state.lastSuccessfulAt,
                 lastError: enabledChanged || cameraChanged ? null : state.lastError,
                 inFlight: monitorChanged ? false : state.inFlight,
-                consecutiveAbsentSamples: monitorChanged || sensitivityChanged
+                consecutiveAbsentSamples: monitorChanged || sensitivityChanged || thresholdChanged
                     ? 0
                     : state.consecutiveAbsentSamples,
+                consecutivePresentSamples: monitorChanged || inputChanged ? 0 : state.consecutivePresentSamples,
             }));
             if ((previous.enabled || previous.inputActivityEnabled) && !normalized.enabled && !normalized.inputActivityEnabled) {
                 usePomodoroStore.getState().clearPresenceAutomationOwnership();
@@ -237,6 +244,7 @@ export function createPresenceStore(opts: { isSettingsWindow: boolean }): Presen
                 lastError: null,
                 generation: state.generation + 1,
                 consecutiveAbsentSamples: 0,
+                consecutivePresentSamples: 0,
             }));
             try {
                 const capability = await invoke<PresenceCapability>('request_camera_presence_access', {
@@ -264,6 +272,7 @@ export function createPresenceStore(opts: { isSettingsWindow: boolean }): Presen
                 lastError: null,
                 generation: state.generation + 1,
                 consecutiveAbsentSamples: 0,
+                consecutivePresentSamples: 0,
             }));
             try {
                 const capability = await invoke<PresenceCapability>('camera_presence_status', {
@@ -316,11 +325,16 @@ export function applyPresenceSample(
     nowMs: number,
 ): void {
     const current = store.getState();
-    const required = presenceAbsencePolicy(current.absenceSensitivity).requiredAbsentSamples;
+    const required = presenceAbsencePolicy(current.absenceSensitivity, current.absenceThresholds).requiredAbsentSamples;
     const misses = sample.observation === 'absent'
         ? Math.min(current.consecutiveAbsentSamples + 1, required) : 0;
+    const presentSamples = sample.observation === 'present'
+        ? Math.min(current.consecutivePresentSamples + 1, 2) : 0;
+    const pendingPresent = current.workstationRegion !== null
+        && sample.observation === 'present' && presentSamples < 2
+        && current.cameraPresence !== 'present';
     const cameraPresence = sample.observation === 'absent' && misses < required
-        ? current.cameraPresence : sample.observation;
+        ? current.cameraPresence : pendingPresent ? current.cameraPresence : sample.observation;
     store.setState({
         availability: sample.availability,
         cameraPresence,
@@ -328,11 +342,12 @@ export function applyPresenceSample(
         lastError: sample.errorCode,
         inFlight: false,
         consecutiveAbsentSamples: misses,
+        consecutivePresentSamples: presentSamples,
         ...(terminalAvailability(sample.availability) && sample.availability !== current.availability
             ? { notice: notice('摄像头不可用，摄像头自动控制暂不可用') } : {}),
     });
-    applyCombinedPresence(store, pomodoro, nowMs, sample.observation !== 'absent' || misses >= required
-        || (current.inputActivityEnabled && pomodoro.getState().currentPhase === 'break'));
+    applyCombinedPresence(store, pomodoro, nowMs, (!pendingPresent && (sample.observation !== 'absent'
+        || misses >= required)) || (current.inputActivityEnabled && pomodoro.getState().currentPhase === 'break'));
 }
 
 export function applyInputActivitySample(
@@ -400,6 +415,7 @@ interface PresenceMonitorRuntime {
     invokeSample: (
         intervalSeconds: number,
         cameraDeviceId: string | null,
+        workstationRegion: import('./presencePersistence').WorkstationRegion | null,
     ) => Promise<PresenceSample>;
     stopSampleStream?: () => Promise<unknown>;
     now: () => number;
@@ -413,9 +429,10 @@ const defaultMonitorRuntime: PresenceMonitorRuntime = {
     invokeCapability: (cameraDeviceId) => invoke<PresenceCapability>('camera_presence_status', {
         cameraDeviceId,
     }),
-    invokeSample: (intervalSeconds, cameraDeviceId) => invoke<PresenceSample>('sample_camera_presence', {
+    invokeSample: (intervalSeconds, cameraDeviceId, workstationRegion) => invoke<PresenceSample>('sample_camera_presence', {
         intervalSeconds,
         cameraDeviceId,
+        workstationRegion,
     }),
     stopSampleStream: () => invoke('stop_camera_presence_stream'),
     now: () => performance.now(),
@@ -444,6 +461,7 @@ export function startPresenceMonitor({
     let inFlight = false;
     const intervalSeconds = store.getState().intervalSeconds;
     const cameraDeviceId = store.getState().cameraDeviceId;
+    const workstationRegion = store.getState().workstationRegion;
     const intervalMs = intervalSeconds * 1000;
 
     const isCurrent = () => !stopped
@@ -484,7 +502,7 @@ export function startPresenceMonitor({
         };
         try {
             const result = await Promise.race([
-                runtime.invokeSample(intervalSeconds, cameraDeviceId),
+                runtime.invokeSample(intervalSeconds, cameraDeviceId, workstationRegion),
                 timeout,
             ]);
             if (!isCurrent()) return;
@@ -544,6 +562,7 @@ export function startPresenceMonitor({
 export function usePresenceMonitor({ enabled }: { enabled: boolean }): void {
     const presenceEnabled = usePresenceStore((state) => state.enabled);
     const cameraDeviceId = usePresenceStore((state) => state.cameraDeviceId);
+    const workstationRegion = usePresenceStore((state) => state.workstationRegion);
     const intervalSeconds = usePresenceStore((state) => state.intervalSeconds);
     const generation = usePresenceStore((state) => state.generation);
 
@@ -553,7 +572,7 @@ export function usePresenceMonitor({ enabled }: { enabled: boolean }): void {
             store: usePresenceStore,
             pomodoro: usePomodoroStore,
         });
-    }, [enabled, presenceEnabled, cameraDeviceId, intervalSeconds, generation]);
+    }, [enabled, presenceEnabled, cameraDeviceId, workstationRegion, intervalSeconds, generation]);
 
     useEffect(() => {
         if (!enabled || presenceEnabled) return;

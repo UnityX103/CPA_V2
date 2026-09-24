@@ -652,6 +652,7 @@ pub fn run() {
             presence_detection::open_camera_privacy_settings,
             presence_detection::stop_camera_presence_stream,
             presence_detection::sample_camera_presence,
+            presence_detection::capture_camera_calibration_frame,
             audio::list_audio_output_devices,
             audio::play_sound,
             sound_files::validate_custom_sound_path,

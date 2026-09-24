@@ -104,6 +104,8 @@ describe('bridge host', () => {
                 cameraDeviceId: 'camera-usb',
                 intervalSeconds: 30,
                 absenceSensitivity: 'balanced',
+                absenceThresholds: { strict: 2, balanced: 4, relaxed: 6 },
+                workstationRegion: { x: 0.2, y: 0.1, width: 0.5, height: 0.8 },
                 restDeskReminderEnabled: true,
                 restDeskReminderMode: 'cockroachInvasion',
             }],
@@ -115,6 +117,8 @@ describe('bridge host', () => {
             cameraDeviceId: 'camera-usb',
             intervalSeconds: 30,
             absenceSensitivity: 'balanced',
+            absenceThresholds: { strict: 2, balanced: 4, relaxed: 6 },
+            workstationRegion: { x: 0.2, y: 0.1, width: 0.5, height: 0.8 },
             restDeskReminderEnabled: true,
             restDeskReminderMode: 'cockroachInvasion',
         });

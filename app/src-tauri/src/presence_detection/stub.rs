@@ -16,7 +16,10 @@ pub(super) fn open_privacy_settings() -> Result<(), String> {
     Err("camera presence detection is unsupported on this platform".to_string())
 }
 
-pub(super) fn sample(_camera_device_id: Option<&str>) -> Result<bool, NativeError> {
+pub(super) fn sample(
+    _camera_device_id: Option<&str>,
+    _region: Option<super::WorkstationRegion>,
+) -> Result<bool, NativeError> {
     Err(NativeError::new(
         NativeErrorKind::Error,
         "unsupported-platform",
@@ -26,9 +29,17 @@ pub(super) fn sample(_camera_device_id: Option<&str>) -> Result<bool, NativeErro
 pub(super) fn stream_samples(
     _frame_interval: std::time::Duration,
     _camera_device_id: Option<&str>,
+    _region: Option<super::WorkstationRegion>,
     mut emit: impl FnMut(Result<bool, NativeError>) -> bool,
 ) -> Result<(), NativeError> {
     let error = NativeError::new(NativeErrorKind::Error, "unsupported-platform");
     let _ = emit(Err(error.clone()));
     Err(error)
+}
+
+pub(super) fn calibration_frame(_camera_device_id: Option<&str>) -> Result<String, NativeError> {
+    Err(NativeError::new(
+        NativeErrorKind::Error,
+        "unsupported-platform",
+    ))
 }

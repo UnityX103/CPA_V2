@@ -9,6 +9,7 @@ vi.mock('./presencePersistence', async (importOriginal) => {
 });
 
 import { createPomodoroStore } from './pomodoro';
+import { DEFAULT_PRESENCE_PREFERENCES } from './presencePersistence';
 import {
     applyPresenceSample,
     createPresenceStore,
@@ -56,6 +57,7 @@ describe('presence settings updates', () => {
         });
 
         await presence.getState().applySettings({
+            ...DEFAULT_PRESENCE_PREFERENCES,
             enabled: true,
             inputActivityEnabled: false,
             cameraDeviceId: 'camera-usb',
@@ -86,6 +88,7 @@ describe('presence settings updates', () => {
         });
 
         await presence.getState().applySettings({
+            ...DEFAULT_PRESENCE_PREFERENCES,
             enabled: true,
             inputActivityEnabled: false,
             cameraDeviceId: null,
@@ -121,6 +124,7 @@ describe('presence settings updates', () => {
         }
 
         await presence.getState().applySettings({
+            ...DEFAULT_PRESENCE_PREFERENCES,
             enabled: true,
             inputActivityEnabled: false,
             cameraDeviceId: null,
@@ -148,6 +152,29 @@ describe('presence settings updates', () => {
 });
 
 describe('presence and pomodoro integration', () => {
+    it('uses the active preset count and ignores a single passerby after an absence', () => {
+        const { presence, pomodoro } = freshStores();
+        presence.setState({
+            enabled: true,
+            absenceSensitivity: 'balanced',
+            absenceThresholds: { strict: 2, balanced: 4, relaxed: 6 },
+            workstationRegion: { x: 0.1, y: 0.1, width: 0.6, height: 0.8 },
+        });
+        pomodoro.getState().start();
+        for (let index = 0; index < 3; index += 1) {
+            applyPresenceSample(presence, pomodoro, sample('absent'), index * 10_000);
+        }
+        expect(pomodoro.getState().isRunning).toBe(true);
+        applyPresenceSample(presence, pomodoro, sample('absent'), 30_000);
+        expect(pomodoro.getState().presenceAutomationState).toBe('focusPaused');
+        applyPresenceSample(presence, pomodoro, sample('present'), 40_000);
+        expect(pomodoro.getState().isRunning).toBe(false);
+        applyPresenceSample(presence, pomodoro, sample('absent'), 50_000);
+        applyPresenceSample(presence, pomodoro, sample('present'), 60_000);
+        expect(pomodoro.getState().isRunning).toBe(false);
+        applyPresenceSample(presence, pomodoro, sample('present'), 70_000);
+        expect(pomodoro.getState().isRunning).toBe(true);
+    });
     it.each([
         ['off', 1],
         ['strict', 2],
@@ -406,7 +433,7 @@ describe('presence monitor scheduling', () => {
         });
         await flushPromises();
         expect(invokeSample).toHaveBeenCalledTimes(1);
-        expect(invokeSample).toHaveBeenCalledWith(30, null);
+        expect(invokeSample).toHaveBeenCalledWith(30, null, null);
         expect(presence.getState().availability).toBe('ready');
 
         intervalCallback();
@@ -423,6 +450,7 @@ describe('presence monitor scheduling', () => {
             enabled: true,
             inputActivityEnabled: false,
             cameraDeviceId: 'camera-usb',
+            workstationRegion: { x: 0.2, y: 0.1, width: 0.5, height: 0.8 },
             generation: 1,
             intervalSeconds: 30,
         });
@@ -448,7 +476,9 @@ describe('presence monitor scheduling', () => {
         await flushPromises();
 
         expect(invokeCapability).toHaveBeenCalledWith('camera-usb');
-        expect(invokeSample).toHaveBeenCalledWith(30, 'camera-usb');
+        expect(invokeSample).toHaveBeenCalledWith(30, 'camera-usb', {
+            x: 0.2, y: 0.1, width: 0.5, height: 0.8,
+        });
         cleanup();
     });
 

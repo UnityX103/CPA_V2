@@ -1,6 +1,7 @@
+use base64::Engine;
+use image::{imageops, RgbImage};
 use serde::{Deserialize, Serialize};
 use std::ffi::{OsStr, OsString};
-#[cfg(test)]
 use std::io::Read;
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Child, ChildStdout, Command, Stdio};
@@ -16,10 +17,21 @@ mod stub;
 mod windows;
 
 static STOP_REQUESTED: AtomicBool = AtomicBool::new(false);
+static CALIBRATING: AtomicBool = AtomicBool::new(false);
+
+struct CalibrationGuard;
+
+impl Drop for CalibrationGuard {
+    fn drop(&mut self) {
+        CALIBRATING.store(false, Ordering::Release);
+    }
+}
 
 const SAMPLE_HELPER_ARG: &str = "--camera-presence-sample-helper";
 const STREAM_HELPER_ARG: &str = "--camera-presence-stream-helper";
 const CAMERA_DEVICE_ID_ARG: &str = "--camera-device-id";
+const WORKSTATION_REGION_ARG: &str = "--workstation-region";
+const CALIBRATION_HELPER_ARG: &str = "--camera-calibration-helper";
 const SAMPLE_TIMEOUT: Duration = Duration::from_secs(10);
 const MIN_STREAM_INTERVAL_SECONDS: u64 = 5;
 const MAX_STREAM_INTERVAL_SECONDS: u64 = 600;
@@ -77,6 +89,76 @@ pub struct CameraDevice {
     pub is_default: bool,
 }
 
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorkstationRegion {
+    x: f32,
+    y: f32,
+    width: f32,
+    height: f32,
+}
+
+impl WorkstationRegion {
+    fn valid(self) -> bool {
+        [self.x, self.y, self.width, self.height]
+            .iter()
+            .all(|value| value.is_finite())
+            && self.x >= 0.0
+            && self.y >= 0.0
+            && self.width >= 0.1
+            && self.height >= 0.1
+            && self.x + self.width <= 1.000001
+            && self.y + self.height <= 1.000001
+    }
+}
+
+fn crop_to_workstation(image: RgbImage, region: Option<WorkstationRegion>) -> RgbImage {
+    let Some(region) = region else { return image };
+    let (width, height) = image.dimensions();
+    if width == 0 || height == 0 {
+        return image;
+    }
+    let x = (region.x * width as f32).floor() as u32;
+    let y = (region.y * height as f32).floor() as u32;
+    let right = ((region.x + region.width) * width as f32).ceil() as u32;
+    let bottom = ((region.y + region.height) * height as f32).ceil() as u32;
+    imageops::crop_imm(
+        &image,
+        x.min(width - 1),
+        y.min(height - 1),
+        right.min(width).saturating_sub(x).max(1),
+        bottom.min(height).saturating_sub(y).max(1),
+    )
+    .to_image()
+}
+
+fn nearby_face(width_ratio: f32, height_ratio: f32) -> bool {
+    width_ratio >= 0.12 && height_ratio >= 0.12
+}
+
+fn encode_calibration_frame(image: RgbImage) -> Result<String, NativeError> {
+    let (width, height) = image.dimensions();
+    let longest = width.max(height);
+    let resized = if longest > 640 {
+        imageops::resize(
+            &image,
+            (width as u64 * 640 / longest as u64).max(1) as u32,
+            (height as u64 * 640 / longest as u64).max(1) as u32,
+            imageops::FilterType::Triangle,
+        )
+    } else {
+        image
+    };
+    let mut jpeg = Vec::new();
+    image::codecs::jpeg::JpegEncoder::new_with_quality(&mut jpeg, 75)
+        .encode_image(&resized)
+        .map_err(|_| NativeError::new(NativeErrorKind::Error, "camera-preview-encode-failed"))?;
+    Ok(format!(
+        "data:image/jpeg;base64,{}",
+        base64::engine::general_purpose::STANDARD.encode(jpeg)
+    ))
+}
+
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq, Serialize)]
 pub(super) enum NativeErrorKind {
     PermissionDenied,
@@ -110,12 +192,14 @@ struct StreamState {
     running: bool,
     frame_interval: Option<Duration>,
     camera_device_id: Option<String>,
+    workstation_region: Option<WorkstationRegion>,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq)]
 struct StreamHelperRequest {
     frame_interval: Duration,
     camera_device_id: Option<String>,
+    workstation_region: Option<WorkstationRegion>,
 }
 
 fn platform() -> PresencePlatform {
@@ -185,6 +269,28 @@ fn requested_camera_device_id(args: &[OsString]) -> Result<Option<String>, Nativ
         .ok_or_else(|| NativeError::new(NativeErrorKind::Error, "camera-device-id-invalid"))
 }
 
+fn requested_region(args: &[OsString]) -> Result<Option<WorkstationRegion>, NativeError> {
+    let Some(index) = args
+        .iter()
+        .position(|arg| arg == OsStr::new(WORKSTATION_REGION_ARG))
+    else {
+        return Ok(None);
+    };
+    let raw = args
+        .get(index + 1)
+        .and_then(|arg| arg.to_str())
+        .ok_or_else(|| NativeError::new(NativeErrorKind::Error, "camera-region-invalid"))?;
+    let region: WorkstationRegion = serde_json::from_str(raw)
+        .map_err(|_| NativeError::new(NativeErrorKind::Error, "camera-region-invalid"))?;
+    if !region.valid() {
+        return Err(NativeError::new(
+            NativeErrorKind::Error,
+            "camera-region-invalid",
+        ));
+    }
+    Ok(Some(region))
+}
+
 fn requested_stream_helper(args: &[OsString]) -> Option<Result<StreamHelperRequest, NativeError>> {
     for (index, arg) in args.iter().enumerate() {
         if arg == OsStr::new(STREAM_HELPER_ARG) {
@@ -199,6 +305,7 @@ fn requested_stream_helper(args: &[OsString]) -> Option<Result<StreamHelperReque
                     Ok(StreamHelperRequest {
                         frame_interval: parse_stream_interval(value)?,
                         camera_device_id: requested_camera_device_id(args)?,
+                        workstation_region: requested_region(args)?,
                     })
                 },
             ));
@@ -279,6 +386,7 @@ fn stop_stream_locked(state: &mut StreamState) {
     state.running = false;
     state.frame_interval = None;
     state.camera_device_id = None;
+    state.workstation_region = None;
 }
 
 fn stop_stream_process() {
@@ -358,6 +466,7 @@ fn start_stream_locked(
     state: &mut StreamState,
     frame_interval: Duration,
     camera_device_id: Option<&str>,
+    region: Option<WorkstationRegion>,
 ) -> Result<(), NativeError> {
     let executable = std::env::current_exe().map_err(|_| {
         NativeError::new(NativeErrorKind::Error, "camera-helper-executable-not-found")
@@ -368,6 +477,12 @@ fn start_stream_locked(
         .arg(frame_interval.as_secs().to_string());
     if let Some(camera_device_id) = camera_device_id {
         command.arg(CAMERA_DEVICE_ID_ARG).arg(camera_device_id);
+    }
+    if let Some(region) = region {
+        command.arg(WORKSTATION_REGION_ARG).arg(
+            serde_json::to_string(&region)
+                .map_err(|_| NativeError::new(NativeErrorKind::Error, "camera-region-invalid"))?,
+        );
     }
     let mut child = command
         .stdin(Stdio::null())
@@ -391,6 +506,7 @@ fn start_stream_locked(
     state.running = true;
     state.frame_interval = Some(frame_interval);
     state.camera_device_id = camera_device_id.map(str::to_string);
+    state.workstation_region = region;
     state.child = Some(child);
     std::thread::spawn(move || read_stream_output(stdout, generation));
     Ok(())
@@ -399,16 +515,24 @@ fn start_stream_locked(
 fn sample_from_stream_with_timeout(
     frame_interval: Duration,
     camera_device_id: Option<String>,
+    region: Option<WorkstationRegion>,
 ) -> Result<bool, NativeError> {
     let deadline = Instant::now() + SAMPLE_TIMEOUT;
     let (mutex, ready) = stream_runtime();
     let mut state = mutex
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
+    if CALIBRATING.load(Ordering::Acquire) {
+        return Err(NativeError::new(
+            NativeErrorKind::Busy,
+            "camera-calibrating",
+        ));
+    }
     if state
         .frame_interval
         .is_some_and(|current| current != frame_interval)
         || state.camera_device_id != camera_device_id
+        || state.workstation_region != region
     {
         stop_stream_locked(&mut state);
     }
@@ -418,7 +542,12 @@ fn sample_from_stream_with_timeout(
         .is_some_and(|(sequence, _)| *sequence > state.delivered_sequence);
     if !state.running && !has_undelivered {
         stop_stream_locked(&mut state);
-        start_stream_locked(&mut state, frame_interval, camera_device_id.as_deref())?;
+        start_stream_locked(
+            &mut state,
+            frame_interval,
+            camera_device_id.as_deref(),
+            region,
+        )?;
     }
     let generation = state.generation;
     let after_sequence = state.delivered_sequence;
@@ -493,6 +622,17 @@ fn run_releasing_sample_loop(
 
 pub(crate) fn run_sample_helper_if_requested() -> bool {
     let args = std::env::args_os().collect::<Vec<_>>();
+    if args
+        .iter()
+        .any(|arg| arg == OsStr::new(CALIBRATION_HELPER_ARG))
+    {
+        let result = requested_camera_device_id(&args)
+            .and_then(|id| platform_impl::calibration_frame(id.as_deref()));
+        let mut stdout = std::io::stdout().lock();
+        let _ = serde_json::to_writer(&mut stdout, &result);
+        let _ = stdout.flush();
+        return true;
+    }
     if let Some(request) = requested_stream_helper(&args) {
         let mut stdout = std::io::stdout().lock();
         let mut emitted = false;
@@ -500,6 +640,7 @@ pub(crate) fn run_sample_helper_if_requested() -> bool {
             platform_impl::stream_samples(
                 request.frame_interval,
                 request.camera_device_id.as_deref(),
+                request.workstation_region,
                 |sample| {
                     emitted = true;
                     write_stream_result(&mut stdout, &sample)
@@ -517,8 +658,10 @@ pub(crate) fn run_sample_helper_if_requested() -> bool {
         return false;
     }
 
-    let result = requested_camera_device_id(&args)
-        .and_then(|camera_device_id| platform_impl::sample(camera_device_id.as_deref()));
+    let result = requested_camera_device_id(&args).and_then(|camera_device_id| {
+        requested_region(&args)
+            .and_then(|region| platform_impl::sample(camera_device_id.as_deref(), region))
+    });
     let mut stdout = std::io::stdout().lock();
     let _ = serde_json::to_writer(&mut stdout, &result);
     let _ = stdout.flush();
@@ -598,13 +741,20 @@ pub fn stop_camera_presence_stream() {
 pub async fn sample_camera_presence(
     interval_seconds: u64,
     camera_device_id: Option<String>,
+    workstation_region: Option<WorkstationRegion>,
 ) -> Result<PresenceSample, String> {
     let frame_interval = match validated_stream_interval(interval_seconds) {
         Ok(interval) => interval,
         Err(error) => return Ok(error_sample(error)),
     };
+    if workstation_region.is_some_and(|region| !region.valid()) {
+        return Ok(error_sample(NativeError::new(
+            NativeErrorKind::Error,
+            "camera-region-invalid",
+        )));
+    }
     let result = tauri::async_runtime::spawn_blocking(move || {
-        sample_from_stream_with_timeout(frame_interval, camera_device_id)
+        sample_from_stream_with_timeout(frame_interval, camera_device_id, workstation_region)
     })
     .await
     .map_err(|error| format!("camera sample task failed: {error}"));
@@ -621,6 +771,87 @@ pub async fn sample_camera_presence(
         }),
         Err(error) => Ok(error_sample(error)),
     }
+}
+
+fn capture_calibration_frame_with_timeout(
+    camera_device_id: Option<&str>,
+) -> Result<String, NativeError> {
+    let executable = std::env::current_exe().map_err(|_| {
+        NativeError::new(NativeErrorKind::Error, "camera-helper-executable-not-found")
+    })?;
+    let mut command = Command::new(executable);
+    command.arg(CALIBRATION_HELPER_ARG);
+    if let Some(id) = camera_device_id {
+        command.arg(CAMERA_DEVICE_ID_ARG).arg(id);
+    }
+    let mut child = command
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .spawn()
+        .map_err(|_| NativeError::new(NativeErrorKind::Error, "camera-preview-spawn-failed"))?;
+    let stdout = child.stdout.take().ok_or_else(|| {
+        NativeError::new(NativeErrorKind::Error, "camera-preview-output-unavailable")
+    })?;
+    let reader = std::thread::spawn(move || {
+        let mut output = Vec::new();
+        BufReader::new(stdout)
+            .take(2_000_000)
+            .read_to_end(&mut output)
+            .map(|_| output)
+    });
+    let deadline = Instant::now() + SAMPLE_TIMEOUT;
+    loop {
+        match child.try_wait() {
+            Ok(Some(status)) => {
+                let output = reader
+                    .join()
+                    .map_err(|_| {
+                        NativeError::new(NativeErrorKind::Error, "camera-preview-read-failed")
+                    })?
+                    .map_err(|_| {
+                        NativeError::new(NativeErrorKind::Error, "camera-preview-read-failed")
+                    })?;
+                if !status.success() {
+                    return Err(NativeError::new(
+                        NativeErrorKind::Error,
+                        "camera-preview-helper-exited",
+                    ));
+                }
+                return serde_json::from_slice::<Result<String, NativeError>>(&output).map_err(
+                    |_| NativeError::new(NativeErrorKind::Error, "camera-preview-invalid-response"),
+                )?;
+            }
+            Ok(None) if Instant::now() < deadline && !STOP_REQUESTED.load(Ordering::Acquire) => {
+                std::thread::sleep(Duration::from_millis(25));
+            }
+            _ => {
+                terminate_child(&mut child);
+                let _ = reader.join();
+                return Err(NativeError::new(
+                    NativeErrorKind::Error,
+                    "camera-preview-timeout",
+                ));
+            }
+        }
+    }
+}
+
+#[tauri::command]
+pub async fn capture_camera_calibration_frame(
+    camera_device_id: Option<String>,
+) -> Result<String, String> {
+    if CALIBRATING.swap(true, Ordering::AcqRel) {
+        return Err("camera-preview-busy".to_string());
+    }
+    stop_stream_process();
+    tauri::async_runtime::spawn_blocking(move || {
+        let _guard = CalibrationGuard;
+        capture_calibration_frame_with_timeout(camera_device_id.as_deref())
+    })
+    .await
+    .map_err(|error| format!("camera preview task failed: {error}"))?
+    .map_err(|error| error.code)
 }
 
 #[cfg(target_os = "macos")]
@@ -701,8 +932,58 @@ mod tests {
             Some(Ok(StreamHelperRequest {
                 frame_interval: Duration::from_secs(30),
                 camera_device_id: Some("camera-usb".to_string()),
+                workstation_region: None,
             }))
         );
+    }
+
+    #[test]
+    fn region_filters_to_the_selected_seat_and_rejects_invalid_coordinates() {
+        let region = WorkstationRegion {
+            x: 0.25,
+            y: 0.1,
+            width: 0.5,
+            height: 0.8,
+        };
+        assert!(region.valid());
+        let image = RgbImage::new(100, 80);
+        assert_eq!(
+            crop_to_workstation(image, Some(region)).dimensions(),
+            (50, 64)
+        );
+        assert!(!WorkstationRegion { x: 0.8, ..region }.valid());
+        assert!(!WorkstationRegion {
+            width: f32::NAN,
+            ..region
+        }
+        .valid());
+        assert!(!nearby_face(0.08, 0.2));
+        assert!(nearby_face(0.18, 0.2));
+        let args = vec![
+            OsString::from(WORKSTATION_REGION_ARG),
+            OsString::from(r#"{"x":0.25,"y":0.1,"width":0.5,"height":0.8}"#),
+        ];
+        assert_eq!(requested_region(&args), Ok(Some(region)));
+    }
+
+    #[test]
+    fn calibration_image_is_scaled_and_kept_in_memory() {
+        let image = RgbImage::new(1280, 720);
+        let frame = encode_calibration_frame(image).expect("jpeg");
+        let encoded = frame
+            .strip_prefix("data:image/jpeg;base64,")
+            .expect("image data");
+        let bytes = base64::engine::general_purpose::STANDARD
+            .decode(encoded)
+            .expect("base64");
+        let decoded = image::load_from_memory(&bytes).expect("jpeg image");
+        assert_eq!((decoded.width(), decoded.height()), (640, 360));
+        let portrait = encode_calibration_frame(RgbImage::new(720, 1280)).expect("jpeg");
+        let bytes = base64::engine::general_purpose::STANDARD
+            .decode(portrait.strip_prefix("data:image/jpeg;base64,").unwrap())
+            .expect("base64");
+        let decoded = image::load_from_memory(&bytes).expect("jpeg image");
+        assert_eq!((decoded.width(), decoded.height()), (360, 640));
     }
 
     #[test]
@@ -718,6 +999,7 @@ mod tests {
             Some(Ok(StreamHelperRequest {
                 frame_interval: Duration::from_secs(10),
                 camera_device_id: None,
+                workstation_region: None,
             }))
         );
     }

@@ -19,8 +19,30 @@ beforeEach(() => {
 });
 
 describe('presence persistence', () => {
+    it('normalizes independent preset counts and rejects invalid camera regions', () => {
+        expect(persistence.normalizePresencePreferences({
+            absenceThresholds: { strict: 4, balanced: 0, relaxed: 12 },
+            workstationRegion: { x: 0.8, y: 0.2, width: 0.5, height: 0.6 },
+        })).toMatchObject({
+            absenceThresholds: { strict: 4, balanced: 3, relaxed: 12 },
+            workstationRegion: null,
+        });
+        expect(persistence.normalizeWorkstationRegion({
+            x: 0.2, y: 0.1, width: 0.5, height: 0.8,
+        })).toEqual({ x: 0.2, y: 0.1, width: 0.5, height: 0.8 });
+    });
+
+    it('round-trips v6 region and customized presets on this device', async () => {
+        const preferences = {
+            ...persistence.DEFAULT_PRESENCE_PREFERENCES,
+            absenceThresholds: { strict: 4, balanced: 8, relaxed: 12 },
+            workstationRegion: { x: 0.2, y: 0.1, width: 0.5, height: 0.8 },
+        };
+        await persistence.savePresencePreferences(preferences);
+        expect(await persistence.loadPresencePreferences()).toEqual(preferences);
+    });
     it('defaults to disabled when no value exists', async () => {
-        await expect(persistence.loadPresencePreferences()).resolves.toEqual({
+        await expect(persistence.loadPresencePreferences()).resolves.toMatchObject({
             enabled: false,
             inputActivityEnabled: false,
             cameraDeviceId: null,
@@ -39,7 +61,7 @@ describe('presence persistence', () => {
             presentThresholdSeconds: 999,
         });
 
-        await expect(persistence.loadPresencePreferences()).resolves.toEqual({
+        await expect(persistence.loadPresencePreferences()).resolves.toMatchObject({
             enabled: true,
             inputActivityEnabled: false,
             cameraDeviceId: null,
@@ -61,7 +83,7 @@ describe('presence persistence', () => {
                 restDeskReminderMode: 'cockroachInvasion',
             });
 
-            await expect(persistence.loadPresencePreferences()).resolves.toEqual({
+            await expect(persistence.loadPresencePreferences()).resolves.toMatchObject({
                 enabled: true,
                 inputActivityEnabled: false,
                 cameraDeviceId: null,
@@ -83,7 +105,7 @@ describe('presence persistence', () => {
             restDeskReminderMode: 'cockroachInvasion',
         });
 
-        await expect(persistence.loadPresencePreferences()).resolves.toEqual({
+        await expect(persistence.loadPresencePreferences()).resolves.toMatchObject({
             enabled: true,
             inputActivityEnabled: false,
             cameraDeviceId: null,
@@ -101,7 +123,7 @@ describe('presence persistence', () => {
             intervalSeconds: 5,
         });
 
-        await expect(persistence.loadPresencePreferences()).resolves.toEqual({
+        await expect(persistence.loadPresencePreferences()).resolves.toMatchObject({
             enabled: true,
             inputActivityEnabled: false,
             cameraDeviceId: null,
@@ -118,7 +140,7 @@ describe('presence persistence', () => {
             enabled: true,
             intervalSeconds: 30,
         });
-        await expect(persistence.loadPresencePreferences()).resolves.toEqual({
+        await expect(persistence.loadPresencePreferences()).resolves.toMatchObject({
             enabled: false,
             inputActivityEnabled: false,
             cameraDeviceId: null,
@@ -129,8 +151,9 @@ describe('presence persistence', () => {
         });
     });
 
-    it('saves only device-local v5 settings', async () => {
+    it('saves only device-local v6 settings', async () => {
         await persistence.savePresencePreferences({
+            ...persistence.DEFAULT_PRESENCE_PREFERENCES,
             enabled: true,
             inputActivityEnabled: false,
             cameraDeviceId: 'camera-usb',
@@ -141,12 +164,14 @@ describe('presence persistence', () => {
         });
 
         expect(storeData.get('presencePreferences')).toEqual({
-            schemaVersion: 5,
+            schemaVersion: 6,
             enabled: true,
             inputActivityEnabled: false,
             cameraDeviceId: 'camera-usb',
             intervalSeconds: 30,
             absenceSensitivity: 'relaxed',
+            absenceThresholds: { strict: 2, balanced: 3, relaxed: 6 },
+            workstationRegion: null,
             restDeskReminderEnabled: true,
             restDeskReminderMode: 'cockroachInvasion',
         });
@@ -165,7 +190,7 @@ describe('presence persistence', () => {
             restDeskReminderMode: 'cockroachInvasion',
         });
 
-        await expect(persistence.loadPresencePreferences()).resolves.toEqual({
+        await expect(persistence.loadPresencePreferences()).resolves.toMatchObject({
             enabled: true,
             inputActivityEnabled: false,
             cameraDeviceId: 'camera-usb',
@@ -178,10 +203,10 @@ describe('presence persistence', () => {
 });
 
 
-it('migrates older settings without input consent and persists explicit v5 opt-in', async () => {
+it('migrates older settings without input consent and persists explicit v6 opt-in', async () => {
     storeData.set('presencePreferences', { schemaVersion: 4, enabled: true });
     expect((await persistence.loadPresencePreferences()).inputActivityEnabled).toBe(false);
     await persistence.savePresencePreferences({ ...persistence.DEFAULT_PRESENCE_PREFERENCES, inputActivityEnabled: true });
     expect(await persistence.loadPresencePreferences()).toMatchObject({ enabled: false, inputActivityEnabled: true });
-    expect(storeData.get('presencePreferences')).toMatchObject({ schemaVersion: 5, inputActivityEnabled: true });
+    expect(storeData.get('presencePreferences')).toMatchObject({ schemaVersion: 6, inputActivityEnabled: true });
 });

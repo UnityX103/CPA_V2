@@ -122,6 +122,8 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
             cameraDeviceId: presence.cameraDeviceId,
             intervalSeconds: presence.intervalSeconds,
             absenceSensitivity: presence.absenceSensitivity,
+            absenceThresholds: { ...presence.absenceThresholds },
+            workstationRegion: presence.workstationRegion ? { ...presence.workstationRegion } : null,
             restDeskReminderEnabled: presence.restDeskReminderEnabled,
             restDeskReminderMode: presence.restDeskReminderMode,
             platform: presence.platform,
@@ -353,6 +355,8 @@ export function presenceSig(s: {
     cameraDeviceId: string | null;
     intervalSeconds: number;
     absenceSensitivity: PresenceAbsenceSensitivity;
+    absenceThresholds: import('../presence').PresenceAbsenceThresholds;
+    workstationRegion: import('../presence').WorkstationRegion | null;
     restDeskReminderEnabled: boolean;
     restDeskReminderMode: string;
     platform: string;
@@ -368,6 +372,10 @@ export function presenceSig(s: {
         s.cameraDeviceId,
         s.intervalSeconds,
         s.absenceSensitivity,
+        s.absenceThresholds.strict,
+        s.absenceThresholds.balanced,
+        s.absenceThresholds.relaxed,
+        s.workstationRegion,
         s.restDeskReminderEnabled,
         s.restDeskReminderMode,
         s.platform,

@@ -1,4 +1,7 @@
-use super::{CameraDevice, NativeError, NativeErrorKind, PresenceAvailability};
+use super::{
+    crop_to_workstation, encode_calibration_frame, nearby_face, CameraDevice, NativeError,
+    NativeErrorKind, PresenceAvailability, WorkstationRegion,
+};
 use block2::RcBlock;
 use nokhwa::pixel_format::RgbFormat;
 use nokhwa::utils::{ApiBackend, FrameFormat, RequestedFormat, RequestedFormatType};
@@ -86,9 +89,12 @@ pub(super) fn open_privacy_settings() -> Result<(), String> {
     Ok(())
 }
 
-pub(super) fn sample(camera_device_id: Option<&str>) -> Result<bool, NativeError> {
+pub(super) fn sample(
+    camera_device_id: Option<&str>,
+    region: Option<WorkstationRegion>,
+) -> Result<bool, NativeError> {
     let mut camera = open_camera(camera_device_id)?;
-    let detection = sample_open_camera(&mut camera);
+    let detection = sample_open_camera(&mut camera, region);
     let stop_result = camera.stop_stream().map_err(map_camera_error);
     match (detection, stop_result) {
         (Err(error), _) | (Ok(_), Err(error)) => Err(error),
@@ -99,14 +105,27 @@ pub(super) fn sample(camera_device_id: Option<&str>) -> Result<bool, NativeError
 pub(super) fn stream_samples(
     frame_interval: Duration,
     camera_device_id: Option<&str>,
+    region: Option<WorkstationRegion>,
     emit: impl FnMut(Result<bool, NativeError>) -> bool,
 ) -> Result<(), NativeError> {
     super::run_releasing_sample_loop(
         frame_interval,
-        || sample(camera_device_id),
+        || sample(camera_device_id, region),
         emit,
         std::thread::sleep,
     )
+}
+
+pub(super) fn calibration_frame(camera_device_id: Option<&str>) -> Result<String, NativeError> {
+    let mut camera = open_camera(camera_device_id)?;
+    let result = camera
+        .frame()
+        .map_err(map_camera_error)
+        .and_then(|frame| frame.decode_image::<RgbFormat>().map_err(map_camera_error))
+        .and_then(encode_calibration_frame);
+    let stopped = camera.stop_stream().map_err(map_camera_error);
+    stopped?;
+    result
 }
 
 fn open_camera(camera_device_id: Option<&str>) -> Result<Camera, NativeError> {
@@ -143,15 +162,19 @@ fn open_camera(camera_device_id: Option<&str>) -> Result<Camera, NativeError> {
     Ok(camera)
 }
 
-fn sample_open_camera(camera: &mut Camera) -> Result<bool, NativeError> {
+fn sample_open_camera(
+    camera: &mut Camera,
+    region: Option<WorkstationRegion>,
+) -> Result<bool, NativeError> {
     let frame = camera.frame().map_err(map_camera_error)?;
     let decoded = frame
         .decode_image::<RgbFormat>()
         .map_err(map_camera_error)?;
+    let decoded = crop_to_workstation(decoded, region);
     let (width, height) = decoded.dimensions();
     let bytes = decoded.into_raw();
 
-    detect_face(&bytes, width as usize, height as usize)
+    detect_face(&bytes, width as usize, height as usize, region.is_some())
 }
 
 fn camera_index(camera_device_id: Option<&str>) -> Result<nokhwa::utils::CameraIndex, NativeError> {
@@ -192,7 +215,12 @@ fn availability_for_error(error: &NativeError) -> PresenceAvailability {
     }
 }
 
-fn detect_face(bytes: &[u8], width: usize, height: usize) -> Result<bool, NativeError> {
+fn detect_face(
+    bytes: &[u8],
+    width: usize,
+    height: usize,
+    filter_distant: bool,
+) -> Result<bool, NativeError> {
     let data = CFData::from_bytes(bytes);
     let provider = CGDataProvider::with_cf_data(Some(&data))
         .ok_or_else(|| NativeError::new(NativeErrorKind::Error, "image-provider-failed"))?;
@@ -229,7 +257,15 @@ fn detect_face(bytes: &[u8], width: usize, height: usize) -> Result<bool, Native
         .performRequests_error(&requests)
         .map_err(|_| NativeError::new(NativeErrorKind::Error, "vision-request-failed"))?;
     let results = unsafe { request.results() };
-    Ok(results.is_some_and(|faces| faces.count() > 0))
+    Ok(results.is_some_and(|faces| {
+        faces.iter().any(|face| {
+            if !filter_distant {
+                return true;
+            }
+            let bounds = unsafe { face.boundingBox() };
+            nearby_face(bounds.size.width as f32, bounds.size.height as f32)
+        })
+    }))
 }
 
 fn map_camera_error(error: nokhwa::NokhwaError) -> NativeError {

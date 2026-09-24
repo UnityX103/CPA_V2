@@ -180,8 +180,8 @@
     "semantic_hash": ""
   },
   "app/package.json": {
-    "mtime": 1790224523.346875,
-    "ast_hash": "aae2b1b4a39114fa89132e069dc4b9fd",
+    "mtime": 1789563616.0379431,
+    "ast_hash": "5737b087e21bba2d08ea6d3ec964211c",
     "semantic_hash": ""
   },
   "app/public/sounds/pomodoro/manifest.json": {
@@ -280,8 +280,8 @@
     "semantic_hash": ""
   },
   "app/src-tauri/src/presence_detection/mod.rs": {
-    "mtime": 1790224523.346071,
-    "ast_hash": "68fa604d7c768942e2d79afbf8ff8fce",
+    "mtime": 1790213356.3538203,
+    "ast_hash": "37e48b704aab4a1ed728e0563604ea5a",
     "semantic_hash": ""
   },
   "app/src-tauri/src/presence_detection/stub.rs": {
@@ -345,8 +345,8 @@
     "semantic_hash": ""
   },
   "app/src-tauri/tauri.conf.json": {
-    "mtime": 1790224523.349729,
-    "ast_hash": "e5f0761aa6aaf8c17eeab9b8f23dcc29",
+    "mtime": 1790212032.4069393,
+    "ast_hash": "09def0cd0339d6ec73067e9344cd289c",
     "semantic_hash": ""
   },
   "app/src-tauri/tests/focus_restore_regression.rs": {
@@ -2385,8 +2385,8 @@
     "semantic_hash": ""
   },
   ".github/workflows/ci.yml": {
-    "mtime": 1790224523.3452795,
-    "ast_hash": "3376732181390d419472b9b6fedf68c7",
+    "mtime": 1789263447.5626302,
+    "ast_hash": "59636b9bb16ddc4a9a029586bb3e5d82",
     "semantic_hash": ""
   },
   ".github/workflows/release.yml": {
@@ -2492,11 +2492,6 @@
   "docs/superpowers/specs/2026-09-24-workstation-region-calibration.md": {
     "mtime": 1790213125.178152,
     "ast_hash": "2569df549136ae2522a5fc18b348dddc",
-    "semantic_hash": ""
-  },
-  "docs/deployment/release-0.2.5.md": {
-    "mtime": 1790224523.3500154,
-    "ast_hash": "266fecbc9ad364604fd91777f0738272",
     "semantic_hash": ""
   }
 }

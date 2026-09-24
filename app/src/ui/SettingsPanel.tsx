@@ -55,9 +55,13 @@ import {
     type RestDeskReminderMode,
 } from '../domain/presence';
 import {
+    MAX_ABSENCE_SAMPLES,
+    MIN_ABSENCE_SAMPLES,
     MAX_PRESENCE_SECONDS,
     MIN_PRESENCE_SECONDS,
+    type WorkstationRegion,
 } from '../domain/presencePersistence';
+import { WorkstationCalibration } from './WorkstationCalibration';
 import {
     presenceAuthorizationView,
     type PresenceAuthorizationAction,
@@ -237,6 +241,9 @@ function PomodoroTab({ onApplyStateChange }: {
     const [cameraDevices, setCameraDevices] = useState<CameraDevice[]>([]);
     const [presenceIntervalSeconds, setPresenceIntervalSeconds] = useState(presence.intervalSeconds);
     const [absenceSensitivity, setAbsenceSensitivity] = useState(presence.absenceSensitivity);
+    const [absenceThresholds, setAbsenceThresholds] = useState({ ...presence.absenceThresholds });
+    const [workstationRegion, setWorkstationRegion] = useState<WorkstationRegion | null>(presence.workstationRegion);
+    const [calibrationOpen, setCalibrationOpen] = useState(false);
     const [restDeskReminderEnabled, setRestDeskReminderEnabled] = useState(
         presence.restDeskReminderEnabled,
     );
@@ -259,6 +266,8 @@ function PomodoroTab({ onApplyStateChange }: {
         cameraDeviceId: presence.cameraDeviceId,
         presenceIntervalSeconds: presence.intervalSeconds,
         absenceSensitivity: presence.absenceSensitivity,
+        absenceThresholds: { ...presence.absenceThresholds },
+        workstationRegion: presence.workstationRegion,
         restDeskReminderEnabled: presence.restDeskReminderEnabled,
         restDeskReminderMode: presence.restDeskReminderMode,
     });
@@ -283,6 +292,8 @@ function PomodoroTab({ onApplyStateChange }: {
             || cameraDeviceId !== previous.cameraDeviceId
             || presenceIntervalSeconds !== previous.presenceIntervalSeconds
             || absenceSensitivity !== previous.absenceSensitivity
+            || JSON.stringify(absenceThresholds) !== JSON.stringify(previous.absenceThresholds)
+            || JSON.stringify(workstationRegion) !== JSON.stringify(previous.workstationRegion)
             || restDeskReminderEnabled !== previous.restDeskReminderEnabled
             || restDeskReminderMode !== previous.restDeskReminderMode;
         if (!launchDraftDirty) {
@@ -317,6 +328,11 @@ function PomodoroTab({ onApplyStateChange }: {
             setCameraDeviceId(presence.cameraDeviceId);
             setPresenceIntervalSeconds(presence.intervalSeconds);
             setAbsenceSensitivity(presence.absenceSensitivity);
+            setAbsenceThresholds((current) => (
+                JSON.stringify(current) === JSON.stringify(presence.absenceThresholds)
+                    ? current : { ...presence.absenceThresholds }
+            ));
+            setWorkstationRegion(presence.workstationRegion);
             setRestDeskReminderEnabled(presence.restDeskReminderEnabled);
             setRestDeskReminderMode(presence.restDeskReminderMode);
         }
@@ -337,6 +353,8 @@ function PomodoroTab({ onApplyStateChange }: {
             cameraDeviceId: presence.cameraDeviceId,
             presenceIntervalSeconds: presence.intervalSeconds,
             absenceSensitivity: presence.absenceSensitivity,
+            absenceThresholds: { ...presence.absenceThresholds },
+            workstationRegion: presence.workstationRegion,
             restDeskReminderEnabled: presence.restDeskReminderEnabled,
             restDeskReminderMode: presence.restDeskReminderMode,
         };
@@ -363,6 +381,8 @@ function PomodoroTab({ onApplyStateChange }: {
         presence.cameraDeviceId,
         presence.intervalSeconds,
         presence.absenceSensitivity,
+        presence.absenceThresholds,
+        presence.workstationRegion,
         presence.restDeskReminderEnabled,
         presence.restDeskReminderMode,
         focusMin,
@@ -380,6 +400,8 @@ function PomodoroTab({ onApplyStateChange }: {
         cameraDeviceId,
         presenceIntervalSeconds,
         absenceSensitivity,
+        absenceThresholds,
+        workstationRegion,
         restDeskReminderEnabled,
         restDeskReminderMode,
     ]);
@@ -414,6 +436,8 @@ function PomodoroTab({ onApplyStateChange }: {
         cameraDeviceId !== presence.cameraDeviceId ||
         presenceIntervalSeconds !== presence.intervalSeconds ||
         absenceSensitivity !== presence.absenceSensitivity ||
+        JSON.stringify(absenceThresholds) !== JSON.stringify(presence.absenceThresholds) ||
+        JSON.stringify(workstationRegion) !== JSON.stringify(presence.workstationRegion) ||
         restDeskReminderEnabled !== presence.restDeskReminderEnabled ||
         restDeskReminderMode !== presence.restDeskReminderMode;
     const hasMissingCustomVideo =
@@ -446,6 +470,8 @@ function PomodoroTab({ onApplyStateChange }: {
             || cameraDeviceId !== presence.cameraDeviceId
             || presenceIntervalSeconds !== presence.intervalSeconds
             || absenceSensitivity !== presence.absenceSensitivity
+            || JSON.stringify(absenceThresholds) !== JSON.stringify(presence.absenceThresholds)
+            || JSON.stringify(workstationRegion) !== JSON.stringify(presence.workstationRegion)
             || restDeskReminderEnabled !== presence.restDeskReminderEnabled
             || restDeskReminderMode !== presence.restDeskReminderMode;
 
@@ -477,6 +503,8 @@ function PomodoroTab({ onApplyStateChange }: {
                 cameraDeviceId,
                 intervalSeconds: presenceIntervalSeconds,
                 absenceSensitivity,
+                absenceThresholds,
+                workstationRegion,
                 restDeskReminderEnabled,
                 restDeskReminderMode,
             })).catch((error) => {
@@ -505,6 +533,8 @@ function PomodoroTab({ onApplyStateChange }: {
         cameraDeviceId,
         presenceIntervalSeconds,
         absenceSensitivity,
+        absenceThresholds,
+        workstationRegion,
         restDeskReminderEnabled,
         restDeskReminderMode,
     ]);
@@ -643,9 +673,10 @@ function PomodoroTab({ onApplyStateChange }: {
                                     className="dropdown dropdown-fit camera-device-select"
                                     aria-label="目标摄像头"
                                     value={cameraDeviceId ?? ''}
-                                    onChange={(event) => setCameraDeviceId(
-                                        event.currentTarget.value || null,
-                                    )}
+                                    onChange={(event) => {
+                                        setCameraDeviceId(event.currentTarget.value || null);
+                                        setWorkstationRegion(null);
+                                    }}
                                 >
                                     <option value="">自动选择摄像头</option>
                                     {cameraDeviceId !== null
@@ -660,6 +691,24 @@ function PomodoroTab({ onApplyStateChange }: {
                                     ))}
                                 </select>
                             </div>
+                        )}
+
+                        {presenceEnabled && (
+                            <div className="card pomo-row">
+                                <span className="pomo-row-label">工位区域</span>
+                                <div className="pomo-row-right">
+                                    <span className="pomo-row-value">{workstationRegion ? '已校准' : '整个画面'}</span>
+                                    <button className="btn" onClick={() => setCalibrationOpen(true)}>校准区域</button>
+                                </div>
+                            </div>
+                        )}
+                        {calibrationOpen && (
+                            <WorkstationCalibration
+                                cameraDeviceId={cameraDeviceId}
+                                region={workstationRegion}
+                                onSave={(region) => { setWorkstationRegion(region); setCalibrationOpen(false); }}
+                                onClose={() => setCalibrationOpen(false)}
+                            />
                         )}
 
                         <PresenceAuthorizationControl
@@ -684,7 +733,7 @@ function PomodoroTab({ onApplyStateChange }: {
                             {presence.inputActivityEnabled && <span className="input-activity-status" role="status">{presence.inputActivityAvailability === 'error' ? '键鼠活动检测暂不可用，将自动重试。' : presence.inputActivityAvailability === 'ready' ? '键鼠活动检测可用' : '已允许，休息时检测'}</span>}
                         </div>
 
-                        <div className="card card-grid">
+                        <div className="card card-grid presence-threshold-grid">
                             <div className="card">
                                 <span className="card-label">检测间隔</span>
                                 <NumberInput aria-label="检测间隔"
@@ -711,6 +760,22 @@ function PomodoroTab({ onApplyStateChange }: {
                                         </option>
                                     ))}
                                 </select>
+                                {absenceSensitivity !== 'off' && (
+                                    <>
+                                        <span className="card-label">连续离席次数</span>
+                                        <NumberInput
+                                            aria-label="连续离席次数"
+                                            value={absenceThresholds[absenceSensitivity]}
+                                            onChange={(count) => setAbsenceThresholds((current) => ({
+                                                ...current,
+                                                [absenceSensitivity]: count,
+                                            }))}
+                                            min={MIN_ABSENCE_SAMPLES}
+                                            max={MAX_ABSENCE_SAMPLES}
+                                            suffix="次"
+                                        />
+                                    </>
+                                )}
                             </div>
                         </div>
 
