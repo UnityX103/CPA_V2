@@ -225,6 +225,5 @@
   "223": "SettingsPanel.test.tsx",
   "224": "latency.test.js",
   "225": "VideoPlayerApp.tsx",
-  "226": "@tauri-apps/cli",
-  "227": "release-0.2.6.md"
+  "226": "@tauri-apps/cli"
 }

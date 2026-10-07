@@ -326,7 +326,7 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
             }),
             skip: () => {
                 const state = get();
-                if (!state.isRunning || state.currentPhase === 'completed') return;
+                if (state.currentPhase === 'completed' || (!state.isRunning && state.currentPhase !== 'break')) return;
                 accumulator = 0;
                 set(advancePhase(state, 'skip'));
             },

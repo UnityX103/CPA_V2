@@ -35,11 +35,25 @@ it('waits for restored preferences and configures the dock with the saved scale'
     act(() => useSettingsStore.setState({ uiScale: 2.4 }));
     rerender({ ready: true });
     await waitFor(() => expect(invoke).toHaveBeenCalledWith('configure_pomodoro_docking', {
-        autoDock: true, paused: false, phase: 'focus', scale: 2.4, suspended: false,
+        autoDock: true, paused: false, phase: 'focus', scale: 2.4, suspended: false, restReminderLevel: 0,
     }));
     act(() => useSettingsStore.setState({ uiScale: 1.5 }));
     await waitFor(() => expect(invoke).toHaveBeenLastCalledWith('configure_pomodoro_docking', {
-        autoDock: true, paused: false, phase: 'focus', scale: 1.5, suspended: false,
+        autoDock: true, paused: false, phase: 'focus', scale: 1.5, suspended: false, restReminderLevel: 0,
     }));
     act(() => useSettingsStore.setState({ uiScale: previousScale }));
+});
+
+it('immediately displays the complete break panel even while a stale native strip response is pending', async () => {
+    vi.stubGlobal('__TAURI_INTERNALS__', {});
+    invoke.mockResolvedValue({ side: 'right', expanded: false, dragging: false });
+    const { result, rerender } = renderHook(({ phase, level }) => usePomodoroDocking(true, false, phase, true, level), {
+        initialProps: { phase: 'focus', level: 0 as 0 | 3 },
+    });
+    await waitFor(() => expect(result.current.side).toBe('right'));
+    rerender({ phase: 'break', level: 3 });
+    expect(result.current.side).toBeNull();
+    await waitFor(() => expect(invoke).toHaveBeenCalledWith('configure_pomodoro_docking', expect.objectContaining({ phase: 'break', restReminderLevel: 3 })));
+    expect(result.current.side).toBeNull();
+    expect(result.current.restScale).toBe(1.7);
 });

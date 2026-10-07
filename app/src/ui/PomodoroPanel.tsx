@@ -6,6 +6,7 @@ import { usePresenceStore, type ConfirmedPresence } from '../domain/presence';
 import { shouldStartWindowDrag } from './windowDrag';
 import './PomodoroPanel.css';
 import { usePomodoroDocking } from './usePomodoroDocking';
+import { useBreakReminderLevel } from '../domain/breakReminder';
 
 type ClockState = 'focus' | 'rest' | 'paused' | 'off';
 
@@ -30,6 +31,8 @@ export function PomodoroPanel({ preferencesReady = true }: { preferencesReady?: 
     const [pausedDuringSession, setPausedDuringSession] = useState(false);
     const [autoDock, setAutoDock] = useState(() => localStorage.getItem('pomo-auto-dock') === 'true');
     const [touchActions, setTouchActions] = useState(false);
+    const isBreak = state.currentPhase === 'break';
+    const reminderLevel = useBreakReminderLevel(preferencesReady);
 
     useEffect(() => usePomodoroStore.subscribe((next, previous) => {
         if (next.isRunning || next.currentPhase !== previous.currentPhase
@@ -59,11 +62,11 @@ export function PomodoroPanel({ preferencesReady = true }: { preferencesReady?: 
     }, []);
 
     useEffect(() => {
-        void invoke('set_main_window_pinned', { onTop: state.isPinned || autoDock })
+        void invoke('set_main_window_pinned', { onTop: isBreak || state.isPinned || autoDock })
             .catch((error) => {
                 console.error('[pin] set_main_window_pinned failed', error);
             });
-    }, [state.isPinned, autoDock]);
+    }, [state.isPinned, autoDock, isBreak]);
 
     const totalSeconds =
         state.currentPhase === 'break'
@@ -90,10 +93,10 @@ export function PomodoroPanel({ preferencesReady = true }: { preferencesReady?: 
         : (cameraAvailable || inputAvailable)
             && (state.presenceAutomationState === 'breakPaused'
                 || (state.presenceAutomationState === 'breakResumeEligible' && confirmedPresence === 'present'));
-    const showPauseOverlay = !state.isRunning && state.currentPhase !== 'completed'
+    const showPauseOverlay = !isBreak && !state.isRunning && state.currentPhase !== 'completed'
         && (pausedDuringSession || state.remainingSeconds < totalSeconds || automaticPause);
-    const showStartOverlay = !state.isRunning && !showPauseOverlay && state.currentPhase !== 'completed';
-    const docking = usePomodoroDocking(autoDock, showPauseOverlay, state.currentPhase, preferencesReady);
+    const showStartOverlay = !isBreak && !state.isRunning && !showPauseOverlay && state.currentPhase !== 'completed';
+    const docking = usePomodoroDocking(autoDock, showPauseOverlay, state.currentPhase, preferencesReady, reminderLevel);
     const windowMode = autoDock ? '停靠' : state.isPinned ? '置顶' : '取消置顶';
 
     useEffect(() => {
@@ -160,8 +163,27 @@ export function PomodoroPanel({ preferencesReady = true }: { preferencesReady?: 
         <div
             className="pomo-panel"
             data-clock-state={clockState}
+            data-break-reminder-level={isBreak ? reminderLevel : undefined}
+            style={isBreak ? { zoom: docking.restScale } : undefined}
             onPointerDown={onPanelPointerDown}
         >
+            {isBreak ? <div className="pomo-rest-content" data-no-window-drag>
+                <div className="pomo-rest-title" role="status" data-dock-compatible="true">
+                    {automaticPause ? reminderLevel >= 2 ? '该离开工位休息了' : '请先离开工位' : '休息时间'}
+                </div>
+                <ClockRing progress={progress} label={formatMmSs(state.remainingSeconds)}
+                    sub={state.isRunning ? '休息中' : automaticPause || pausedDuringSession || state.remainingSeconds < totalSeconds
+                        ? '休息已暂停' : '待休息'} clockState={clockState} />
+                <div className="pomo-rest-note">
+                    {automaticPause ? '放下键鼠，离开后继续计时' : '站起来，让眼睛和身体歇一会儿'}
+                </div>
+                <div className="pomo-rest-actions">
+                    {!state.isRunning && !automaticPause && <button className="btn btn-primary" onClick={onStartClick}>
+                        {state.remainingSeconds < totalSeconds ? '继续休息' : '开始休息'}
+                    </button>}
+                    <button className="btn btn-secondary" onClick={onSkipClick}>跳过休息</button>
+                </div>
+            </div> : <>
             <div className="pomo-content">
                 <div className="pomo-header">
                     <div className="pomo-streak">
@@ -202,6 +224,7 @@ export function PomodoroPanel({ preferencesReady = true }: { preferencesReady?: 
                     </div>
                 </div>}
             </div>
+            </>}
             <button className="pomo-icon-btn" aria-label="设置" title="设置"
                 onClick={() => { void invoke('open_settings_window'); }}>
                 <SettingsIcon />
@@ -210,8 +233,9 @@ export function PomodoroPanel({ preferencesReady = true }: { preferencesReady?: 
             <button
                 className={`pomo-pin ${state.isPinned ? 'is-pinned' : ''} ${autoDock ? 'is-docking' : ''}`}
                 onClick={onTogglePin}
+                disabled={isBreak}
                 aria-label="置顶"
-                title={`${windowMode}；点击切换为${autoDock ? '取消置顶' : state.isPinned ? '停靠' : '置顶'}`}
+                title={isBreak ? '休息期间保持完整显示并置顶' : `${windowMode}；点击切换为${autoDock ? '取消置顶' : state.isPinned ? '停靠' : '置顶'}`}
             >
                 <PinIcon active={state.isPinned} />
             </button>

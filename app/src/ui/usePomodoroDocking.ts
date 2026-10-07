@@ -3,10 +3,11 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { useSettingsStore } from '../domain/settings';
 import { useDockNoticeSuspension } from './useDockNoticeSuspension';
+import { BREAK_REMINDER_SCALES, type BreakReminderLevel } from '../domain/breakReminder';
 
-export interface DockView { side: 'left' | 'right' | null; expanded: boolean; dragging: boolean }
+export interface DockView { side: 'left' | 'right' | null; expanded: boolean; dragging: boolean; restScale?: number }
 const full: DockView = { side: null, expanded: false, dragging: false };
-export function usePomodoroDocking(autoDock: boolean, paused: boolean, phase = 'focus', enabled = true) {
+export function usePomodoroDocking(autoDock: boolean, paused: boolean, phase = 'focus', enabled = true, restReminderLevel: BreakReminderLevel = 0) {
     const suspended = useDockNoticeSuspension();
     const scale = useSettingsStore((state) => state.uiScale);
     const commands = useRef<Promise<unknown>>(Promise.resolve());
@@ -29,15 +30,16 @@ export function usePomodoroDocking(autoDock: boolean, paused: boolean, phase = '
         if (!('__TAURI_INTERNALS__' in window)) return;
         if (!enabled) return;
         let cancelled = false;
-        void enqueue<DockView>('configure_pomodoro_docking', { autoDock, paused, phase, scale, suspended })
+        void enqueue<DockView>('configure_pomodoro_docking', { autoDock, paused, phase, scale, suspended, restReminderLevel })
             .then(value => { if (!cancelled) setView(value); })
             .catch(error => console.error('[docking] configure', error));
         return () => { cancelled = true; };
-    }, [autoDock, paused, phase, scale, enabled, suspended]);
+    }, [autoDock, paused, phase, scale, enabled, suspended, restReminderLevel]);
     const hover = (hovered: boolean) => {
         if (!('__TAURI_INTERNALS__' in window)) return;
         void enqueue('hover_pomodoro_docking', { hovered })
             .catch(error => console.error('[docking] hover', error));
     };
-    return { ...view, hover };
+    return { ...view, side: phase === 'focus' ? view.side : null,
+        restScale: phase === 'break' ? (view.restScale ?? BREAK_REMINDER_SCALES[restReminderLevel]) : 1, hover };
 }

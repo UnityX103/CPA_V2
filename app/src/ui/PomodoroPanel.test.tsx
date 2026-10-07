@@ -151,7 +151,7 @@ describe('PomodoroPanel pause overlay', () => {
         expect(usePomodoroStore.getState().remainingSeconds).toBe(1499);
     });
 
-    it.each(['focus', 'break'] as const)('simplifies automatic %s pause without changing automatic recovery', (phase) => {
+    it.each(['focus'] as const)('simplifies automatic %s pause without changing automatic recovery', (phase) => {
         usePomodoroStore.setState({ currentPhase: phase, isRunning: true, remainingSeconds: phase === 'focus' ? 1500 : 300 });
         usePresenceStore.setState({ enabled: true, availability: 'ready', confirmedPresence: phase === 'focus' ? 'absent' : 'present', lastSuccessfulAt: 1000 });
         render(<PomodoroPanel />);
@@ -181,6 +181,37 @@ describe('PomodoroPanel pause overlay', () => {
         fireEvent.click(screen.getByRole('button', { name: '置顶' }));
         expect(usePomodoroStore.getState().isPinned).toBe(true);
         expect(screen.getByRole('region', { name: '番茄钟已暂停' })).toBeTruthy();
+    });
+});
+
+describe('complete rest panel', () => {
+    it('keeps time and skip visible during an automatic pause, and only skip exits the break', async () => {
+        localStorage.setItem('pomo-auto-dock', 'true');
+        usePomodoroStore.setState({ currentPhase: 'break', isRunning: true, remainingSeconds: 300 });
+        usePresenceStore.setState({ inputActivityEnabled: true, inputActivityAvailability: 'ready' });
+        const { container } = render(<PomodoroPanel />);
+        act(() => usePomodoroStore.getState().pauseBreakFromPresence());
+        expect(container.querySelector('.pomo-dock')).toBeNull();
+        expect(screen.getByText('05:00')).toBeTruthy();
+        expect(screen.getByText('休息已暂停')).toBeTruthy();
+        expect(screen.queryByRole('button', { name: '恢复' })).toBeNull();
+        expect((screen.getByRole('button', { name: '置顶' }) as HTMLButtonElement).disabled).toBe(true);
+        await waitFor(() => expect(pinCalls()).toContainEqual(['set_main_window_pinned', { onTop: true }]));
+        fireEvent.pointerLeave(container.querySelector('.pomo-panel')!);
+        act(() => usePomodoroStore.getState().tick(300));
+        expect(screen.getByText('05:00')).toBeTruthy();
+        fireEvent.click(screen.getByRole('button', { name: '跳过休息' }));
+        expect(usePomodoroStore.getState().currentPhase).toBe('focus');
+        expect(screen.queryByRole('button', { name: '跳过休息' })).toBeNull();
+    });
+
+    it.each([true, false])('offers skip for a running or manually paused break (%s)', (isRunning) => {
+        usePomodoroStore.setState({ currentPhase: 'break', isRunning, remainingSeconds: 200 });
+        render(<PomodoroPanel />);
+        expect((screen.getByRole('button', { name: '跳过休息' }) as HTMLButtonElement).disabled).toBe(false);
+        expect(screen.getByText('03:20')).toBeTruthy();
+        fireEvent.click(screen.getByRole('button', { name: '跳过休息' }));
+        expect(usePomodoroStore.getState().currentPhase).toBe('focus');
     });
 });
 

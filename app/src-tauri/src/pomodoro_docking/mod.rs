@@ -24,12 +24,18 @@ pub enum Side {
     Left,
     Right,
 }
-#[derive(Clone, Copy, Default, Serialize)]
+#[derive(Clone, Copy, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Snapshot {
     pub side: Option<Side>,
     pub expanded: bool,
     pub dragging: bool,
+    pub rest_scale: f64,
+}
+impl Default for Snapshot {
+    fn default() -> Self {
+        Self { side: None, expanded: false, dragging: false, rest_scale: 1.0 }
+    }
 }
 struct Inner {
     view: Snapshot,
@@ -43,6 +49,9 @@ struct Inner {
     notice_generation: u64,
     suspended: bool,
     suspended_origin: Option<(f64, f64)>,
+    break_origin: Option<(f64, f64)>,
+    rest_reminder_level: u8,
+    rest_scale: f64,
 }
 impl Default for Inner {
     fn default() -> Self {
@@ -58,6 +67,9 @@ impl Default for Inner {
             notice_generation: 0,
             suspended: false,
             suspended_origin: None,
+            break_origin: None,
+            rest_reminder_level: 0,
+            rest_scale: 1.0,
         }
     }
 }
@@ -85,7 +97,15 @@ impl Inner {
         hovered || self.paused || self.keep_open_until_blur
     }
     fn displayed_view(&self) -> Snapshot {
-        if self.suspended { Snapshot::default() } else { self.view }
+        if self.suspended || !self.docking_allowed() {
+            Snapshot { rest_scale: self.rest_scale, ..Snapshot::default() }
+        } else { self.view }
+    }
+    fn docking_allowed(&self) -> bool {
+        self.phase.as_deref().is_none_or(|phase| phase == "focus")
+    }
+    fn in_break(&self) -> bool {
+        self.phase.as_deref() == Some("break")
     }
     fn gain_focus(&mut self) {
         self.notice_generation = self.notice_generation.wrapping_add(1);
@@ -118,7 +138,7 @@ pub fn transient(app: &tauri::AppHandle) -> bool {
     state
         .inner
         .try_lock()
-        .map(|s| s.view.side.is_some() || s.view.dragging || s.suspended)
+        .map(|s| s.view.side.is_some() || s.view.dragging || s.suspended || s.in_break())
         .unwrap_or(true)
 }
 pub fn radius(width: f64, height: f64) -> Option<f64> {
@@ -172,8 +192,8 @@ fn geometry(w: &tauri::WebviewWindow, s: &Inner, x: f64, y: f64) -> Result<(), S
     } else {
         w.scale_factor().map_err(|e| e.to_string())?
     };
-    let zoom = dpi * s.scale;
-    let (width, height) = if s.view.side.is_some() && !s.suspended {
+    let zoom = dpi * s.scale * s.rest_scale;
+    let (width, height) = if s.view.side.is_some() && !s.suspended && s.docking_allowed() {
         (dock_frame_width(s.view.expanded), 156.0)
     } else {
         (215.0, 187.0)
@@ -303,6 +323,10 @@ pub fn resize_if_docked(app: &tauri::AppHandle, scale: f64) -> Result<bool, Stri
     let state = app.state::<Docking>();
     let mut s = state.inner.lock().map_err(|e| e.to_string())?;
     s.scale = scale;
+    if s.in_break() {
+        place_break(&window(app)?, &mut s, false)?;
+        return Ok(true);
+    }
     if s.view.side.is_none() {
         return Ok(false);
     }
@@ -318,6 +342,7 @@ pub async fn configure_pomodoro_docking(
     phase: String,
     scale: f64,
     suspended: bool,
+    rest_reminder_level: Option<u8>,
 ) -> Result<Snapshot, String> {
     tauri::async_runtime::spawn_blocking(move || {
         let w = window(&app)?;
@@ -330,6 +355,11 @@ pub async fn configure_pomodoro_docking(
             return Err("invalid UI scale".into());
         }
         let scale_changed = s.scale != scale;
+        let was_break = s.in_break();
+        let reminder_level = rest_reminder_level.unwrap_or(0);
+        if reminder_level > 3 { return Err("invalid break reminder level".into()); }
+        let reminder_changed = s.rest_reminder_level != reminder_level;
+        s.rest_reminder_level = reminder_level;
         s.scale = scale;
         let phase_changed = s.update_phase(phase);
         let pause_changed = s.paused != paused;
@@ -339,6 +369,25 @@ pub async fn configure_pomodoro_docking(
         if !s.restored {
             s.restored = true;
             restore(&app, &w, &mut s)?;
+        }
+        if s.in_break() && !was_break {
+            let p = w.outer_position().map_err(|e| e.to_string())?;
+            s.break_origin = Some((p.x as f64, p.y as f64));
+        }
+        if was_break && !s.in_break() {
+            s.rest_scale = 1.0;
+            if let Some((x, y)) = s.break_origin.take() {
+                let m = docking_monitor(&w, &s)?;
+                let r = m.work_area();
+                let z = m.scale_factor() * s.scale;
+                let docked = s.docking_allowed() && s.view.side.is_some() && !s.suspended;
+                let width = if docked { 56.0 } else { 215.0 } * z;
+                let height = if docked { 156.0 } else { 187.0 } * z;
+                let left = r.position.x as f64;
+                let top = r.position.y as f64;
+                geometry(&w, &s, x.clamp(left, (left + r.size.width as f64 - width).max(left)),
+                    y.clamp(top, (top + r.size.height as f64 - height).max(top)))?;
+            }
         }
         let suspension_changed = s.suspended != suspended;
         if suspension_changed {
@@ -354,7 +403,7 @@ pub async fn configure_pomodoro_docking(
                 }
             }
         }
-        if !s.auto_dock && s.view.side.is_some() && !s.view.dragging {
+        if !s.auto_dock && s.view.side.is_some() && !s.view.dragging && !s.in_break() {
             let side = s.view.side.unwrap();
             let p = w.outer_position().map_err(|e| e.to_string())?;
             let m = w
@@ -376,8 +425,13 @@ pub async fn configure_pomodoro_docking(
             geometry(&w, &s, x, p.y as f64)?;
             save(&app, &w, &s)?;
         }
-        if (changed || suspension_changed) && s.view.side.is_some() && !s.view.dragging {
+        if s.in_break() && (!was_break || changed || reminder_changed || suspension_changed) && !s.view.dragging {
+            place_break(&w, &mut s, reminder_changed && reminder_level > 0)?;
+        } else if (changed || suspension_changed) && s.view.side.is_some() && !s.view.dragging && s.docking_allowed() {
             snap(&w, &mut s, false)?;
+        } else if phase_changed && !s.docking_allowed() && !s.in_break() {
+            let p = w.outer_position().map_err(|e| e.to_string())?;
+            geometry(&w, &s, p.x as f64, p.y as f64)?;
         }
         if phase_changed || pause_changed {
             if let Some(token) = s.focus_notice_token(w.is_focused().unwrap_or(true)) {
@@ -388,6 +442,38 @@ pub async fn configure_pomodoro_docking(
     })
     .await
     .map_err(|e| e.to_string())?
+}
+
+fn break_frame_scale(level: u8, base_zoom: f64, width: f64, height: f64) -> f64 {
+    let requested: f64 = match level { 2 => 1.35, 3 => 1.7, _ => 1.0 };
+    requested.min((width - 48.0).max(1.0) / (215.0 * base_zoom))
+        .min((height - 48.0).max(1.0) / (187.0 * base_zoom))
+}
+fn break_origin(left: f64, top: f64, width: f64, height: f64, zoom: f64, level: u8) -> (f64, f64) {
+    let x = left + (width - 215.0 * zoom) / 2.0;
+    let y = if level == 0 { top + height - 187.0 * zoom - 24.0 } else { top + 24.0 };
+    (x, y)
+}
+fn place_break(w: &tauri::WebviewWindow, s: &mut Inner, animate: bool) -> Result<(), String> {
+    let m = docking_monitor(w, s)?;
+    let r = m.work_area();
+    let base_zoom = m.scale_factor() * s.scale;
+    s.rest_scale = break_frame_scale(s.rest_reminder_level, base_zoom, r.size.width as f64, r.size.height as f64);
+    let (x, y) = break_origin(r.position.x as f64, r.position.y as f64,
+        r.size.width as f64, r.size.height as f64, base_zoom * s.rest_scale, s.rest_reminder_level);
+    let p = w.outer_position().map_err(|e| e.to_string())?;
+    w.unminimize().map_err(|e| e.to_string())?;
+    w.show().map_err(|e| e.to_string())?;
+    // The same Tauri geometry path serves macOS and Windows, retaining native regional hit testing.
+    let frames = if animate { 20 } else { 1 };
+    for frame in 1..=frames {
+        let t = frame as f64 / frames as f64;
+        let eased = 1.0 - (1.0 - t).powi(3);
+        geometry(w, s, p.x as f64 + (x - p.x as f64) * eased,
+            p.y as f64 + (y - p.y as f64) * eased)?;
+        if frame < frames { std::thread::sleep(std::time::Duration::from_millis(16)); }
+    }
+    Ok(())
 }
 
 const FOCUS_NOTICE_DURATION: std::time::Duration = std::time::Duration::from_secs(5);
@@ -414,7 +500,7 @@ pub async fn hover_pomodoro_docking(
         let w = window(&app)?;
         let state = app.state::<Docking>();
         let mut s = state.inner.lock().map_err(|e| e.to_string())?;
-        if s.view.side.is_some() && !s.view.dragging && !s.suspended {
+        if s.view.side.is_some() && !s.view.dragging && !s.suspended && s.docking_allowed() {
             let expanded = s.expanded_for_hover(hovered);
             if expanded != s.view.expanded {
                 s.view.expanded = expanded;
@@ -432,7 +518,10 @@ pub async fn drag_pomodoro_window(app: tauri::AppHandle) -> Result<(), String> {
     tauri::async_runtime::spawn_blocking(move || {
         let w = window(&app)?;
         let state = app.state::<Docking>();
-        let suspended = state.inner.lock().map_err(|e| e.to_string())?.suspended;
+        let suspended = {
+            let s = state.inner.lock().map_err(|e| e.to_string())?;
+            s.suspended || !s.docking_allowed()
+        };
         if suspended { return w.start_dragging().map_err(|e| e.to_string()); }
         let (start, anchor_x, anchor_y) = {
             let mut s = state.inner.lock().map_err(|e| e.to_string())?;
@@ -527,7 +616,7 @@ pub fn install(app: &tauri::AppHandle) {
                         return;
                     };
                     s.lose_focus();
-                    if s.auto_dock && !s.view.dragging && !s.suspended {
+                    if s.auto_dock && !s.view.dragging && !s.suspended && s.docking_allowed() {
                         if let Ok(w) = window(&app) {
                             if let Err(e) = snap(&w, &mut s, true).and_then(|()| save(&app, &w, &s))
                             {
@@ -572,7 +661,7 @@ fn saved_path(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
     Ok(dir.join("pomodoro-docking.json"))
 }
 fn save(app: &tauri::AppHandle, w: &tauri::WebviewWindow, s: &Inner) -> Result<(), String> {
-    if s.suspended { return Ok(()); }
+    if s.suspended || s.in_break() { return Ok(()); }
     let m = docking_monitor(w, s)?;
     let r = m.work_area();
     let p = w.outer_position().map_err(|e| e.to_string())?;
@@ -750,6 +839,45 @@ mod phase_notice_tests {
         s.update_phase("break".into());
         assert!(s.view.side.is_none());
         assert!(!s.keep_open_until_blur);
+    }
+}
+
+#[cfg(test)]
+mod break_reminder_tests {
+    use super::*;
+    #[test]
+    fn break_and_completed_never_display_a_strip_even_after_blur() {
+        for phase in ["break", "completed"] {
+            for side in [Side::Left, Side::Right] {
+                let mut s = Inner::default();
+                s.auto_dock = true;
+                s.view.side = Some(side);
+                s.update_phase(phase.into());
+                s.lose_focus();
+                assert!(!s.docking_allowed());
+                assert!(s.displayed_view().side.is_none());
+                assert_eq!(s.view.side, Some(side));
+                s.update_phase("focus".into());
+                assert!(s.docking_allowed());
+                assert_eq!(s.displayed_view().side, Some(side));
+            }
+        }
+    }
+    #[test]
+    fn break_moves_from_bottom_to_top_and_grows_within_each_monitor() {
+        assert_eq!(break_frame_scale(0, 2.0, 1920.0, 1080.0), 1.0);
+        assert_eq!(break_frame_scale(2, 2.0, 1920.0, 1080.0), 1.35);
+        assert_eq!(break_frame_scale(3, 2.0, 1920.0, 1080.0), 1.7);
+        for base in [1.0, 2.0, 4.0] {
+            for level in 0..=3 {
+                let scale = break_frame_scale(level, base, 800.0, 600.0);
+                let z = base * scale;
+                let (x, y) = break_origin(-800.0, -600.0, 800.0, 600.0, z, level);
+                assert!(x >= -800.0 && x + 215.0 * z <= 0.0);
+                assert!(y >= -600.0 && y + 187.0 * z <= 0.0);
+                if level > 0 { assert_eq!(y, -576.0); }
+            }
+        }
     }
 }
 

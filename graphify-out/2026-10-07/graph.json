@@ -33399,17 +33399,6 @@
       "norm_label": "release-0.2.5.md"
     },
     {
-      "label": "release-0.2.6.md",
-      "file_type": "document",
-      "source_file": "docs/deployment/release-0.2.6.md",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "docs_deployment_release_0_2_6",
-      "community": 227,
-      "community_name": "release-0.2.6.md",
-      "norm_label": "release-0.2.6.md"
-    },
-    {
       "label": "2026-08-31-sam2-birefnet-cross-platform-commercial-audit.md",
       "file_type": "document",
       "source_file": "docs/research/2026-08-31-sam2-birefnet-cross-platform-commercial-audit.md",

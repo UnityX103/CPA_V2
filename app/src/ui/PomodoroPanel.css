@@ -145,6 +145,19 @@
 .pomo-start-summary dd { margin: 3px 0 0; font-size: 17px; line-height: 1.2; color: var(--text-brand-dark); }
 .pomo-start-summary dd span { margin-left: 2px; font-size: 9px; color: #8F7766; }
 
+/* Rest keeps the complete clock and its explicit skip action on screen. */
+.pomo-rest-content { position: absolute; inset: 14px 29px 11px 14px; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.pomo-rest-title { font-size: 14px; line-height: 20px; color: #3D8A58; }
+.pomo-rest-content .pomo-clock, .pomo-rest-content .pomo-clock > svg { width: 96px; height: 96px; }
+.pomo-rest-content .pomo-clock-time { top: 27px; width: 96px; font-size: 23px; }
+.pomo-rest-content .pomo-clock-sub { top: 53px; width: 96px; font-size: 12px; }
+.pomo-rest-note { font-size: 10px; line-height: 14px; color: #64735E; white-space: nowrap; }
+.pomo-rest-actions { display: flex; justify-content: center; gap: 5px; }
+.pomo-rest-actions .btn { padding: 5px 9px; font-size: 11px; }
+.pomo-panel[data-break-reminder-level="2"] { --panel-bg: #FFF6E8; --panel-stroke: #D99B44; }
+.pomo-panel[data-break-reminder-level="3"] { --panel-bg: #FFF0E9; --panel-stroke: #C65D46; border-width: 2px; }
+.pomo-panel:is([data-break-reminder-level="2"], [data-break-reminder-level="3"]) .pomo-rest-title { color: #AC4C30; }
+
 /* Docking uses the same font and icon artwork as the complete timer. */
 .pomo-header { -webkit-app-region: no-drag; }
 .pomo-pin.is-docking { background: #DCE9D0; color: #647C44; }
@@ -175,7 +188,8 @@
 .pomo-dock-colon { font-family: system-ui, sans-serif; font-size: 17px; line-height: 16px; letter-spacing: 3px; text-indent: 3px; }
 
 .pomo-dock-frame { position: relative; width: 56px; height: 156px; }
-.pomo-dock { position: absolute; left: 0; top: 0; transition: width 180ms cubic-bezier(.2,.8,.2,1); }
+/* Clip the zoomed width animation to its current bounds so WebKit clears old edges. */
+.pomo-dock { position: absolute; left: 0; top: 0; clip-path: inset(0 round 11px); transition: width 180ms cubic-bezier(.2,.8,.2,1); }
 .pomo-dock[data-side="right"] { left: auto; right: 0; }
 /* Never lay text out against the animated panel width. Hide immediately on collapse. */
 .pomo-dock-info { width: 28px; min-width: 28px; max-width: 28px; right: auto; opacity: 0; visibility: hidden; transition: none; }
