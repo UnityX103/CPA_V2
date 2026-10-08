@@ -37,21 +37,12 @@ function snapshot(): BridgeSnapshot {
             },
         },
         presence: {
-            enabled: true,
             inputActivityEnabled: true,
-            cameraDeviceId: 'camera-usb',
-            intervalSeconds: 30,
-            absenceSensitivity: 'relaxed',
-            absenceThresholds: { strict: 2, balanced: 3, relaxed: 6 },
-            workstationRegion: { x: 0.2, y: 0.1, width: 0.5, height: 0.8 },
             restDeskReminderEnabled: true,
             restDeskReminderMode: 'cockroachInvasion',
             inputActivityAvailability: 'ready',
-            platform: 'macos',
-            availability: 'ready',
             confirmedPresence: 'present',
             lastSuccessfulAt: 123,
-            lastError: null,
         },
         network: {
             autoConnect: false,
@@ -88,7 +79,7 @@ function snapshot(): BridgeSnapshot {
 
 beforeEach(() => {
     useSettingsStore.setState({ uiScale: 1, committedUiScale: 1, autostartEnabled: false, dangerousChange: null });
-    usePresenceStore.setState({ enabled: false, availability: 'disabled', confirmedPresence: 'unknown' });
+    usePresenceStore.setState({ inputActivityEnabled: false, inputActivityAvailability: 'disabled', confirmedPresence: 'unknown' });
 });
 
 describe('bridge client', () => {
@@ -118,16 +109,9 @@ describe('bridge client', () => {
             },
         }));
         expect(usePresenceStore.getState()).toEqual(expect.objectContaining({
-            enabled: true,
             inputActivityEnabled: true,
-            cameraDeviceId: 'camera-usb',
-            intervalSeconds: 30,
-            absenceSensitivity: 'relaxed',
-            absenceThresholds: { strict: 2, balanced: 3, relaxed: 6 },
-            workstationRegion: { x: 0.2, y: 0.1, width: 0.5, height: 0.8 },
             restDeskReminderEnabled: true,
             restDeskReminderMode: 'cockroachInvasion',
-            availability: 'ready',
             inputActivityAvailability: 'ready',
             confirmedPresence: 'present',
         }));

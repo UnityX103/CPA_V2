@@ -79,20 +79,13 @@ export function PomodoroPanel({ preferencesReady = true }: { preferencesReady?: 
     const clockState = clockStateOf(state.currentPhase, state.isRunning);
     const startLabel = state.isRunning ? '暂停' : '开始';
     const showSkip = state.isRunning && state.currentPhase !== 'completed';
-    const confirmedPresence = (presence.enabled || presence.inputActivityEnabled)
-        && (presence.inputActivityAvailability === 'ready' || presence.availability === 'ready' || presence.availability === 'checking')
-        && presence.lastSuccessfulAt != null
-        && presence.confirmedPresence !== 'unknown'
-        ? presence.confirmedPresence
-        : null;
-    const cameraAvailable = presence.enabled
-        && (presence.availability === 'ready' || presence.availability === 'checking');
     const inputAvailable = presence.inputActivityEnabled && presence.inputActivityAvailability === 'ready';
-    const automaticPause = state.currentPhase === 'focus'
-        ? (cameraAvailable || inputAvailable) && state.presenceAutomationState === 'focusPaused'
-        : (cameraAvailable || inputAvailable)
-            && (state.presenceAutomationState === 'breakPaused'
-                || (state.presenceAutomationState === 'breakResumeEligible' && confirmedPresence === 'present'));
+    const confirmedPresence = inputAvailable && presence.lastSuccessfulAt != null
+        && presence.confirmedPresence !== 'unknown' ? presence.confirmedPresence : null;
+    const automaticPause = inputAvailable && (state.currentPhase === 'focus'
+        ? state.presenceAutomationState === 'focusPaused'
+        : state.presenceAutomationState === 'breakPaused'
+            || (state.presenceAutomationState === 'breakResumeEligible' && confirmedPresence === 'present'));
     const showPauseOverlay = !isBreak && !state.isRunning && state.currentPhase !== 'completed'
         && (state.presenceAutomationState === 'manualPaused'
             || pausedDuringSession || state.remainingSeconds < totalSeconds || automaticPause);
@@ -168,7 +161,7 @@ export function PomodoroPanel({ preferencesReady = true }: { preferencesReady?: 
             style={isBreak ? { zoom: docking.restScale } : undefined}
             onPointerDown={onPanelPointerDown}
         >
-            {isBreak ? <div className="pomo-rest-content" data-no-window-drag>
+            {isBreak ? <div className="pomo-rest-content">
                 <div className="pomo-rest-title" role="status" data-dock-compatible="true">
                     {automaticPause ? reminderLevel >= 2 ? '该离开工位休息了' : '请先离开工位' : '休息时间'}
                 </div>
@@ -176,7 +169,7 @@ export function PomodoroPanel({ preferencesReady = true }: { preferencesReady?: 
                     sub={state.isRunning ? '休息中' : automaticPause || pausedDuringSession || state.remainingSeconds < totalSeconds
                         ? '休息已暂停' : '待休息'} clockState={clockState} />
                 <div className="pomo-rest-note">
-                    {automaticPause ? '放下键鼠，离开后继续计时' : '站起来，让眼睛和身体歇一会儿'}
+                    {automaticPause ? '停止操作键鼠后继续计时' : '站起来，让眼睛和身体歇一会儿'}
                 </div>
                 <div className="pomo-rest-actions">
                     {!state.isRunning && !automaticPause && <button className="btn btn-primary" onClick={onStartClick}>
@@ -278,7 +271,7 @@ function ConfirmedPresenceStatus({
             className={`pomo-presence-status is-${presence}`}
             role="status"
             data-dock-compatible="true"
-            aria-label={present ? '检测到人，在工位' : '未检测到人，已离开'}
+            aria-label={present ? '检测到键鼠活动' : '键鼠已闲置'}
             data-confirmed-presence={presence}
         >
             <svg

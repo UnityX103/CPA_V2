@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createPomodoroStore } from './pomodoro';
 import { createPomodoroBroadcast } from './pomodoroBroadcast';
-import { applyPresenceSample, usePresenceStore } from './presence';
+import { applyInputActivitySample, usePresenceStore } from './presence';
 import type { PomodoroRuleEvent } from './pomodoroEvents';
 
-beforeEach(() => usePresenceStore.setState({ enabled: true, confirmedPresence: 'absent' }));
+beforeEach(() => usePresenceStore.setState({ inputActivityEnabled: true, confirmedPresence: 'absent' }));
 function fixture() {
     const store = createPomodoroStore({ isSettingsWindow: false });
     store.getState().applySettings(2, 2, 2, true, false);
@@ -33,7 +33,7 @@ describe('public Pomodoro rule events', () => {
     });
 
     it('fires workstation presence when starting while already at the desk', () => {
-        usePresenceStore.setState({ enabled: true, confirmedPresence: 'present' });
+        usePresenceStore.setState({ inputActivityEnabled: true, confirmedPresence: 'present' });
         const { store, signals, stop } = fixture();
         expect(signals).toEqual([]);
         store.getState().start();
@@ -64,14 +64,14 @@ describe('public Pomodoro rule events', () => {
         store.getState().tick(2);
         store.getState().start();
         store.getState().pause();
-        applyPresenceSample(usePresenceStore, store, { observation: 'present', availability: 'ready', errorCode: null }, 0);
+        applyInputActivitySample(usePresenceStore, store, 0, 0);
         expect(signals).not.toContain('break.present');
 
         store.getState().start();
-        applyPresenceSample(usePresenceStore, store, { observation: 'present', availability: 'ready', errorCode: null }, 1);
+        applyInputActivitySample(usePresenceStore, store, 0, 1);
         expect(signals.filter((signal) => signal === 'break.present')).toHaveLength(1);
         store.getState().start(); // Explicitly continuing a presence-owned pause overrides automation.
-        applyPresenceSample(usePresenceStore, store, { observation: 'present', availability: 'ready', errorCode: null }, 2);
+        applyInputActivitySample(usePresenceStore, store, 0, 2);
         expect(store.getState().isRunning).toBe(true);
         expect(signals.filter((signal) => signal === 'break.present')).toHaveLength(1);
         stop();
@@ -80,12 +80,12 @@ describe('public Pomodoro rule events', () => {
     it('does not replay events from snapshots or disabled/unknown presence', () => {
         const { store, signals, stop } = fixture();
         expect(signals).toEqual([]);
-        usePresenceStore.setState({ enabled: false, confirmedPresence: 'present' });
+        usePresenceStore.setState({ inputActivityEnabled: false, confirmedPresence: 'present' });
         store.getState().start();
         usePresenceStore.setState({ confirmedPresence: 'unknown' });
         expect(signals).toEqual(['focus.started']);
         stop();
-        usePresenceStore.setState({ enabled: true, confirmedPresence: 'present' });
+        usePresenceStore.setState({ inputActivityEnabled: true, confirmedPresence: 'present' });
         expect(signals).toEqual(['focus.started']);
     });
 });

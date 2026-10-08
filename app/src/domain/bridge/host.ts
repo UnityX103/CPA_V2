@@ -8,10 +8,7 @@ import { useBindingKeyStore, type BindingKeyEntry } from '../bindingKey';
 import { useActiveAppStore, type ActiveAppInfo } from '../activeApp';
 import { useAppUpdateStore, type AppUpdateSnapshot } from '../appUpdate';
 import { REMOTE_PLAYER_WINDOW_LABELS } from '../remotePlayerWindowLabels';
-import {
-    usePresenceStore,
-    type PresenceAbsenceSensitivity,
-} from '../presence';
+import { usePresenceStore } from '../presence';
 import { clonePomodoroEndSounds, type PomodoroEndSounds } from '../pomodoroSounds';
 import {
     BRIDGE_VERSION,
@@ -116,21 +113,12 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
             endSounds: clonePomodoroEndSounds(p.endSounds),
         },
         presence: {
-            enabled: presence.enabled,
             inputActivityEnabled: presence.inputActivityEnabled,
             inputActivityAvailability: presence.inputActivityAvailability,
-            cameraDeviceId: presence.cameraDeviceId,
-            intervalSeconds: presence.intervalSeconds,
-            absenceSensitivity: presence.absenceSensitivity,
-            absenceThresholds: { ...presence.absenceThresholds },
-            workstationRegion: presence.workstationRegion ? { ...presence.workstationRegion } : null,
             restDeskReminderEnabled: presence.restDeskReminderEnabled,
             restDeskReminderMode: presence.restDeskReminderMode,
-            platform: presence.platform,
-            availability: presence.availability,
             confirmedPresence: presence.confirmedPresence,
             lastSuccessfulAt: presence.lastSuccessfulAt,
-            lastError: presence.lastError,
         },
         network: {
             autoConnect: n.autoConnect,
@@ -202,9 +190,6 @@ export async function applyDispatch(payload: DispatchPayload): Promise<void> {
             const presence = usePresenceStore.getState();
             switch (payload.action) {
                 case 'applySettings': await presence.applySettings(...payload.args); return;
-                case 'requestAccess': await presence.requestAccess(); return;
-                case 'retry': await presence.retry(); return;
-                case 'openPrivacySettings': await presence.openPrivacySettings(); return;
             }
             return;
         }
@@ -348,42 +333,9 @@ export function pomoSig(s: {
     ]);
 }
 
-export function presenceSig(s: {
-    enabled: boolean;
-    inputActivityEnabled: boolean;
-    inputActivityAvailability: string;
-    cameraDeviceId: string | null;
-    intervalSeconds: number;
-    absenceSensitivity: PresenceAbsenceSensitivity;
-    absenceThresholds: import('../presence').PresenceAbsenceThresholds;
-    workstationRegion: import('../presence').WorkstationRegion | null;
-    restDeskReminderEnabled: boolean;
-    restDeskReminderMode: string;
-    platform: string;
-    availability: string;
-    confirmedPresence: string;
-    lastSuccessfulAt: number | null;
-    lastError: string | null;
-}): string {
-    return JSON.stringify([
-        s.enabled,
-        s.inputActivityEnabled,
-        s.inputActivityAvailability,
-        s.cameraDeviceId,
-        s.intervalSeconds,
-        s.absenceSensitivity,
-        s.absenceThresholds.strict,
-        s.absenceThresholds.balanced,
-        s.absenceThresholds.relaxed,
-        s.workstationRegion,
-        s.restDeskReminderEnabled,
-        s.restDeskReminderMode,
-        s.platform,
-        s.availability,
-        s.confirmedPresence,
-        s.lastSuccessfulAt,
-        s.lastError,
-    ]);
+export function presenceSig(s: BridgeSnapshot['presence']): string {
+    return JSON.stringify([s.inputActivityEnabled, s.inputActivityAvailability,
+        s.restDeskReminderEnabled, s.restDeskReminderMode, s.confirmedPresence, s.lastSuccessfulAt]);
 }
 
 export function networkSig(s: {

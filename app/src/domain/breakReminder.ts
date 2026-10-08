@@ -31,16 +31,13 @@ export function startBreakReminderMonitor({ presence, pomodoro, onLevelChange, n
             && state.inputSampleAt !== null && time - state.inputSampleAt <= 10_000
             && state.inputIdleMs !== null
             && state.inputIdleMs + time - state.inputSampleAt < INPUT_ACTIVITY_RECENT_MS;
-        const cameraFresh = state.enabled && state.cameraPresence === 'present'
-            && state.cameraSampleAt !== null
-            && time - state.cameraSampleAt <= state.intervalSeconds * 1000 + 12_000;
         const pausedForPresence = pomo.presenceAutomationState === 'breakPaused'
             || pomo.presenceAutomationState === 'breakResumeEligible';
-        if (!scope || !pausedForPresence || state.confirmedPresence !== 'present' || (!inputFresh && !cameraFresh)) {
+        if (!scope || !pausedForPresence || state.confirmedPresence !== 'present' || !inputFresh) {
             presentSince = previousSampleAt = null;
             return;
         }
-        const freshnessWindow = cameraFresh ? state.intervalSeconds * 1000 + 12_000 : 10_000;
+        const freshnessWindow = 10_000;
         if (previousSampleAt === null || time - previousSampleAt > freshnessWindow) presentSince = time;
         previousSampleAt = time;
         const nextLevel = Math.min(3, Math.floor((time - presentSince!) / 30_000)) as BreakReminderLevel;

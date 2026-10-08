@@ -8,8 +8,6 @@ import type { AppUpdateSnapshot } from '../appUpdate';
 import type { CloudAccountData } from '../cloudAccountData';
 import type {
     ConfirmedPresence,
-    PresenceAvailability,
-    PresencePlatform,
     PresencePreferences,
 } from '../presence';
 
@@ -44,11 +42,8 @@ export interface BridgeSnapshot {
     };
     presence: PresencePreferences & {
         inputActivityAvailability: import('../presence').InputActivityAvailability;
-        platform: PresencePlatform;
-        availability: PresenceAvailability;
         confirmedPresence: ConfirmedPresence;
         lastSuccessfulAt: number | null;
-        lastError: string | null;
     };
     network: {
         autoConnect: boolean;
@@ -90,7 +85,6 @@ export type DispatchPayload =
     | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'applyEndActionSettings'; args: [PomodoroEndActionMode, PomodoroEndActionVideo, boolean?] }
     | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'applyEndSoundSettings'; args: [PomodoroEndSounds] }
     | { v: typeof BRIDGE_VERSION; store: 'presence';   action: 'applySettings'; args: [PresencePreferences] }
-    | { v: typeof BRIDGE_VERSION; store: 'presence';   action: 'requestAccess' | 'retry' | 'openPrivacySettings'; args: [] }
     | { v: typeof BRIDGE_VERSION; store: 'network';    action: 'createRoom' | 'joinRoom'; args: [string] }
     | { v: typeof BRIDGE_VERSION; store: 'network';    action: 'leaveRoom'; args: [] }
     | { v: typeof BRIDGE_VERSION; store: 'network';    action: 'setAutoConnect'; args: [boolean] }

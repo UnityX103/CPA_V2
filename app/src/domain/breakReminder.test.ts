@@ -72,17 +72,12 @@ describe('rest reminder escalation', () => {
         f.stop();
     });
 
-    it('supports camera-only detection and stops reacting after cleanup', () => {
+    it('stops reacting after cleanup', () => {
         const f = fixture();
-        f.presence.setState({ inputActivityEnabled: false, enabled: true, intervalSeconds: 10 });
-        f.pomodoro.getState().pauseBreakFromPresence();
-        for (let time = 0; time <= 30_000; time += 5000) {
-            f.sample(time, 60_000);
-            f.presence.setState({ cameraPresence: 'present', cameraSampleAt: time, confirmedPresence: 'present' });
-        }
+        for (let time = 0; time <= 30_000; time += 5000) f.sample(time);
         expect(f.levels).toEqual([0, 1]);
-        f.stop();
-        f.pomodoro.getState().skip();
+        f.stop(); f.pomodoro.getState().skip();
         expect(f.levels).toEqual([0, 1]);
     });
+
 });

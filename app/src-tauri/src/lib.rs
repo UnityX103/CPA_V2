@@ -6,7 +6,6 @@ mod cockroach_module;
 mod extension_packs;
 mod key_counter;
 mod input_activity;
-mod presence_detection;
 mod scaled_window;
 mod pomodoro_docking;
 mod sound_files;
@@ -442,11 +441,6 @@ async fn resize_scaled_window(
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    if presence_detection::run_sample_helper_if_requested() {
-        return;
-    }
-    presence_detection::prepare_for_run();
-
     let active_app_stop = Arc::new(AtomicBool::new(false));
     let active_app_stop_for_setup = active_app_stop.clone();
     let active_app_stop_for_exit = active_app_stop.clone();
@@ -646,13 +640,6 @@ pub fn run() {
             accessibility::restart_key_counter_listener,
             accessibility::request_accessibility_permission,
             input_activity::sample_input_activity,
-            presence_detection::camera_presence_status,
-            presence_detection::list_camera_devices,
-            presence_detection::request_camera_presence_access,
-            presence_detection::open_camera_privacy_settings,
-            presence_detection::stop_camera_presence_stream,
-            presence_detection::sample_camera_presence,
-            presence_detection::capture_camera_calibration_frame,
             audio::list_audio_output_devices,
             audio::play_sound,
             sound_files::validate_custom_sound_path,
@@ -684,7 +671,6 @@ pub fn run() {
             _handle.state::<pomodoro_docking::Docking>().stop.store(true, Ordering::Relaxed);
             cockroach_module::stop_for_exit(_handle);
             video_editor_module::stop_for_exit(_handle);
-            presence_detection::stop_for_exit();
             active_app_stop_for_exit.store(true, Ordering::Relaxed);
             accessibility_stop_for_exit.store(true, Ordering::Relaxed);
             listener_handle_for_exit.stop();

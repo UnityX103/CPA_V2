@@ -85,19 +85,10 @@ beforeEach(() => {
         },
     });
     usePresenceStore.setState({
-        enabled: false,
         inputActivityEnabled: false,
         inputActivityAvailability: 'disabled',
-        cameraDeviceId: null,
-        intervalSeconds: 60,
-        absenceSensitivity: 'strict',
-        platform: 'macos',
-        availability: 'disabled',
         confirmedPresence: 'unknown',
         lastSuccessfulAt: null,
-        lastError: null,
-        inFlight: false,
-        generation: 0,
         notice: null,
     });
     useExtensionPackStore.setState({
@@ -402,47 +393,20 @@ describe('SettingsPanel', () => {
         expect(screen.getByText('100%')).toBeTruthy();
     });
 
-    it('renders the local camera automation controls', () => {
+
+
+    it('renders input-only controls without querying the camera', async () => {
         render(<SettingsPanel />);
-
-        const toggle = screen.getByRole('button', { name: '摄像头自动控制' });
-        const toggleRow = toggle.closest('.pomo-row');
-        const authorizationControl = screen.getByRole('group', { name: '摄像头授权状态' });
-
-        expect(toggle.getAttribute('aria-pressed')).toBe('false');
-        expect(toggleRow?.nextElementSibling).toBe(authorizationControl);
-        expect(screen.getByText('检测间隔')).toBeTruthy();
-        const threshold = screen.getByRole('combobox', { name: '离席判定阈值' }) as HTMLSelectElement;
-        expect(threshold.value).toBe('strict');
-        expect(screen.getByRole('option', { name: '关闭防抖' })).toBeTruthy();
-        expect(screen.getByRole('option', { name: '严谨' })).toBeTruthy();
-        expect(screen.getByRole('option', { name: '中等' })).toBeTruthy();
-        expect(screen.getByRole('option', { name: '宽松' })).toBeTruthy();
-        expect(screen.getByText('摄像头授权')).toBeTruthy();
-        expect(screen.getByText('未启用')).toBeTruthy();
-        expect(screen.getByText('工位状态')).toBeTruthy();
+        expect(screen.getByRole('button', { name: '允许检测键盘和鼠标活动' })).toBeTruthy();
+        for (const label of ['摄像头自动控制', '校准区域']) {
+            expect(screen.queryByRole('button', { name: label })).toBeNull();
+        }
+        expect(screen.queryByRole('group', { name: '摄像头授权状态' })).toBeNull();
         expect(screen.queryByRole('combobox', { name: '目标摄像头' })).toBeNull();
-    });
-
-    it('selects and applies a target camera only after camera automation is enabled', async () => {
-        render(<SettingsPanel />);
-
-        expect(screen.queryByRole('combobox', { name: '目标摄像头' })).toBeNull();
-        fireEvent.click(screen.getByRole('button', { name: '摄像头自动控制' }));
-
-        const camera = await screen.findByRole('combobox', { name: '目标摄像头' });
-        expect(screen.getByRole('option', { name: '自动选择摄像头' })).toBeTruthy();
-        expect(screen.getByRole('option', { name: 'FaceTime HD Camera（系统默认）' })).toBeTruthy();
-        expect(screen.getByRole('option', { name: 'USB Camera' })).toBeTruthy();
-        fireEvent.change(camera, { target: { value: 'camera-usb' } });
-        fireEvent.click(screen.getByRole('button', { name: '应用' }));
-
-        await vi.waitFor(() => {
-            expect(usePresenceStore.getState()).toEqual(expect.objectContaining({
-                enabled: true,
-                cameraDeviceId: 'camera-usb',
-            }));
-        });
+        expect(screen.queryByRole('combobox', { name: '离席判定阈值' })).toBeNull();
+        expect(screen.queryByRole('spinbutton', { name: '检测间隔' })).toBeNull();
+        await act(async () => {});
+        expect(invoke.mock.calls.some(([command]) => String(command).includes('camera'))).toBe(false);
     });
 
     it('labels automatic focus-end pinning clearly', () => {
@@ -607,81 +571,8 @@ describe('SettingsPanel', () => {
         expect((screen.getByRole('button', { name: '选择自定义视频' }) as HTMLButtonElement).disabled).toBe(false);
     });
 
-    it('applies camera automation settings through the existing apply flow', async () => {
-        render(<SettingsPanel />);
 
-        fireEvent.click(screen.getByRole('button', { name: '摄像头自动控制' }));
-        const interval = screen.getByRole('spinbutton', { name: '检测间隔' });
-        expect(interval.getAttribute('min')).toBe('5');
-        fireEvent.change(interval, { target: { value: '5' } });
-        fireEvent.change(screen.getByRole('combobox', { name: '离席判定阈值' }), {
-            target: { value: 'balanced' },
-        });
-        const count = screen.getByRole('spinbutton', { name: '连续离席次数' });
-        const thresholdCard = screen.getByRole('combobox', { name: '离席判定阈值' }).closest('.card');
-        expect(thresholdCard?.contains(count)).toBe(true);
-        expect(thresholdCard?.contains(interval)).toBe(false);
-        expect((count as HTMLInputElement).value).toBe('3');
-        fireEvent.change(count, { target: { value: '5' } });
-        fireEvent.change(screen.getByRole('combobox', { name: '离席判定阈值' }), {
-            target: { value: 'strict' },
-        });
-        expect((screen.getByRole('spinbutton', { name: '连续离席次数' }) as HTMLInputElement).value).toBe('2');
-        fireEvent.change(screen.getByRole('combobox', { name: '离席判定阈值' }), {
-            target: { value: 'balanced' },
-        });
-        expect((screen.getByRole('spinbutton', { name: '连续离席次数' }) as HTMLInputElement).value).toBe('5');
-        fireEvent.click(screen.getByRole('button', { name: '应用' }));
 
-        await vi.waitFor(() => {
-            expect(usePresenceStore.getState()).toEqual(expect.objectContaining({
-                enabled: true,
-                intervalSeconds: 5,
-                absenceSensitivity: 'balanced',
-                absenceThresholds: { strict: 2, balanced: 5, relaxed: 6 },
-            }));
-        });
-    });
-
-    it('keeps the no-debounce preset fixed at one absence without a count input', () => {
-        render(<SettingsPanel />);
-        fireEvent.change(screen.getByRole('combobox', { name: '离席判定阈值' }), {
-            target: { value: 'off' },
-        });
-        expect(screen.queryByRole('spinbutton', { name: '连续离席次数' })).toBeNull();
-    });
-
-    it('calibrates the seat area locally and clears it when the camera changes', async () => {
-        invoke.mockImplementation((command: string) => command === 'capture_camera_calibration_frame'
-            ? Promise.resolve('data:image/jpeg;base64,ZmFrZQ==')
-            : command === 'list_camera_devices'
-                ? Promise.resolve([{ id: 'camera-usb', name: 'USB Camera', isDefault: false }])
-                : Promise.resolve(undefined));
-        render(<SettingsPanel />);
-        fireEvent.click(screen.getByRole('button', { name: '摄像头自动控制' }));
-        fireEvent.click(screen.getByRole('button', { name: '校准区域' }));
-        const frame = await screen.findByRole('img', { name: '摄像头校准画面' });
-        Object.defineProperty(frame, 'getBoundingClientRect', {
-            value: () => ({ left: 0, top: 0, width: 400, height: 300 }),
-        });
-        Object.defineProperty(frame, 'setPointerCapture', { value: () => {} });
-        Object.defineProperty(frame, 'hasPointerCapture', { value: () => false });
-        fireEvent.pointerDown(frame, { pointerId: 1, clientX: 80, clientY: 30 });
-        fireEvent.pointerUp(frame, { pointerId: 1, clientX: 280, clientY: 270 });
-        fireEvent.click(screen.getByRole('button', { name: '应用区域' }));
-        expect(screen.queryByRole('dialog', { name: '校准工位区域' })).toBeNull();
-        expect(screen.getByText('已校准')).toBeTruthy();
-        fireEvent.click(screen.getByRole('button', { name: '应用' }));
-        await vi.waitFor(() => expect(usePresenceStore.getState().workstationRegion).toEqual({
-            x: 0.2, y: 0.1, width: 0.5, height: 0.8,
-        }));
-        expect(invoke).toHaveBeenCalledWith('capture_camera_calibration_frame', { cameraDeviceId: null });
-        expect(screen.queryByRole('img', { name: '摄像头校准画面' })).toBeNull();
-        fireEvent.change(await screen.findByRole('combobox', { name: '目标摄像头' }), {
-            target: { value: 'camera-usb' },
-        });
-        expect(screen.getByText('整个画面')).toBeTruthy();
-    });
 
     it('reveals the rest-at-desk reminder and its method only after their dependencies are enabled', async () => {
         useExtensionPackStore.setState((state) => ({
@@ -696,7 +587,7 @@ describe('SettingsPanel', () => {
         expect(screen.queryByRole('button', { name: '休息未离开工位时的提醒' })).toBeNull();
         expect(screen.queryByRole('combobox', { name: '提醒方式' })).toBeNull();
 
-        fireEvent.click(screen.getByRole('button', { name: '摄像头自动控制' }));
+        fireEvent.click(screen.getByRole('button', { name: '允许检测键盘和鼠标活动' }));
         const reminder = screen.getByRole('button', { name: '休息未离开工位时的提醒' });
         expect(reminder.getAttribute('aria-pressed')).toBe('false');
         expect(screen.queryByRole('combobox', { name: '提醒方式' })).toBeNull();
@@ -720,7 +611,7 @@ describe('SettingsPanel', () => {
 
 
 describe('keyboard and mouse activity consent', () => {
-    it('requires Apply, persists independently of the camera, and supports revocation', async () => {
+    it('requires Apply and supports revocation', async () => {
         render(<SettingsPanel />);
         const toggle = screen.getByRole('button', { name: '允许检测键盘和鼠标活动' });
         expect(toggle.getAttribute('aria-pressed')).toBe('false');
@@ -728,7 +619,7 @@ describe('keyboard and mouse activity consent', () => {
         expect(usePresenceStore.getState().inputActivityEnabled).toBe(false);
         await act(async () => { fireEvent.click(screen.getByRole('button', { name: '应用' })); });
         expect(usePresenceStore.getState().inputActivityEnabled).toBe(true);
-        expect(usePresenceStore.getState().enabled).toBe(false);
+        expect(usePresenceStore.getState()).not.toHaveProperty('enabled');
         expect(invoke.mock.calls.some(([command]) => command === 'sample_input_activity')).toBe(false);
         fireEvent.click(toggle);
         await act(async () => { fireEvent.click(screen.getByRole('button', { name: '应用' })); });

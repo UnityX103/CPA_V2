@@ -8,7 +8,7 @@ describe('event-driven extension runtime', () => {
     it('uses the feature manifest policy to react to the public Pomodoro contract', () => {
         useSettingsStore.setState({ breakPetMode: 'cockroachInvasion' });
         usePresenceStore.setState({
-            enabled: true,
+            inputActivityEnabled: true,
             restDeskReminderEnabled: true,
             restDeskReminderMode: 'cockroachInvasion',
             confirmedPresence: 'present',

@@ -30,16 +30,10 @@ beforeEach(() => {
         playVideoOnBreakEnd: false,
     });
     usePresenceStore.setState({
-        enabled: false,
-        intervalSeconds: 60,
-        absenceSensitivity: 'strict',
         restDeskReminderEnabled: false,
         restDeskReminderMode: 'cockroachInvasion',
-        platform: 'macos',
-        availability: 'disabled',
         confirmedPresence: 'unknown',
         lastSuccessfulAt: null,
-        lastError: null,
     });
 });
 
@@ -60,12 +54,8 @@ describe('bridge host', () => {
 
         expect(snapshot.pomodoro).toEqual(expect.objectContaining({ endActionMode: 'topWindow' }));
         expect(snapshot.presence).toEqual(expect.objectContaining({
-            enabled: false,
-            intervalSeconds: 60,
-            absenceSensitivity: 'strict',
             restDeskReminderEnabled: false,
             restDeskReminderMode: 'cockroachInvasion',
-            availability: 'disabled',
         }));
     });
 
@@ -99,26 +89,14 @@ describe('bridge host', () => {
             store: 'presence',
             action: 'applySettings',
             args: [{
-                enabled: true,
                 inputActivityEnabled: false,
-                cameraDeviceId: 'camera-usb',
-                intervalSeconds: 30,
-                absenceSensitivity: 'balanced',
-                absenceThresholds: { strict: 2, balanced: 4, relaxed: 6 },
-                workstationRegion: { x: 0.2, y: 0.1, width: 0.5, height: 0.8 },
                 restDeskReminderEnabled: true,
                 restDeskReminderMode: 'cockroachInvasion',
             }],
         });
 
         expect(applySettings).toHaveBeenCalledWith({
-            enabled: true,
             inputActivityEnabled: false,
-            cameraDeviceId: 'camera-usb',
-            intervalSeconds: 30,
-            absenceSensitivity: 'balanced',
-            absenceThresholds: { strict: 2, balanced: 4, relaxed: 6 },
-            workstationRegion: { x: 0.2, y: 0.1, width: 0.5, height: 0.8 },
             restDeskReminderEnabled: true,
             restDeskReminderMode: 'cockroachInvasion',
         });
@@ -151,12 +129,10 @@ describe('bridge host', () => {
             ...usePresenceStore.getState(), inputActivityAvailability: 'error',
         }));
         expect(presenceSig(usePresenceStore.getState())).not.toBe(presenceSig({
-            ...usePresenceStore.getState(),
-            availability: 'ready',
+            ...usePresenceStore.getState(), confirmedPresence: 'present',
         }));
         expect(presenceSig(usePresenceStore.getState())).not.toBe(presenceSig({
-            ...usePresenceStore.getState(),
-            absenceSensitivity: 'relaxed',
+            ...usePresenceStore.getState(), lastSuccessfulAt: 1000,
         }));
         expect(presenceSig(usePresenceStore.getState())).not.toBe(presenceSig({
             ...usePresenceStore.getState(),

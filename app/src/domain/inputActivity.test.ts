@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPomodoroStore } from './pomodoro';
-import { applyCombinedPresence, applyInputActivitySample, applyPresenceSample, createPresenceStore } from './presence';
+import { applyCombinedPresence, applyInputActivitySample, createPresenceStore } from './presence';
 import { createPomodoroBroadcast } from './pomodoroBroadcast';
 import { startInputActivityMonitor } from './inputActivity';
 
@@ -9,27 +9,16 @@ vi.mock('./presencePersistence', async (original) => ({
     savePresencePreferences: vi.fn(async () => {}),
 }));
 
-function fixture(camera = false) {
+function fixture() {
     const store = createPresenceStore({ isSettingsWindow: false });
     const pomodoro = createPomodoroStore({ isSettingsWindow: false });
-    store.setState({ inputActivityEnabled: true, enabled: camera, absenceSensitivity: 'strict' });
+    store.setState({ inputActivityEnabled: true });
     pomodoro.setState({ currentPhase: 'break', isRunning: true, remainingSeconds: 300 });
     const input = (idleMs: number | null, time = 0) => applyInputActivitySample(store, pomodoro, idleMs, time);
-    const cameraSample = (observation: 'present' | 'absent' | 'unknown', time = 0) =>
-        applyPresenceSample(store, pomodoro, { observation, availability: observation === 'unknown' ? 'error' : 'ready', errorCode: null }, time);
-    return { store, pomodoro, input, cameraSample };
+    return { store, pomodoro, input };
 }
 
-describe('input and camera evidence', () => {
-    it('rest recovery resumes after one empty camera sample without waiting for old input history to expire', () => {
-        const f = fixture(true);
-        f.input(0, 0);
-        f.cameraSample('present', 0);
-        expect(f.pomodoro.getState().presenceAutomationState).toBe('breakPaused');
-        f.input(10_000, 10_000);
-        f.cameraSample('absent', 10_000);
-        expect(f.pomodoro.getState()).toMatchObject({ isRunning: true, remainingSeconds: 300, presenceAutomationState: 'none' });
-    });
+describe('keyboard and mouse evidence', () => {
 
     it('rest recovery resumes input-only breaks on the first idle poll after five seconds', () => {
         const f = fixture();
@@ -39,7 +28,7 @@ describe('input and camera evidence', () => {
         expect(f.pomodoro.getState().isRunning).toBe(true);
     });
 
-    it('works with camera disabled and emits one break.present signal per automatic pause', () => {
+    it('emits one break.present signal per automatic pause', () => {
         const f = fixture();
         const events: string[] = [];
         const broadcast = createPomodoroBroadcast(f.pomodoro, () => 0, f.store);
@@ -48,7 +37,6 @@ describe('input and camera evidence', () => {
         f.input(0);
         f.input(0, 5000);
         expect(f.pomodoro.getState().isRunning).toBe(false);
-        expect(f.store.getState().availability).toBe('disabled');
         f.input(30_000, 35_000);
         expect(f.pomodoro.getState().isRunning).toBe(true);
         f.input(0, 40_000);
@@ -56,56 +44,19 @@ describe('input and camera evidence', () => {
         stop();
     });
 
-    it('requires both enabled sources to confirm absence and counts only camera samples', () => {
-        const f = fixture(true);
-        f.input(0);
-        f.cameraSample('present', 0);
-        f.input(5000, 5000);
-        expect(f.pomodoro.getState().isRunning).toBe(false);
-        f.cameraSample('absent', 5000);
-        expect(f.pomodoro.getState().isRunning).toBe(true);
-        for (let time = 10_000; time <= 30_000; time += 5000) f.input(time, time);
-        expect(f.store.getState().consecutiveAbsentSamples).toBe(1);
-        f.cameraSample('present', 35_000);
-        f.input(60_000, 35_000);
-        expect(f.pomodoro.getState().isRunning).toBe(false);
-    });
 
-    it('keeps rest paused while input continues even after the camera detects an empty workstation', () => {
-        const f = fixture(true);
+    it('keeps rest paused during continuous input, resuming after the first idle poll', () => {
+        const f = fixture();
         f.input(0);
-        f.cameraSample('present', 0);
         for (let time = 5000; time <= 60_000; time += 5000) {
             f.input(100, time);
-            f.cameraSample('absent', time);
             expect(f.pomodoro.getState().presenceAutomationState).toBe('breakPaused');
         }
         f.input(5100, 65_000);
         expect(f.pomodoro.getState().isRunning).toBe(true);
     });
 
-    it('input presence wins over camera absence, failure, and late camera results', () => {
-        const f = fixture(true);
-        f.input(0);
-        f.cameraSample('absent', 1000);
-        f.cameraSample('absent', 2000);
-        f.cameraSample('unknown', 3000);
-        expect(f.store.getState().confirmedPresence).toBe('present');
-        expect(f.pomodoro.getState().isRunning).toBe(false);
-        f.input(null, 5000);
-        expect(f.store.getState().confirmedPresence).toBe('unknown');
-        expect(f.pomodoro.getState().isRunning).toBe(false);
-    });
 
-    it('does not trust an expired camera observation or infer absence from an input error', () => {
-        const f = fixture(true);
-        f.cameraSample('present');
-        f.input(60_000, 60_000);
-        expect(f.store.getState().confirmedPresence).toBe('unknown');
-        expect(f.pomodoro.getState().isRunning).toBe(false);
-        f.input(null, 65_000);
-        expect(f.pomodoro.getState().isRunning).toBe(false);
-    });
 
     it('preserves manual pause and manual continue overrides', () => {
         const f = fixture();
@@ -138,34 +89,20 @@ describe('input and camera evidence', () => {
         expect(f.store.getState().confirmedPresence).toBe('unknown');
     });
 
-    it('resumes an automatically paused focus from input even when the camera is unavailable', () => {
-        const f = fixture(true);
+    it('resumes a previously automatically paused focus from input', () => {
+        const f = fixture();
         f.pomodoro.getState().reset();
         f.pomodoro.getState().start();
         f.pomodoro.getState().tick(7);
         f.pomodoro.getState().pauseFocusFromPresence();
-        f.cameraSample('unknown');
 
         f.input(0, 5000);
         expect(f.pomodoro.getState()).toMatchObject({
             isRunning: true, remainingSeconds: 1493, presenceAutomationState: 'none', lastEndEvent: null,
         });
-        expect(f.store.getState().notice?.message).toBe('检测到返回，已继续专注');
+        expect(f.store.getState().notice?.message).toBe('检测到键鼠活动，已继续专注');
     });
 
-    it('input presence overrides camera misses, pending confirmations, and failures during focus', () => {
-        const f = fixture(true);
-        f.pomodoro.getState().reset();
-        f.store.setState({ workstationRegion: { x: 0.1, y: 0.1, width: 0.6, height: 0.8 } });
-        f.input(0);
-        f.cameraSample('absent', 1000);
-        f.cameraSample('absent', 2000);
-        f.cameraSample('present', 3000);
-        f.cameraSample('unknown', 4000);
-        expect(f.pomodoro.getState().isRunning).toBe(true);
-        expect(f.store.getState().confirmedPresence).toBe('present');
-        expect(f.store.getState().consecutiveAbsentSamples).toBe(0);
-    });
 
     it('never resumes a manual focus pause or restarts a completed timer from input', () => {
         const f = fixture();

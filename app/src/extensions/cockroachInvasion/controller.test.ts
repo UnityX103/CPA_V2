@@ -4,7 +4,7 @@ import type { CockroachRule } from '../../domain/cockroachAutomation';
 import type { PomodoroBroadcastEvent } from '../../domain/pomodoroBroadcast';
 import { createPomodoroBroadcast } from '../../domain/pomodoroBroadcast';
 import { createPomodoroStore } from '../../domain/pomodoro';
-import { applyPresenceSample, createPresenceStore } from '../../domain/presence';
+import { applyInputActivitySample, createPresenceStore } from '../../domain/presence';
 
 async function fixture(initial: CockroachRule[]) {
     let listener!: (event: PomodoroBroadcastEvent) => void;
@@ -28,7 +28,7 @@ describe('Cockroach event/action rules', () => {
     it('spawns immediately on every presence-owned break pause, including leaving and returning', async () => {
         const pomodoro = createPomodoroStore({ isSettingsWindow: false });
         const presence = createPresenceStore({ isSettingsWindow: false });
-        presence.setState({ enabled: true, confirmedPresence: 'present', absenceSensitivity: 'off' });
+        presence.setState({ inputActivityEnabled: true, confirmedPresence: 'present' });
         pomodoro.setState({ currentPhase: 'break', remainingSeconds: 30, isRunning: true });
         const broadcast = createPomodoroBroadcast(pomodoro, () => 1234, presence);
         const observed: PomodoroBroadcastEvent[] = [];
@@ -41,8 +41,8 @@ describe('Cockroach event/action rules', () => {
         };
         const stopController = startCockroachModuleController(null, control, broadcast);
         await Promise.resolve(); await Promise.resolve();
-        const sample = (observation: 'present' | 'absent') => applyPresenceSample(
-            presence, pomodoro, { observation, availability: 'ready', errorCode: null }, 1234,
+        const sample = (observation: 'present' | 'absent') => applyInputActivitySample(
+            presence, pomodoro, observation === 'present' ? 0 : 5000, 1234,
         );
         try {
             expect(control.execute).not.toHaveBeenCalled();

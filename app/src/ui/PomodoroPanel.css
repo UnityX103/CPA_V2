@@ -146,6 +146,8 @@
 .pomo-start-summary dd span { margin-left: 2px; font-size: 9px; color: #8F7766; }
 
 /* Rest keeps the complete clock and its explicit skip action on screen. */
+.pomo-panel[data-break-reminder-level] { cursor: grab; }
+.pomo-panel[data-break-reminder-level]:active { cursor: grabbing; }
 .pomo-rest-content { position: absolute; inset: 14px 29px 11px 14px; display: flex; flex-direction: column; align-items: center; gap: 3px; }
 .pomo-rest-title { font-size: 14px; line-height: 20px; color: #3D8A58; }
 .pomo-rest-content .pomo-clock, .pomo-rest-content .pomo-clock > svg { width: 96px; height: 96px; }

@@ -6,9 +6,7 @@ import { render, screen, fireEvent, cleanup, waitFor, act } from '@testing-libra
 import { usePomodoroStore } from '../domain/pomodoro';
 import {
     applyInputActivitySample,
-    applyPresenceSample,
     usePresenceStore,
-    type PresenceAvailability,
 } from '../domain/presence';
 import { PomodoroPanel } from './PomodoroPanel';
 import { hasFullWindowNotice } from './useDockNoticeSuspension';
@@ -48,27 +46,15 @@ function resetPomodoro() {
 
 function resetPresence() {
     usePresenceStore.setState({
-        enabled: false,
         inputActivityEnabled: false,
         inputActivityAvailability: 'disabled',
-        absenceSensitivity: 'strict',
-        availability: 'disabled',
         confirmedPresence: 'unknown',
         lastSuccessfulAt: null,
-        lastError: null,
-        inFlight: false,
-        generation: 0,
     });
 }
 
 function pinCalls() {
     return invokeMock.mock.calls.filter(([cmd]) => cmd === 'set_main_window_pinned');
-}
-
-function deferred<T>() {
-    let resolve!: (value: T) => void;
-    const promise = new Promise<T>((done) => { resolve = done; });
-    return { promise, resolve };
 }
 
 beforeEach(() => {
@@ -89,6 +75,40 @@ afterEach(() => {
 });
 
 describe('PomodoroPanel drag', () => {
+    it.each([true, false])('drags the complete rest content while running=%s, including the clock ring', async (isRunning) => {
+        usePomodoroStore.setState({ currentPhase: 'break', isRunning, remainingSeconds: 300,
+            presenceAutomationState: isRunning ? 'none' : 'breakPaused' });
+        usePresenceStore.setState({ inputActivityEnabled: true, inputActivityAvailability: 'ready' });
+        const { container } = render(<PomodoroPanel />);
+        const selectors = ['.pomo-rest-title', '.pomo-clock-time', '.pomo-clock-sub',
+            '.pomo-clock > svg', '.pomo-clock circle', '.pomo-rest-note', '.pomo-rest-content'];
+        for (const selector of selectors) {
+            await act(async () => { fireEvent.pointerDown(container.querySelector(selector)!, { button: 0 }); });
+        }
+        expect(startDragging).toHaveBeenCalledTimes(selectors.length);
+        expect(usePomodoroStore.getState().currentPhase).toBe('break');
+    });
+
+    it('keeps rest actions clickable and excludes button artwork from window dragging', async () => {
+        usePomodoroStore.setState({ currentPhase: 'break', isRunning: false, remainingSeconds: 300 });
+        render(<PomodoroPanel />);
+        const skip = screen.getByRole('button', { name: '跳过休息' });
+        const start = screen.getByRole('button', { name: '开始休息' });
+        const settings = screen.getByRole('button', { name: '设置' });
+        await act(async () => {
+            fireEvent.pointerDown(skip, { button: 0 });
+            fireEvent.pointerDown(start, { button: 0 });
+            fireEvent.pointerDown(settings.querySelector('svg')!, { button: 0 });
+        });
+        expect(startDragging).not.toHaveBeenCalled();
+        fireEvent.click(settings);
+        expect(invokeMock).toHaveBeenCalledWith('open_settings_window');
+        fireEvent.click(start);
+        expect(usePomodoroStore.getState().isRunning).toBe(true);
+        fireEvent.click(skip);
+        expect(usePomodoroStore.getState().currentPhase).toBe('focus');
+    });
+
     it('panel empty background pointer down triggers native window drag', async () => {
         const { container } = render(<PomodoroPanel />);
         const panel = container.querySelector('.pomo-panel')!;
@@ -139,13 +159,11 @@ describe('PomodoroPanel scale root', () => {
 describe('PomodoroPanel pause overlay', () => {
     it('shows a manual pause before any elapsed time and keeps it paused when presence is confirmed', () => {
         usePomodoroStore.getState().pause();
-        usePresenceStore.setState({ enabled: true, availability: 'ready' });
+        usePresenceStore.setState({ inputActivityEnabled: true, inputActivityAvailability: 'ready' });
         render(<PomodoroPanel />);
 
         expect(screen.getByRole('region', { name: '番茄钟已暂停' })).toBeTruthy();
-        act(() => applyPresenceSample(usePresenceStore, usePomodoroStore, {
-            observation: 'present', availability: 'ready', errorCode: null,
-        }, 0));
+        act(() => applyInputActivitySample(usePresenceStore, usePomodoroStore, 0, 0));
         expect(usePomodoroStore.getState().isRunning).toBe(false);
 
         fireEvent.click(screen.getByRole('button', { name: '恢复' }));
@@ -154,13 +172,11 @@ describe('PomodoroPanel pause overlay', () => {
     });
 
     it('replaces the waiting overlay with a running focus after presence is confirmed', () => {
-        usePresenceStore.setState({ enabled: true, availability: 'ready' });
+        usePresenceStore.setState({ inputActivityEnabled: true, inputActivityAvailability: 'ready' });
         render(<PomodoroPanel />);
         expect(screen.getByRole('region', { name: '番茄钟待开始' })).toBeTruthy();
 
-        act(() => applyPresenceSample(usePresenceStore, usePomodoroStore, {
-            observation: 'present', availability: 'ready', errorCode: null,
-        }, 0));
+        act(() => applyInputActivitySample(usePresenceStore, usePomodoroStore, 0, 0));
 
         expect(screen.queryByRole('region', { name: '番茄钟待开始' })).toBeNull();
         expect(screen.getByRole('button', { name: '暂停' })).toBeTruthy();
@@ -178,7 +194,7 @@ describe('PomodoroPanel pause overlay', () => {
         expect(screen.getByRole('button', { name: '暂停' })).toBeTruthy();
         expect(usePomodoroStore.getState().isRunning).toBe(true);
         expect(invokeMock.mock.calls.some(([command]) => command === 'sample_camera_presence')).toBe(false);
-        expect(screen.getByLabelText('检测到人，在工位')).toBeTruthy();
+        expect(screen.getByLabelText('检测到键鼠活动')).toBeTruthy();
     });
 
     it('pauses immediately, freezes time, and resumes from the central button', () => {
@@ -198,7 +214,7 @@ describe('PomodoroPanel pause overlay', () => {
 
     it.each(['focus'] as const)('simplifies automatic %s pause without changing automatic recovery', (phase) => {
         usePomodoroStore.setState({ currentPhase: phase, isRunning: true, remainingSeconds: phase === 'focus' ? 1500 : 300 });
-        usePresenceStore.setState({ enabled: true, availability: 'ready', confirmedPresence: phase === 'focus' ? 'absent' : 'present', lastSuccessfulAt: 1000 });
+        usePresenceStore.setState({ inputActivityEnabled: true, inputActivityAvailability: 'ready', confirmedPresence: phase === 'focus' ? 'absent' : 'present', lastSuccessfulAt: 1000 });
         render(<PomodoroPanel />);
         act(() => {
             const store = usePomodoroStore.getState();
@@ -214,12 +230,12 @@ describe('PomodoroPanel pause overlay', () => {
         expect(usePomodoroStore.getState().isRunning).toBe(true);
     });
 
-    it('keeps settings and pin available when camera access becomes unavailable during a pause', () => {
+    it('keeps settings and pin available when input sampling fails during a pause', () => {
         usePomodoroStore.setState({ isRunning: true });
-        usePresenceStore.setState({ enabled: true, availability: 'ready' });
+        usePresenceStore.setState({ inputActivityEnabled: true, inputActivityAvailability: 'ready' });
         render(<PomodoroPanel />);
         act(() => usePomodoroStore.getState().pauseFocusFromPresence());
-        act(() => usePresenceStore.setState({ availability: 'permissionDenied' }));
+        act(() => usePresenceStore.setState({ inputActivityAvailability: 'error' }));
         expect(screen.getByRole('button', { name: '恢复' })).toBeTruthy();
         fireEvent.click(screen.getByRole('button', { name: '设置' }));
         expect(invokeMock).toHaveBeenCalledWith('open_settings_window');
@@ -230,6 +246,26 @@ describe('PomodoroPanel pause overlay', () => {
 });
 
 describe('complete rest panel', () => {
+    it('starts the visible rest countdown on the first idle input poll', () => {
+        usePresenceStore.setState({ inputActivityEnabled: true });
+        usePomodoroStore.getState().applySettings(1, 300, 4, true, true);
+        render(<PomodoroPanel />);
+        act(() => {
+            usePomodoroStore.getState().start();
+            usePomodoroStore.getState().tick(1);
+            applyInputActivitySample(usePresenceStore, usePomodoroStore, 0, 1000);
+        });
+        expect(screen.getByText('05:00')).toBeTruthy();
+        expect(screen.getByText('休息已暂停')).toBeTruthy();
+        act(() => {
+            applyInputActivitySample(usePresenceStore, usePomodoroStore, 10_000, 10_000);
+            usePomodoroStore.getState().tick(1);
+        });
+        expect(screen.getByText('04:59')).toBeTruthy();
+        expect(screen.getByText('休息中')).toBeTruthy();
+        expect(screen.getByRole('button', { name: '跳过休息' })).toBeTruthy();
+    });
+
     it('keeps time and skip visible during an automatic pause, and only skip exits the break', async () => {
         localStorage.setItem('pomo-auto-dock', 'true');
         usePomodoroStore.setState({ currentPhase: 'break', isRunning: true, remainingSeconds: 300 });
@@ -260,146 +296,30 @@ describe('complete rest panel', () => {
     });
 });
 
-describe('PomodoroPanel camera presence status', () => {
-    it.each(['present', 'absent'] as const)('does not suspend docking for the persistent %s indicator', async (confirmedPresence) => {
+describe('PomodoroPanel input activity status', () => {
+    it.each(['present', 'absent'] as const)('keeps the %s indicator from suspending docking', async (confirmedPresence) => {
         localStorage.setItem('pomo-auto-dock', 'true');
-        usePresenceStore.setState({
-            enabled: true,
-            availability: 'ready',
-            confirmedPresence,
-            lastSuccessfulAt: 1_000,
-        });
-        const { container } = render(
-            <div className="app-scale-root"><PomodoroPanel /></div>,
-        );
+        usePresenceStore.setState({ inputActivityEnabled: true, inputActivityAvailability: 'ready',
+            confirmedPresence, lastSuccessfulAt: 1000 });
+        const { container } = render(<div className="app-scale-root"><PomodoroPanel /></div>);
         await act(async () => {});
         expect(screen.getByRole('status')).toBeTruthy();
         expect(hasFullWindowNotice(container.querySelector('.app-scale-root')!)).toBe(false);
     });
-
-    it('keeps the present state through one miss and switches away after the default second cycle', () => {
-        usePresenceStore.setState({
-            enabled: true,
-            availability: 'ready',
-            confirmedPresence: 'unknown',
-            lastSuccessfulAt: null,
-        });
-        const { container } = render(<PomodoroPanel />);
-
-        act(() => {
-            applyPresenceSample(usePresenceStore, usePomodoroStore, {
-                observation: 'present',
-                availability: 'ready',
-                errorCode: null,
-            }, 1_000);
-        });
-
-        expect(screen.getByRole('status', { name: '检测到人，在工位' })).toBeTruthy();
-        expect(container.querySelector('.pomo-presence-status.is-present')).toBeTruthy();
-
-        act(() => {
-            applyPresenceSample(usePresenceStore, usePomodoroStore, {
-                observation: 'absent',
-                availability: 'ready',
-                errorCode: null,
-            }, 2_000);
-        });
-
-        expect(screen.getByRole('status', { name: '检测到人，在工位' })).toBeTruthy();
-        expect(container.querySelector('.pomo-presence-status.is-present')).toBeTruthy();
-
-        act(() => {
-            applyPresenceSample(usePresenceStore, usePomodoroStore, {
-                observation: 'absent',
-                availability: 'ready',
-                errorCode: null,
-            }, 3_000);
-        });
-
-        expect(screen.getByRole('status', { name: '未检测到人，已离开' })).toBeTruthy();
-        expect(container.querySelector('.pomo-presence-status.is-absent')).toBeTruthy();
-    });
-
-    it('keeps the last successful state visible while the next sample is checking', () => {
-        usePresenceStore.setState({
-            enabled: true,
-            availability: 'checking',
-            confirmedPresence: 'present',
-            lastSuccessfulAt: 1_000,
-            inFlight: true,
-        });
-
+    it('updates the status and resumes rest after five idle seconds', () => {
+        usePresenceStore.setState({ inputActivityEnabled: true });
+        usePomodoroStore.setState({ currentPhase: 'break', isRunning: true, remainingSeconds: 300 });
         render(<PomodoroPanel />);
-
-        expect(screen.getByRole('status', { name: '检测到人，在工位' })).toBeTruthy();
+        act(() => applyInputActivitySample(usePresenceStore, usePomodoroStore, 0, 1000));
+        expect(screen.getByRole('status', { name: '检测到键鼠活动' })).toBeTruthy();
+        act(() => applyInputActivitySample(usePresenceStore, usePomodoroStore, 5000, 6000));
+        expect(screen.getByRole('status', { name: '键鼠已闲置' })).toBeTruthy();
+        expect(usePomodoroStore.getState().isRunning).toBe(true);
     });
-
-    it.each([
-        ['authorization request', 'request_camera_presence_access', 'requestAccess'],
-        ['camera retry', 'camera_presence_status', 'retry'],
-    ] as const)('hides the previous state immediately during %s', async (_label, command, action) => {
-        const capability = deferred<{
-            platform: 'macos';
-            availability: 'permissionDenied';
-        }>();
-        invokeMock.mockImplementation((invokedCommand: string) => invokedCommand === command
-            ? capability.promise
-            : Promise.resolve(undefined));
-        usePresenceStore.setState({
-            enabled: true,
-            availability: 'ready',
-            confirmedPresence: 'present',
-            lastSuccessfulAt: 1_000,
-        });
-
+    it.each(['disabled', 'waiting', 'error'] as const)('hides past evidence when input is %s', (inputActivityAvailability) => {
+        usePresenceStore.setState({ inputActivityEnabled: true, inputActivityAvailability,
+            confirmedPresence: 'present', lastSuccessfulAt: 1000 });
         render(<PomodoroPanel />);
-        expect(screen.getByRole('status', { name: '检测到人，在工位' })).toBeTruthy();
-
-        let request!: Promise<void>;
-        act(() => {
-            request = Promise.resolve(usePresenceStore.getState()[action]());
-        });
-
-        expect(screen.queryByRole('status')).toBeNull();
-
-        capability.resolve({ platform: 'macos', availability: 'permissionDenied' });
-        await act(async () => { await request; });
-        expect(screen.queryByRole('status')).toBeNull();
-    });
-
-    it.each([
-        ['feature disabled', false, 'disabled'],
-        ['permission required', true, 'permissionRequired'],
-        ['permission denied', true, 'permissionDenied'],
-        ['camera unavailable', true, 'noDevice'],
-        ['camera busy', true, 'busy'],
-        ['camera error', true, 'error'],
-    ] as const)(
-        'hides the icon when %s',
-        (_label, enabled, availability: PresenceAvailability) => {
-            usePresenceStore.setState({
-                enabled,
-                availability,
-                confirmedPresence: 'present',
-                lastSuccessfulAt: 1_000,
-            });
-
-            render(<PomodoroPanel />);
-
-            expect(screen.queryByRole('status')).toBeNull();
-        },
-    );
-
-    it('hides the icon before the first successful observation', () => {
-        usePresenceStore.setState({
-            enabled: true,
-            availability: 'ready',
-            confirmedPresence: 'unknown',
-            lastSuccessfulAt: null,
-        });
-
-        render(<PomodoroPanel />);
-
         expect(screen.queryByRole('status')).toBeNull();
     });
 });

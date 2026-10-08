@@ -446,13 +446,6 @@ pub(crate) fn yield_permission_windows(
 }
 
 #[cfg(target_os = "macos")]
-pub(crate) fn lower_permission_windows_for_camera_prompt(
-    app: &AppHandle,
-) -> Result<PermissionWindowSnapshot, String> {
-    prepare_permission_windows(app, false)
-}
-
-#[cfg(target_os = "macos")]
 pub(crate) fn restore_permission_windows(
     app: &AppHandle,
     snapshot: PermissionWindowSnapshot,
