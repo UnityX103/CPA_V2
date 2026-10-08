@@ -26,7 +26,7 @@ export type {
     WorkstationRegion,
 } from './presencePersistence';
 
-export const INPUT_ACTIVITY_RECENT_MS = 30_000;
+export const INPUT_ACTIVITY_RECENT_MS = 5_000;
 export type InputActivityAvailability = 'disabled' | 'waiting' | 'ready' | 'error';
 
 export type PresencePlatform = 'macos' | 'windows' | 'other';
@@ -317,6 +317,15 @@ export function applyPresenceCapability(
     store.setState((state) => capabilityState(state, capability));
 }
 
+function inputPresence(state: PresenceState, nowMs: number): ConfirmedPresence {
+    if (!state.inputActivityEnabled || state.inputActivityAvailability !== 'ready'
+        || state.inputSampleAt === null || state.inputIdleMs === null) return 'unknown';
+    const elapsedMs = nowMs - state.inputSampleAt;
+    if (elapsedMs < 0 || elapsedMs > 10_000) return 'unknown';
+    return state.inputIdleMs + elapsedMs < INPUT_ACTIVITY_RECENT_MS
+        ? 'present' : 'absent';
+}
+
 // Each source keeps its own evidence; input polls must never count as camera misses.
 export function applyPresenceSample(
     store: PresenceStore,
@@ -325,7 +334,9 @@ export function applyPresenceSample(
     nowMs: number,
 ): void {
     const current = store.getState();
-    const required = presenceAbsencePolicy(current.absenceSensitivity, current.absenceThresholds).requiredAbsentSamples;
+    // Focus debounces missed detections; an empty workstation resumes rest immediately.
+    const required = pomodoro.getState().currentPhase === 'break' ? 1
+        : presenceAbsencePolicy(current.absenceSensitivity, current.absenceThresholds).requiredAbsentSamples;
     const misses = sample.observation === 'absent'
         ? Math.min(current.consecutiveAbsentSamples + 1, required) : 0;
     const presentSamples = sample.observation === 'present'
@@ -347,7 +358,9 @@ export function applyPresenceSample(
             ? { notice: notice('摄像头不可用，摄像头自动控制暂不可用') } : {}),
     });
     applyCombinedPresence(store, pomodoro, nowMs, (!pendingPresent && (sample.observation !== 'absent'
-        || misses >= required)) || (current.inputActivityEnabled && pomodoro.getState().currentPhase === 'break'));
+        || misses >= required)) || (current.inputActivityEnabled
+            && (pomodoro.getState().currentPhase === 'break'
+                || inputPresence(store.getState(), nowMs) === 'present')));
 }
 
 export function applyInputActivitySample(
@@ -369,17 +382,20 @@ export function applyCombinedPresence(store: PresenceStore, pomodoro: PomodoroSt
     const current = store.getState();
     const pomo = pomodoro.getState();
     let observation = current.enabled ? current.cameraPresence : 'unknown';
-    const inputEnabled = current.inputActivityEnabled && pomo.currentPhase === 'break';
+    const inputEnabled = current.inputActivityEnabled
+        && (pomo.currentPhase === 'break' || pomo.currentPhase === 'focus');
     if (inputEnabled) {
         const cameraFresh = current.cameraSampleAt !== null
             && nowMs - current.cameraSampleAt <= current.intervalSeconds * 1000 + SAMPLE_TIMEOUT_MS;
         const camera = current.enabled && cameraFresh ? current.cameraPresence : 'unknown';
-        const inputFresh = current.inputSampleAt !== null && nowMs - current.inputSampleAt <= 10_000;
-        const input = current.inputActivityAvailability === 'ready' && inputFresh && current.inputIdleMs !== null
-            ? (current.inputIdleMs + nowMs - current.inputSampleAt! < INPUT_ACTIVITY_RECENT_MS ? 'present' : 'absent')
-            : 'unknown';
-        observation = camera === 'present' || input === 'present' ? 'present'
-            : input === 'absent' && (!current.enabled || camera === 'absent') ? 'absent' : 'unknown';
+        const input = inputPresence(current, nowMs);
+        if (pomo.currentPhase === 'focus') {
+            // Input can confirm presence; inactivity alone cannot prove the user left.
+            observation = input === 'present' ? 'present' : camera;
+        } else {
+            observation = camera === 'present' || input === 'present' ? 'present'
+                : input === 'absent' && (!current.enabled || camera === 'absent') ? 'absent' : 'unknown';
+        }
     }
     store.setState({
         confirmedPresence: observation,

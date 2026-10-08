@@ -14,6 +14,7 @@ export type PomodoroEndActionSourceKind = 'builtin' | 'custom';
 export type PomodoroPinSource = 'manual' | 'focusEndAuto' | null;
 export type PresenceAutomationState =
     | 'none'
+    | 'manualPaused'
     | 'focusPaused'
     | 'breakPaused'
     | 'focusAutoStartEligible'
@@ -322,7 +323,7 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
             },
             pause: () => set({
                 isRunning: false,
-                presenceAutomationState: 'none',
+                presenceAutomationState: 'manualPaused',
             }),
             skip: () => {
                 const state = get();
@@ -348,7 +349,8 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
                 if (
                     state.currentPhase === 'focus'
                     && !state.isRunning
-                    && state.presenceAutomationState === 'focusAutoStartEligible'
+                    && (state.presenceAutomationState === 'none'
+                        || state.presenceAutomationState === 'focusAutoStartEligible')
                 ) {
                     set({
                         isRunning: true,
@@ -427,8 +429,11 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
             },
             clearPresenceAutomationOwnership: () => {
                 const state = get();
-                if (state.presenceAutomationState === 'none') return;
-                set({ presenceAutomationState: 'none' });
+                if (state.presenceAutomationState === 'none'
+                    || state.presenceAutomationState === 'manualPaused') return;
+                // Disabling detection must keep an owned focus pause stopped.
+                set({ presenceAutomationState: state.presenceAutomationState === 'focusPaused'
+                    ? 'manualPaused' : 'none' });
             },
             togglePin: () => set((s) => {
                 const isPinned = !s.isPinned;
@@ -450,12 +455,16 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
             setAutoPinAfterFocus: (autoPinAfterFocus) => set({ autoPinAfterFocus }),
             setAutoStartOnLaunch: (autoStartOnLaunch) => set({ autoStartOnLaunch }),
             applySettings: (focusSeconds, breakSeconds, totalRounds, resetProgress, autoStartBreak) => {
+                const state = get();
                 set({
                     focusDurationSeconds: focusSeconds,
                     breakDurationSeconds: breakSeconds,
                     totalRounds,
                     autoStartBreak,
-                    presenceAutomationState: 'none',
+                    presenceAutomationState: !resetProgress
+                        && (state.presenceAutomationState === 'manualPaused'
+                            || state.presenceAutomationState === 'focusPaused')
+                        ? 'manualPaused' : 'none',
                 });
                 if (resetProgress) {
                     accumulator = 0;

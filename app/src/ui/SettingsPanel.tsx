@@ -655,7 +655,7 @@ function PomodoroTab({ onApplyStateChange }: {
                         </div>
 
                         <div className="card pomo-row">
-                            <span className="pomo-row-label">摄像头自动控制<SettingsHelp label="摄像头自动控制">通过摄像头判断是否在工位：专注时离席自动暂停，回到工位自动恢复；休息时在工位暂停计时，离席后继续。手动暂停不会自动恢复。开启后点击“应用”生效。</SettingsHelp></span>
+                            <span className="pomo-row-label">摄像头自动控制<SettingsHelp label="摄像头自动控制">通过摄像头判断是否在工位：待开始的专注在确认在场后自动开始；专注时离席自动暂停，回到工位自动恢复；休息时在工位暂停计时，下一次有效检测为空工位就继续剩余休息。若同时开启键鼠检测，还需无输入满 5 秒。手动暂停不会自动恢复。开启后点击“应用”生效。</SettingsHelp></span>
                             <Toggle
                                 checked={presenceEnabled}
                                 onChange={(enabled) => {
@@ -724,14 +724,15 @@ function PomodoroTab({ onApplyStateChange }: {
                                 <span className="pomo-row-label">
                                     允许检测键盘和鼠标活动
                                     <SettingsHelp label="键盘和鼠标活动">
-                                        <p>仅在休息中每 5 秒检查一次。最近 30 秒有键鼠活动视为在工位，不读取或保存按键内容、鼠标位置；无需额外系统输入权限。开启后点击“应用”生效。</p>
-                                        <p>可单独使用；同时开启摄像头时，任一检测到在场都会暂停休息。持续在工位 30 秒后面板弹到顶部，60 秒、90 秒逐级放大。无输入满 30 秒且摄像头确认离场（或未启用）后继续剩余休息。</p>
-                                        <p>休息面板始终完整显示并置顶，只有点击“跳过休息”或完成休息才结束提醒。手动暂停和专注期间不检测。</p>
+                                        <p>专注和休息期间每 5 秒检查一次。最近 5 秒有键鼠活动视为在工位，不读取或保存按键内容、鼠标位置；无需额外系统输入权限。开启后点击“应用”生效。</p>
+                                        <p>关闭摄像头也可使用：有键鼠活动时自动开始待开始的专注，或恢复因离席自动暂停的专注。专注时仅无输入不会自动暂停；同时开启摄像头时，键鼠活动也能确认在场。</p>
+                                        <p>可单独使用；同时开启摄像头时，任一检测到在场都会暂停休息。持续在工位 30 秒后面板弹到顶部，60 秒、90 秒逐级放大。无输入满 5 秒且摄像头一次有效检测为空工位（或未启用）后继续剩余休息。</p>
+                                        <p>休息面板始终完整显示并置顶，只有点击“跳过休息”或完成休息才结束提醒。键鼠活动不会提前跳过休息；手动暂停和全部完成后不检测，也不会自动恢复。</p>
                                     </SettingsHelp>
                                 </span>
                                 <Toggle checked={inputActivityEnabled} onChange={setInputActivityEnabled} ariaLabel="允许检测键盘和鼠标活动" />
                             </div>
-                            {presence.inputActivityEnabled && <span className="input-activity-status" role="status">{presence.inputActivityAvailability === 'error' ? '键鼠活动检测暂不可用，将自动重试。' : presence.inputActivityAvailability === 'ready' ? '键鼠活动检测可用' : '已允许，休息时检测'}</span>}
+                            {presence.inputActivityEnabled && <span className="input-activity-status" role="status">{presence.inputActivityAvailability === 'error' ? '键鼠活动检测暂不可用，将自动重试。' : presence.inputActivityAvailability === 'ready' ? '键鼠活动检测可用' : '已允许，专注和休息时检测'}</span>}
                         </div>
 
                         <div className="card card-grid presence-threshold-grid">
@@ -746,7 +747,7 @@ function PomodoroTab({ onApplyStateChange }: {
                                 />
                             </div>
                             <div className="card">
-                                <span className="card-label">离席判定阈值</span>
+                                <span className="card-label">离席判定阈值<SettingsHelp label="离席判定阈值">此防抖只用于专注阶段的离席暂停。休息恢复不等待连续次数，一次有效空工位检测即可继续；检测间隔仍按上方设置。</SettingsHelp></span>
                                 <select
                                     className="dropdown"
                                     aria-label="离席判定阈值"

@@ -5,6 +5,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup, waitFor, act } from '@testing-library/react';
 import { usePomodoroStore } from '../domain/pomodoro';
 import {
+    applyInputActivitySample,
     applyPresenceSample,
     usePresenceStore,
     type PresenceAvailability,
@@ -136,6 +137,50 @@ describe('PomodoroPanel scale root', () => {
 });
 
 describe('PomodoroPanel pause overlay', () => {
+    it('shows a manual pause before any elapsed time and keeps it paused when presence is confirmed', () => {
+        usePomodoroStore.getState().pause();
+        usePresenceStore.setState({ enabled: true, availability: 'ready' });
+        render(<PomodoroPanel />);
+
+        expect(screen.getByRole('region', { name: '番茄钟已暂停' })).toBeTruthy();
+        act(() => applyPresenceSample(usePresenceStore, usePomodoroStore, {
+            observation: 'present', availability: 'ready', errorCode: null,
+        }, 0));
+        expect(usePomodoroStore.getState().isRunning).toBe(false);
+
+        fireEvent.click(screen.getByRole('button', { name: '恢复' }));
+        expect(usePomodoroStore.getState().isRunning).toBe(true);
+        expect(screen.queryByRole('region', { name: '番茄钟已暂停' })).toBeNull();
+    });
+
+    it('replaces the waiting overlay with a running focus after presence is confirmed', () => {
+        usePresenceStore.setState({ enabled: true, availability: 'ready' });
+        render(<PomodoroPanel />);
+        expect(screen.getByRole('region', { name: '番茄钟待开始' })).toBeTruthy();
+
+        act(() => applyPresenceSample(usePresenceStore, usePomodoroStore, {
+            observation: 'present', availability: 'ready', errorCode: null,
+        }, 0));
+
+        expect(screen.queryByRole('region', { name: '番茄钟待开始' })).toBeNull();
+        expect(screen.getByRole('button', { name: '暂停' })).toBeTruthy();
+        expect(usePomodoroStore.getState()).toMatchObject({ isRunning: true, remainingSeconds: 1500 });
+    });
+
+    it('starts a waiting focus from keyboard or mouse activity with camera detection disabled', () => {
+        usePresenceStore.setState({ inputActivityEnabled: true });
+        render(<PomodoroPanel />);
+        expect(screen.getByRole('region', { name: '番茄钟待开始' })).toBeTruthy();
+
+        act(() => applyInputActivitySample(usePresenceStore, usePomodoroStore, 0, 0));
+
+        expect(screen.queryByRole('region', { name: '番茄钟待开始' })).toBeNull();
+        expect(screen.getByRole('button', { name: '暂停' })).toBeTruthy();
+        expect(usePomodoroStore.getState().isRunning).toBe(true);
+        expect(invokeMock.mock.calls.some(([command]) => command === 'sample_camera_presence')).toBe(false);
+        expect(screen.getByLabelText('检测到人，在工位')).toBeTruthy();
+    });
+
     it('pauses immediately, freezes time, and resumes from the central button', () => {
         const { container } = render(<PomodoroPanel />);
         expect(screen.queryByRole('region', { name: '番茄钟已暂停' })).toBeNull();

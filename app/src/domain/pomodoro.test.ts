@@ -257,6 +257,52 @@ describe('PomodoroTimerSystem.skip', () => {
 });
 
 describe('Pomodoro presence automation', () => {
+    it('starts an idle focus from presence without changing progress or creating an end event', () => {
+        const store = freshStore();
+        const before = store.getState();
+
+        expect(store.getState().startFocusFromPresence()).toBe(true);
+        expect(store.getState()).toMatchObject({
+            currentPhase: 'focus',
+            currentRound: before.currentRound,
+            remainingSeconds: before.remainingSeconds,
+            isRunning: true,
+            lastEndEvent: null,
+            consecutiveCompletedFocus: 0,
+        });
+        expect(store.getState().startFocusFromPresence()).toBe(false);
+    });
+
+    it('keeps a manual pause across settings changes and automation cleanup until manually started', () => {
+        const store = freshStore();
+        store.getState().start();
+        store.getState().tick(7);
+        store.getState().pause();
+        store.getState().applySettings(60, 30, 2, false, false);
+        store.getState().clearPresenceAutomationOwnership();
+
+        expect(store.getState().startFocusFromPresence()).toBe(false);
+        expect(store.getState().resumeFocusFromPresence()).toBe(false);
+        expect(store.getState().isRunning).toBe(false);
+
+        store.getState().start();
+        expect(store.getState()).toMatchObject({
+            isRunning: true,
+            presenceAutomationState: 'none',
+        });
+    });
+
+    it('keeps an automatically paused focus stopped after automation is cleared', () => {
+        const store = freshStore();
+        store.getState().start();
+        store.getState().pauseFocusFromPresence();
+        store.getState().clearPresenceAutomationOwnership();
+
+        expect(store.getState().startFocusFromPresence()).toBe(false);
+        expect(store.getState().resumeFocusFromPresence()).toBe(false);
+        expect(store.getState().isRunning).toBe(false);
+    });
+
     it('pauses and resumes the same break without creating a completion event', () => {
         const store = freshStore();
         store.getState().applySettings(60, 30, 2, true, false);
@@ -283,7 +329,7 @@ describe('Pomodoro presence automation', () => {
         });
     });
 
-    it('starts only a focus produced by a natural break completion', () => {
+    it('starts a waiting focus after a natural break or reset but honors manual pause', () => {
         const store = freshStore();
         store.getState().applySettings(60, 1, 2, true, false);
         store.setState({ currentPhase: 'break', isRunning: true, remainingSeconds: 1 });
@@ -295,7 +341,7 @@ describe('Pomodoro presence automation', () => {
 
         store.getState().reset();
         store.getState().startFocusFromPresence();
-        expect(store.getState().isRunning).toBe(false);
+        expect(store.getState().isRunning).toBe(true);
 
         store.setState({ presenceAutomationState: 'focusAutoStartEligible' });
         store.getState().pause();

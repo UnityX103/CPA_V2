@@ -79,7 +79,7 @@ export function PomodoroPanel({ preferencesReady = true }: { preferencesReady?: 
     const clockState = clockStateOf(state.currentPhase, state.isRunning);
     const startLabel = state.isRunning ? '暂停' : '开始';
     const showSkip = state.isRunning && state.currentPhase !== 'completed';
-    const confirmedPresence = (presence.enabled || (presence.inputActivityEnabled && state.currentPhase === 'break'))
+    const confirmedPresence = (presence.enabled || presence.inputActivityEnabled)
         && (presence.inputActivityAvailability === 'ready' || presence.availability === 'ready' || presence.availability === 'checking')
         && presence.lastSuccessfulAt != null
         && presence.confirmedPresence !== 'unknown'
@@ -89,12 +89,13 @@ export function PomodoroPanel({ preferencesReady = true }: { preferencesReady?: 
         && (presence.availability === 'ready' || presence.availability === 'checking');
     const inputAvailable = presence.inputActivityEnabled && presence.inputActivityAvailability === 'ready';
     const automaticPause = state.currentPhase === 'focus'
-        ? cameraAvailable && state.presenceAutomationState === 'focusPaused'
+        ? (cameraAvailable || inputAvailable) && state.presenceAutomationState === 'focusPaused'
         : (cameraAvailable || inputAvailable)
             && (state.presenceAutomationState === 'breakPaused'
                 || (state.presenceAutomationState === 'breakResumeEligible' && confirmedPresence === 'present'));
     const showPauseOverlay = !isBreak && !state.isRunning && state.currentPhase !== 'completed'
-        && (pausedDuringSession || state.remainingSeconds < totalSeconds || automaticPause);
+        && (state.presenceAutomationState === 'manualPaused'
+            || pausedDuringSession || state.remainingSeconds < totalSeconds || automaticPause);
     const showStartOverlay = !isBreak && !state.isRunning && !showPauseOverlay && state.currentPhase !== 'completed';
     const docking = usePomodoroDocking(autoDock, showPauseOverlay, state.currentPhase, preferencesReady, reminderLevel);
     const windowMode = autoDock ? '停靠' : state.isPinned ? '置顶' : '取消置顶';

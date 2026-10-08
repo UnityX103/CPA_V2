@@ -12,6 +12,10 @@
 `2026-09-24-workstation-region-calibration.md` 为准；本文相应的“全画面 / 首次
 present 立即响应 / 不返回预览画面”约束仅描述最初版本。
 
+**2026-10-08 调整**：已开启摄像头自动控制时，任意待开始的 focus 在确认在场后自动开始，包括初次启动、reset、重置进度的设置和跳过休息后。手动暂停仍保持暂停；休息不提前结束，completed 不自动开启新一轮。
+
+同日新增独立键鼠触发路径，见 `2026-09-06-break-input-presence.md`：显式开启键鼠检测后，无摄像头也可启动待开始的专注，或恢复因离席自动暂停的专注；无输入本身不触发专注暂停。
+
 ## 文档关系与替代说明
 
 本文基于只读调研 `docs/superpowers/specs/2026-08-14-camera-presence-detection-research.md` 重新核对当前代码后形成。
@@ -72,7 +76,7 @@ present 立即响应 / 不返回预览画面”约束仅描述最初版本。
 - 保存图片、录像、缩略图、人脸框或生物特征。
 - 上传或向房间广播任何摄像头派生状态。
 - 多摄像头选择、画面预览、外接摄像头优先级。
-- 用键盘、鼠标或前台应用活动替代摄像头判断。
+- 未经独立授权使用键鼠活动，以及用前台应用活动判断在场。
 - Linux、移动端或 Windows ARM64。
 - 常驻系统服务；主窗口退出后不继续检测。
 - v1 中引入 ONNX Runtime、下载模型或运行时在线拉取模型。
@@ -156,16 +160,15 @@ present 立即响应 / 不返回预览画面”约束仅描述最初版本。
 - 用户手动暂停的 break 不具备自动恢复资格。
 - presence 观测不得提前结束 break、推进轮次或进入 `completed`。
 
-### 自然休息结束后自动开始专注
+### 待开始的专注在确认在场后自动开始
 
 资格状态同时满足：
 
 - `currentPhase === 'focus'`；
 - `isRunning === false`；
-- 最近一次真实阶段事件是 `break -> focus`；
-- 之后没有发生手动 `pause / reset / applySettings`。
+- 未处于手动暂停或已取消恢复资格的暂停状态。
 
-第一次成功 `present` 观测后直接启动当前 focus。初次启动、reset 后的 focus、用户手动暂停的 focus 和 `completed` 都不具备该资格。
+确认 `present` 后直接启动当前 focus，包含初次启动、reset、重置进度的设置和跳过休息后的等待状态。工位区域校准的连续在场确认规则继续生效。手动暂停的 focus 和 `completed` 不具备该资格；已经运行的专注不重复启动，也不重置剩余时间、轮次或完成记录。
 
 ### 专注中离场
 
@@ -186,6 +189,7 @@ present 立即响应 / 不返回预览画面”约束仅描述最初版本。
 - 用户手动暂停的 focus 永不因 `present` 自动恢复；手动暂停的 break 永不因 `absent` 自动恢复。
 - 用户在 Presence-Owned Pause 状态手动点击开始，视为用户接管：立即开始，并锁定当前确认在场状态的自动动作，直到确认状态先变为相反方向才解除；不得在下一采样周期立即重新暂停。
 - 用户执行 skip、reset 或应用会重置进度的番茄钟设置后，清除所有 presence 自动化归属。
+- reset、重置进度的设置或跳过休息后进入待开始的 focus，可在下一次确认在场后自动开始；不重置进度的设置保留手动暂停。关闭检测保留已有暂停，重新开启也不会把取消恢复资格的暂停当成待开始。
 - 用户在 break 中手动暂停会立即清除 presence 自动恢复资格。
 
 ## D-01：已确认决策
@@ -302,7 +306,7 @@ sample_camera_presence(): PresenceSample
 
 - 设备本地配置：`enabled`、`intervalSeconds`、`absenceSensitivity`。
 - 运行态：availability、确认在场状态（Confirmed Presence）、连续 `absent` 计数、最近成功时间、in-flight、generation、lastError。
-- 自动化归属：用互斥的 `presenceAutomationState` 表达 focus/break 的 Presence-Owned Pause、自然进入但未自动开始的 break 恢复资格、自然 break 结束后的 focus 自动启动资格，以及手动接管锁定；不得用多个布尔值组合出无效状态。
+- 自动化归属：用互斥的 `presenceAutomationState` 区分待开始（`none`）、手动暂停或取消恢复资格的暂停（`manualPaused`）、focus/break 的 Presence-Owned Pause、自然进入但未自动开始的 break 恢复资格、自然 break 结束后的 focus 自动启动资格，以及手动接管锁定；不得用多个布尔值组合出无效状态。
 - `usePresenceMonitor({ enabled: localHydrated })`，只挂载在主窗口。
 
 设置窗口不得直接调用采样 command。扩展现有 bridge：
@@ -314,7 +318,7 @@ sample_camera_presence(): PresenceSample
 
 番茄钟新增窄 action，不让 presence 模块直接 `setState`：
 
-- `startFocusFromPresence()`：仅处理自然 break 结束后的 focus 自动启动资格。
+- `startFocusFromPresence()`：处理非手动暂停的待开始 focus；Presence-Owned Pause 由 `resumeFocusFromPresence()` 保留进度恢复。
 - `pauseFocusFromPresence()` / `resumeFocusFromPresence()`：在 focus 中响应离席/在场。
 - `pauseBreakFromPresence()` / `resumeBreakFromPresence()`：在 break 中响应在场/离席，并且只消费自动化拥有的暂停或自然 break 启动资格。
 - presence 不再产生番茄钟阶段结束事件；`PomodoroEndEvent.triggeredBy` 仅保留 `timer | skip`。
@@ -381,7 +385,7 @@ sample_camera_presence(): PresenceSample
 | 检测到照片或屏幕中的脸 | v1 可能视为 present；活体检测不在范围内 |
 | breakDurationSeconds = 0 | 离席仍按所选档位处理，不借用休息时长作为阈值 |
 | completed | 不自动开始新番茄钟 |
-| 初始 focus 停止态 | 不因在场自动开始 |
+| 初始或重置后的 focus 待开始状态 | 确认在场后自动开始 |
 | 手动暂停 focus | 永不由摄像头恢复 |
 | 手动暂停 break | 永不由离席观测恢复 |
 | 运行中 break 检测到 present | 保留阶段/轮次/剩余时间并进入 Presence-Owned Pause |
@@ -400,7 +404,7 @@ sample_camera_presence(): PresenceSample
 4. focus 中第一次成功 present 立即恢复 Presence-Owned Pause；break 中第一次 present 立即暂停运行中的休息。
 5. break 中连续 absent 达所选阈值时，只恢复 Presence-Owned Pause 或自然休息启动资格；手动暂停不恢复。
 6. presence 不得提前结束 break、推进轮次或进入 completed。
-7. 自然 break 结束后的 focus 可由第一次 present 启动；初始/reset/手动暂停 focus 不可。
+7. 初始、reset、重置设置、跳过 break 或自然 break 结束后的待开始 focus，在确认 present 后启动；手动暂停不可。
 8. 手动 start/pause/skip/reset 优先并清空自动化状态。
 9. completed 对任意观测无动作。
 10. 关闭时丢弃过期采样结果；已自动暂停的 focus 保持暂停。
@@ -433,7 +437,7 @@ sample_camera_presence(): PresenceSample
 1. **AC-01 默认隐私**：全新安装首次启动 10 分钟内不出现摄像头权限提示或摄像头指示灯，直到用户明确启用并授权。
 2. **AC-02 按需释放**：启用后每次采样结束或失败后摄像头被释放；FaceTime/Camera/会议软件可在采样间隔内重新取得设备。
 3. **AC-03 休息镜像控制**：运行中 break 第一次成功 present 后保留 remaining 并暂停；连续 absent 达所选阈值后恢复同一 remaining。
-4. **AC-04 休息结束后启动**：自然 break 结束进入停止的 focus 后，第一次成功 present 会开始 focus；应用初始停止态不会自动开始。
+4. **AC-04 在场自动启动**：初始、reset、重置设置、跳过休息或自然休息结束后进入待开始 focus，确认 present 后开始专注；unknown、absent、手动暂停和 completed 不触发启动，已运行时不重置进度。
 5. **AC-05 可关闭的三档离席防抖**：关闭防抖/严谨/中等/宽松分别在连续 1/2/3/6 次 absent 时确认离席；确认离席在 focus 中暂停、在 break 中恢复；unknown 无动作。
 6. **AC-06 失败安全**：权限拒绝、设备忙、无设备、超时连续发生时，番茄钟阶段、轮次、剩余时间和运行状态不因 presence 自动化改变。
 7. **AC-07 手动优先**：手动暂停 focus 后收到 present，或手动暂停 break 后达到 absent 阈值，计时器都仍保持暂停；手动继续 Presence-Owned Pause 后，相同的确认在场状态不得立即重新暂停。

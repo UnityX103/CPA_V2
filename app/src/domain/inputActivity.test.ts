@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPomodoroStore } from './pomodoro';
-import { applyInputActivitySample, applyPresenceSample, createPresenceStore } from './presence';
+import { applyCombinedPresence, applyInputActivitySample, applyPresenceSample, createPresenceStore } from './presence';
 import { createPomodoroBroadcast } from './pomodoroBroadcast';
 import { startInputActivityMonitor } from './inputActivity';
 
@@ -20,7 +20,25 @@ function fixture(camera = false) {
     return { store, pomodoro, input, cameraSample };
 }
 
-describe('break input and camera evidence', () => {
+describe('input and camera evidence', () => {
+    it('rest recovery resumes after one empty camera sample without waiting for old input history to expire', () => {
+        const f = fixture(true);
+        f.input(0, 0);
+        f.cameraSample('present', 0);
+        expect(f.pomodoro.getState().presenceAutomationState).toBe('breakPaused');
+        f.input(10_000, 10_000);
+        f.cameraSample('absent', 10_000);
+        expect(f.pomodoro.getState()).toMatchObject({ isRunning: true, remainingSeconds: 300, presenceAutomationState: 'none' });
+    });
+
+    it('rest recovery resumes input-only breaks on the first idle poll after five seconds', () => {
+        const f = fixture();
+        f.input(0, 0);
+        expect(f.pomodoro.getState().presenceAutomationState).toBe('breakPaused');
+        f.input(5000, 5000);
+        expect(f.pomodoro.getState().isRunning).toBe(true);
+    });
+
     it('works with camera disabled and emits one break.present signal per automatic pause', () => {
         const f = fixture();
         const events: string[] = [];
@@ -41,15 +59,29 @@ describe('break input and camera evidence', () => {
     it('requires both enabled sources to confirm absence and counts only camera samples', () => {
         const f = fixture(true);
         f.input(0);
-        f.cameraSample('absent', 0);
-        for (let time = 5000; time <= 30_000; time += 5000) f.input(30_000, time);
-        expect(f.store.getState().consecutiveAbsentSamples).toBe(1);
+        f.cameraSample('present', 0);
+        f.input(5000, 5000);
         expect(f.pomodoro.getState().isRunning).toBe(false);
-        f.cameraSample('absent', 30_000);
+        f.cameraSample('absent', 5000);
         expect(f.pomodoro.getState().isRunning).toBe(true);
+        for (let time = 10_000; time <= 30_000; time += 5000) f.input(time, time);
+        expect(f.store.getState().consecutiveAbsentSamples).toBe(1);
         f.cameraSample('present', 35_000);
         f.input(60_000, 35_000);
         expect(f.pomodoro.getState().isRunning).toBe(false);
+    });
+
+    it('keeps rest paused while input continues even after the camera detects an empty workstation', () => {
+        const f = fixture(true);
+        f.input(0);
+        f.cameraSample('present', 0);
+        for (let time = 5000; time <= 60_000; time += 5000) {
+            f.input(100, time);
+            f.cameraSample('absent', time);
+            expect(f.pomodoro.getState().presenceAutomationState).toBe('breakPaused');
+        }
+        f.input(5100, 65_000);
+        expect(f.pomodoro.getState().isRunning).toBe(true);
     });
 
     it('input presence wins over camera absence, failure, and late camera results', () => {
@@ -89,13 +121,77 @@ describe('break input and camera evidence', () => {
         expect(f.pomodoro.getState().isRunning).toBe(false);
     });
 
-    it('input never starts or pauses focus', () => {
+    it('input starts a waiting focus without camera access and does not pause it on inactivity', () => {
         const f = fixture();
-        f.pomodoro.setState({ currentPhase: 'focus', isRunning: true });
+        f.pomodoro.getState().reset();
+        f.input(60_000);
+        expect(f.pomodoro.getState().isRunning).toBe(false);
         f.input(0);
+        expect(f.pomodoro.getState()).toMatchObject({
+            currentPhase: 'focus', isRunning: true, remainingSeconds: 1500,
+            lastEndEvent: null, consecutiveCompletedFocus: 0,
+        });
+        expect(f.store.getState().confirmedPresence).toBe('present');
+        f.pomodoro.getState().tick(7);
         f.input(60_000, 60_000);
-        expect(f.pomodoro.getState().isRunning).toBe(true);
+        expect(f.pomodoro.getState()).toMatchObject({ isRunning: true, remainingSeconds: 1493 });
         expect(f.store.getState().confirmedPresence).toBe('unknown');
+    });
+
+    it('resumes an automatically paused focus from input even when the camera is unavailable', () => {
+        const f = fixture(true);
+        f.pomodoro.getState().reset();
+        f.pomodoro.getState().start();
+        f.pomodoro.getState().tick(7);
+        f.pomodoro.getState().pauseFocusFromPresence();
+        f.cameraSample('unknown');
+
+        f.input(0, 5000);
+        expect(f.pomodoro.getState()).toMatchObject({
+            isRunning: true, remainingSeconds: 1493, presenceAutomationState: 'none', lastEndEvent: null,
+        });
+        expect(f.store.getState().notice?.message).toBe('检测到返回，已继续专注');
+    });
+
+    it('input presence overrides camera misses, pending confirmations, and failures during focus', () => {
+        const f = fixture(true);
+        f.pomodoro.getState().reset();
+        f.store.setState({ workstationRegion: { x: 0.1, y: 0.1, width: 0.6, height: 0.8 } });
+        f.input(0);
+        f.cameraSample('absent', 1000);
+        f.cameraSample('absent', 2000);
+        f.cameraSample('present', 3000);
+        f.cameraSample('unknown', 4000);
+        expect(f.pomodoro.getState().isRunning).toBe(true);
+        expect(f.store.getState().confirmedPresence).toBe('present');
+        expect(f.store.getState().consecutiveAbsentSamples).toBe(0);
+    });
+
+    it('never resumes a manual focus pause or restarts a completed timer from input', () => {
+        const f = fixture();
+        f.pomodoro.getState().reset();
+        f.pomodoro.getState().pause();
+        f.input(0);
+        expect(f.pomodoro.getState().isRunning).toBe(false);
+        f.pomodoro.setState({ currentPhase: 'completed', remainingSeconds: 0 });
+        f.input(0, 5000);
+        expect(f.pomodoro.getState()).toMatchObject({ currentPhase: 'completed', isRunning: false });
+    });
+
+    it('requires enabled, valid, fresh input evidence to start focus', () => {
+        const f = fixture();
+        f.pomodoro.getState().reset();
+        f.input(null);
+        f.input(Number.NaN);
+        f.input(-1);
+        f.input(5000);
+        expect(f.pomodoro.getState().isRunning).toBe(false);
+        f.store.setState({ inputActivityAvailability: 'ready', inputIdleMs: 0, inputSampleAt: 0 });
+        applyCombinedPresence(f.store, f.pomodoro, 10_001);
+        expect(f.pomodoro.getState().isRunning).toBe(false);
+        f.store.setState({ inputActivityEnabled: false });
+        f.input(0);
+        expect(f.pomodoro.getState().isRunning).toBe(false);
     });
 });
 
@@ -114,7 +210,22 @@ function monitor() {
 }
 
 describe('input sampling lifecycle', () => {
-    it('polls every five seconds only in eligible breaks, including automatic pauses', async () => {
+    it('automatically resumes a paused break at the next idle poll and keeps counting down', async () => {
+        const f = monitor();
+        f.sample.mockResolvedValue(0);
+        await vi.advanceTimersByTimeAsync(5000);
+        expect(f.pomodoro.getState().presenceAutomationState).toBe('breakPaused');
+        f.sample.mockResolvedValue(5000);
+        await vi.advanceTimersByTimeAsync(5000);
+        expect(f.pomodoro.getState().isRunning).toBe(true);
+        f.pomodoro.getState().tick(1);
+        expect(f.pomodoro.getState().remainingSeconds).toBe(299);
+        await vi.advanceTimersByTimeAsync(5000);
+        expect(f.pomodoro.getState().isRunning).toBe(true);
+        f.stop();
+    });
+
+    it('polls focus and eligible breaks every five seconds, stopping for manual pause or completion', async () => {
         const f = monitor();
         await vi.advanceTimersByTimeAsync(4999);
         expect(f.sample).toHaveBeenCalledTimes(1);
@@ -128,15 +239,21 @@ describe('input sampling lifecycle', () => {
         f.pomodoro.getState().pause();
         await vi.advanceTimersByTimeAsync(60_000);
         expect(f.sample).toHaveBeenCalledTimes(4);
-        f.pomodoro.setState({ currentPhase: 'focus', isRunning: true });
-        await vi.advanceTimersByTimeAsync(60_000);
-        expect(f.sample).toHaveBeenCalledTimes(4);
-        f.pomodoro.setState({ currentPhase: 'break' });
+        f.pomodoro.getState().reset();
         await vi.advanceTimersByTimeAsync(0);
         expect(f.sample).toHaveBeenCalledTimes(5);
+        await vi.advanceTimersByTimeAsync(5000);
+        expect(f.sample).toHaveBeenCalledTimes(6);
+        expect(f.pomodoro.getState().isRunning).toBe(true);
+        f.pomodoro.setState({ currentPhase: 'completed', isRunning: false });
+        await vi.advanceTimersByTimeAsync(60_000);
+        expect(f.sample).toHaveBeenCalledTimes(6);
+        f.pomodoro.setState({ currentPhase: 'break', isRunning: true });
+        await vi.advanceTimersByTimeAsync(0);
+        expect(f.sample).toHaveBeenCalledTimes(7);
         f.store.setState({ inputActivityEnabled: false });
         await vi.advanceTimersByTimeAsync(60_000);
-        expect(f.sample).toHaveBeenCalledTimes(5);
+        expect(f.sample).toHaveBeenCalledTimes(7);
         expect(vi.getTimerCount()).toBe(0);
         f.stop();
     });
@@ -183,5 +300,68 @@ describe('input sampling lifecycle', () => {
         expect(sample).toHaveBeenCalledTimes(1);
         expect(f.pomodoro.getState().isRunning).toBe(false);
         stop();
+    });
+
+    it('keeps polling a waiting focus and an automatic focus pause so input can start or resume it', async () => {
+        const f = fixture();
+        f.pomodoro.getState().reset();
+        const sample = vi.fn(async () => 60_000);
+        const stop = startInputActivityMonitor({ ...f, runtime: {
+            sample, now: () => Date.now(),
+            setInterval: (cb, ms) => window.setInterval(cb, ms), clearInterval: (id) => window.clearInterval(id),
+        } });
+        await vi.advanceTimersByTimeAsync(0);
+        expect(f.pomodoro.getState().isRunning).toBe(false);
+        sample.mockResolvedValue(0);
+        await vi.advanceTimersByTimeAsync(5000);
+        expect(f.pomodoro.getState().isRunning).toBe(true);
+        f.pomodoro.getState().tick(7);
+        f.pomodoro.getState().pauseFocusFromPresence();
+        await vi.advanceTimersByTimeAsync(5000);
+        expect(f.pomodoro.getState()).toMatchObject({ isRunning: true, remainingSeconds: 1493 });
+        expect(sample).toHaveBeenCalledTimes(3);
+        stop();
+    });
+
+    it('rejects an in-flight focus result after manual pause, even after input is re-enabled', async () => {
+        const f = fixture();
+        f.pomodoro.getState().reset();
+        let resolve!: (value: number) => void;
+        const sample = vi.fn(() => new Promise<number>((done) => { resolve = done; }));
+        const stop = startInputActivityMonitor({ ...f, runtime: {
+            sample, now: () => Date.now(),
+            setInterval: (cb, ms) => window.setInterval(cb, ms), clearInterval: (id) => window.clearInterval(id),
+        } });
+        expect(sample).toHaveBeenCalledTimes(1);
+        f.pomodoro.getState().pause();
+        f.store.setState({ inputActivityEnabled: false });
+        f.store.setState({ inputActivityEnabled: true });
+        resolve(0);
+        await vi.advanceTimersByTimeAsync(10_000);
+        expect(f.pomodoro.getState().isRunning).toBe(false);
+        expect(sample).toHaveBeenCalledTimes(1);
+        expect(f.store.getState().inputIdleMs).toBeNull();
+        stop();
+    });
+
+    it('drops a focus result that arrives after entering a break', async () => {
+        const f = fixture();
+        f.pomodoro.getState().reset();
+        let resolve!: (value: number) => void;
+        const sample = vi.fn(() => new Promise<number>((done) => { resolve = done; }));
+        const stop = startInputActivityMonitor({ ...f, runtime: {
+            sample, now: () => Date.now(),
+            setInterval: (cb, ms) => window.setInterval(cb, ms), clearInterval: (id) => window.clearInterval(id),
+        } });
+        f.pomodoro.setState({ currentPhase: 'break', isRunning: true, remainingSeconds: 300 });
+        resolve(0);
+        await vi.advanceTimersByTimeAsync(0);
+        expect(f.pomodoro.getState()).toMatchObject({ currentPhase: 'break', isRunning: true });
+        expect(f.store.getState().inputIdleMs).toBeNull();
+        await vi.advanceTimersByTimeAsync(5000);
+        expect(sample).toHaveBeenCalledTimes(2);
+        stop();
+        resolve(0);
+        await vi.advanceTimersByTimeAsync(0);
     });
 });

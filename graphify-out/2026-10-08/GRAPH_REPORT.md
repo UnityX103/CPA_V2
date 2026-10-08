@@ -1,11 +1,11 @@
 # Graph Report - CPA_V2  (2026-10-08)
 
 ## Corpus Check
-- 415 files · ~498,615 words
+- 414 files · ~498,607 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3751 nodes · 7732 edges · 223 communities (193 shown, 30 thin omitted)
+- 3750 nodes · 7732 edges · 223 communities (193 shown, 30 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 85 edges (avg confidence: 0.74)
 - Token cost: 0 input · 0 output
 
@@ -195,7 +195,7 @@
 - consume_logic_root
 - videoEditorModuleConfig.test.ts
 - cockroach-electron-module/licenses/NONCOMMERCIAL-NOTICE.md
-- createPomodoroServer
+- integration.test.js
 - BUILD_MATRIX.md
 - video-editor-module/licenses/THIRD-PARTY-SOURCES.md
 - replace_file_atomically
@@ -218,6 +218,7 @@
 - PomodoroEndActionLayer.tsx
 - FakeWebSocket
 - 工位区域校准与可调离席次数
+- latency.test.js
 - VideoPlayerApp.tsx
 - @tauri-apps/cli
 
@@ -236,36 +237,36 @@
 ## Surprising Connections (you probably didn't know these)
 - `normalizeDataFile()` --indirect_call--> `snapshot()`  [INFERRED]
   Server/src/UserDataStore.js → app/src/domain/bridge/client.test.ts
+- `createTestServer()` --calls--> `createPomodoroServer()`  [EXTRACTED]
+  Server/test/integration.test.js → Server/src/index.js
+- `createTestServer()` --calls--> `createPomodoroServer()`  [EXTRACTED]
+  Server/test/latency.test.js → Server/src/index.js
 - `write_core_pointer()` --calls--> `replace_file_atomically()`  [INFERRED]
   app/src-tauri/src/cockroach_module.rs → app/src-tauri/src/extension_packs.rs
 - `rules_path()` --calls--> `module_data_dir()`  [INFERRED]
   app/src-tauri/src/cockroach_module/automation.rs → app/src-tauri/src/cockroach_module.rs
-- `write_rules()` --calls--> `module_data_dir()`  [INFERRED]
-  app/src-tauri/src/cockroach_module/automation.rs → app/src-tauri/src/cockroach_module.rs
-- `launch_cockroach_module()` --calls--> `pack_is_enabled()`  [INFERRED]
-  app/src-tauri/src/cockroach_module.rs → app/src-tauri/src/extension_packs.rs
 
 ## Import Cycles
-- 3-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/presence.ts -> app/src/domain/bridge/dispatch.ts`
+- 3-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/network.ts -> app/src/domain/bridge/dispatch.ts`
 - 3-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/pomodoro.ts -> app/src/domain/bridge/dispatch.ts`
+- 3-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/presence.ts -> app/src/domain/bridge/dispatch.ts`
+- 3-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/settings.ts -> app/src/domain/bridge/dispatch.ts`
 - 3-file cycle: `app/src/domain/appUpdate.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/appUpdate.ts`
 - 3-file cycle: `app/src/domain/bindingKey.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/bindingKey.ts`
-- 3-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/settings.ts -> app/src/domain/bridge/dispatch.ts`
-- 3-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/network.ts -> app/src/domain/bridge/dispatch.ts`
-- 4-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/presence.ts -> app/src/domain/pomodoro.ts -> app/src/domain/bridge/dispatch.ts`
-- 4-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/pomodoro.ts -> app/src/domain/bridge/dispatch.ts`
 - 4-file cycle: `app/src/domain/appUpdate.ts -> app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/appUpdate.ts`
 - 4-file cycle: `app/src/domain/bindingKey.ts -> app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/bindingKey.ts`
 - 4-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/network.ts -> app/src/domain/bridge/dispatch.ts`
+- 4-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/pomodoro.ts -> app/src/domain/bridge/dispatch.ts`
 - 4-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/settings.ts -> app/src/domain/bridge/dispatch.ts`
+- 4-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/presence.ts -> app/src/domain/pomodoro.ts -> app/src/domain/bridge/dispatch.ts`
 - 4-file cycle: `app/src/domain/appUpdate.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/userPreferences.ts -> app/src/domain/appUpdate.ts`
 - 4-file cycle: `app/src/domain/bindingKey.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/userPreferences.ts -> app/src/domain/bindingKey.ts`
-- 5-file cycle: `app/src/domain/audioPlayback.ts -> app/src/domain/settings.ts -> app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/pomodoroSounds.ts -> app/src/domain/audioPlayback.ts`
-- 5-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/userPreferences.ts -> app/src/domain/pomodoro.ts -> app/src/domain/bridge/dispatch.ts`
 - 5-file cycle: `app/src/domain/appUpdate.ts -> app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/userPreferences.ts -> app/src/domain/appUpdate.ts`
 - 5-file cycle: `app/src/domain/bindingKey.ts -> app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/userPreferences.ts -> app/src/domain/bindingKey.ts`
 - 5-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/userPreferences.ts -> app/src/domain/network.ts -> app/src/domain/bridge/dispatch.ts`
+- 5-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/userPreferences.ts -> app/src/domain/pomodoro.ts -> app/src/domain/bridge/dispatch.ts`
 - 5-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/userPreferences.ts -> app/src/domain/settings.ts -> app/src/domain/bridge/dispatch.ts`
+- 5-file cycle: `app/src/domain/audioPlayback.ts -> app/src/domain/settings.ts -> app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/pomodoroSounds.ts -> app/src/domain/audioPlayback.ts`
 
 ## Hyperedges (group relationships)
 - **Cross-platform updater release gate** — agents_skills_cpa_v2_release_publish_skill_macos_dual_thin_builds, agents_skills_cpa_v2_release_publish_skill_windows_x64_nsis, agents_skills_cpa_v2_release_publish_skill_four_platform_manifest [EXTRACTED 1.00]
@@ -281,8 +282,8 @@
 ## Communities (223 total, 30 thin omitted)
 
 ### Community 0 - "index.js"
-Cohesion: 0.16
-Nodes (31): broadcastToRoom(), DEFAULT_PORT, ensureAuthenticated(), ensureConnectionNotInRoom(), handleAuthCreate(), handleAuthLogin(), handleAuthLogout(), handleAuthSession() (+23 more)
+Cohesion: 0.13
+Nodes (38): broadcastToRoom(), clearConnectionInitTimeout(), createPomodoroServer(), DEFAULT_PORT, ensureAuthenticated(), ensureConnectionNotInRoom(), handleAuthCreate(), handleAuthLogin() (+30 more)
 
 ### Community 1 - "accessibility/mod.rs"
 Cohesion: 0.10
@@ -920,9 +921,9 @@ Nodes (3): accept_runtime(), main(), Path
 Cohesion: 0.67
 Nodes (3): consume_logic_root(), main(), Path
 
-### Community 188 - "createPomodoroServer"
-Cohesion: 0.11
-Nodes (13): clearConnectionInitTimeout(), createPomodoroServer(), handleKnownError(), installProcessGuards(), waitForListening(), createErrorMessage(), normalizeErrorCode(), authClient() (+5 more)
+### Community 188 - "integration.test.js"
+Cohesion: 0.33
+Nodes (3): authClient(), createTestServer(), sendJson()
 
 ### Community 192 - "replace_file_atomically"
 Cohesion: 0.50
@@ -976,6 +977,10 @@ Nodes (26): FocusableAppWindowLabel, focusAppWindow(), { invokeMock }, PomodoroE
 Cohesion: 0.40
 Nodes (4): 工位区域校准与可调离席次数, 设置, 语义, 验收
 
+### Community 224 - "latency.test.js"
+Cohesion: 0.40
+Nodes (3): authClient(), createTestServer(), sendJson()
+
 ### Community 225 - "VideoPlayerApp.tsx"
 Cohesion: 0.60
 Nodes (3): closePlayerWindow(), close, VideoPlayerApp()
@@ -994,11 +999,11 @@ _Questions this graph is uniquely positioned to answer:_
   _High betweenness centrality (0.015) - this node is a cross-community bridge._
 - **What connects `metadata`, `STATE_LABELS`, `ClockProps` to the rest of the system?**
   _1037 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `index.js` be split into smaller, more focused modules?**
+  _Cohesion score 0.12560975609756098 - nodes in this community are weakly interconnected._
 - **Should `accessibility/mod.rs` be split into smaller, more focused modules?**
   _Cohesion score 0.09800362976406533 - nodes in this community are weakly interconnected._
 - **Should `presence.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.07291666666666667 - nodes in this community are weakly interconnected._
 - **Should `userPreferences.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.09872241579558652 - nodes in this community are weakly interconnected._
-- **Should `lib.rs` be split into smaller, more focused modules?**
-  _Cohesion score 0.11085972850678733 - nodes in this community are weakly interconnected._

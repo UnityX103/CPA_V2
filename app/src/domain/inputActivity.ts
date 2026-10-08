@@ -31,7 +31,11 @@ export function startInputActivityMonitor({ store, pomodoro, runtime = defaultRu
     let scope = '';
     const eligible = () => {
         const pomo = pomodoro.getState();
-        return !stopped && store.getState().inputActivityEnabled && pomo.currentPhase === 'break'
+        if (stopped || !store.getState().inputActivityEnabled) return false;
+        if (pomo.currentPhase === 'focus') {
+            return pomo.presenceAutomationState !== 'manualPaused';
+        }
+        return pomo.currentPhase === 'break'
             && (pomo.isRunning || pomo.presenceAutomationState === 'breakPaused'
                 || pomo.presenceAutomationState === 'breakResumeEligible');
     };
@@ -69,7 +73,7 @@ export function startInputActivityMonitor({ store, pomodoro, runtime = defaultRu
             interval = runtime.setInterval(() => { void poll(); }, INPUT_ACTIVITY_POLL_MS);
             void poll();
         } else {
-            // Drop an input-only status immediately when leaving a break or disabling detection.
+            // Drop input evidence when sampling stops or the timer changes phase/round.
             applyCombinedPresence(store, pomodoro, runtime.now(), false);
         }
     };
