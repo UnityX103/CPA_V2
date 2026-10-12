@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "wellness.kegel",
+  "runtimeAbi": "cpa-webview-break-activity-v1",
+  "distribution": "project-owned",
+  "entry": "index.html",
+  "targets": ["macos-arm64", "macos-x86_64", "windows-x86_64"],
+  "dependencies": [],
+  "requiresRunning": false,
+  "runtimeContribution": {
+    "eventContract": "pomodoro-broadcast-v1",
+    "activationPhase": "break",
+    "delayMs": 0,
+    "requiresPresence": false,
+    "settingsGate": "wellness.kegel"
+  }
+}

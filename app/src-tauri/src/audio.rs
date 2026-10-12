@@ -6,6 +6,7 @@ use std::fs::File;
 use std::io::{Cursor, Read, Seek};
 use std::str::FromStr;
 use std::sync::Mutex;
+pub(crate) mod generated;
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]

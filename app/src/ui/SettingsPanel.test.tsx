@@ -104,6 +104,7 @@ beforeEach(() => {
         progress: null,
         error: null,
         statuses: {
+            'wellness.kegel': packStatus('wellness.kegel'),
             'video.core': packStatus('video.core'),
             'video.editor': packStatus('video.editor'),
             'pet.core': packStatus('pet.core'),
@@ -202,6 +203,21 @@ describe('SettingsPanel', () => {
             expect(useSettingsStore.getState().activeTab).toBe('extensions');
         });
         expect(screen.queryByRole('button', { name: '蟑螂入侵' })).toBeNull();
+    });
+
+    it('shows the Kegel settings only after installation and removes them on disable', async () => {
+        render(<SettingsPanel />);
+        expect(screen.queryByRole('button', { name: '凯格尔运动' })).toBeNull();
+        act(() => useExtensionPackStore.setState((state) => ({ statuses: {
+            ...state.statuses, 'wellness.kegel': packStatus('wellness.kegel', true, true),
+        } })));
+        fireEvent.click(screen.getByRole('button', { name: '凯格尔运动' }));
+        expect(useSettingsStore.getState().activeTab).toBe('kegel');
+        act(() => useExtensionPackStore.setState((state) => ({ statuses: {
+            ...state.statuses, 'wellness.kegel': packStatus('wellness.kegel', true, false),
+        } })));
+        await vi.waitFor(() => expect(useSettingsStore.getState().activeTab).toBe('extensions'));
+        expect(screen.queryByRole('button', { name: '凯格尔运动' })).toBeNull();
     });
 
     it('downloads video editing and offers Open without adding a settings tab', async () => {

@@ -8,11 +8,12 @@ export type ExtensionPackId =
     | 'video.core'
     | 'video.editor'
     | 'pet.core'
-    | 'pet.cockroach-invasion';
+    | 'pet.cockroach-invasion'
+    | 'wellness.kegel';
 
 export type ExtensionPackKind = 'common' | 'feature';
-export type ExtensionSettingsTab = 'pet';
-export type ExtensionSettingsRenderer = 'pet.cockroach-invasion';
+export type ExtensionSettingsTab = 'pet' | 'kegel';
+export type ExtensionSettingsRenderer = 'pet.cockroach-invasion' | 'wellness.kegel';
 
 export interface ExtensionPackDescriptor {
     readonly id: ExtensionPackId;
@@ -24,6 +25,7 @@ export interface ExtensionPackDescriptor {
     readonly contents: string;
     readonly dependencies: readonly ExtensionPackId[];
     readonly open?: () => Promise<void>;
+    readonly breakActivity?: { readonly window: string; readonly visibilityCommand: string };
     readonly settings?: {
         readonly tab: ExtensionSettingsTab;
         readonly label: string;
@@ -94,6 +96,18 @@ interface ExtensionPackStoreState {
 export type ExtensionPackStore = UseBoundStore<StoreApi<ExtensionPackStoreState>>;
 
 export const extensionPackRegistry: Readonly<Record<ExtensionPackId, ExtensionPackDescriptor>> = {
+    'wellness.kegel': {
+        id: 'wellness.kegel',
+        name: '凯格尔运动',
+        kind: 'feature',
+        order: 50,
+        icon: '息',
+        description: '在休息时用渐变泡泡和编钟引导运动，记录每日进度。',
+        contents: '独立运动功能包，无需额外运行环境',
+        dependencies: [],
+        breakActivity: { window: 'kegel', visibilityCommand: 'set_kegel_window_visible' },
+        settings: { tab: 'kegel', label: '凯格尔运动', order: 20, renderer: 'wellness.kegel' },
+    },
     'video.core': {
         id: 'video.core',
         name: '视频通用包',
@@ -178,21 +192,11 @@ function emptyStatus(id: ExtensionPackId): ExtensionPackStatus {
 }
 
 function emptyStatuses(): ExtensionPackStatuses {
-    return {
-        'video.core': emptyStatus('video.core'),
-        'video.editor': emptyStatus('video.editor'),
-        'pet.core': emptyStatus('pet.core'),
-        'pet.cockroach-invasion': emptyStatus('pet.cockroach-invasion'),
-    };
+    return Object.fromEntries(extensionPackCatalog.map((pack) => [pack.id, emptyStatus(pack.id)])) as ExtensionPackStatuses;
 }
 
 function emptyRevisions(): ExtensionPackRevisions {
-    return {
-        'video.core': 0,
-        'video.editor': 0,
-        'pet.core': 0,
-        'pet.cockroach-invasion': 0,
-    };
+    return Object.fromEntries(extensionPackCatalog.map((pack) => [pack.id, 0])) as ExtensionPackRevisions;
 }
 
 function indexedStatuses(statuses: readonly ExtensionPackStatus[]): ExtensionPackStatuses {
@@ -335,6 +339,11 @@ export function useExtensionPackSync({ enabled = true }: { enabled?: boolean } =
         }));
         keep(listenProgress('video-editor-module-progress', 'video'));
         keep(listenProgress('cockroach-module-progress', 'pet'));
+        keep(listen<ExtensionPackProgress>('extension-pack-progress', ({ payload }) => {
+            if (useExtensionPackStore.getState().busyPackId === payload.packId) {
+                useExtensionPackStore.setState({ progress: payload });
+            }
+        }));
         return () => {
             disposed = true;
             unlisteners.forEach((unlisten) => unlisten());

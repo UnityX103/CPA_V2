@@ -1,0 +1,40 @@
+.kegel-preview-background { position: fixed; inset: 0; background: radial-gradient(ellipse at 40% 40%, #344359, #141e2e); }
+.kegel-preview-ended { display: grid; place-items: center; text-align: center; color: #f1f6ff; }
+.kegel-stage { position: fixed; inset: 0; z-index: 1000; font-family: var(--font-cn); color: #f1f6ff; pointer-events: none; }
+.kegel-topline, .kegel-bottomline, .kegel-floating-settings { pointer-events: auto; background: rgba(18, 28, 49, .91); border: 1px solid rgba(210, 225, 255, .16); backdrop-filter: blur(20px); border-radius: 20px; box-shadow: 0 10px 40px #0a143522; }
+.kegel-topline { position: absolute; top: 22px; left: 50%; transform: translateX(-50%); display: flex; gap: 30px; align-items: center; padding: 13px 23px; font-size: 13px; white-space: nowrap; }
+.kegel-wordmark { font-weight: 700; letter-spacing: 2px; color: #bbcaff; }
+.kegel-orbit { position: absolute; left: 50%; top: 49%; transform: translate(-50%, -50%); width: min(81vh, 89vw); height: min(81vh, 89vw); display: grid; place-items: center; }
+.kegel-bubble { width: 100%; height: 100%; border-radius: 50%; pointer-events: auto; position: absolute; overflow: hidden; transform: scale(var(--bubble-scale)); background: radial-gradient(circle at 27% 18%, #e5fbffd9 0%, #a7e9f68c 17%, transparent 45%), linear-gradient(145deg, var(--bubble-cold-light), var(--bubble-cold-dark)); border: 1px solid #e3faff77; box-shadow: inset 14px 20px 48px #ffffff31, inset -18px -30px 70px #27337073, 0 26px 70px #38469138; }
+.kegel-bubble::before { content: ''; position: absolute; inset: 0; border-radius: inherit; background: radial-gradient(circle at 27% 18%, #fff8e7dd 0%, #fff2c580 17%, transparent 45%), linear-gradient(145deg, var(--bubble-warm-light), var(--bubble-warm-dark)); opacity: var(--warm-opacity); transition: opacity .55s ease; box-shadow: inset 14px 20px 48px #ffffff31, inset -18px -30px 70px #7b332c42; }
+.kegel-bubble:focus-visible { outline: 4px solid white; outline-offset: 8px; }
+.kegel-bubble-glint { position: absolute; inset: 4% 18% 68% 14%; border-radius: 50%; transform: rotate(-25deg); background: linear-gradient(180deg, #fff6, transparent); filter: blur(12px); }
+.kegel-center-copy { position: relative; text-align: center; pointer-events: none; text-shadow: 0 2px 20px #24326188; }
+.kegel-center-copy h1 { margin: 18px 0 14px; font-size: clamp(26px, 4.3vw, 55px); letter-spacing: 3px; font-weight: 500; }
+.kegel-center-copy p { font-size: clamp(11px, 1.3vw, 16px); opacity: .85; margin: 0; }
+.kegel-eyebrow { font-size: 14px; letter-spacing: 3px; opacity: .85; }
+.kegel-bottomline { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 13px 22px; min-width: 320px; text-align: center; }
+.kegel-time { display: flex; align-items: center; justify-content: center; gap: 14px; font-size: 12px; color: #c0cbe2; }
+.kegel-time strong { font-size: 22px; color: #f0f5ff; font-variant-numeric: tabular-nums; letter-spacing: 2px; }
+.kegel-actions { display: flex; justify-content: center; gap: 10px; margin-top: 9px; }
+.kegel-actions button, .kegel-floating-heading button { color: #c7d8f5; padding: 7px 13px; border-radius: 10px; background: #ffffff0d; font-size: 12px; }
+.kegel-actions button:hover { background: #ffffff22; }
+.kegel-floating-settings { position: absolute; width: 290px; right: 24px; top: 50%; transform: translateY(-50%); padding: 20px; }
+.kegel-floating-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.kegel-settings-form { display: flex; flex-direction: column; gap: 14px; }
+.kegel-settings-form label { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; }
+.kegel-settings-form .num-input { width: 110px; flex: 0 0 110px; }
+.kegel-settings-form input[type=range] { width: 120px; accent-color: #879dfa; }
+.kegel-settings-form input[type=checkbox] { accent-color: #879dfa; width: 17px; height: 17px; }
+.kegel-form-note { font-size: 11px; line-height: 1.65; opacity: .65; margin: 4px 0; }
+.kegel-primary { background: #7c91e9; border-radius: 12px; color: white; padding: 10px 16px; font-size: 13px; }
+.kegel-primary:disabled { opacity: .5; }
+.kegel-settings-tab { display: flex; flex-direction: column; gap: 14px; padding-bottom: 20px; }
+.kegel-settings-tab h3 { margin: 0; font-size: 16px; }
+.kegel-stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.kegel-stats-grid div { border-radius: 12px; padding: 12px 5px; text-align: center; background: #899cef14; display: flex; flex-direction: column; gap: 4px; }
+.kegel-stats-grid strong { font-size: 25px; color: #8fa3ef; }
+.kegel-stats-grid span { font-size: 10px; }
+.kegel-history-list { padding: 0; list-style: none; font-size: 11px; max-height: 150px; overflow: auto; }
+.kegel-history-list li { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid #899cef22; }
+@media (max-width: 600px) { .kegel-topline { width: calc(100% - 28px); gap: 10px; justify-content: space-between; padding: 12px; font-size: 10px; } .kegel-floating-settings { right: 14px; max-height: 70vh; overflow: auto; } .kegel-orbit { width: 92vw; height: 92vw; } }

@@ -28,6 +28,14 @@ function status(
 }
 
 describe('extension pack registry', () => {
+    it('exposes Kegel settings only through its installed and enabled standalone feature', () => {
+        expect(extensionPackRegistry['wellness.kegel'].dependencies).toEqual([]);
+        expect(settingsContributionsFor([status('wellness.kegel', false, false)])).toEqual([]);
+        expect(settingsContributionsFor([status('wellness.kegel', true, false)])).toEqual([]);
+        expect(settingsContributionsFor([status('wellness.kegel', true, true)])).toEqual([
+            { packId: 'wellness.kegel', tab: 'kegel', label: '凯格尔运动', renderer: 'wellness.kegel' },
+        ]);
+    });
     it('contributes settings only for installed and enabled feature packs', () => {
         expect(extensionPackRegistry['video.editor'].dependencies).toEqual(['video.core']);
         expect(extensionPackRegistry['pet.cockroach-invasion'].dependencies).toEqual(['pet.core']);

@@ -3,6 +3,22 @@ import { createPomodoroStore } from './pomodoro';
 import { createPomodoroBroadcast } from './pomodoroBroadcast';
 
 describe('pomodoro broadcast', () => {
+    it('publishes activity ownership but avoids broadcasting animation frames', () => {
+        const pomodoro = createPomodoroStore({ isSettingsWindow: false });
+        pomodoro.getState().applySettings(1, 300, 1, true, false);
+        pomodoro.getState().configureBreakActivity('wellness.kegel');
+        const broadcast = createPomodoroBroadcast(pomodoro);
+        const events: ReturnType<typeof broadcast.current>[] = [];
+        broadcast.subscribe((event) => events.push(event));
+        const stop = broadcast.start();
+        pomodoro.getState().start(); pomodoro.getState().tick(1);
+        expect(events[events.length - 1]?.activityOwnsBreak).toBe(true);
+        pomodoro.getState().controlBreakActivity(pomodoro.getState().breakActivity!.id, 'toggle');
+        const before = events.length;
+        pomodoro.getState().tick(0.05);
+        expect(events.length).toBe(before);
+        stop();
+    });
     it('publishes a versioned phase event for extension subscribers', () => {
         const pomodoro = createPomodoroStore({ isSettingsWindow: false });
         pomodoro.getState().applySettings(1, 5, 1, true, false);

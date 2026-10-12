@@ -45,6 +45,7 @@ beforeEach(() => {
         progress: null,
         error: null,
         statuses: {
+            'wellness.kegel': status('wellness.kegel', false, false),
             'video.core': status('video.core', true, true),
             'video.editor': status('video.editor', true, true),
             'pet.core': status('pet.core', false, false),

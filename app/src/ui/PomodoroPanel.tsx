@@ -46,16 +46,15 @@ export function PomodoroPanel({ preferencesReady = true }: { preferencesReady?: 
 
     useEffect(() => {
         let last = performance.now();
-        let rafId = 0;
-        const loop = (now: number) => {
+        const loop = () => {
+            const now = performance.now();
             const delta = (now - last) / 1000;
             last = now;
             usePomodoroStore.getState().tick(delta);
-            rafId = requestAnimationFrame(loop);
         };
-        rafId = requestAnimationFrame(loop);
-        tickRef.current = rafId;
-        return () => cancelAnimationFrame(rafId);
+        const interval = window.setInterval(loop, 50);
+        tickRef.current = interval;
+        return () => window.clearInterval(interval);
     }, []);
 
     useEffect(() => {

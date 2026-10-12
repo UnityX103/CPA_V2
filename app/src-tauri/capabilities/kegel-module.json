@@ -1,0 +1,8 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "kegel-module",
+  "description": "已校验凯格尔功能包的专用窗口，只开放活动事件通信。",
+  "windows": ["kegel"],
+  "remote": { "urls": ["http://cpa-module.localhost/wellness.kegel/*", "cpa-module://localhost/wellness.kegel/*"] },
+  "permissions": ["core:event:allow-listen", "core:event:allow-unlisten", "core:event:allow-emit-to"]
+}

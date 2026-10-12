@@ -5,6 +5,8 @@ mod audio;
 mod cockroach_module;
 mod extension_packs;
 mod key_counter;
+mod kegel_window;
+mod kegel_module;
 mod input_activity;
 mod presence_detection;
 mod scaled_window;
@@ -461,6 +463,9 @@ pub fn run() {
     let listener_handle_for_exit = listener_handle.clone();
 
     let app = tauri::Builder::default()
+        .register_uri_scheme_protocol("cpa-module", |context, request| {
+            extension_packs::web_pack::asset_response(context.app_handle(), request.uri().path())
+        })
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_persisted_scope::init())
@@ -473,6 +478,7 @@ pub fn run() {
         ))
         .manage(pomodoro_docking::Docking::default())
         .manage(audio::AudioPlaybackState::default())
+        .manage(kegel_module::KegelAudioState::default())
         .manage(cockroach_module::CockroachModuleState::default())
         .manage(video_editor_module::VideoEditorModuleState::default())
         .manage::<std::sync::Arc<accessibility::ListenerHandle>>(listener_handle_for_manage)
@@ -622,6 +628,16 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            kegel_module::kegel_module_preferences,
+            kegel_module::begin_kegel_module_audio,
+            kegel_module::configure_kegel_module_audio,
+            kegel_module::play_kegel_module_audio,
+            kegel_module::end_kegel_module_audio,
+            kegel_module::save_kegel_module_settings,
+            kegel_module::save_kegel_module_history,
+            kegel_module::control_kegel_break_activity,
+            kegel_window::set_kegel_window_visible,
+            kegel_window::update_kegel_hit_regions,
             app_update::check_app_update,
             app_update::install_app_update,
             set_main_window_pinned,
@@ -684,6 +700,7 @@ pub fn run() {
             cockroach_module::stop_for_exit(_handle);
             video_editor_module::stop_for_exit(_handle);
             presence_detection::stop_for_exit();
+            kegel_module::stop_audio(_handle);
             active_app_stop_for_exit.store(true, Ordering::Relaxed);
             accessibility_stop_for_exit.store(true, Ordering::Relaxed);
             listener_handle_for_exit.stop();

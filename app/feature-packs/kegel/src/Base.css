@@ -1,0 +1,6 @@
+:root { --font-cn: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif; }
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; padding: 0; background: transparent; overflow: hidden; color: #f1f6ff; font-family: var(--font-cn); user-select: none; -webkit-user-select: none; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; padding: 0; }
+input, select, textarea { font-family: inherit; }
+button:focus-visible { outline: 2px solid #879dfa; outline-offset: 2px; }
