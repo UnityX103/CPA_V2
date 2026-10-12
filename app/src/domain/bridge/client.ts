@@ -87,25 +87,20 @@ export function applySnapshotToMirrors(snap: BridgeSnapshot): void {
         breakDurationSeconds: snap.pomodoro.breakDurationSeconds,
         totalRounds: snap.pomodoro.totalRounds,
         autoStartBreak: snap.pomodoro.autoStartBreak,
+        autoStartOnLaunch: snap.pomodoro.autoStartOnLaunch ?? false,
         autoPinAfterFocus: snap.pomodoro.autoPinAfterFocus,
         endActionMode: snap.pomodoro.endActionMode,
+        playVideoOnBreakEnd: snap.pomodoro.playVideoOnBreakEnd ?? false,
         endActionVideo: { ...snap.pomodoro.endActionVideo },
         endSounds: clonePomodoroEndSounds(snap.pomodoro.endSounds),
     });
     usePresenceStore.setState({
-        enabled: snap.presence.enabled,
         inputActivityEnabled: snap.presence.inputActivityEnabled,
         inputActivityAvailability: snap.presence.inputActivityAvailability,
-        cameraDeviceId: snap.presence.cameraDeviceId,
-        intervalSeconds: snap.presence.intervalSeconds,
-        absenceSensitivity: snap.presence.absenceSensitivity,
         restDeskReminderEnabled: snap.presence.restDeskReminderEnabled,
         restDeskReminderMode: snap.presence.restDeskReminderMode,
-        platform: snap.presence.platform,
-        availability: snap.presence.availability,
         confirmedPresence: snap.presence.confirmedPresence,
         lastSuccessfulAt: snap.presence.lastSuccessfulAt,
-        lastError: snap.presence.lastError,
     });
     useNetworkStore.setState({
         autoConnect: snap.network.autoConnect,

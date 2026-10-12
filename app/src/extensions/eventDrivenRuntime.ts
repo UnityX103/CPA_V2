@@ -39,7 +39,7 @@ function activationGateMatches(
         return false;
     }
     if (!contribution.requiresPresence) return true;
-    return presence.enabled
+    return presence.inputActivityEnabled
         && presence.restDeskReminderEnabled
         && presence.restDeskReminderMode === contribution.settingsGate
         && presence.confirmedPresence === 'present';

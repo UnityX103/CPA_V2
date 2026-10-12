@@ -70,8 +70,10 @@ beforeEach(() => {
         breakDurationSeconds: 300,
         totalRounds: 4,
         autoStartBreak: false,
+        autoStartOnLaunch: false,
         autoPinAfterFocus: true,
         endActionMode: 'playVideo',
+        playVideoOnBreakEnd: false,
         endActionVideo: {
             sourceKind: 'builtin',
             builtinVideoId: 'qianqian',
@@ -83,19 +85,10 @@ beforeEach(() => {
         },
     });
     usePresenceStore.setState({
-        enabled: false,
         inputActivityEnabled: false,
         inputActivityAvailability: 'disabled',
-        cameraDeviceId: null,
-        intervalSeconds: 60,
-        absenceSensitivity: 'strict',
-        platform: 'macos',
-        availability: 'disabled',
         confirmedPresence: 'unknown',
         lastSuccessfulAt: null,
-        lastError: null,
-        inFlight: false,
-        generation: 0,
         notice: null,
     });
     useExtensionPackStore.setState({
@@ -416,47 +409,20 @@ describe('SettingsPanel', () => {
         expect(screen.getByText('100%')).toBeTruthy();
     });
 
-    it('renders the local camera automation controls', () => {
+
+
+    it('renders input-only controls without querying the camera', async () => {
         render(<SettingsPanel />);
-
-        const toggle = screen.getByRole('button', { name: '摄像头自动控制' });
-        const toggleRow = toggle.closest('.pomo-row');
-        const authorizationControl = screen.getByRole('group', { name: '摄像头授权状态' });
-
-        expect(toggle.getAttribute('aria-pressed')).toBe('false');
-        expect(toggleRow?.nextElementSibling).toBe(authorizationControl);
-        expect(screen.getByText('检测间隔')).toBeTruthy();
-        const threshold = screen.getByRole('combobox', { name: '离席判定阈值' }) as HTMLSelectElement;
-        expect(threshold.value).toBe('strict');
-        expect(screen.getByRole('option', { name: '关闭防抖' })).toBeTruthy();
-        expect(screen.getByRole('option', { name: '严谨' })).toBeTruthy();
-        expect(screen.getByRole('option', { name: '中等' })).toBeTruthy();
-        expect(screen.getByRole('option', { name: '宽松' })).toBeTruthy();
-        expect(screen.getByText('摄像头授权')).toBeTruthy();
-        expect(screen.getByText('未启用')).toBeTruthy();
-        expect(screen.getByText('工位状态')).toBeTruthy();
+        expect(screen.getByRole('button', { name: '允许检测键盘和鼠标活动' })).toBeTruthy();
+        for (const label of ['摄像头自动控制', '校准区域']) {
+            expect(screen.queryByRole('button', { name: label })).toBeNull();
+        }
+        expect(screen.queryByRole('group', { name: '摄像头授权状态' })).toBeNull();
         expect(screen.queryByRole('combobox', { name: '目标摄像头' })).toBeNull();
-    });
-
-    it('selects and applies a target camera only after camera automation is enabled', async () => {
-        render(<SettingsPanel />);
-
-        expect(screen.queryByRole('combobox', { name: '目标摄像头' })).toBeNull();
-        fireEvent.click(screen.getByRole('button', { name: '摄像头自动控制' }));
-
-        const camera = await screen.findByRole('combobox', { name: '目标摄像头' });
-        expect(screen.getByRole('option', { name: '自动选择摄像头' })).toBeTruthy();
-        expect(screen.getByRole('option', { name: 'FaceTime HD Camera（系统默认）' })).toBeTruthy();
-        expect(screen.getByRole('option', { name: 'USB Camera' })).toBeTruthy();
-        fireEvent.change(camera, { target: { value: 'camera-usb' } });
-        fireEvent.click(screen.getByRole('button', { name: '应用' }));
-
-        await vi.waitFor(() => {
-            expect(usePresenceStore.getState()).toEqual(expect.objectContaining({
-                enabled: true,
-                cameraDeviceId: 'camera-usb',
-            }));
-        });
+        expect(screen.queryByRole('combobox', { name: '离席判定阈值' })).toBeNull();
+        expect(screen.queryByRole('spinbutton', { name: '检测间隔' })).toBeNull();
+        await act(async () => {});
+        expect(invoke.mock.calls.some(([command]) => String(command).includes('camera'))).toBe(false);
     });
 
     it('labels automatic focus-end pinning clearly', () => {
@@ -465,6 +431,31 @@ describe('SettingsPanel', () => {
         expect(screen.getByRole('button', { name: '专注结束后自动置顶' })).toBeTruthy();
         expect(screen.getByText('专注结束后自动置顶')).toBeTruthy();
         expect(screen.queryByText('自动制定')).toBeNull();
+    });
+
+    it('applies automatic start only on confirmation and keeps timer progress', () => {
+        usePomodoroStore.getState().reset();
+        usePomodoroStore.getState().start();
+        usePomodoroStore.getState().tick(10);
+        render(<SettingsPanel />);
+        const toggle = screen.getByRole('button', { name: '自动开始' });
+        expect(toggle.getAttribute('aria-pressed')).toBe('false');
+
+        fireEvent.click(toggle);
+        expect(toggle.getAttribute('aria-pressed')).toBe('true');
+        expect(usePomodoroStore.getState().autoStartOnLaunch).toBe(false);
+        act(() => usePomodoroStore.getState().tick(1));
+        expect(toggle.getAttribute('aria-pressed')).toBe('true');
+        fireEvent.click(screen.getByRole('button', { name: '应用' }));
+        expect(usePomodoroStore.getState()).toMatchObject({
+            autoStartOnLaunch: true,
+            isRunning: true,
+            remainingSeconds: 1489,
+        });
+
+        fireEvent.click(toggle);
+        fireEvent.click(screen.getByRole('button', { name: '应用' }));
+        expect(usePomodoroStore.getState().autoStartOnLaunch).toBe(false);
     });
 
     it('shows focus-end video prompt settings with bundled and custom sources', () => {
@@ -492,6 +483,37 @@ describe('SettingsPanel', () => {
         expect(screen.getByRole('option', { name: '复古闹铃' })).toBeTruthy();
         expect(screen.getByRole('button', { name: '选择专注结束声音本机 MP3' })).toBeTruthy();
         expect(screen.getByRole('button', { name: '选择休息结束声音本机 MP3' })).toBeTruthy();
+    });
+
+    it('applies the default-off break-end video toggle without resetting progress', async () => {
+        usePomodoroStore.setState({ isRunning: true, remainingSeconds: 42 });
+        render(<SettingsPanel />);
+        const toggle = screen.getByRole('button', { name: '休息结束时也弹出视频提示' });
+        expect(toggle.getAttribute('aria-pressed')).toBe('false');
+        fireEvent.click(toggle);
+        expect(toggle.getAttribute('aria-pressed')).toBe('true');
+        expect(usePomodoroStore.getState().playVideoOnBreakEnd).toBe(false);
+        fireEvent.click(screen.getByRole('button', { name: '应用' }));
+        await vi.waitFor(() => expect(usePomodoroStore.getState().playVideoOnBreakEnd).toBe(true));
+        expect(usePomodoroStore.getState().remainingSeconds).toBe(42);
+        expect(usePomodoroStore.getState().isRunning).toBe(true);
+
+        fireEvent.click(toggle);
+        fireEvent.click(screen.getByRole('button', { name: '应用' }));
+        await vi.waitFor(() => expect(usePomodoroStore.getState().playVideoOnBreakEnd).toBe(false));
+    });
+
+    it('shows the break-end video toggle only for video mode and preserves its draft', () => {
+        render(<SettingsPanel />);
+        fireEvent.click(screen.getByRole('button', { name: '休息结束时也弹出视频提示' }));
+        fireEvent.change(screen.getByRole('combobox', { name: '计时结束提示' }), {
+            target: { value: 'topWindow' },
+        });
+        expect(screen.queryByRole('button', { name: '休息结束时也弹出视频提示' })).toBeNull();
+        fireEvent.change(screen.getByRole('combobox', { name: '计时结束提示' }), {
+            target: { value: 'playVideo' },
+        });
+        expect(screen.getByRole('button', { name: '休息结束时也弹出视频提示' }).getAttribute('aria-pressed')).toBe('true');
     });
 
     it('selects and applies an independent custom focus-end MP3 path', async () => {
@@ -565,27 +587,8 @@ describe('SettingsPanel', () => {
         expect((screen.getByRole('button', { name: '选择自定义视频' }) as HTMLButtonElement).disabled).toBe(false);
     });
 
-    it('applies camera automation settings through the existing apply flow', async () => {
-        render(<SettingsPanel />);
 
-        fireEvent.click(screen.getByRole('button', { name: '摄像头自动控制' }));
-        const inputs = screen.getAllByRole('spinbutton');
-        expect(inputs).toHaveLength(4);
-        expect(inputs[3].getAttribute('min')).toBe('5');
-        fireEvent.change(inputs[3], { target: { value: '5' } });
-        fireEvent.change(screen.getByRole('combobox', { name: '离席判定阈值' }), {
-            target: { value: 'balanced' },
-        });
-        fireEvent.click(screen.getByRole('button', { name: '应用' }));
 
-        await vi.waitFor(() => {
-            expect(usePresenceStore.getState()).toEqual(expect.objectContaining({
-                enabled: true,
-                intervalSeconds: 5,
-                absenceSensitivity: 'balanced',
-            }));
-        });
-    });
 
     it('reveals the rest-at-desk reminder and its method only after their dependencies are enabled', async () => {
         useExtensionPackStore.setState((state) => ({
@@ -600,7 +603,7 @@ describe('SettingsPanel', () => {
         expect(screen.queryByRole('button', { name: '休息未离开工位时的提醒' })).toBeNull();
         expect(screen.queryByRole('combobox', { name: '提醒方式' })).toBeNull();
 
-        fireEvent.click(screen.getByRole('button', { name: '摄像头自动控制' }));
+        fireEvent.click(screen.getByRole('button', { name: '允许检测键盘和鼠标活动' }));
         const reminder = screen.getByRole('button', { name: '休息未离开工位时的提醒' });
         expect(reminder.getAttribute('aria-pressed')).toBe('false');
         expect(screen.queryByRole('combobox', { name: '提醒方式' })).toBeNull();
@@ -624,7 +627,7 @@ describe('SettingsPanel', () => {
 
 
 describe('keyboard and mouse activity consent', () => {
-    it('requires Apply, persists independently of the camera, and supports revocation', async () => {
+    it('requires Apply and supports revocation', async () => {
         render(<SettingsPanel />);
         const toggle = screen.getByRole('button', { name: '允许检测键盘和鼠标活动' });
         expect(toggle.getAttribute('aria-pressed')).toBe('false');
@@ -632,7 +635,7 @@ describe('keyboard and mouse activity consent', () => {
         expect(usePresenceStore.getState().inputActivityEnabled).toBe(false);
         await act(async () => { fireEvent.click(screen.getByRole('button', { name: '应用' })); });
         expect(usePresenceStore.getState().inputActivityEnabled).toBe(true);
-        expect(usePresenceStore.getState().enabled).toBe(false);
+        expect(usePresenceStore.getState()).not.toHaveProperty('enabled');
         expect(invoke.mock.calls.some(([command]) => command === 'sample_input_activity')).toBe(false);
         fireEvent.click(toggle);
         await act(async () => { fireEvent.click(screen.getByRole('button', { name: '应用' })); });

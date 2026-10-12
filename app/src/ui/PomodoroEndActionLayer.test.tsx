@@ -40,6 +40,7 @@ beforeEach(() => {
     usePomodoroStore.setState({
         lastEndEvent: null,
         endActionMode: 'playVideo',
+        playVideoOnBreakEnd: false,
         endActionVideo: {
             sourceKind: 'builtin',
             builtinVideoId: 'qianqian',
@@ -113,6 +114,8 @@ describe('PomodoroEndActionLayer', () => {
         });
 
         expect(await screen.findByText('休息结束')).toBeTruthy();
+        expect(resolvePomodoroEndAction).not.toHaveBeenCalled();
+        expect(openPomodoroVideoWindow).not.toHaveBeenCalled();
         expect(playPomodoroEndSound).toHaveBeenCalledWith(
             usePomodoroStore.getState().endSounds,
             'break',
@@ -131,6 +134,61 @@ describe('PomodoroEndActionLayer', () => {
         expect(openPomodoroVideoWindow).not.toHaveBeenCalled();
         expect(focusAppWindow).not.toHaveBeenCalled();
         expect(playPomodoroEndSound).not.toHaveBeenCalled();
+    });
+
+    it.each(['focus', 'completed'] as const)('opens the selected video when an enabled break ends into %s', async (toPhase) => {
+        const action = { kind: 'video', title: '千千', src: '/videos/ms1-alpha.mov' };
+        resolvePomodoroEndAction.mockResolvedValue(action);
+        usePomodoroStore.setState({ playVideoOnBreakEnd: true });
+        render(<PomodoroEndActionLayer />);
+
+        await act(async () => {
+            usePomodoroStore.setState({ lastEndEvent: endEvent({ fromPhase: 'break', toPhase }) });
+        });
+
+        expect(openPomodoroVideoWindow).toHaveBeenCalledExactlyOnceWith(action);
+        expect(focusAppWindow).not.toHaveBeenCalled();
+        expect(playPomodoroEndSound).toHaveBeenCalledWith(usePomodoroStore.getState().endSounds, 'break');
+        await act(async () => {
+            usePomodoroStore.setState({ playVideoOnBreakEnd: false });
+        });
+        expect(openPomodoroVideoWindow).toHaveBeenCalledTimes(1);
+    });
+
+    it('falls back to the break-end popup when video playback fails', async () => {
+        usePomodoroStore.setState({ playVideoOnBreakEnd: true });
+        resolvePomodoroEndAction.mockResolvedValue({ kind: 'video', title: '千千', src: '/videos/ms1-alpha.mov' });
+        openPomodoroVideoWindow.mockRejectedValue(new Error('player unavailable'));
+        render(<PomodoroEndActionLayer />);
+        await act(async () => {
+            usePomodoroStore.setState({ lastEndEvent: endEvent({ fromPhase: 'break', toPhase: 'focus' }) });
+        });
+        expect(screen.getByText('休息结束')).toBeTruthy();
+        expect(focusAppWindow).toHaveBeenCalledWith('main');
+    });
+
+    it('keeps the top-window mode when break-end video is enabled', async () => {
+        usePomodoroStore.setState({ playVideoOnBreakEnd: true, endActionMode: 'topWindow' });
+        render(<PomodoroEndActionLayer />);
+        await act(async () => {
+            usePomodoroStore.setState({ lastEndEvent: endEvent({ fromPhase: 'break', toPhase: 'focus' }) });
+        });
+        expect(screen.getByText('休息结束')).toBeTruthy();
+        expect(openPomodoroVideoWindow).not.toHaveBeenCalled();
+    });
+
+    it('does not play video or sound when an enabled break is manually skipped', async () => {
+        usePomodoroStore.setState({ playVideoOnBreakEnd: true });
+        render(<PomodoroEndActionLayer />);
+        await act(async () => {
+            usePomodoroStore.setState({
+                lastEndEvent: endEvent({ fromPhase: 'break', toPhase: 'focus', triggeredBy: 'skip' }),
+            });
+        });
+        expect(resolvePomodoroEndAction).not.toHaveBeenCalled();
+        expect(openPomodoroVideoWindow).not.toHaveBeenCalled();
+        expect(playPomodoroEndSound).not.toHaveBeenCalled();
+        expect(focusAppWindow).not.toHaveBeenCalled();
     });
 
 });

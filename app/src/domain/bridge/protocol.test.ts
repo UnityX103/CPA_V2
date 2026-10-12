@@ -19,8 +19,10 @@ describe('bridge protocol', () => {
                 breakDurationSeconds: 300,
                 totalRounds: 4,
                 autoStartBreak: false,
+                autoStartOnLaunch: false,
                 autoPinAfterFocus: true,
                 endActionMode: 'topWindow',
+                playVideoOnBreakEnd: false,
                 endActionVideo: {
                     sourceKind: 'builtin',
                     builtinVideoId: 'qianqian',
@@ -32,19 +34,12 @@ describe('bridge protocol', () => {
                 },
             },
             presence: {
-                enabled: true,
                 inputActivityEnabled: false,
-                cameraDeviceId: 'camera-built-in',
-                intervalSeconds: 60,
-                absenceSensitivity: 'strict',
                 restDeskReminderEnabled: true,
                 restDeskReminderMode: 'cockroachInvasion',
                 inputActivityAvailability: 'disabled',
-                platform: 'macos',
-                availability: 'ready',
                 confirmedPresence: 'present',
                 lastSuccessfulAt: 123,
-                lastError: null,
             },
             network: {
                 autoConnect: false,
@@ -94,20 +89,13 @@ describe('bridge protocol', () => {
                 break: { sourceKind: 'builtin', builtinSoundId: 'triple-ping', customSoundPath: '' },
             }] },
             { v: BRIDGE_VERSION, store: 'presence', action: 'applySettings', args: [{
-                enabled: true,
                 inputActivityEnabled: false,
-                cameraDeviceId: 'camera-built-in',
-                intervalSeconds: 60,
-                absenceSensitivity: 'strict',
                 restDeskReminderEnabled: true,
                 restDeskReminderMode: 'cockroachInvasion',
             }] },
-            { v: BRIDGE_VERSION, store: 'presence', action: 'requestAccess', args: [] },
-            { v: BRIDGE_VERSION, store: 'presence', action: 'retry', args: [] },
-            { v: BRIDGE_VERSION, store: 'presence', action: 'openPrivacySettings', args: [] },
             { v: BRIDGE_VERSION, store: 'network', action: 'leaveRoom', args: [] },
         ];
 
-        expect(payloads).toHaveLength(9);
+        expect(payloads).toHaveLength(6);
     });
 });

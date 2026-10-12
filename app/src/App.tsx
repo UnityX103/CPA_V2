@@ -28,7 +28,7 @@ import {
 } from './domain/userPreferencesPersistence';
 import type { CloudAccountData } from './domain/cloudAccountData';
 import { useInputActivityMonitor } from './domain/inputActivity';
-import { usePresenceMonitor, usePresenceStore } from './domain/presence';
+import { usePresenceStore } from './domain/presence';
 import { loadPresencePreferences } from './domain/presencePersistence';
 import { PresenceNotice } from './ui/PresenceNotice';
 import { usePomodoroBroadcastSource } from './domain/pomodoroBroadcast';
@@ -160,7 +160,6 @@ export default function App() {
     useBindingKeyListener();
     useBridgeHost();
     usePomodoroBroadcastSource();
-    usePresenceMonitor({ enabled: localHydrated });
     useInputActivityMonitor(localHydrated);
     useInputCounterWindowController();
     useRemotePlayerWindowController();
@@ -302,7 +301,13 @@ export default function App() {
                     useSettingsStore.getState().hydrateSettings(snapshot);
                 }
 
+                const pomodoro = usePomodoroStore.getState();
+                if (pomodoro.autoStartOnLaunch) {
+                    pomodoro.start();
+                }
+
                 const savedSnapshot = await saveLocalSnapshot(stores);
+                if (cancelled) return;
                 const network = useNetworkStore.getState();
                 if (network.accountStatus === 'loggedIn' && !network.cloudData) {
                     network.saveUserData(savedSnapshot, network.cloudDataUpdatedAt);

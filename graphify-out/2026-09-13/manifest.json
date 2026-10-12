@@ -2395,8 +2395,8 @@
     "semantic_hash": ""
   },
   "docs/deployment/cloud-release.md": {
-    "mtime": 1789266584.100681,
-    "ast_hash": "c5b300eee7caae269771ba63a023f03c",
+    "mtime": 1789288565.622947,
+    "ast_hash": "672694f1917e32945553c230e62a11c8",
     "semantic_hash": ""
   },
   "docs/deployment/release-0.1.32.md": {
@@ -2415,8 +2415,8 @@
     "semantic_hash": ""
   },
   "docs/deployment/release-0.2.0.md": {
-    "mtime": 1789271541.7610068,
-    "ast_hash": "e9a6e61e5029d1ae7c3faf9cc5d9c754",
+    "mtime": 1789288565.582071,
+    "ast_hash": "e49605fd817dd27210dba5ec095d7aa0",
     "semantic_hash": ""
   },
   "app/src-tauri/src/pomodoro_docking/macos.rs": {
@@ -2455,13 +2455,13 @@
     "semantic_hash": ""
   },
   "docs/deployment/release-0.2.1.md": {
-    "mtime": 1789283525.3313758,
-    "ast_hash": "1a305cfcf92dd40f8ad015320da70942",
+    "mtime": 1789288565.5844877,
+    "ast_hash": "9c9b5f1c2a136609bf65bb8199a16ecb",
     "semantic_hash": ""
   },
   "docs/deployment/release-0.2.2.md": {
-    "mtime": 1789287684.9986885,
-    "ast_hash": "8144ffb0a8185e0bf5247ffc28453a46",
+    "mtime": 1789288565.5877178,
+    "ast_hash": "1cf1d54224adaa8cdc7ff51430c09134",
     "semantic_hash": ""
   }
 }

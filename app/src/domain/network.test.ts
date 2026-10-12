@@ -62,8 +62,10 @@ function makeCloudSnapshot(): CloudAccountData {
             breakDurationSeconds: 300,
             totalRounds: 4,
             autoStartBreak: false,
+            autoStartOnLaunch: false,
             autoPinAfterFocus: true,
             endActionMode: 'topWindow',
+            playVideoOnBreakEnd: false,
             endActionVideo: {
                 sourceKind: 'builtin',
                 builtinVideoId: 'qianqian',

@@ -7,11 +7,48 @@ function freshStore() {
     return createPomodoroStore({ isSettingsWindow: false });
 }
 
+describe('Pomodoro automatic start preference', () => {
+    it('defaults off and preserves a running timer when changed', () => {
+        const store = freshStore();
+        expect(store.getState().autoStartOnLaunch).toBe(false);
+        store.getState().start();
+        store.getState().tick(10);
+        store.getState().setAutoStartOnLaunch(true);
+        expect(store.getState()).toMatchObject({
+            autoStartOnLaunch: true,
+            isRunning: true,
+            remainingSeconds: 1490,
+        });
+        store.getState().setAutoStartOnLaunch(false);
+        expect(store.getState().autoStartOnLaunch).toBe(false);
+    });
+
+    it('dispatches from the settings mirror without starting a timer there', () => {
+        const dispatch = vi.spyOn(dispatchMod, 'dispatch').mockResolvedValue(undefined);
+        try {
+            const store = createPomodoroStore({ isSettingsWindow: true });
+            store.getState().setAutoStartOnLaunch(true);
+            expect(dispatch).toHaveBeenCalledWith({
+                v: BRIDGE_VERSION,
+                store: 'pomodoro',
+                action: 'setAutoStartOnLaunch',
+                args: [true],
+            });
+            expect(store.getState().autoStartOnLaunch).toBe(false);
+            expect(store.getState().isRunning).toBe(false);
+        } finally {
+            dispatch.mockRestore();
+        }
+    });
+});
+
 describe('Pomodoro end action', () => {
     it('defaults to playing the bundled qianqian video', () => {
         const store = freshStore();
 
         expect(store.getState().endActionMode).toBe('playVideo');
+        expect(store.getState().playVideoOnBreakEnd).toBe(false);
+        expect(createPomodoroStore({ isSettingsWindow: true }).getState().playVideoOnBreakEnd).toBe(false);
         expect(store.getState().endActionVideo).toEqual({
             sourceKind: 'builtin',
             builtinVideoId: 'qianqian',
@@ -53,6 +90,41 @@ describe('Pomodoro end action', () => {
             focus: { sourceKind: 'off', builtinSoundId: 'clear-success', customSoundPath: '' },
             break: { sourceKind: 'custom', builtinSoundId: 'triple-ping', customSoundPath: '/tmp/rest.mp3' },
         });
+    });
+
+    it('enables and disables break-end video without resetting timer progress', async () => {
+        const store = freshStore();
+        store.getState().start();
+        store.getState().tick(10);
+        const video = store.getState().endActionVideo;
+
+        await store.getState().applyEndActionSettings('playVideo', video, true);
+        expect(store.getState().playVideoOnBreakEnd).toBe(true);
+        await store.getState().applyEndActionSettings('topWindow', video);
+        expect(store.getState().playVideoOnBreakEnd).toBe(true);
+        await store.getState().applyEndActionSettings('playVideo', video, false);
+        expect(store.getState().playVideoOnBreakEnd).toBe(false);
+        expect(store.getState().remainingSeconds).toBe(1490);
+        expect(store.getState().isRunning).toBe(true);
+    });
+
+    it('dispatches break-end video settings for confirmation from the settings window', async () => {
+        const dispatch = vi.spyOn(dispatchMod, 'dispatchConfirmed').mockResolvedValue(undefined);
+        try {
+            const store = createPomodoroStore({ isSettingsWindow: true });
+            const video = store.getState().endActionVideo;
+            await store.getState().applyEndActionSettings('playVideo', video, true);
+
+            expect(dispatch).toHaveBeenCalledWith({
+                v: BRIDGE_VERSION,
+                store: 'pomodoro',
+                action: 'applyEndActionSettings',
+                args: ['playVideo', video, true],
+            }, { replyTo: 'settings' });
+            expect(store.getState().playVideoOnBreakEnd).toBe(false);
+        } finally {
+            dispatch.mockRestore();
+        }
     });
 });
 
@@ -185,6 +257,52 @@ describe('PomodoroTimerSystem.skip', () => {
 });
 
 describe('Pomodoro presence automation', () => {
+    it('starts an idle focus from presence without changing progress or creating an end event', () => {
+        const store = freshStore();
+        const before = store.getState();
+
+        expect(store.getState().startFocusFromPresence()).toBe(true);
+        expect(store.getState()).toMatchObject({
+            currentPhase: 'focus',
+            currentRound: before.currentRound,
+            remainingSeconds: before.remainingSeconds,
+            isRunning: true,
+            lastEndEvent: null,
+            consecutiveCompletedFocus: 0,
+        });
+        expect(store.getState().startFocusFromPresence()).toBe(false);
+    });
+
+    it('keeps a manual pause across settings changes and automation cleanup until manually started', () => {
+        const store = freshStore();
+        store.getState().start();
+        store.getState().tick(7);
+        store.getState().pause();
+        store.getState().applySettings(60, 30, 2, false, false);
+        store.getState().clearPresenceAutomationOwnership();
+
+        expect(store.getState().startFocusFromPresence()).toBe(false);
+        expect(store.getState().resumeFocusFromPresence()).toBe(false);
+        expect(store.getState().isRunning).toBe(false);
+
+        store.getState().start();
+        expect(store.getState()).toMatchObject({
+            isRunning: true,
+            presenceAutomationState: 'none',
+        });
+    });
+
+    it('keeps an automatically paused focus stopped after automation is cleared', () => {
+        const store = freshStore();
+        store.getState().start();
+        store.getState().pauseFocusFromPresence();
+        store.getState().clearPresenceAutomationOwnership();
+
+        expect(store.getState().startFocusFromPresence()).toBe(false);
+        expect(store.getState().resumeFocusFromPresence()).toBe(false);
+        expect(store.getState().isRunning).toBe(false);
+    });
+
     it('pauses and resumes the same break without creating a completion event', () => {
         const store = freshStore();
         store.getState().applySettings(60, 30, 2, true, false);
@@ -211,7 +329,7 @@ describe('Pomodoro presence automation', () => {
         });
     });
 
-    it('starts only a focus produced by a natural break completion', () => {
+    it('starts a waiting focus after a natural break or reset but honors manual pause', () => {
         const store = freshStore();
         store.getState().applySettings(60, 1, 2, true, false);
         store.setState({ currentPhase: 'break', isRunning: true, remainingSeconds: 1 });
@@ -223,7 +341,7 @@ describe('Pomodoro presence automation', () => {
 
         store.getState().reset();
         store.getState().startFocusFromPresence();
-        expect(store.getState().isRunning).toBe(false);
+        expect(store.getState().isRunning).toBe(true);
 
         store.setState({ presenceAutomationState: 'focusAutoStartEligible' });
         store.getState().pause();

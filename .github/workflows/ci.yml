@@ -28,6 +28,8 @@ jobs:
       - run: npm ci
         working-directory: app
       - run: npm test
+        env:
+          NODE_OPTIONS: --localstorage-file=${{ runner.temp }}/cpa-v2-vitest-localstorage
         working-directory: app
       - run: npm run build
         working-directory: app

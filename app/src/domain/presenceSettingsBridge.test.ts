@@ -13,34 +13,15 @@ beforeEach(() => {
     dispatchConfirmed.mockClear();
 });
 
-describe('settings-window presence actions', () => {
-    it('does not request camera access until the explicit action runs', async () => {
+describe('settings-window input activity settings', () => {
+    it('dispatches input opt-in to the main window and waits for its acknowledgement', async () => {
         const store = createPresenceStore({ isSettingsWindow: true });
-
+        await store.getState().applySettings({ inputActivityEnabled: true,
+            restDeskReminderEnabled: false, restDeskReminderMode: 'cockroachInvasion' });
+        expect(dispatchConfirmed).toHaveBeenCalledWith({ v: BRIDGE_VERSION, store: 'presence',
+            action: 'applySettings', args: [{ inputActivityEnabled: true, restDeskReminderEnabled: false,
+                restDeskReminderMode: 'cockroachInvasion' }] }, { replyTo: 'settings' });
+        expect(store.getState().inputActivityEnabled).toBe(false);
         expect(dispatch).not.toHaveBeenCalled();
-        await store.getState().requestAccess();
-
-        expect(dispatch).toHaveBeenCalledWith({
-            v: BRIDGE_VERSION,
-            store: 'presence',
-            action: 'requestAccess',
-            args: [],
-        });
-    });
-
-    it.each([
-        ['retry', 'retry'],
-        ['openPrivacySettings', 'openPrivacySettings'],
-    ] as const)('dispatches %s to the authoritative main-window store', async (method, action) => {
-        const store = createPresenceStore({ isSettingsWindow: true });
-
-        await store.getState()[method]();
-
-        expect(dispatch).toHaveBeenCalledWith({
-            v: BRIDGE_VERSION,
-            store: 'presence',
-            action,
-            args: [],
-        });
     });
 });

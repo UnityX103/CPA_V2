@@ -19,6 +19,25 @@ beforeEach(() => {
 });
 
 describe('user preferences persistence', () => {
+    it.each([true, false])('persists and reloads automatic start=%s', async (enabled) => {
+        const snapshot = defaultUserPreferencesSnapshot();
+        snapshot.pomodoro.autoStartOnLaunch = enabled;
+        await savePersistedUserPreferences(snapshot);
+        store.get.mockResolvedValue(store.set.mock.calls[0][1]);
+        expect((await loadPersistedUserPreferences())?.pomodoro.autoStartOnLaunch).toBe(enabled);
+    });
+
+    it.each([undefined, null, 'true', 1])('defaults missing or invalid automatic start to false (%s)', (value) => {
+        const snapshot = defaultUserPreferencesSnapshot();
+        const fallback = defaultUserPreferencesSnapshot();
+        fallback.pomodoro.autoStartOnLaunch = true;
+        const legacy = {
+            ...snapshot,
+            pomodoro: { ...snapshot.pomodoro, autoStartOnLaunch: value },
+        };
+        expect(normalizeUserPreferencesSnapshot(legacy, fallback)?.pomodoro.autoStartOnLaunch).toBe(false);
+    });
+
     it('normalizes retained fields', () => {
         const input = {
             ...defaultUserPreferencesSnapshot(),
@@ -33,6 +52,7 @@ describe('user preferences persistence', () => {
             breakPetMode: 'off',
         });
         expect(normalized?.pomodoro.endActionMode).toBe('playVideo');
+        expect(normalized?.pomodoro.playVideoOnBreakEnd).toBe(false);
         expect(normalized?.pomodoro.endActionVideo).toEqual({
             sourceKind: 'builtin',
             builtinVideoId: 'qianqian',
@@ -69,5 +89,25 @@ describe('user preferences persistence', () => {
 
         expect(store.set).toHaveBeenCalledWith('userPreferences', snapshot);
         expect(store.save).toHaveBeenCalledTimes(1);
+    });
+
+    it.each([true, false])('persists and reloads break-end video=%s', async (enabled) => {
+        const snapshot = defaultUserPreferencesSnapshot();
+        snapshot.pomodoro.playVideoOnBreakEnd = enabled;
+        await savePersistedUserPreferences(snapshot);
+        store.get.mockResolvedValue(store.set.mock.calls[0][1]);
+
+        expect((await loadPersistedUserPreferences())?.pomodoro.playVideoOnBreakEnd).toBe(enabled);
+    });
+
+    it.each([undefined, null, 'true', 1])('defaults missing or invalid break-end video to false (%s)', (value) => {
+        const snapshot = defaultUserPreferencesSnapshot();
+        const fallback = defaultUserPreferencesSnapshot();
+        fallback.pomodoro.playVideoOnBreakEnd = true;
+        const legacy = {
+            ...snapshot,
+            pomodoro: { ...snapshot.pomodoro, playVideoOnBreakEnd: value },
+        };
+        expect(normalizeUserPreferencesSnapshot(legacy, fallback)?.pomodoro.playVideoOnBreakEnd).toBe(false);
     });
 });

@@ -32,7 +32,6 @@ import {
 } from '../domain/pomodoroSounds';
 import { pickCustomMp3Path } from '../domain/soundFiles';
 import { listAudioOutputDevices, type AudioOutputDevice } from '../domain/audioPlayback';
-import { listCameraDevices, type CameraDevice } from '../domain/cameraDevices';
 import { useNetworkStore } from '../domain/network';
 import {
     labelForInput,
@@ -48,20 +47,10 @@ import { InputBindingBadge } from './InputBindingBadge';
 import { NumberInput, TextInput } from './TextInput';
 import { shouldStartWindowDrag } from './windowDrag';
 import {
-    PRESENCE_ABSENCE_POLICIES,
     usePresenceStore,
     type ConfirmedPresence,
-    type PresenceAbsenceSensitivity,
     type RestDeskReminderMode,
 } from '../domain/presence';
-import {
-    MAX_PRESENCE_SECONDS,
-    MIN_PRESENCE_SECONDS,
-} from '../domain/presencePersistence';
-import {
-    presenceAuthorizationView,
-    type PresenceAuthorizationAction,
-} from './presenceAuthorization';
 import { ExtensionPackManagerTab } from './ExtensionPackManagerTab';
 import { ExtensionSettingsOutlet } from './ExtensionSettingsOutlet';
 import {
@@ -223,18 +212,15 @@ function PomodoroTab({ onApplyStateChange }: {
     const [breakMin, setBreakMin] = useState(Math.round(pomo.breakDurationSeconds / 60));
     const [totalRounds, setTotalRounds] = useState(pomo.totalRounds);
     const [autoStartBreak, setAutoStartBreak] = useState(pomo.autoStartBreak);
+    const [autoStartOnLaunch, setAutoStartOnLaunch] = useState(pomo.autoStartOnLaunch);
     const [autoPinAfterFocus, setAutoPinAfterFocus] = useState(pomo.autoPinAfterFocus);
     const [endActionMode, setEndActionMode] = useState<PomodoroEndActionMode>(pomo.endActionMode);
+    const [playVideoOnBreakEnd, setPlayVideoOnBreakEnd] = useState(pomo.playVideoOnBreakEnd);
     const [endActionVideo, setEndActionVideo] = useState<PomodoroEndActionVideo>({ ...pomo.endActionVideo });
     const [importingVideo, setImportingVideo] = useState(false);
     const [videoImportError, setVideoImportError] = useState('');
     const [endSounds, setEndSounds] = useState<PomodoroEndSounds>(clonePomodoroEndSounds(pomo.endSounds));
-    const [presenceEnabled, setPresenceEnabled] = useState(presence.enabled);
     const [inputActivityEnabled, setInputActivityEnabled] = useState(presence.inputActivityEnabled);
-    const [cameraDeviceId, setCameraDeviceId] = useState(presence.cameraDeviceId);
-    const [cameraDevices, setCameraDevices] = useState<CameraDevice[]>([]);
-    const [presenceIntervalSeconds, setPresenceIntervalSeconds] = useState(presence.intervalSeconds);
-    const [absenceSensitivity, setAbsenceSensitivity] = useState(presence.absenceSensitivity);
     const [restDeskReminderEnabled, setRestDeskReminderEnabled] = useState(
         presence.restDeskReminderEnabled,
     );
@@ -246,21 +232,20 @@ function PomodoroTab({ onApplyStateChange }: {
         breakDurationSeconds: pomo.breakDurationSeconds,
         totalRounds: pomo.totalRounds,
         autoStartBreak: pomo.autoStartBreak,
+        autoStartOnLaunch: pomo.autoStartOnLaunch,
         autoPinAfterFocus: pomo.autoPinAfterFocus,
         endActionMode: pomo.endActionMode,
+        playVideoOnBreakEnd: pomo.playVideoOnBreakEnd,
         endActionVideo: { ...pomo.endActionVideo },
         endSounds: clonePomodoroEndSounds(pomo.endSounds),
-        presenceEnabled: presence.enabled,
         inputActivityEnabled: presence.inputActivityEnabled,
-        cameraDeviceId: presence.cameraDeviceId,
-        presenceIntervalSeconds: presence.intervalSeconds,
-        absenceSensitivity: presence.absenceSensitivity,
         restDeskReminderEnabled: presence.restDeskReminderEnabled,
         restDeskReminderMode: presence.restDeskReminderMode,
     });
 
     useEffect(() => {
         const previous = committedRef.current;
+        const launchDraftDirty = autoStartOnLaunch !== previous.autoStartOnLaunch;
         const durationDraftDirty =
             focusMin * 60 !== previous.focusDurationSeconds ||
             breakMin * 60 !== previous.breakDurationSeconds ||
@@ -268,17 +253,17 @@ function PomodoroTab({ onApplyStateChange }: {
             autoStartBreak !== previous.autoStartBreak ||
             autoPinAfterFocus !== previous.autoPinAfterFocus;
         const endActionDraftDirty =
+            playVideoOnBreakEnd !== previous.playVideoOnBreakEnd ||
             endActionMode !== previous.endActionMode ||
             !sameEndActionVideo(endActionVideo, previous.endActionVideo);
         const endSoundDraftDirty = !samePomodoroEndSounds(endSounds, previous.endSounds);
         const presenceDraftDirty =
-            presenceEnabled !== previous.presenceEnabled
-            || inputActivityEnabled !== previous.inputActivityEnabled
-            || cameraDeviceId !== previous.cameraDeviceId
-            || presenceIntervalSeconds !== previous.presenceIntervalSeconds
-            || absenceSensitivity !== previous.absenceSensitivity
+            inputActivityEnabled !== previous.inputActivityEnabled
             || restDeskReminderEnabled !== previous.restDeskReminderEnabled
             || restDeskReminderMode !== previous.restDeskReminderMode;
+        if (!launchDraftDirty) {
+            setAutoStartOnLaunch(pomo.autoStartOnLaunch);
+        }
         if (!durationDraftDirty) {
             setFocusMin(Math.round(pomo.focusDurationSeconds / 60));
             setBreakMin(Math.round(pomo.breakDurationSeconds / 60));
@@ -287,6 +272,7 @@ function PomodoroTab({ onApplyStateChange }: {
             setAutoPinAfterFocus(pomo.autoPinAfterFocus);
         }
         if (!endActionDraftDirty) {
+            setPlayVideoOnBreakEnd(pomo.playVideoOnBreakEnd);
             setEndActionMode(pomo.endActionMode);
             setEndActionVideo((current) => (
                 sameEndActionVideo(current, pomo.endActionVideo)
@@ -302,11 +288,7 @@ function PomodoroTab({ onApplyStateChange }: {
             ));
         }
         if (!presenceDraftDirty) {
-            setPresenceEnabled(presence.enabled);
             setInputActivityEnabled(presence.inputActivityEnabled);
-            setCameraDeviceId(presence.cameraDeviceId);
-            setPresenceIntervalSeconds(presence.intervalSeconds);
-            setAbsenceSensitivity(presence.absenceSensitivity);
             setRestDeskReminderEnabled(presence.restDeskReminderEnabled);
             setRestDeskReminderMode(presence.restDeskReminderMode);
         }
@@ -316,15 +298,13 @@ function PomodoroTab({ onApplyStateChange }: {
             breakDurationSeconds: pomo.breakDurationSeconds,
             totalRounds: pomo.totalRounds,
             autoStartBreak: pomo.autoStartBreak,
+            autoStartOnLaunch: pomo.autoStartOnLaunch,
             autoPinAfterFocus: pomo.autoPinAfterFocus,
             endActionMode: pomo.endActionMode,
+            playVideoOnBreakEnd: pomo.playVideoOnBreakEnd,
             endActionVideo: { ...pomo.endActionVideo },
             endSounds: clonePomodoroEndSounds(pomo.endSounds),
-            presenceEnabled: presence.enabled,
             inputActivityEnabled: presence.inputActivityEnabled,
-            cameraDeviceId: presence.cameraDeviceId,
-            presenceIntervalSeconds: presence.intervalSeconds,
-            absenceSensitivity: presence.absenceSensitivity,
             restDeskReminderEnabled: presence.restDeskReminderEnabled,
             restDeskReminderMode: presence.restDeskReminderMode,
         };
@@ -333,8 +313,10 @@ function PomodoroTab({ onApplyStateChange }: {
         pomo.breakDurationSeconds,
         pomo.totalRounds,
         pomo.autoStartBreak,
+        pomo.autoStartOnLaunch,
         pomo.autoPinAfterFocus,
         pomo.endActionMode,
+        pomo.playVideoOnBreakEnd,
         pomo.endActionVideo.sourceKind,
         pomo.endActionVideo.builtinVideoId,
         pomo.endActionVideo.customVideoPath,
@@ -344,58 +326,36 @@ function PomodoroTab({ onApplyStateChange }: {
         pomo.endSounds.break.sourceKind,
         pomo.endSounds.break.builtinSoundId,
         pomo.endSounds.break.customSoundPath,
-        presence.enabled,
         presence.inputActivityEnabled,
-        presence.cameraDeviceId,
-        presence.intervalSeconds,
-        presence.absenceSensitivity,
         presence.restDeskReminderEnabled,
         presence.restDeskReminderMode,
         focusMin,
         breakMin,
         totalRounds,
         autoStartBreak,
+        autoStartOnLaunch,
         autoPinAfterFocus,
         endActionMode,
+        playVideoOnBreakEnd,
         endActionVideo,
         endSounds,
-        presenceEnabled,
         inputActivityEnabled,
-        cameraDeviceId,
-        presenceIntervalSeconds,
-        absenceSensitivity,
         restDeskReminderEnabled,
         restDeskReminderMode,
     ]);
-
-    useEffect(() => {
-        if (!presenceEnabled) return undefined;
-        let active = true;
-        void listCameraDevices()
-            .then((devices) => {
-                if (active) setCameraDevices(devices);
-            })
-            .catch((error) => {
-                console.warn('[settings] failed to list camera devices', error);
-                if (active) setCameraDevices([]);
-            });
-        return () => { active = false; };
-    }, [presenceEnabled]);
 
     const dirty =
         focusMin * 60 !== pomo.focusDurationSeconds ||
         breakMin * 60 !== pomo.breakDurationSeconds ||
         totalRounds !== pomo.totalRounds ||
         autoStartBreak !== pomo.autoStartBreak ||
+        autoStartOnLaunch !== pomo.autoStartOnLaunch ||
         autoPinAfterFocus !== pomo.autoPinAfterFocus ||
         endActionMode !== pomo.endActionMode ||
+        playVideoOnBreakEnd !== pomo.playVideoOnBreakEnd ||
         !sameEndActionVideo(endActionVideo, pomo.endActionVideo) ||
         !samePomodoroEndSounds(endSounds, pomo.endSounds) ||
-        presenceEnabled !== presence.enabled ||
         inputActivityEnabled !== presence.inputActivityEnabled ||
-        cameraDeviceId !== presence.cameraDeviceId ||
-        presenceIntervalSeconds !== presence.intervalSeconds ||
-        absenceSensitivity !== presence.absenceSensitivity ||
         restDeskReminderEnabled !== presence.restDeskReminderEnabled ||
         restDeskReminderMode !== presence.restDeskReminderMode;
     const hasMissingCustomVideo =
@@ -418,15 +378,12 @@ function PomodoroTab({ onApplyStateChange }: {
             autoStartBreak !== pomo.autoStartBreak;
         const autoPinAfterFocusChanged = autoPinAfterFocus !== pomo.autoPinAfterFocus;
         const endActionChanged =
+            playVideoOnBreakEnd !== pomo.playVideoOnBreakEnd ||
             endActionMode !== pomo.endActionMode ||
             !sameEndActionVideo(endActionVideo, pomo.endActionVideo);
         const endSoundsChanged = !samePomodoroEndSounds(endSounds, pomo.endSounds);
         const presenceChanged =
-            presenceEnabled !== presence.enabled
-            || inputActivityEnabled !== presence.inputActivityEnabled
-            || cameraDeviceId !== presence.cameraDeviceId
-            || presenceIntervalSeconds !== presence.intervalSeconds
-            || absenceSensitivity !== presence.absenceSensitivity
+            inputActivityEnabled !== presence.inputActivityEnabled
             || restDeskReminderEnabled !== presence.restDeskReminderEnabled
             || restDeskReminderMode !== presence.restDeskReminderMode;
 
@@ -436,8 +393,11 @@ function PomodoroTab({ onApplyStateChange }: {
         if (autoPinAfterFocusChanged) {
             pomo.setAutoPinAfterFocus(autoPinAfterFocus);
         }
+        if (autoStartOnLaunch !== pomo.autoStartOnLaunch) {
+            pomo.setAutoStartOnLaunch(autoStartOnLaunch);
+        }
         if (endActionChanged) {
-            void Promise.resolve(pomo.applyEndActionSettings(endActionMode, endActionVideo))
+            void Promise.resolve(pomo.applyEndActionSettings(endActionMode, endActionVideo, playVideoOnBreakEnd))
                 .catch((error) => {
                     console.warn('[settings] failed to apply Pomodoro end action', error);
                 });
@@ -450,17 +410,13 @@ function PomodoroTab({ onApplyStateChange }: {
         }
         if (presenceChanged) {
             void Promise.resolve(presence.applySettings({
-                enabled: presenceEnabled,
                 inputActivityEnabled,
-                cameraDeviceId,
-                intervalSeconds: presenceIntervalSeconds,
-                absenceSensitivity,
                 restDeskReminderEnabled,
                 restDeskReminderMode,
             })).catch((error) => {
                 console.warn('[settings] failed to apply presence settings', error);
             });
-            if (presenceEnabled && restDeskReminderEnabled) {
+            if (inputActivityEnabled && restDeskReminderEnabled) {
                 useSettingsStore.getState().setBreakPetMode('cockroachInvasion');
             }
         }
@@ -470,17 +426,15 @@ function PomodoroTab({ onApplyStateChange }: {
         breakMin,
         totalRounds,
         autoStartBreak,
+        autoStartOnLaunch,
         autoPinAfterFocus,
         endActionMode,
+        playVideoOnBreakEnd,
         endActionVideo,
         endSounds,
         pomo,
         presence,
-        presenceEnabled,
         inputActivityEnabled,
-        cameraDeviceId,
-        presenceIntervalSeconds,
-        absenceSensitivity,
         restDeskReminderEnabled,
         restDeskReminderMode,
     ]);
@@ -600,102 +554,28 @@ function PomodoroTab({ onApplyStateChange }: {
                             <span className="pomo-row-value pomo-row-value-link">柔和铃声</span>
                         </div>
 
-                        <div className="card pomo-row">
-                            <span className="pomo-row-label">摄像头自动控制<SettingsHelp label="摄像头自动控制">通过摄像头判断是否在工位：专注时离席自动暂停，回到工位自动恢复；休息时在工位暂停计时，离席后继续。手动暂停不会自动恢复。开启后点击“应用”生效。</SettingsHelp></span>
-                            <Toggle
-                                checked={presenceEnabled}
-                                onChange={(enabled) => {
-                                    setPresenceEnabled(enabled);
-                                    if (!enabled) setRestDeskReminderEnabled(false);
-                                }}
-                                ariaLabel="摄像头自动控制"
-                            />
-                        </div>
-
-                        {presenceEnabled && (
-                            <div className="card pomo-row camera-device-row">
-                                <span className="pomo-row-label">目标摄像头</span>
-                                <select
-                                    className="dropdown dropdown-fit camera-device-select"
-                                    aria-label="目标摄像头"
-                                    value={cameraDeviceId ?? ''}
-                                    onChange={(event) => setCameraDeviceId(
-                                        event.currentTarget.value || null,
-                                    )}
-                                >
-                                    <option value="">自动选择摄像头</option>
-                                    {cameraDeviceId !== null
-                                        && !cameraDevices.some((device) => device.id === cameraDeviceId)
-                                        && (
-                                            <option value={cameraDeviceId}>当前选择的摄像头不可用</option>
-                                        )}
-                                    {cameraDevices.map((device) => (
-                                        <option key={device.id} value={device.id}>
-                                            {device.name}{device.isDefault ? '（系统默认）' : ''}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        )}
-
-                        <PresenceAuthorizationControl
-                            enabled={presence.enabled}
-                            availability={presence.availability}
-                            onRequestAccess={() => { void presence.requestAccess(); }}
-                            onRetry={() => { void presence.retry(); }}
-                            onOpenPrivacySettings={() => { void presence.openPrivacySettings(); }}
-                        />
-
                         <div className="card input-activity-settings">
                             <div className="pomo-row">
                                 <span className="pomo-row-label">
                                     允许检测键盘和鼠标活动
                                     <SettingsHelp label="键盘和鼠标活动">
-                                        <p>仅在休息中每 5 秒检查一次。最近 30 秒有键鼠活动视为在工位，不读取或保存按键内容、鼠标位置；无需额外系统输入权限。开启后点击“应用”生效。</p>
-                                        <p>可单独使用；同时开启摄像头时，任一检测到在场都会暂停休息。无输入满 30 秒且摄像头确认离场（或未启用）后继续休息。手动暂停和专注期间不检测。</p>
+                                        <p>专注和休息期间每 5 秒检查一次。最近 5 秒有键鼠活动视为仍在操作，不读取或保存按键内容、鼠标位置；无需额外系统输入权限。开启后点击“应用”生效。</p>
+                                        <p>有键鼠活动时自动开始待开始的专注，或恢复之前自动暂停的专注。专注时仅无输入不会自动暂停。</p>
+                                        <p>休息期间有键鼠活动就暂停计时。持续操作 30 秒后面板弹到顶部，60 秒、90 秒逐级放大。停止操作满 5 秒后，在下一次检查时继续剩余休息。</p>
+                                        <p>休息面板始终完整显示并置顶，只有点击“跳过休息”或完成休息才结束提醒。键鼠活动不会提前跳过休息；手动暂停和全部完成后不检测，也不会自动恢复。</p>
                                     </SettingsHelp>
                                 </span>
-                                <Toggle checked={inputActivityEnabled} onChange={setInputActivityEnabled} ariaLabel="允许检测键盘和鼠标活动" />
+                                <Toggle checked={inputActivityEnabled} onChange={(enabled) => { setInputActivityEnabled(enabled); if (!enabled) setRestDeskReminderEnabled(false); }} ariaLabel="允许检测键盘和鼠标活动" />
                             </div>
-                            {presence.inputActivityEnabled && <span className="input-activity-status" role="status">{presence.inputActivityAvailability === 'error' ? '键鼠活动检测暂不可用，将自动重试。' : presence.inputActivityAvailability === 'ready' ? '键鼠活动检测可用' : '已允许，休息时检测'}</span>}
-                        </div>
-
-                        <div className="card card-grid">
-                            <div className="card">
-                                <span className="card-label">检测间隔</span>
-                                <NumberInput aria-label="检测间隔"
-                                    value={presenceIntervalSeconds}
-                                    onChange={setPresenceIntervalSeconds}
-                                    min={MIN_PRESENCE_SECONDS}
-                                    max={MAX_PRESENCE_SECONDS}
-                                    suffix="秒"
-                                />
-                            </div>
-                            <div className="card">
-                                <span className="card-label">离席判定阈值</span>
-                                <select
-                                    className="dropdown"
-                                    aria-label="离席判定阈值"
-                                    value={absenceSensitivity}
-                                    onChange={(event) => setAbsenceSensitivity(
-                                        event.currentTarget.value as PresenceAbsenceSensitivity,
-                                    )}
-                                >
-                                    {PRESENCE_ABSENCE_POLICIES.map((policy) => (
-                                        <option key={policy.value} value={policy.value}>
-                                            {policy.label}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
+                            {presence.inputActivityEnabled && <span className="input-activity-status" role="status">{presence.inputActivityAvailability === 'error' ? '键鼠活动检测暂不可用，将自动重试。' : presence.inputActivityAvailability === 'ready' ? '键鼠活动检测可用' : '已允许，专注和休息时检测'}</span>}
                         </div>
 
                         <div className="card pomo-row">
-                            <span className="pomo-row-label">工位状态</span>
+                            <span className="pomo-row-label">键鼠状态</span>
                             <span className="pomo-row-value">{confirmedPresenceText(presence.confirmedPresence)}</span>
                         </div>
 
-                        {presenceEnabled && cockroachPackAvailable && (
+                        {inputActivityEnabled && cockroachPackAvailable && (
                             <div className="card pomo-row">
                                 <span className="pomo-row-label">休息未离开工位时的提醒</span>
                                 <Toggle
@@ -706,7 +586,7 @@ function PomodoroTab({ onApplyStateChange }: {
                             </div>
                         )}
 
-                        {presenceEnabled && cockroachPackAvailable && restDeskReminderEnabled && (
+                        {inputActivityEnabled && cockroachPackAvailable && restDeskReminderEnabled && (
                             <div className="card pomo-row">
                                 <span className="pomo-row-label">提醒方式</span>
                                 <div className="reminder-method-actions">
@@ -723,6 +603,15 @@ function PomodoroTab({ onApplyStateChange }: {
                                 </div>
                             </div>
                         )}
+
+                        <div className="card pomo-row">
+                            <span className="pomo-row-label">自动开始</span>
+                            <Toggle
+                                checked={autoStartOnLaunch}
+                                onChange={setAutoStartOnLaunch}
+                                ariaLabel="自动开始"
+                            />
+                        </div>
 
                         {/* pomoAutoStartBreak fnZ59: 结束提示音下方 → Toggle */}
                         <div className="card pomo-row">
@@ -785,6 +674,17 @@ function PomodoroTab({ onApplyStateChange }: {
                                     ))}
                                     <option value="custom">自定义视频</option>
                                 </select>
+                            </div>
+                        )}
+
+                        {showVideoOptions && (
+                            <div className="card pomo-row">
+                                <span className="pomo-row-label">休息结束时也弹出视频提示</span>
+                                <Toggle
+                                    checked={playVideoOnBreakEnd}
+                                    onChange={setPlayVideoOnBreakEnd}
+                                    ariaLabel="休息结束时也弹出视频提示"
+                                />
                             </div>
                         )}
 
@@ -914,59 +814,9 @@ function fileNameFromPath(path: string): string {
 }
 
 function confirmedPresenceText(presence: ConfirmedPresence): string {
-    if (presence === 'present') return '在场';
-    if (presence === 'absent') return '离场';
+    if (presence === 'present') return '正在操作';
+    if (presence === 'absent') return '已闲置';
     return '未知';
-}
-
-function PresenceAuthorizationControl({
-    enabled,
-    availability,
-    onRequestAccess,
-    onRetry,
-    onOpenPrivacySettings,
-}: {
-    enabled: boolean;
-    availability: ReturnType<typeof usePresenceStore.getState>['availability'];
-    onRequestAccess: () => void;
-    onRetry: () => void;
-    onOpenPrivacySettings: () => void;
-}) {
-    const view = presenceAuthorizationView(enabled, availability);
-    const actionHandlers: Record<PresenceAuthorizationAction, () => void> = {
-        requestAccess: onRequestAccess,
-        retry: onRetry,
-        openSettings: onOpenPrivacySettings,
-    };
-    const actionLabels: Record<PresenceAuthorizationAction, string> = {
-        requestAccess: '申请权限',
-        retry: '重试',
-        openSettings: '打开系统设置',
-    };
-
-    return (
-        <div
-            className={`presence-auth-control presence-auth-${view.tone}`}
-            role="group"
-            aria-label="摄像头授权状态"
-        >
-            <div className="presence-auth-copy" role="status" aria-live="polite">
-                <span className="presence-auth-label">摄像头授权<SettingsHelp label="摄像头授权">{view.detail}</SettingsHelp></span>
-                <span className="presence-auth-status">{view.status}</span>
-            </div>
-            <div className="presence-auth-actions" aria-label="摄像头授权操作">
-                {view.actions.map((action) => (
-                    <button
-                        key={action}
-                        type="button"
-                        onClick={actionHandlers[action]}
-                    >
-                        {actionLabels[action]}
-                    </button>
-                ))}
-            </div>
-        </div>
-    );
 }
 
 /* ============================================================

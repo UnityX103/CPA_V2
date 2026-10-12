@@ -79,7 +79,10 @@ export function PomodoroEndActionLayer() {
                 }, 4000);
             };
 
-            if (event.fromPhase !== 'focus') {
+            if (
+                event.fromPhase !== 'focus'
+                && !(event.fromPhase === 'break' && state.playVideoOnBreakEnd)
+            ) {
                 showTopPopup();
                 return;
             }
@@ -140,7 +143,7 @@ export function PomodoroEndActionLayer() {
     return (
         <>
             {popup && (
-                <div className="pomo-end-popup" role="status">
+                <div className="pomo-end-popup" role="status" data-dock-compatible="true">
                     {popup}
                 </div>
             )}

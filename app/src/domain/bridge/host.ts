@@ -8,10 +8,7 @@ import { useBindingKeyStore, type BindingKeyEntry } from '../bindingKey';
 import { useActiveAppStore, type ActiveAppInfo } from '../activeApp';
 import { useAppUpdateStore, type AppUpdateSnapshot } from '../appUpdate';
 import { REMOTE_PLAYER_WINDOW_LABELS } from '../remotePlayerWindowLabels';
-import {
-    usePresenceStore,
-    type PresenceAbsenceSensitivity,
-} from '../presence';
+import { usePresenceStore } from '../presence';
 import { clonePomodoroEndSounds, type PomodoroEndSounds } from '../pomodoroSounds';
 import {
     BRIDGE_VERSION,
@@ -108,25 +105,20 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
             breakDurationSeconds: p.breakDurationSeconds,
             totalRounds: p.totalRounds,
             autoStartBreak: p.autoStartBreak,
+            autoStartOnLaunch: p.autoStartOnLaunch,
             autoPinAfterFocus: p.autoPinAfterFocus,
             endActionMode: p.endActionMode,
+            playVideoOnBreakEnd: p.playVideoOnBreakEnd,
             endActionVideo: { ...p.endActionVideo },
             endSounds: clonePomodoroEndSounds(p.endSounds),
         },
         presence: {
-            enabled: presence.enabled,
             inputActivityEnabled: presence.inputActivityEnabled,
             inputActivityAvailability: presence.inputActivityAvailability,
-            cameraDeviceId: presence.cameraDeviceId,
-            intervalSeconds: presence.intervalSeconds,
-            absenceSensitivity: presence.absenceSensitivity,
             restDeskReminderEnabled: presence.restDeskReminderEnabled,
             restDeskReminderMode: presence.restDeskReminderMode,
-            platform: presence.platform,
-            availability: presence.availability,
             confirmedPresence: presence.confirmedPresence,
             lastSuccessfulAt: presence.lastSuccessfulAt,
-            lastError: presence.lastError,
         },
         network: {
             autoConnect: n.autoConnect,
@@ -183,6 +175,9 @@ export async function applyDispatch(payload: DispatchPayload): Promise<void> {
             if (payload.action === 'setAutoPinAfterFocus') {
                 usePomodoroStore.getState().setAutoPinAfterFocus(...payload.args);
             }
+            if (payload.action === 'setAutoStartOnLaunch') {
+                usePomodoroStore.getState().setAutoStartOnLaunch(...payload.args);
+            }
             if (payload.action === 'applyEndActionSettings') {
                 await usePomodoroStore.getState().applyEndActionSettings(...payload.args);
             }
@@ -195,9 +190,6 @@ export async function applyDispatch(payload: DispatchPayload): Promise<void> {
             const presence = usePresenceStore.getState();
             switch (payload.action) {
                 case 'applySettings': await presence.applySettings(...payload.args); return;
-                case 'requestAccess': await presence.requestAccess(); return;
-                case 'retry': await presence.retry(); return;
-                case 'openPrivacySettings': await presence.openPrivacySettings(); return;
             }
             return;
         }
@@ -313,8 +305,10 @@ export function pomoSig(s: {
     breakDurationSeconds: number;
     totalRounds: number;
     autoStartBreak: boolean;
+    autoStartOnLaunch: boolean;
     autoPinAfterFocus: boolean;
     endActionMode: string;
+    playVideoOnBreakEnd: boolean;
     endActionVideo: { sourceKind: string; builtinVideoId: string; customVideoPath: string };
     endSounds: PomodoroEndSounds;
 }): string {
@@ -323,8 +317,10 @@ export function pomoSig(s: {
         s.breakDurationSeconds,
         s.totalRounds,
         s.autoStartBreak,
+        s.autoStartOnLaunch,
         s.autoPinAfterFocus,
         s.endActionMode,
+        s.playVideoOnBreakEnd,
         s.endActionVideo.sourceKind,
         s.endActionVideo.builtinVideoId,
         s.endActionVideo.customVideoPath,
@@ -337,36 +333,9 @@ export function pomoSig(s: {
     ]);
 }
 
-export function presenceSig(s: {
-    enabled: boolean;
-    inputActivityEnabled: boolean;
-    inputActivityAvailability: string;
-    cameraDeviceId: string | null;
-    intervalSeconds: number;
-    absenceSensitivity: PresenceAbsenceSensitivity;
-    restDeskReminderEnabled: boolean;
-    restDeskReminderMode: string;
-    platform: string;
-    availability: string;
-    confirmedPresence: string;
-    lastSuccessfulAt: number | null;
-    lastError: string | null;
-}): string {
-    return JSON.stringify([
-        s.enabled,
-        s.inputActivityEnabled,
-        s.inputActivityAvailability,
-        s.cameraDeviceId,
-        s.intervalSeconds,
-        s.absenceSensitivity,
-        s.restDeskReminderEnabled,
-        s.restDeskReminderMode,
-        s.platform,
-        s.availability,
-        s.confirmedPresence,
-        s.lastSuccessfulAt,
-        s.lastError,
-    ]);
+export function presenceSig(s: BridgeSnapshot['presence']): string {
+    return JSON.stringify([s.inputActivityEnabled, s.inputActivityAvailability,
+        s.restDeskReminderEnabled, s.restDeskReminderMode, s.confirmedPresence, s.lastSuccessfulAt]);
 }
 
 export function networkSig(s: {
@@ -485,6 +454,7 @@ export function useBridgeHost(): void {
             usePomodoroStore.subscribe((s, previous) => {
                 if (s.focusDurationSeconds === previous.focusDurationSeconds && s.breakDurationSeconds === previous.breakDurationSeconds
                     && s.totalRounds === previous.totalRounds && s.autoStartBreak === previous.autoStartBreak
+                    && s.autoStartOnLaunch === previous.autoStartOnLaunch && s.playVideoOnBreakEnd === previous.playVideoOnBreakEnd
                     && s.autoPinAfterFocus === previous.autoPinAfterFocus && s.endActionMode === previous.endActionMode
                     && s.endActionVideo === previous.endActionVideo && s.endSounds === previous.endSounds) return;
                 const sig = pomoSig(s);

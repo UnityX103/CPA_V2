@@ -1,5 +1,5 @@
 main:
-  "crontab: */15 * * * *":
+  "crontab: */30 * * * *":
     - &mirror
       name: Mirror public GitHub Latest
       runner:

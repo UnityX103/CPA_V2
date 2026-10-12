@@ -11,6 +11,6 @@ const NO_WINDOW_DRAG_SELECTOR = [
 
 export function shouldStartWindowDrag(button: number, target: EventTarget | null): boolean {
     if (button !== 0) return false;
-    if (!(target instanceof HTMLElement)) return false;
+    if (!(target instanceof Element)) return false;
     return target.closest(NO_WINDOW_DRAG_SELECTOR) === null;
 }

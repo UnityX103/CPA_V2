@@ -22,8 +22,10 @@ function snapshot(): BridgeSnapshot {
             breakDurationSeconds: 180,
             totalRounds: 5,
             autoStartBreak: true,
+            autoStartOnLaunch: true,
             autoPinAfterFocus: false,
             endActionMode: 'topWindow',
+            playVideoOnBreakEnd: true,
             endActionVideo: {
                 sourceKind: 'custom',
                 builtinVideoId: 'qianqian',
@@ -35,19 +37,12 @@ function snapshot(): BridgeSnapshot {
             },
         },
         presence: {
-            enabled: true,
             inputActivityEnabled: true,
-            cameraDeviceId: 'camera-usb',
-            intervalSeconds: 30,
-            absenceSensitivity: 'relaxed',
             restDeskReminderEnabled: true,
             restDeskReminderMode: 'cockroachInvasion',
             inputActivityAvailability: 'ready',
-            platform: 'macos',
-            availability: 'ready',
             confirmedPresence: 'present',
             lastSuccessfulAt: 123,
-            lastError: null,
         },
         network: {
             autoConnect: false,
@@ -84,7 +79,7 @@ function snapshot(): BridgeSnapshot {
 
 beforeEach(() => {
     useSettingsStore.setState({ uiScale: 1, committedUiScale: 1, autostartEnabled: false, dangerousChange: null });
-    usePresenceStore.setState({ enabled: false, availability: 'disabled', confirmedPresence: 'unknown' });
+    usePresenceStore.setState({ inputActivityEnabled: false, inputActivityAvailability: 'disabled', confirmedPresence: 'unknown' });
 });
 
 describe('bridge client', () => {
@@ -99,8 +94,10 @@ describe('bridge client', () => {
         }));
         expect(usePomodoroStore.getState()).toEqual(expect.objectContaining({
             focusDurationSeconds: 900,
+            autoStartOnLaunch: true,
             autoPinAfterFocus: false,
             endActionMode: 'topWindow',
+            playVideoOnBreakEnd: true,
             endActionVideo: {
                 sourceKind: 'custom',
                 builtinVideoId: 'qianqian',
@@ -112,14 +109,9 @@ describe('bridge client', () => {
             },
         }));
         expect(usePresenceStore.getState()).toEqual(expect.objectContaining({
-            enabled: true,
             inputActivityEnabled: true,
-            cameraDeviceId: 'camera-usb',
-            intervalSeconds: 30,
-            absenceSensitivity: 'relaxed',
             restDeskReminderEnabled: true,
             restDeskReminderMode: 'cockroachInvasion',
-            availability: 'ready',
             inputActivityAvailability: 'ready',
             confirmedPresence: 'present',
         }));

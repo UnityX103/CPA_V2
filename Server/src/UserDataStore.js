@@ -158,10 +158,12 @@ function normalizePomodoro(value)
         breakDurationSeconds: normalizeNonNegativeInteger(value.breakDurationSeconds),
         totalRounds: normalizePositiveInteger(value.totalRounds),
         autoStartBreak: Boolean(value.autoStartBreak),
+        autoStartOnLaunch: value.autoStartOnLaunch === true,
         autoPinAfterFocus: typeof value.autoPinAfterFocus === 'boolean'
             ? value.autoPinAfterFocus
             : true,
         endActionMode,
+        playVideoOnBreakEnd: value.playVideoOnBreakEnd === true,
         endActionVideo: {
             sourceKind: endActionVideo.sourceKind === 'custom' ? 'custom' : 'builtin',
             builtinVideoId: clampString(endActionVideo.builtinVideoId, 128) || 'qianqian',

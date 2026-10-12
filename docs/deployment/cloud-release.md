@@ -8,7 +8,7 @@
 - 网页 Actions → Release → Run workflow，默认 `publish=false`：验证三平台安装包构建，不创建 Release。
 - 正式发布：先在 main 同步修改 app/package.json、package-lock.json、src-tauri/tauri.conf.json、Cargo.toml 和 Cargo.lock 中本应用版本，并添加对应的 `docs/deployment/release-X.Y.Z.md` 更新说明，然后选择 `publish=true`，或推送相同版本的 `vX.Y.Z` tag。已发布版本不可覆盖。
 - GitHub 自动测试、构建三套安装包、验证签名与架构、汇总四个 updater 平台键，最后公开 Release 并设为 Latest。
-- CNB 每 15 分钟匿名检查 GitHub Latest，也可在 main 分支页面点击“同步 GitHub 最新发布”或“检查镜像来源”。
+- CNB 每 30 分钟匿名检查 GitHub Latest，也可在 main 分支页面点击“同步 GitHub 最新发布”或“检查镜像来源”。
 
 ## 面向用户的更新说明
 
@@ -49,7 +49,7 @@ CNB 脚本仅用内置 CNB_TOKEN 写 CNB Release 和导入相应 Git tag，GitHu
 
 - CNB 失败不会回滚或阻止 GitHub 发布。缺权限、匿名限流、网络错误、签名或哈希不符都会让流水线失败，并在下一周期重试。
 - GitHub 发布到 draft 后失败：检查日志和草稿，不能直接重新覆盖公开版本。确认草稿来源后清理未公开草稿再重试，或使用新版本；正常重复触发会被版本检查拒绝。
-- 使用标准 GitHub 托管机，公开仓库构建分钟免费。中间产物保留 3 天。CNB 检查使用 1 核，15 分钟一次，不反复拉取不变资源。
+- 使用标准 GitHub 托管机，公开仓库构建分钟免费。中间产物保留 3 天。CNB 检查使用 1 核，30 分钟一次，不反复拉取不变资源。
 - 缓存、制品和 CNB 存储仍需在账户用量页关注；设置达到预算后停止用量，而不只是通知。
 
 ## 本地验证

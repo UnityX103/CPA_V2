@@ -8,6 +8,17 @@ const CNB: &str = "https://cnb.cool/nanzhaigame-xpy/CPA_V2/-/releases/latest/dow
 const GITHUB: &str = "https://github.com/UnityX103/CPA_V2/releases/latest/download/latest.json";
 const CHECK_TIMEOUT: Duration = Duration::from_secs(10);
 
+#[cfg(any(windows, test))]
+fn nsis_install_directory_arg(executable: &std::path::Path) -> Result<std::ffi::OsString, String> {
+    let directory = executable
+        .parent()
+        .filter(|path| path.is_absolute())
+        .ok_or("Cannot determine the current installation directory")?;
+    let mut arg = std::ffi::OsString::from("/D=");
+    arg.push(directory.as_os_str());
+    Ok(arg)
+}
+
 async fn with_fallback<T, A, B>(primary: A, fallback: impl FnOnce() -> B) -> Result<T, String>
 where
     A: Future<Output = Result<T, String>>,
@@ -41,8 +52,15 @@ fn package_urls(version: &str, source: &str) -> Result<(String, String), String>
 }
 
 async fn check_source(webview: &Webview, endpoint: &str) -> Result<Option<Update>, String> {
-    webview
-        .updater_builder()
+    let builder = webview.updater_builder();
+    #[cfg(windows)]
+    let builder = {
+        // NSIS otherwise restores a registry path, which can differ from the running copy.
+        // /D= must remain the final installer argument and must not be quoted.
+        let executable = std::env::current_exe().map_err(|e| e.to_string())?;
+        builder.installer_arg(nsis_install_directory_arg(&executable)?)
+    };
+    builder
         .endpoints(vec![endpoint
             .parse()
             .map_err(|e| format!("Invalid update endpoint: {e}"))?])
@@ -211,6 +229,21 @@ pub async fn install_app_update(
 mod tests {
     use super::*;
     use std::cell::Cell;
+    #[test]
+    fn nsis_update_uses_running_executables_directory() {
+        let executable = if cfg!(windows) {
+            std::path::Path::new(r"D:\Apps\Desk Pet\cpa.exe")
+        } else {
+            std::path::Path::new("/mnt/d/Apps/Desk Pet/cpa.exe")
+        };
+        let expected = if cfg!(windows) {
+            r"/D=D:\Apps\Desk Pet"
+        } else {
+            "/D=/mnt/d/Apps/Desk Pet"
+        };
+        assert_eq!(nsis_install_directory_arg(executable).unwrap(), expected);
+        assert!(nsis_install_directory_arg(std::path::Path::new("cpa.exe")).is_err());
+    }
     #[test]
     fn github_success_never_queries_cnb_even_when_up_to_date() {
         tauri::async_runtime::block_on(async {

@@ -1,5 +1,5 @@
 use serde::Deserialize;
-use tauri::{LogicalPosition, LogicalSize, Manager};
+use tauri::{LogicalPosition, Manager, PhysicalSize};
 
 pub const WINDOW_EDGE_MARGIN: f64 = 24.0;
 
@@ -15,6 +15,14 @@ pub struct LogicalRect {
 pub struct LogicalSizePair {
     pub width: f64,
     pub height: f64,
+}
+
+fn enclosing_physical_size(size: LogicalSizePair, dpi: f64) -> PhysicalSize<u32> {
+    // Fractional UI pixels must fit inside the native client area.
+    PhysicalSize::new(
+        (size.width * dpi).ceil() as u32,
+        (size.height * dpi).ceil() as u32,
+    )
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -190,8 +198,9 @@ pub fn resize_scaled_window(
         logical_monitor,
     );
 
+    let dpi = window.scale_factor().map_err(|e| e.to_string())?;
     window
-        .set_size(LogicalSize::new(target.width, target.height))
+        .set_size(enclosing_physical_size(target, dpi))
         .map_err(|e| e.to_string())?;
 
     let Some(logical_monitor) = logical_monitor else {
@@ -221,6 +230,23 @@ pub fn resize_scaled_window(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn physical_window_contains_fractional_ui_at_every_dpi() {
+        for dpi in [1.0, 1.25, 1.5, 1.75, 2.0] {
+            for scale in [1.0, 1.22, 1.4, 1.5, 1.6, 1.75, 2.0] {
+                let logical = scaled_size(215.0, 187.0, scale).unwrap();
+                let physical = enclosing_physical_size(logical, dpi);
+                assert!(
+                    physical.width as f64 >= logical.width * dpi
+                        && physical.height as f64 >= logical.height * dpi,
+                    "scale={scale}, dpi={dpi}: {physical:?} clips {logical:?}"
+                );
+                assert!((physical.width as f64 - logical.width * dpi) < 1.0);
+                assert!((physical.height as f64 - logical.height * dpi) < 1.0);
+            }
+        }
+    }
 
     #[test]
     fn scaled_size_multiplies_base_dimensions() {

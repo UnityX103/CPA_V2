@@ -1,0 +1,13 @@
+{
+  "runs": [
+    {
+      "date": "2026-08-31T10:17:30.870424+00:00",
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "files": 395,
+      "note": "partial semantic extraction: 3/5 document chunks; code AST complete"
+    }
+  ],
+  "total_input_tokens": 0,
+  "total_output_tokens": 0
+}

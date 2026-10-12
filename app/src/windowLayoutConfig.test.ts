@@ -44,6 +44,7 @@ describe('main window fit-panel layout', () => {
         const css = readFileSync(globalCssPath, 'utf8');
         const rootBlock = blockAfter(css, 'html, body, #root');
         const appRootBlock = blockAfter(css, '.app-root');
+        const scaledRootBlock = blockAfter(css, '.app-scale-root');
 
         expect(rootBlock).toMatch(/\bheight\s*:\s*100%\s*;/);
         expect(appRootBlock).not.toMatch(/\bwidth\s*:\s*100vw\s*;/);
@@ -51,6 +52,10 @@ describe('main window fit-panel layout', () => {
         expect(appRootBlock).toMatch(/\bwidth\s*:\s*fit-content\s*;/);
         expect(appRootBlock).toMatch(/\bheight\s*:\s*fit-content\s*;/);
         expect(appRootBlock).toMatch(/\bpadding\s*:\s*0\s*;/);
+        expect(scaledRootBlock).toMatch(/\bwidth\s*:\s*fit-content\s*;/);
+        expect(scaledRootBlock).toMatch(/\bheight\s*:\s*fit-content\s*;/);
+        expect(scaledRootBlock).toMatch(/\boverflow\s*:\s*hidden\s*;/);
+        expect(scaledRootBlock).not.toMatch(/\boverflow\s*:\s*auto\s*;/);
     });
 
     it('does not expose obsolete hit-region commands in the Tauri invoke surface', () => {

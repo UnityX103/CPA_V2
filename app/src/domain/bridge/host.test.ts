@@ -24,35 +24,38 @@ beforeEach(() => {
         breakDurationSeconds: 300,
         totalRounds: 4,
         autoStartBreak: false,
+        autoStartOnLaunch: false,
         autoPinAfterFocus: true,
         endActionMode: 'topWindow',
+        playVideoOnBreakEnd: false,
     });
     usePresenceStore.setState({
-        enabled: false,
-        intervalSeconds: 60,
-        absenceSensitivity: 'strict',
         restDeskReminderEnabled: false,
         restDeskReminderMode: 'cockroachInvasion',
-        platform: 'macos',
-        availability: 'disabled',
         confirmedPresence: 'unknown',
         lastSuccessfulAt: null,
-        lastError: null,
     });
 });
 
 describe('bridge host', () => {
+    it('dispatches and mirrors automatic start', async () => {
+        await applyDispatch({
+            v: BRIDGE_VERSION,
+            store: 'pomodoro',
+            action: 'setAutoStartOnLaunch',
+            args: [true],
+        });
+        expect(usePomodoroStore.getState().autoStartOnLaunch).toBe(true);
+        expect(buildSnapshot().pomodoro.autoStartOnLaunch).toBe(true);
+    });
+
     it('builds a retained-state snapshot', () => {
         const snapshot = buildSnapshot();
 
         expect(snapshot.pomodoro).toEqual(expect.objectContaining({ endActionMode: 'topWindow' }));
         expect(snapshot.presence).toEqual(expect.objectContaining({
-            enabled: false,
-            intervalSeconds: 60,
-            absenceSensitivity: 'strict',
             restDeskReminderEnabled: false,
             restDeskReminderMode: 'cockroachInvasion',
-            availability: 'disabled',
         }));
     });
 
@@ -86,25 +89,29 @@ describe('bridge host', () => {
             store: 'presence',
             action: 'applySettings',
             args: [{
-                enabled: true,
                 inputActivityEnabled: false,
-                cameraDeviceId: 'camera-usb',
-                intervalSeconds: 30,
-                absenceSensitivity: 'balanced',
                 restDeskReminderEnabled: true,
                 restDeskReminderMode: 'cockroachInvasion',
             }],
         });
 
         expect(applySettings).toHaveBeenCalledWith({
-            enabled: true,
             inputActivityEnabled: false,
-            cameraDeviceId: 'camera-usb',
-            intervalSeconds: 30,
-            absenceSensitivity: 'balanced',
             restDeskReminderEnabled: true,
             restDeskReminderMode: 'cockroachInvasion',
         });
+    });
+
+    it('dispatches and mirrors the break-end video preference', async () => {
+        await applyDispatch({
+            v: BRIDGE_VERSION,
+            store: 'pomodoro',
+            action: 'applyEndActionSettings',
+            args: ['playVideo', usePomodoroStore.getState().endActionVideo, true],
+        });
+
+        expect(usePomodoroStore.getState().playVideoOnBreakEnd).toBe(true);
+        expect(buildSnapshot().pomodoro.playVideoOnBreakEnd).toBe(true);
     });
 
     it('signatures ignore transient state and include retained preferences', () => {
@@ -113,6 +120,8 @@ describe('bridge host', () => {
 
         expect(settingsSig(settings)).not.toBe(settingsSig({ ...settings, autostartEnabled: true }));
         expect(pomoSig(pomodoro)).not.toBe(pomoSig({ ...pomodoro, autoPinAfterFocus: false }));
+        expect(pomoSig(pomodoro)).not.toBe(pomoSig({ ...pomodoro, autoStartOnLaunch: true }));
+        expect(pomoSig(pomodoro)).not.toBe(pomoSig({ ...pomodoro, playVideoOnBreakEnd: true }));
         expect(presenceSig(usePresenceStore.getState())).not.toBe(presenceSig({
             ...usePresenceStore.getState(), inputActivityEnabled: true,
         }));
@@ -120,12 +129,10 @@ describe('bridge host', () => {
             ...usePresenceStore.getState(), inputActivityAvailability: 'error',
         }));
         expect(presenceSig(usePresenceStore.getState())).not.toBe(presenceSig({
-            ...usePresenceStore.getState(),
-            availability: 'ready',
+            ...usePresenceStore.getState(), confirmedPresence: 'present',
         }));
         expect(presenceSig(usePresenceStore.getState())).not.toBe(presenceSig({
-            ...usePresenceStore.getState(),
-            absenceSensitivity: 'relaxed',
+            ...usePresenceStore.getState(), lastSuccessfulAt: 1000,
         }));
         expect(presenceSig(usePresenceStore.getState())).not.toBe(presenceSig({
             ...usePresenceStore.getState(),

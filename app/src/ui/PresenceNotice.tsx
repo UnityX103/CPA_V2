@@ -17,7 +17,7 @@ export function PresenceNotice() {
 
     if (!current) return null;
     return (
-        <div className="presence-notice" role="status">
+        <div className="presence-notice" role="status" data-dock-compatible="true">
             {current.message}
         </div>
     );

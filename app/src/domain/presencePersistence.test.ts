@@ -18,170 +18,35 @@ beforeEach(() => {
     save.mockClear();
 });
 
-describe('presence persistence', () => {
-    it('defaults to disabled when no value exists', async () => {
-        await expect(persistence.loadPresencePreferences()).resolves.toEqual({
-            enabled: false,
-            inputActivityEnabled: false,
-            cameraDeviceId: null,
-            intervalSeconds: 10,
-            absenceSensitivity: 'strict',
-            restDeskReminderEnabled: false,
-            restDeskReminderMode: 'cockroachInvasion',
-        });
-    });
-
-    it('loads valid fields and ignores the removed confirmation threshold', async () => {
-        storeData.set('presencePreferences', {
-            schemaVersion: 1,
-            enabled: true,
-            intervalSeconds: 45,
-            presentThresholdSeconds: 999,
-        });
-
-        await expect(persistence.loadPresencePreferences()).resolves.toEqual({
-            enabled: true,
-            inputActivityEnabled: false,
-            cameraDeviceId: null,
-            intervalSeconds: 45,
-            absenceSensitivity: 'strict',
-            restDeskReminderEnabled: false,
-            restDeskReminderMode: 'cockroachInvasion',
-        });
-    });
-
-    it('loads all four sensitivity levels from device-local v2 settings', async () => {
-        for (const absenceSensitivity of ['off', 'strict', 'balanced', 'relaxed']) {
-            storeData.set('presencePreferences', {
-                schemaVersion: 2,
-                enabled: true,
-                intervalSeconds: 10,
-                absenceSensitivity,
-                restDeskReminderEnabled: false,
-                restDeskReminderMode: 'cockroachInvasion',
-            });
-
-            await expect(persistence.loadPresencePreferences()).resolves.toEqual({
-                enabled: true,
-                inputActivityEnabled: false,
-                cameraDeviceId: null,
-                intervalSeconds: 10,
-                absenceSensitivity,
-                restDeskReminderEnabled: false,
-                restDeskReminderMode: 'cockroachInvasion',
-            });
+describe('input-only presence persistence', () => {
+    it('defaults to input detection disabled and rejects unknown schemas', async () => {
+        expect(await persistence.loadPresencePreferences()).toEqual(persistence.DEFAULT_PRESENCE_PREFERENCES);
+        for (const schemaVersion of [0, 8, '7', null]) {
+            storeData.set('presencePreferences', { schemaVersion, inputActivityEnabled: true });
+            expect(await persistence.loadPresencePreferences()).toEqual(persistence.DEFAULT_PRESENCE_PREFERENCES);
         }
+        expect(save).not.toHaveBeenCalled();
     });
-
-    it('loads the enabled cockroach reminder from device-local v3 settings', async () => {
-        storeData.set('presencePreferences', {
-            schemaVersion: 3,
-            enabled: true,
-            intervalSeconds: 10,
-            absenceSensitivity: 'strict',
-            restDeskReminderEnabled: true,
-            restDeskReminderMode: 'cockroachInvasion',
-        });
-
-        await expect(persistence.loadPresencePreferences()).resolves.toEqual({
-            enabled: true,
-            inputActivityEnabled: false,
-            cameraDeviceId: null,
-            intervalSeconds: 10,
-            absenceSensitivity: 'strict',
-            restDeskReminderEnabled: true,
-            restDeskReminderMode: 'cockroachInvasion',
-        });
+    it.each([1, 2, 3, 4, 5, 6])('migrates camera settings from v%s and preserves input opt-in', async (schemaVersion) => {
+        storeData.set('presencePreferences', { schemaVersion, enabled: true, inputActivityEnabled: true,
+            cameraDeviceId: 'camera-usb', intervalSeconds: 600, absenceSensitivity: 'relaxed',
+            workstationRegion: { x: 0, y: 0, width: 1, height: 1 }, restDeskReminderEnabled: true });
+        const expected = { inputActivityEnabled: true, restDeskReminderEnabled: true,
+            restDeskReminderMode: 'cockroachInvasion' };
+        expect(await persistence.loadPresencePreferences()).toEqual(expected);
+        expect(storeData.get('presencePreferences')).toEqual({ schemaVersion: 7, ...expected });
+        expect(save).toHaveBeenCalledOnce();
     });
-
-    it('accepts a five-second camera detection interval', async () => {
-        storeData.set('presencePreferences', {
-            schemaVersion: 1,
-            enabled: true,
-            intervalSeconds: 5,
-        });
-
-        await expect(persistence.loadPresencePreferences()).resolves.toEqual({
-            enabled: true,
-            inputActivityEnabled: false,
-            cameraDeviceId: null,
-            intervalSeconds: 5,
-            absenceSensitivity: 'strict',
-            restDeskReminderEnabled: false,
-            restDeskReminderMode: 'cockroachInvasion',
-        });
+    it('does not grant input opt-in to camera-only users or retain reminders without it', async () => {
+        storeData.set('presencePreferences', { schemaVersion: 6, enabled: true, restDeskReminderEnabled: true });
+        expect(await persistence.loadPresencePreferences()).toEqual(persistence.DEFAULT_PRESENCE_PREFERENCES);
     });
-
-    it('falls back for unsupported schemas', async () => {
-        storeData.set('presencePreferences', {
-            schemaVersion: 999,
-            enabled: true,
-            intervalSeconds: 30,
-        });
-        await expect(persistence.loadPresencePreferences()).resolves.toEqual({
-            enabled: false,
-            inputActivityEnabled: false,
-            cameraDeviceId: null,
-            intervalSeconds: 10,
-            absenceSensitivity: 'strict',
-            restDeskReminderEnabled: false,
-            restDeskReminderMode: 'cockroachInvasion',
-        });
+    it('round-trips input-only settings without reintroducing camera fields', async () => {
+        const preferences = { inputActivityEnabled: true, restDeskReminderEnabled: true,
+            restDeskReminderMode: 'cockroachInvasion' as const };
+        await persistence.savePresencePreferences(preferences);
+        expect(storeData.get('presencePreferences')).toEqual({ schemaVersion: 7, ...preferences });
+        expect(await persistence.loadPresencePreferences()).toEqual(preferences);
+        expect(save).toHaveBeenCalledOnce();
     });
-
-    it('saves only device-local v5 settings', async () => {
-        await persistence.savePresencePreferences({
-            enabled: true,
-            inputActivityEnabled: false,
-            cameraDeviceId: 'camera-usb',
-            intervalSeconds: 30,
-            absenceSensitivity: 'relaxed',
-            restDeskReminderEnabled: true,
-            restDeskReminderMode: 'cockroachInvasion',
-        });
-
-        expect(storeData.get('presencePreferences')).toEqual({
-            schemaVersion: 5,
-            enabled: true,
-            inputActivityEnabled: false,
-            cameraDeviceId: 'camera-usb',
-            intervalSeconds: 30,
-            absenceSensitivity: 'relaxed',
-            restDeskReminderEnabled: true,
-            restDeskReminderMode: 'cockroachInvasion',
-        });
-        expect(save).toHaveBeenCalledTimes(1);
-    });
-
-    it('loads a selected camera from device-local v4 settings', async () => {
-        storeData.set('presencePreferences', {
-            schemaVersion: 4,
-            enabled: true,
-            inputActivityEnabled: false,
-            cameraDeviceId: 'camera-usb',
-            intervalSeconds: 10,
-            absenceSensitivity: 'balanced',
-            restDeskReminderEnabled: false,
-            restDeskReminderMode: 'cockroachInvasion',
-        });
-
-        await expect(persistence.loadPresencePreferences()).resolves.toEqual({
-            enabled: true,
-            inputActivityEnabled: false,
-            cameraDeviceId: 'camera-usb',
-            intervalSeconds: 10,
-            absenceSensitivity: 'balanced',
-            restDeskReminderEnabled: false,
-            restDeskReminderMode: 'cockroachInvasion',
-        });
-    });
-});
-
-
-it('migrates older settings without input consent and persists explicit v5 opt-in', async () => {
-    storeData.set('presencePreferences', { schemaVersion: 4, enabled: true });
-    expect((await persistence.loadPresencePreferences()).inputActivityEnabled).toBe(false);
-    await persistence.savePresencePreferences({ ...persistence.DEFAULT_PRESENCE_PREFERENCES, inputActivityEnabled: true });
-    expect(await persistence.loadPresencePreferences()).toMatchObject({ enabled: false, inputActivityEnabled: true });
-    expect(storeData.get('presencePreferences')).toMatchObject({ schemaVersion: 5, inputActivityEnabled: true });
 });

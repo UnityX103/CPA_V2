@@ -8,8 +8,6 @@ import type { AppUpdateSnapshot } from '../appUpdate';
 import type { CloudAccountData } from '../cloudAccountData';
 import type {
     ConfirmedPresence,
-    PresenceAvailability,
-    PresencePlatform,
     PresencePreferences,
 } from '../presence';
 
@@ -35,18 +33,17 @@ export interface BridgeSnapshot {
         breakDurationSeconds: number;
         totalRounds: number;
         autoStartBreak: boolean;
+        autoStartOnLaunch: boolean;
         autoPinAfterFocus: boolean;
         endActionMode: PomodoroEndActionMode;
+        playVideoOnBreakEnd: boolean;
         endActionVideo: PomodoroEndActionVideo;
         endSounds: PomodoroEndSounds;
     };
     presence: PresencePreferences & {
         inputActivityAvailability: import('../presence').InputActivityAvailability;
-        platform: PresencePlatform;
-        availability: PresenceAvailability;
         confirmedPresence: ConfirmedPresence;
         lastSuccessfulAt: number | null;
-        lastError: string | null;
     };
     network: {
         autoConnect: boolean;
@@ -84,10 +81,10 @@ export type DispatchPayload =
     | { v: typeof BRIDGE_VERSION; store: 'settings';   action: 'applyDangerousChange' | 'revertDangerousChange'; args: [string] }
     | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'applySettings'; args: [number, number, number, boolean, boolean] }
     | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'setAutoPinAfterFocus'; args: [boolean] }
-    | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'applyEndActionSettings'; args: [PomodoroEndActionMode, PomodoroEndActionVideo] }
+    | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'setAutoStartOnLaunch'; args: [boolean] }
+    | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'applyEndActionSettings'; args: [PomodoroEndActionMode, PomodoroEndActionVideo, boolean?] }
     | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'applyEndSoundSettings'; args: [PomodoroEndSounds] }
     | { v: typeof BRIDGE_VERSION; store: 'presence';   action: 'applySettings'; args: [PresencePreferences] }
-    | { v: typeof BRIDGE_VERSION; store: 'presence';   action: 'requestAccess' | 'retry' | 'openPrivacySettings'; args: [] }
     | { v: typeof BRIDGE_VERSION; store: 'network';    action: 'createRoom' | 'joinRoom'; args: [string] }
     | { v: typeof BRIDGE_VERSION; store: 'network';    action: 'leaveRoom'; args: [] }
     | { v: typeof BRIDGE_VERSION; store: 'network';    action: 'setAutoConnect'; args: [boolean] }
