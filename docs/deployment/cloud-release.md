@@ -47,6 +47,7 @@ CNB 脚本仅用内置 CNB_TOKEN 写 CNB Release 和导入相应 Git tag，GitHu
 
 ## 故障与成本
 
+- 安装包构建保留 Tauri `--verbose` 完整日志。仅当 macOS 日志明确报告 `error running bundle_dmg.sh` 时，`app/scripts/build-cloud-installer.mjs` 等待 10/20 秒，最多重试两次 `tauri bundle`，复用已编译程序并保留相同目标、签名和 updater 配置；编译、应用签名、updater 签名或 Windows 构建错误直接失败。重试后仍执行架构、资源封印和 DMG 校验。此机制缓解间歇性 DMG 脚本失败，不能据此断言底层系统命令的根因。
 - CNB 失败不会回滚或阻止 GitHub 发布。缺权限、匿名限流、网络错误、签名或哈希不符都会让流水线失败，并在下一周期重试。
 - GitHub 发布到 draft 后失败：检查日志和草稿，不能直接重新覆盖公开版本。确认草稿来源后清理未公开草稿再重试，或使用新版本；正常重复触发会被版本检查拒绝。
 - 使用标准 GitHub 托管机，公开仓库构建分钟免费。中间产物保留 3 天。CNB 检查使用 1 核，30 分钟一次，不反复拉取不变资源。

@@ -2340,13 +2340,13 @@
     "semantic_hash": ""
   },
   ".github/workflows/release.yml": {
-    "mtime": 1791810442.0439336,
-    "ast_hash": "0328a33c6e2a097868fc75ccbae5d4a3",
+    "mtime": 1791811491.6559417,
+    "ast_hash": "5f835d88ea363bd030bd453cea121bf1",
     "semantic_hash": ""
   },
   "docs/deployment/cloud-release.md": {
-    "mtime": 1789565002.4743657,
-    "ast_hash": "e928ee0bf87468b35ad1e687c830cf84",
+    "mtime": 1791811491.6564317,
+    "ast_hash": "6124421e09a5a958cd54ee30a5d6b762",
     "semantic_hash": ""
   },
   "docs/deployment/release-0.1.32.md": {
@@ -2642,6 +2642,16 @@
   "docs/superpowers/specs/2026-10-10-kegel-module-design.md": {
     "mtime": 1791810429.8613935,
     "ast_hash": "d432af2a511ec9e1f98f0125bbc0a21b",
+    "semantic_hash": ""
+  },
+  "app/scripts/build-cloud-installer.mjs": {
+    "mtime": 1791811511.746646,
+    "ast_hash": "a3e45572455cbc93574228a485759fc9",
+    "semantic_hash": ""
+  },
+  "app/scripts/build-cloud-installer.test.mjs": {
+    "mtime": 1791811456.905196,
+    "ast_hash": "fcb83b090d6faf8c6dadc7d68035cf09",
     "semantic_hash": ""
   }
 }

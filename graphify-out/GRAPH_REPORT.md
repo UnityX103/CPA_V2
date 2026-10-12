@@ -1,23 +1,23 @@
 # Graph Report - CPA_V2  (2026-10-12)
 
 ## Corpus Check
-- 439 files · ~501,265 words
+- 441 files · ~501,841 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3842 nodes · 7872 edges · 241 communities (205 shown, 36 thin omitted)
+- 3849 nodes · 7880 edges · 238 communities (204 shown, 34 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 90 edges (avg confidence: 0.75)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `641596e5`
+- Built from commit: `a7c317c9`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - index.js
 - accessibility/mod.rs
-- pomodoro.ts
+- presence.ts
 - userPreferences.ts
 - lib.rs
 - prepare-updater-release.mjs
@@ -28,7 +28,7 @@
 - permissions
 - audio.rs
 - pomodoro_docking/mod.rs
-- app/src/App.tsx
+- settings.ts
 - UserDataStore.js
 - kegel_module.rs
 - network.ts
@@ -46,11 +46,11 @@
 - web_pack.rs
 - cockroach_module.rs
 - video_editor_module.rs
-- usePomodoroStore
+- pomodoro.ts
 - compilerOptions
 - window_layout.rs
 - AuthStore.js
-- kegelNativeAudio.ts
+- kegel/src/App.tsx
 - 摄像头工位在场自动控制设计
 - OnlineSettingsPanel.tsx
 - remotePlayerWindows.ts
@@ -76,7 +76,7 @@
 - Mirrored Check-in Windows
 - CheckinPlanTemplate
 - VideoEditorModuleContractTests
-- KegelSettings
+- app/src/App.tsx
 - page.tsx
 - Mobile Companion App Design
 - updater.json
@@ -168,7 +168,7 @@
 - host.ts
 - ModuleChild
 - GitHub 云端发布与 CNB 下载镜像
-- videoEditorModule.ts
+- useNetworkStore
 - Scaled Window Sizing
 - Account Auth Status Reset Design
 - 专注结束后自动置顶设计
@@ -205,7 +205,7 @@
 - extensions/README.md
 - automation.rs
 - 2026-09-05-owned-pomodoro-video.md
-- KegelView.tsx
+- build-cloud-installer.test.mjs
 - module-contract.json
 - kegel-module.json
 - RoomManagerError
@@ -218,8 +218,7 @@
 - kegel_window/mod.rs
 - breakActivityHost.ts
 - 工位区域校准与可调离席次数
-- KegelController
-- KegelNativeAudio
+- SettingsPanel.test.tsx
 - hit_test
 - 凯格尔运动模块设计访谈
 - build_pack.py
@@ -229,11 +228,9 @@
 - kegel/README.md
 - @tauri-apps/cli
 - remotePlayerCardPositions.ts
-- kegel/src/App.tsx
 - network.test.ts
 - DevAlignApp.tsx
 - app/src/main.tsx
-- audioPlayback.ts
 - remotePlayerWindows.test.ts
 - latency.test.js
 
@@ -262,26 +259,26 @@
   app/src-tauri/src/cockroach_module/automation.rs → app/src-tauri/src/cockroach_module.rs
 
 ## Import Cycles
-- 3-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/presence.ts -> app/src/domain/bridge/dispatch.ts`
 - 3-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/pomodoro.ts -> app/src/domain/bridge/dispatch.ts`
-- 3-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/settings.ts -> app/src/domain/bridge/dispatch.ts`
+- 3-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/presence.ts -> app/src/domain/bridge/dispatch.ts`
 - 3-file cycle: `app/src/domain/appUpdate.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/appUpdate.ts`
-- 3-file cycle: `app/src/domain/bindingKey.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/bindingKey.ts`
+- 3-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/settings.ts -> app/src/domain/bridge/dispatch.ts`
 - 3-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/network.ts -> app/src/domain/bridge/dispatch.ts`
-- 4-file cycle: `app/src/domain/appUpdate.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/userPreferences.ts -> app/src/domain/appUpdate.ts`
-- 4-file cycle: `app/src/domain/bindingKey.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/userPreferences.ts -> app/src/domain/bindingKey.ts`
-- 4-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/presence.ts -> app/src/domain/pomodoro.ts -> app/src/domain/bridge/dispatch.ts`
+- 3-file cycle: `app/src/domain/bindingKey.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/bindingKey.ts`
 - 4-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/pomodoro.ts -> app/src/domain/bridge/dispatch.ts`
-- 4-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/settings.ts -> app/src/domain/bridge/dispatch.ts`
+- 4-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/presence.ts -> app/src/domain/pomodoro.ts -> app/src/domain/bridge/dispatch.ts`
 - 4-file cycle: `app/src/domain/appUpdate.ts -> app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/appUpdate.ts`
-- 4-file cycle: `app/src/domain/bindingKey.ts -> app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/bindingKey.ts`
+- 4-file cycle: `app/src/domain/appUpdate.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/userPreferences.ts -> app/src/domain/appUpdate.ts`
+- 4-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/settings.ts -> app/src/domain/bridge/dispatch.ts`
 - 4-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/network.ts -> app/src/domain/bridge/dispatch.ts`
-- 5-file cycle: `app/src/domain/appUpdate.ts -> app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/userPreferences.ts -> app/src/domain/appUpdate.ts`
-- 5-file cycle: `app/src/domain/bindingKey.ts -> app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/userPreferences.ts -> app/src/domain/bindingKey.ts`
-- 5-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/userPreferences.ts -> app/src/domain/network.ts -> app/src/domain/bridge/dispatch.ts`
+- 4-file cycle: `app/src/domain/bindingKey.ts -> app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/bindingKey.ts`
+- 4-file cycle: `app/src/domain/bindingKey.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/userPreferences.ts -> app/src/domain/bindingKey.ts`
 - 5-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/userPreferences.ts -> app/src/domain/pomodoro.ts -> app/src/domain/bridge/dispatch.ts`
+- 5-file cycle: `app/src/domain/appUpdate.ts -> app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/userPreferences.ts -> app/src/domain/appUpdate.ts`
 - 5-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/userPreferences.ts -> app/src/domain/settings.ts -> app/src/domain/bridge/dispatch.ts`
 - 5-file cycle: `app/src/domain/audioPlayback.ts -> app/src/domain/settings.ts -> app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/pomodoroSounds.ts -> app/src/domain/audioPlayback.ts`
+- 5-file cycle: `app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/userPreferences.ts -> app/src/domain/network.ts -> app/src/domain/bridge/dispatch.ts`
+- 5-file cycle: `app/src/domain/bindingKey.ts -> app/src/domain/bridge/dispatch.ts -> app/src/domain/bridge/protocol.ts -> app/src/domain/cloudAccountData.ts -> app/src/domain/userPreferences.ts -> app/src/domain/bindingKey.ts`
 
 ## Hyperedges (group relationships)
 - **Cross-platform updater release gate** — agents_skills_cpa_v2_release_publish_skill_macos_dual_thin_builds, agents_skills_cpa_v2_release_publish_skill_windows_x64_nsis, agents_skills_cpa_v2_release_publish_skill_four_platform_manifest [EXTRACTED 1.00]
@@ -294,7 +291,7 @@
 - **Check-in Lifecycle Control Flow** — docs_superpowers_plans_2026_05_23_checkin_global_toggle_checkin_enabled, docs_superpowers_plans_2026_06_16_settings_plan_panel_and_pet_removal_plan_panel_enabled, docs_superpowers_plans_2026_06_16_checkin_system_lifecycle_checkin_subsystem_lifecycle, docs_superpowers_plans_2026_06_16_checkin_system_lifecycle_mirror_panel_unmount [EXTRACTED 1.00]
 - **Native Window Interaction Controls** — docs_superpowers_specs_2026_05_15_overlay_hit_passthrough_design_native_hit_test_passthrough, docs_superpowers_specs_2026_05_15_settings_panel_drag_and_pixel_parity_design_settings_webview_window, docs_superpowers_specs_2026_05_16_main_window_pin_design_main_window_pin_command, docs_superpowers_plans_2026_05_21_temporary_focus_windows_temporary_focus_command [INFERRED 0.85]
 
-## Communities (241 total, 36 thin omitted)
+## Communities (238 total, 34 thin omitted)
 
 ### Community 0 - "index.js"
 Cohesion: 0.13
@@ -304,13 +301,13 @@ Nodes (38): broadcastToRoom(), clearConnectionInitTimeout(), createPomodoroServe
 Cohesion: 0.10
 Nodes (42): AccessibilityStatus, accessibility_status(), AccessibilityChangedPayload, AccessibilityStatus, app_bundle_root(), bundle_identifier(), code_sign_identifier(), current_status() (+34 more)
 
-### Community 2 - "pomodoro.ts"
-Cohesion: 0.09
-Nodes (40): startBreakReminderMonitor(), fixture(), useBreakReminderLevel(), createDispatchRequestId(), dispatchConfirmed(), defaultRuntime, INPUT_ACTIVITY_POLL_MS, InputActivityRuntime (+32 more)
+### Community 2 - "presence.ts"
+Cohesion: 0.10
+Nodes (35): startBreakReminderMonitor(), fixture(), useBreakReminderLevel(), defaultRuntime, INPUT_ACTIVITY_POLL_MS, InputActivityRuntime, startInputActivityMonitor(), fixture() (+27 more)
 
 ### Community 3 - "userPreferences.ts"
-Cohesion: 0.08
-Nodes (50): AppUpdateSnapshot, BreakActivity, AppUpdateStore, BindingKeyStore, cloneBindingKey(), cloneBindingKeyEntry(), CloudStores, mergeCloudAccountDataConflict() (+42 more)
+Cohesion: 0.09
+Nodes (47): AppUpdateStore, BindingKeyStore, buildCloudAccountData(), cloneBindingKey(), cloneBindingKeyEntry(), cloudAccountDataKey(), CloudStores, hydrateCloudAccountData() (+39 more)
 
 ### Community 4 - "lib.rs"
 Cohesion: 0.11
@@ -325,8 +322,8 @@ Cohesion: 0.09
 Nodes (28): install_first_mouse_only(), install_focus_restorer(), install_main_panel_hit_test(), main_panel_corner_radius(), main_panel_hit_test_scales_with_the_window(), point_in_rounded_rect(), post_did_move_notification_for_testing(), AppHandle (+20 more)
 
 ### Community 7 - "PomodoroEndActionLayer.tsx"
-Cohesion: 0.11
-Nodes (21): FocusableAppWindowLabel, focusAppWindow(), { invokeMock }, PomodoroEndEvent, PomodoroEndActionResolution, playPomodoroEndSound(), openPomodoroVideoWindow(), PomodoroVideoWindowAction (+13 more)
+Cohesion: 0.15
+Nodes (16): FocusableAppWindowLabel, focusAppWindow(), { invokeMock }, PomodoroEndEvent, openPomodoroVideoWindow(), customVideoSrc(), pickCustomWebmPath(), showCustomVideoMissingMessage() (+8 more)
 
 ### Community 8 - "tauri.conf.json"
 Cohesion: 0.05
@@ -348,9 +345,9 @@ Nodes (31): ActivePlayback, AudioOutputDevice, AudioPlaybackResult, AudioPlaybac
 Cohesion: 0.08
 Nodes (59): break_and_completed_never_display_a_strip_even_after_blur(), break_frame_scale(), break_moves_from_bottom_to_top_and_grows_within_each_monitor(), break_origin(), break_pause_and_resume_ignore_old_focus_timeout(), collapsed_transparent_space_passes_through_on_both_sides(), configure_pomodoro_docking(), dock_frame_width() (+51 more)
 
-### Community 13 - "app/src/App.tsx"
-Cohesion: 0.09
-Nodes (39): App(), buildStartupSettingsSnapshot(), clampStartupScale(), getStartupSettingsState(), StartupArchiveSource, mocks, userPreferenceStores(), waitForAccountRestoreAttempt() (+31 more)
+### Community 13 - "settings.ts"
+Cohesion: 0.13
+Nodes (23): dispatch(), BreakPetMode, clampScale(), clampSoundVolume(), createDangerousChangeId(), createSettingsStore(), DANGEROUS_CHANGE_TIMEOUT_MS, DangerousSettingKind (+15 more)
 
 ### Community 14 - "UserDataStore.js"
 Cohesion: 0.12
@@ -361,12 +358,12 @@ Cohesion: 0.09
 Nodes (47): decodes_interleaved_pcm_with_bounded_rates_channels_and_duration(), generated_audio_follows_selected_hardware_and_preserves_unfinished_tails(), GeneratedAudioOutput, PcmAudio, MixerDeviceSink, Option, Player, Result (+39 more)
 
 ### Community 16 - "network.ts"
-Cohesion: 0.11
-Nodes (24): clearPersistedAccountSession(), isPersistedAccountSessionV1(), loadPersistedAccountSession(), openStore(), PersistedAccountSession, PersistedAccountSessionV1, savePersistedAccountSession(), store (+16 more)
+Cohesion: 0.12
+Nodes (22): clearPersistedAccountSession(), isPersistedAccountSessionV1(), loadPersistedAccountSession(), openStore(), PersistedAccountSession, PersistedAccountSessionV1, savePersistedAccountSession(), store (+14 more)
 
 ### Community 17 - "ui/PlayerCard.tsx"
-Cohesion: 0.17
-Nodes (9): RemotePlayer, RemoteState, SyncRemotePlayerWindowsInput, deriveBadge(), PhaseBadge, PlayerCard(), PlayerCardProps, { startDraggingMock } (+1 more)
+Cohesion: 0.20
+Nodes (8): RemotePlayer, RemoteState, SyncRemotePlayerWindowsInput, deriveBadge(), PhaseBadge, PlayerCard(), PlayerCardProps, { startDraggingMock }
 
 ### Community 18 - "compilerOptions"
 Cohesion: 0.07
@@ -393,16 +390,16 @@ Cohesion: 0.19
 Nodes (17): useBridgeClient(), INPUT_COUNTER_BASE_HEIGHT, INPUT_COUNTER_BASE_WIDTH, MAIN_WINDOW_BASE_SIZE, ScaledWindowSizeOptions, SETTINGS_WINDOW_BASE_SIZE, SETTINGS_WINDOW_MIN_SIZE, { invokeMock } (+9 more)
 
 ### Community 24 - "pomodoroSounds.ts"
-Cohesion: 0.12
-Nodes (24): SoundSource, BREAK_END_SOUNDS, BuiltinPomodoroSound, builtinSoundForSelection(), DEFAULT_POMODORO_END_SOUNDS, defaultPlaybackDeps, FOCUS_END_SOUNDS, isObject() (+16 more)
+Cohesion: 0.10
+Nodes (29): AudioOutputDevice, AudioPlaybackResult, listAudioOutputDevices(), playSound(), SoundSource, invoke, BREAK_END_SOUNDS, BuiltinPomodoroSound (+21 more)
 
 ### Community 25 - "bindingKey.ts"
 Cohesion: 0.06
-Nodes (46): ActiveAppState, useActiveAppStore, AccessibilityStatus, applyHealth(), BindingInput, BindingKeyActions, BindingKeyPlatform, BindingKeyState (+38 more)
+Nodes (47): ActiveAppState, useActiveAppStore, AccessibilityStatus, applyHealth(), BindingInput, BindingKeyActions, BindingKeyPlatform, BindingKeyState (+39 more)
 
 ### Community 26 - "pomodoroBroadcast.ts"
-Cohesion: 0.09
-Nodes (35): activityOwnsBreak(), COCKROACH_ACTIONS, COCKROACH_AUTOMATION_RESULT, COCKROACH_RULES_CHANGED, CockroachAction, CockroachRule, executeCockroachAction(), readCockroachRules() (+27 more)
+Cohesion: 0.10
+Nodes (34): activityOwnsBreak(), COCKROACH_ACTIONS, COCKROACH_AUTOMATION_RESULT, COCKROACH_RULES_CHANGED, CockroachAction, CockroachRule, executeCockroachAction(), readCockroachRules() (+26 more)
 
 ### Community 27 - "extension_packs.rs"
 Cohesion: 0.17
@@ -420,9 +417,9 @@ Nodes (131): accepts_noncommercial_layered_runtime_and_logic_index(), accepts_th
 Cohesion: 0.07
 Nodes (123): accepts_the_base64_wrapped_signature_emitted_by_tauri_signer(), accepts_the_expected_module_contract(), activate_layered_installation(), begin_module_update(), bundled_tool_path(), child_is_running(), common_pack_state(), ComponentFile (+115 more)
 
-### Community 31 - "usePomodoroStore"
-Cohesion: 0.08
-Nodes (26): BREAK_REMINDER_SCALES, BreakReminderLevel, buildCloudAccountData(), cloudAccountDataKey(), hydrateCloudAccountData(), stores, saveLocal, useCloudAccountSync() (+18 more)
+### Community 31 - "pomodoro.ts"
+Cohesion: 0.07
+Nodes (26): BREAK_REMINDER_SCALES, BreakReminderLevel, DEFAULT_END_ACTION_VIDEO, formatMmSs(), PomodoroActions, PomodoroEndActionSourceKind, PomodoroPhase, PomodoroPinSource (+18 more)
 
 ### Community 32 - "compilerOptions"
 Cohesion: 0.09
@@ -436,9 +433,9 @@ Nodes (19): apply_layout(), empty_snapshot(), install_tracking(), is_supported_w
 Cohesion: 0.19
 Nodes (11): AuthStore, AuthStoreError, createSession(), createSessionToken(), DEFAULT_FILE_PATH, hashPassword(), normalizeAccountInput(), normalizeDataFile() (+3 more)
 
-### Community 35 - "kegelNativeAudio.ts"
-Cohesion: 0.09
-Nodes (19): KegelPhase, BELL_PITCHES, BellVoice, createBellGraph(), KegelAudio, KegelAudioPlayer, LEVELS, nextBellPitch() (+11 more)
+### Community 35 - "kegel/src/App.tsx"
+Cohesion: 0.05
+Nodes (54): KegelPreferences, loadKegelPreferences(), saveKegelHistory(), saveKegelSettings(), KegelApp(), KegelPreviewApp(), KegelController, KegelControllerAdapter (+46 more)
 
 ### Community 36 - "摄像头工位在场自动控制设计"
 Cohesion: 0.04
@@ -449,8 +446,8 @@ Cohesion: 0.10
 Nodes (7): DEFAULT_HISTORY, DEFAULT_ROOM, OnlinePhase, OnlineSettingsPanelProps, PHASE_LABEL, RoomHistory, RoomMember
 
 ### Community 38 - "remotePlayerWindows.ts"
-Cohesion: 0.18
-Nodes (16): loadRemotePlayerCardPositions(), REMOTE_PLAYER_WINDOW_LABELS, RemotePlayerWindowLabel, Assignment, assignments, closeAllRemotePlayerWindows(), closeLabel(), defaultPosition() (+8 more)
+Cohesion: 0.19
+Nodes (15): REMOTE_PLAYER_WINDOW_LABELS, RemotePlayerWindowLabel, Assignment, assignments, closeAllRemotePlayerWindows(), closeLabel(), defaultPosition(), isStaleSync() (+7 more)
 
 ### Community 39 - "dependencies"
 Cohesion: 0.11
@@ -540,9 +537,9 @@ Nodes (12): Check-in Day Inheritance, Check-in Editor Inherit Context Menu Imple
 Cohesion: 0.11
 Nodes (5): load_build_runtime(), load_layer_packager(), load_packager(), load_pipeline(), VideoEditorModuleContractTests
 
-### Community 61 - "KegelSettings"
-Cohesion: 0.30
-Nodes (12): KegelPreferences, loadKegelPreferences(), saveKegelHistory(), saveKegelSettings(), KegelApp(), KegelControllerAdapter, KegelWindowSnapshot, KegelSettings (+4 more)
+### Community 61 - "app/src/App.tsx"
+Cohesion: 0.15
+Nodes (20): App(), buildStartupSettingsSnapshot(), clampStartupScale(), getStartupSettingsState(), StartupArchiveSource, mocks, userPreferenceStores(), waitForAccountRestoreAttempt() (+12 more)
 
 ### Community 62 - "page.tsx"
 Cohesion: 0.20
@@ -557,8 +554,8 @@ Cohesion: 0.20
 Nodes (9): description, identifier, main, permissions, $schema, windows, process:allow-restart, updater:allow-check (+1 more)
 
 ### Community 65 - "extensionPacks.ts"
-Cohesion: 0.07
-Nodes (41): createExtensionPackStore(), emptyRevisions(), emptyStatus(), emptyStatuses(), errorText(), extensionPackCatalog, ExtensionPackDescriptor, ExtensionPackId (+33 more)
+Cohesion: 0.09
+Nodes (26): createExtensionPackStore(), emptyRevisions(), emptyStatus(), emptyStatuses(), errorText(), ExtensionPackDescriptor, ExtensionPackKind, extensionPackRegistry (+18 more)
 
 ### Community 66 - "windowPinConfig.test.ts"
 Cohesion: 0.20
@@ -625,8 +622,8 @@ Cohesion: 0.29
 Nodes (7): CPA_V2 Game Launcher, Non-destructive launcher process management, CPA_V2 local development runtime, Pomodoro MP Server, Node.js 25 test glob workaround, Single-node development WebSocket server, ws://127.0.0.1:8039
 
 ### Community 85 - "ui/SettingsPanel.tsx"
-Cohesion: 0.09
-Nodes (21): SettingsTab, AppUpdatePreview(), accountErrorText(), AppUpdateSettingsRow(), appUpdateStatusText(), cloudSyncStatusText(), confirmedPresenceText(), CORE_TABS (+13 more)
+Cohesion: 0.08
+Nodes (25): samePomodoroEndSounds(), sameSoundSelection(), AppUpdatePreview(), accountErrorText(), AppUpdateSettingsRow(), appUpdateStatusText(), cloudSyncStatusText(), confirmedPresenceText() (+17 more)
 
 ### Community 86 - "Pomodoro Cloud Settings Design"
 Cohesion: 0.08
@@ -733,16 +730,16 @@ Cohesion: 1.00
 Nodes (3): Windows Update Publish Implementation Plan, GitHub Releases Updater, Windows x64 NSIS Release
 
 ### Community 121 - "appUpdate.ts"
-Cohesion: 0.10
-Nodes (24): APP_UPDATE_CHECK_INTERVAL_MS, APP_UPDATE_REQUEST_TIMEOUT_MS, APP_UPDATE_STARTUP_DELAY_MS, AppUpdateActions, AppUpdateDeps, AppUpdateStatus, AppUpdateStore, createAppUpdateStore() (+16 more)
+Cohesion: 0.11
+Nodes (21): APP_UPDATE_CHECK_INTERVAL_MS, APP_UPDATE_REQUEST_TIMEOUT_MS, APP_UPDATE_STARTUP_DELAY_MS, AppUpdateActions, AppUpdateDeps, AppUpdateStatus, AppUpdateStore, createAppUpdateStore() (+13 more)
 
 ### Community 122 - "pomodoroEndAction.ts"
-Cohesion: 0.19
-Nodes (12): basename(), MaybePromise, PomodoroEndActionRuntime, PomodoroEndActionState, resolvePomodoroEndAction(), BUILTIN_POMODORO_VIDEOS, BuiltinPomodoroVideo, DEFAULT_BUILTIN_POMODORO_VIDEO_ID (+4 more)
+Cohesion: 0.12
+Nodes (16): basename(), MaybePromise, PomodoroEndActionResolution, PomodoroEndActionRuntime, PomodoroEndActionState, resolvePomodoroEndAction(), BUILTIN_POMODORO_VIDEOS, BuiltinPomodoroVideo (+8 more)
 
 ### Community 134 - "CockroachModulePanel.tsx"
-Cohesion: 0.14
-Nodes (17): CockroachModuleSettings, CockroachModuleStatus, killAllCockroaches(), launchCockroachModule(), readCockroachModuleStatus(), saveCockroachModuleSettings(), ExtensionSettingsRenderer, CockroachModulePanel() (+9 more)
+Cohesion: 0.17
+Nodes (15): CockroachModuleSettings, CockroachModuleStatus, killAllCockroaches(), launchCockroachModule(), readCockroachModuleStatus(), saveCockroachModuleSettings(), ExtensionSettingsRenderer, CockroachModulePanel() (+7 more)
 
 ### Community 135 - "Mouse Input Counter Design"
 Cohesion: 0.11
@@ -834,7 +831,7 @@ Nodes (11): Check-in Global Toggle Design, Context, Data Flow, Error Handling, G
 
 ### Community 157 - "host.ts"
 Cohesion: 0.06
-Nodes (59): ActiveAppInfo, BindingKeyEntry, { listenMock, invokeMock }, applySnapshotToMirrors(), cloneActiveAppForMirror(), cloneDangerousChange(), cloneEntries(), clonePlayer() (+51 more)
+Nodes (67): ActiveAppInfo, AppUpdateSnapshot, BindingKeyEntry, applySnapshotToMirrors(), cloneActiveAppForMirror(), cloneDangerousChange(), cloneEntries(), clonePlayer() (+59 more)
 
 ### Community 158 - "ModuleChild"
 Cohesion: 0.09
@@ -844,9 +841,13 @@ Nodes (32): ensure_entry_executable(), restore_archive_permissions(), restore_ar
 Cohesion: 0.25
 Nodes (7): GitHub 云端发布与 CNB 下载镜像, 凭据边界, 故障与成本, 日常操作, 本地验证, 签名、索引与镜像, 面向用户的更新说明
 
-### Community 160 - "videoEditorModule.ts"
-Cohesion: 0.47
-Nodes (4): launchVideoEditorModule(), readVideoEditorModuleStatus(), invoke, VideoEditorModuleStatus
+### Community 160 - "useNetworkStore"
+Cohesion: 0.36
+Nodes (6): useNetworkStore, saveRemotePlayerCardPosition(), RemotePlayerCardApp(), routePlayerId(), {
+    onMovedMock,
+    savePositionMock,
+    useBridgeClientMock,
+}, RemoteRoster()
 
 ### Community 161 - "Scaled Window Sizing"
 Cohesion: 0.18
@@ -952,9 +953,9 @@ Nodes (4): replace_file_atomically(), Path, Result, String
 Cohesion: 0.31
 Nodes (16): CockroachAction, CockroachRule, default_rules(), read_cockroach_automation_rules(), read_rules(), AppHandle, Path, PathBuf (+8 more)
 
-### Community 201 - "KegelView.tsx"
-Cohesion: 0.32
-Nodes (10): KEGEL_RESET_SECONDS, kegelColors(), kegelOwnsBreak(), kegelStats(), localDay(), previousDay(), formatMmSs(), KegelView() (+2 more)
+### Community 201 - "build-cloud-installer.test.mjs"
+Cohesion: 0.38
+Nodes (4): buildCloudInstaller(), dmgFailure, harness(), success
 
 ### Community 202 - "module-contract.json"
 Cohesion: 0.11
@@ -985,12 +986,16 @@ Cohesion: 0.27
 Nodes (11): build_hidden(), HitMap, HitRegion, AppHandle, Result, String, Vec, WebviewWindow (+3 more)
 
 ### Community 213 - "breakActivityHost.ts"
-Cohesion: 0.30
-Nodes (9): BREAK_ACTIVITY_CONTROL_EVENT, BREAK_ACTIVITY_REQUEST_EVENT, BREAK_ACTIVITY_STATE_EVENT, BreakActivityAction, BreakActivitySnapshot, BreakActivityStatus, emitTo, Host() (+1 more)
+Cohesion: 0.12
+Nodes (22): BREAK_ACTIVITY_CONTROL_EVENT, BREAK_ACTIVITY_REQUEST_EVENT, BREAK_ACTIVITY_STATE_EVENT, BreakActivity, BreakActivityStatus, emitTo, Host(), useBreakActivityHost() (+14 more)
 
 ### Community 216 - "工位区域校准与可调离席次数"
 Cohesion: 0.40
 Nodes (4): 工位区域校准与可调离席次数, 设置, 语义, 验收
+
+### Community 221 - "SettingsPanel.test.tsx"
+Cohesion: 0.33
+Nodes (4): invoke, listen, message, open
 
 ### Community 223 - "hit_test"
 Cohesion: 0.24
@@ -1009,12 +1014,8 @@ Cohesion: 0.50
 Nodes (4): install(), Result, String, WebviewWindow
 
 ### Community 233 - "remotePlayerCardPositions.ts"
-Cohesion: 0.17
-Nodes (13): isRemotePlayerCardPosition(), normalizePositions(), openStore(), PersistedRemotePlayerCardPositionsV1, RemotePlayerCardPosition, RemotePlayerCardPositions, saveQueue, saveRemotePlayerCardPosition() (+5 more)
-
-### Community 234 - "kegel/src/App.tsx"
-Cohesion: 0.38
-Nodes (8): KegelPreviewApp(), advanceKegel(), createKegelSession(), DEFAULT_KEGEL_SETTINGS, kegelScale(), KegelSession, smooth(), recordKegelReps()
+Cohesion: 0.24
+Nodes (10): isRemotePlayerCardPosition(), loadRemotePlayerCardPositions(), normalizePositions(), openStore(), PersistedRemotePlayerCardPositionsV1, RemotePlayerCardPosition, RemotePlayerCardPositions, saveQueue (+2 more)
 
 ### Community 235 - "network.test.ts"
 Cohesion: 0.17
@@ -1028,33 +1029,29 @@ Nodes (8): DevAlignApp(), initialMode(), initialTargetId(), MOCK_PLAYER, Mode, P
 Cohesion: 0.33
 Nodes (6): useExtensionPackSync(), which, WindowRoot(), closePlayerWindow(), close, VideoPlayerApp()
 
-### Community 238 - "audioPlayback.ts"
-Cohesion: 0.32
-Nodes (6): AudioOutputDevice, AudioPlaybackResult, listAudioOutputDevices(), playSound(), invoke, AudioSettingsCard()
-
 ### Community 240 - "latency.test.js"
 Cohesion: 0.40
 Nodes (3): authClient(), createTestServer(), sendJson()
 
 ## Knowledge Gaps
-- **1073 isolated node(s):** `metadata`, `STATE_LABELS`, `ClockProps`, `PanelKey`, `MENU_ITEMS` (+1068 more)
+- **1075 isolated node(s):** `metadata`, `STATE_LABELS`, `ClockProps`, `PanelKey`, `MENU_ITEMS` (+1070 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **36 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **34 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `snapshot()` connect `UserDataStore.js` to `host.ts`?**
-  _High betweenness centrality (0.017) - this node is a cross-community bridge._
+  _High betweenness centrality (0.018) - this node is a cross-community bridge._
 - **Why does `T` connect `audio.rs` to `extension_packs.rs`, `cockroach_module.rs`, `video_editor_module.rs`, `app_update.rs`?**
   _High betweenness centrality (0.017) - this node is a cross-community bridge._
 - **What connects `metadata`, `STATE_LABELS`, `ClockProps` to the rest of the system?**
-  _1073 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _1075 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `index.js` be split into smaller, more focused modules?**
   _Cohesion score 0.12560975609756098 - nodes in this community are weakly interconnected._
 - **Should `accessibility/mod.rs` be split into smaller, more focused modules?**
   _Cohesion score 0.09774436090225563 - nodes in this community are weakly interconnected._
-- **Should `pomodoro.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.08823529411764706 - nodes in this community are weakly interconnected._
+- **Should `presence.ts` be split into smaller, more focused modules?**
+  _Cohesion score 0.09797979797979799 - nodes in this community are weakly interconnected._
 - **Should `userPreferences.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.08315863032844165 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.08525506638714186 - nodes in this community are weakly interconnected._
