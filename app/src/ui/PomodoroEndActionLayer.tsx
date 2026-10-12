@@ -44,6 +44,12 @@ export function PomodoroEndActionLayer() {
             const requestSeq = latestRequestSeq.current + 1;
             latestRequestSeq.current = requestSeq;
 
+            if (event.fromPhase === 'focus' && event.toPhase === 'break' && state.breakActivity) {
+                setPopup(null);
+                clearPopupTimeout();
+                return;
+            }
+
             if (event.triggeredBy === 'skip') {
                 setPopup(null);
                 clearPopupTimeout();

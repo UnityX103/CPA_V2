@@ -1,0 +1,16 @@
+.kegel-settings-form { display: flex; flex-direction: column; gap: 14px; }
+.kegel-settings-form label { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; }
+.kegel-settings-form .num-input { width: 110px; flex: 0 0 110px; }
+.kegel-settings-form input[type=range] { width: 120px; accent-color: #879dfa; }
+.kegel-settings-form input[type=checkbox] { accent-color: #879dfa; width: 17px; height: 17px; }
+.kegel-form-note { font-size: 11px; line-height: 1.65; opacity: .65; margin: 4px 0; }
+.kegel-primary { background: #7c91e9; border-radius: 12px; color: white; padding: 10px 16px; font-size: 13px; }
+.kegel-primary:disabled { opacity: .5; }
+.kegel-settings-tab { display: flex; flex-direction: column; gap: 14px; padding-bottom: 20px; }
+.kegel-settings-tab h3 { margin: 0; font-size: 16px; }
+.kegel-stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.kegel-stats-grid div { border-radius: 12px; padding: 12px 5px; text-align: center; background: #899cef14; display: flex; flex-direction: column; gap: 4px; }
+.kegel-stats-grid strong { font-size: 25px; color: #8fa3ef; }
+.kegel-stats-grid span { font-size: 10px; }
+.kegel-history-list { padding: 0; list-style: none; font-size: 11px; max-height: 150px; overflow: auto; }
+.kegel-history-list li { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid #899cef22; }

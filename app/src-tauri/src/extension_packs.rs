@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 use tauri::{Emitter, Manager};
+pub mod web_pack;
 
 #[cfg(target_os = "macos")]
 #[path = "extension_packs/macos.rs"]
@@ -19,6 +20,10 @@ pub const VIDEO_CORE_ID: &str = "video.core";
 pub const VIDEO_EDITOR_ID: &str = "video.editor";
 pub const PET_CORE_ID: &str = "pet.core";
 pub const COCKROACH_ID: &str = "pet.cockroach-invasion";
+pub const KEGEL_ID: &str = web_pack::KEGEL_ID;
+// Serialize lifecycle transactions, including window creation, so an install
+// cannot race a disable or replace a staging directory in use by another call.
+pub(crate) static LIFECYCLE_LOCK: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
@@ -160,6 +165,7 @@ fn status_from_install(
 fn statuses_internal(app: &tauri::AppHandle) -> Result<Vec<ExtensionPackStatus>, String> {
     let preferences = read_preferences(app)?;
     Ok(vec![
+        status_from_install(KEGEL_ID, web_pack::state(app), &preferences),
         status_from_install(
             VIDEO_CORE_ID,
             video_editor_module::common_pack_state(app),
@@ -238,7 +244,9 @@ pub async fn install_extension_pack(
     cockroach_state: tauri::State<'_, cockroach_module::CockroachModuleState>,
     pack_id: String,
 ) -> Result<Vec<ExtensionPackStatus>, String> {
-    let before = statuses_internal(&app)?;
+    let _guard = LIFECYCLE_LOCK.lock().await;
+    let status_app = app.clone();
+    let before = run_status_check(move || statuses_internal(&status_app)).await?;
     status_for(&before, &pack_id)?;
     match pack_id.as_str() {
         VIDEO_CORE_ID if status_for(&before, VIDEO_EDITOR_ID)?.installed => {
@@ -255,6 +263,7 @@ pub async fn install_extension_pack(
         COCKROACH_ID => {
             cockroach_module::download_cockroach_module(app.clone(), cockroach_state).await?;
         }
+        KEGEL_ID => web_pack::install(&app).await?,
         _ => unreachable!("pack id validated above"),
     }
 
@@ -273,7 +282,20 @@ pub async fn install_extension_pack(
 }
 
 #[tauri::command]
-pub fn set_extension_pack_enabled(
+pub async fn set_extension_pack_enabled(
+    app: tauri::AppHandle,
+    pack_id: String,
+    enabled: bool,
+) -> Result<Vec<ExtensionPackStatus>, String> {
+    let _guard = LIFECYCLE_LOCK.lock().await;
+    run_status_check(move || {
+        let video_state = app.state::<video_editor_module::VideoEditorModuleState>();
+        let cockroach_state = app.state::<cockroach_module::CockroachModuleState>();
+        set_extension_pack_enabled_inner(app.clone(), video_state, cockroach_state, pack_id, enabled)
+    }).await
+}
+
+fn set_extension_pack_enabled_inner(
     app: tauri::AppHandle,
     video_state: tauri::State<'_, video_editor_module::VideoEditorModuleState>,
     cockroach_state: tauri::State<'_, cockroach_module::CockroachModuleState>,
@@ -308,12 +330,27 @@ pub fn set_extension_pack_enabled(
     if !enabled && pack_id == COCKROACH_ID {
         cockroach_module::stop_feature(&app, &cockroach_state)?;
     }
+    if !enabled && pack_id == KEGEL_ID {
+        crate::kegel_window::stop_feature(&app)?;
+    }
     write_preferences(&app, &preferences)?;
     Ok(emit_statuses(&app, &pack_id, statuses_internal(&app)?))
 }
 
 #[tauri::command]
-pub fn uninstall_extension_pack(
+pub async fn uninstall_extension_pack(
+    app: tauri::AppHandle,
+    pack_id: String,
+) -> Result<Vec<ExtensionPackStatus>, String> {
+    let _guard = LIFECYCLE_LOCK.lock().await;
+    run_status_check(move || {
+        let video_state = app.state::<video_editor_module::VideoEditorModuleState>();
+        let cockroach_state = app.state::<cockroach_module::CockroachModuleState>();
+        uninstall_extension_pack_inner(app.clone(), video_state, cockroach_state, pack_id)
+    }).await
+}
+
+fn uninstall_extension_pack_inner(
     app: tauri::AppHandle,
     video_state: tauri::State<'_, video_editor_module::VideoEditorModuleState>,
     cockroach_state: tauri::State<'_, cockroach_module::CockroachModuleState>,
@@ -327,6 +364,7 @@ pub fn uninstall_extension_pack(
         VIDEO_EDITOR_ID => video_editor_module::uninstall_feature_pack(&app, &video_state)?,
         PET_CORE_ID => cockroach_module::uninstall_common_pack(&app)?,
         COCKROACH_ID => cockroach_module::uninstall_feature_pack(&app, &cockroach_state)?,
+        KEGEL_ID => web_pack::uninstall(&app)?,
         _ => unreachable!("pack id validated above"),
     }
     let mut preferences = read_preferences(&app)?;

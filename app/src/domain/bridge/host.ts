@@ -451,7 +451,12 @@ export function useBridgeHost(): void {
                 prevSettings = sig;
                 void sendSnapshot();
             }),
-            usePomodoroStore.subscribe((s) => {
+            usePomodoroStore.subscribe((s, previous) => {
+                if (s.focusDurationSeconds === previous.focusDurationSeconds && s.breakDurationSeconds === previous.breakDurationSeconds
+                    && s.totalRounds === previous.totalRounds && s.autoStartBreak === previous.autoStartBreak
+                    && s.autoStartOnLaunch === previous.autoStartOnLaunch && s.playVideoOnBreakEnd === previous.playVideoOnBreakEnd
+                    && s.autoPinAfterFocus === previous.autoPinAfterFocus && s.endActionMode === previous.endActionMode
+                    && s.endActionVideo === previous.endActionVideo && s.endSounds === previous.endSounds) return;
                 const sig = pomoSig(s);
                 if (sig === prevPomo) return;
                 prevPomo = sig;

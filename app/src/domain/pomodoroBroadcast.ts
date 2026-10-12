@@ -1,5 +1,6 @@
 import { usePresenceStore, type ConfirmedPresence } from './presence';
 import { createPomodoroEventDetector, type PomodoroRuleEvent } from './pomodoroEvents';
+import { activityOwnsBreak } from './breakActivity';
 import { useEffect } from 'react';
 import { emit, listen, type UnlistenFn } from '@tauri-apps/api/event';
 import {
@@ -26,6 +27,7 @@ export type PomodoroBroadcastType =
 export type PomodoroBroadcastReason = 'timer' | 'skip' | 'manual' | 'presence' | 'hydrate';
 
 export interface PomodoroBroadcastEvent {
+    readonly activityOwnsBreak?: boolean;
     readonly v: typeof POMODORO_BROADCAST_VERSION;
     readonly sequence: number;
     readonly emittedAt: number;
@@ -99,6 +101,7 @@ export function createPomodoroBroadcast(
         nextSequence: boolean,
     ): PomodoroBroadcastEvent => ({
         v: POMODORO_BROADCAST_VERSION,
+        activityOwnsBreak: activityOwnsBreak(state.breakActivity),
         sequence: nextSequence ? ++sequence : sequence,
         emittedAt: now(),
         type,
@@ -128,6 +131,11 @@ export function createPomodoroBroadcast(
             detectEvents = createPomodoroEventDetector();
             publish(build(store.getState(), 'snapshot', null, 'hydrate', true));
             unsubscribeStore = store.subscribe((state, previous) => {
+                // Frame-level activity animation is transported separately; the public timer
+                // broadcast remains limited to timer, settings and ownership changes.
+                if (activityOwnsBreak(state.breakActivity) === activityOwnsBreak(previous.breakActivity)
+                    && Object.entries(state).every(([key, value]) => key === 'breakActivity'
+                        || value === (previous as unknown as Record<string, unknown>)[key])) return;
                 const type = eventTypeFor(state, previous);
                 publish(build(
                     state,

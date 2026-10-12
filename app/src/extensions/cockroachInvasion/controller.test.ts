@@ -25,6 +25,15 @@ async function fixture(initial: CockroachRule[]) {
 }
 
 describe('Cockroach event/action rules', () => {
+    it('suppresses rules and stops an existing reminder while an activity owns the break', async () => {
+        const f = await fixture([{ event: 'break.started', action: 'start-simulation' }]);
+        f.emit({ activityOwnsBreak: true, signals: ['break.started'] });
+        await vi.waitFor(() => expect(f.adapter.stop).toHaveBeenCalledOnce());
+        expect(f.adapter.execute).not.toHaveBeenCalled();
+        f.emit({ sequence: 2, activityOwnsBreak: false, signals: ['break.started'] });
+        await vi.waitFor(() => expect(f.adapter.execute).toHaveBeenCalledWith('start-simulation'));
+        f.stop();
+    });
     it('spawns immediately on every presence-owned break pause, including leaving and returning', async () => {
         const pomodoro = createPomodoroStore({ isSettingsWindow: false });
         const presence = createPresenceStore({ isSettingsWindow: false });

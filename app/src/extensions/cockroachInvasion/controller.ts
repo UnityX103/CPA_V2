@@ -58,6 +58,11 @@ export function startCockroachModuleController(
     const unsubscribe = broadcast.subscribe((event) => {
         if (disposed || event.v !== 1 || event.type === 'snapshot' || event.sequence <= lastSequence) return;
         lastSequence = event.sequence;
+        if (event.activityOwnsBreak) {
+            revision++;
+            queue = queue.then(() => control.stop()).catch((error) => control.report(String(error)));
+            return;
+        }
         const events = event.signals ?? [];
         const currentRevision = revision;
         const selected = rules.filter((rule) => events.includes(rule.event)

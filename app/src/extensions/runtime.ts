@@ -30,7 +30,7 @@ export function useExtensionRuntimeContributions({ enabled }: { enabled: boolean
                 const status = state.statuses[pack.id];
                 return status.installed
                     && status.enabled
-                    && (status.runtimeContribution || RUNTIME_LOADERS[pack.id]);
+                    && ((status.runtimeContribution && !pack.breakActivity) || RUNTIME_LOADERS[pack.id]);
             })
             .map((pack) => ({
                 packId: pack.id,

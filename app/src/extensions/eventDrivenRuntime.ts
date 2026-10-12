@@ -52,6 +52,7 @@ export function startEventDrivenRuntime(
     broadcast: PomodoroBroadcast = extensionPomodoroBroadcast,
 ): () => void {
     let currentPhase = broadcast.current().phase;
+    let activityOwnsBreak = broadcast.current().activityOwnsBreak === true;
     let eligibleSinceMs: number | null = null;
     let active = false;
     let wakeTimer: number | null = null;
@@ -66,7 +67,7 @@ export function startEventDrivenRuntime(
     const evaluate = () => {
         if (stopped) return;
         clearWakeTimer();
-        if (!activationGateMatches(contribution, currentPhase)) {
+        if (activityOwnsBreak || !activationGateMatches(contribution, currentPhase)) {
             eligibleSinceMs = null;
             if (active) {
                 active = false;
@@ -90,6 +91,7 @@ export function startEventDrivenRuntime(
         usePresenceStore.subscribe(evaluate),
         broadcast.subscribe((event) => {
             currentPhase = event.phase;
+            activityOwnsBreak = event.activityOwnsBreak === true;
             evaluate();
         }),
     ];

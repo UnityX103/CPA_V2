@@ -33,6 +33,7 @@ import { loadPresencePreferences } from './domain/presencePersistence';
 import { PresenceNotice } from './ui/PresenceNotice';
 import { usePomodoroBroadcastSource } from './domain/pomodoroBroadcast';
 import { useExtensionRuntimeContributions } from './extensions/runtime';
+import { useBreakActivityHost } from './domain/breakActivityHost';
 
 const STARTUP_ACCOUNT_RESTORE_TIMEOUT_MS = 2500;
 
@@ -153,6 +154,7 @@ async function waitForAccountRestoreAttempt(
 
 export default function App() {
     const [localHydrated, setLocalHydrated] = useState(false);
+    const activityError = useBreakActivityHost({ enabled: localHydrated });
     useStateSync();
     useActiveAppListener();
     useBindingKeyListener();
@@ -347,6 +349,7 @@ export default function App() {
             <div className="app-root">
                 <PomodoroPanel preferencesReady={localHydrated} />
                 <PomodoroEndActionLayer />
+                {activityError && <div className="pomo-end-popup" role="alert">{activityError}</div>}
                 <PresenceNotice />
                 <AppUpdateReadyNotice />
             </div>

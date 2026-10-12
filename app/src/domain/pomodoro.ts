@@ -2,6 +2,7 @@ import { create, type StoreApi, type UseBoundStore } from 'zustand';
 import { dispatch, dispatchConfirmed } from './bridge/dispatch';
 import { BRIDGE_VERSION } from './bridge/protocol';
 import { DEFAULT_BUILTIN_POMODORO_VIDEO_ID } from './pomodoroVideos';
+import { activityOwnsBreak, type BreakActivity, type BreakActivityAction } from './breakActivity';
 import {
     clonePomodoroEndSounds,
     DEFAULT_POMODORO_END_SOUNDS,
@@ -36,6 +37,8 @@ export interface PomodoroEndEvent {
 }
 
 export interface PomodoroState {
+    breakActivityOwner: string | null;
+    breakActivity: BreakActivity | null;
     focusDurationSeconds: number;
     breakDurationSeconds: number;
     totalRounds: number;
@@ -81,6 +84,8 @@ export function presenceAutomationContextSignature(state: Pick<
 }
 
 export interface PomodoroActions {
+    configureBreakActivity: (ownerId: string | null) => void;
+    controlBreakActivity: (id: string, action: BreakActivityAction) => void;
     start: () => void;
     pause: () => void;
     skip: () => void;
@@ -127,6 +132,10 @@ export type PomodoroStore = UseBoundStore<StoreApi<PomodoroState & PomodoroActio
 export function createPomodoroStore(opts: { isSettingsWindow: boolean }): PomodoroStore {
     if (opts.isSettingsWindow) {
         return create<PomodoroState & PomodoroActions>(() => ({
+            breakActivityOwner: null,
+            breakActivity: null,
+            configureBreakActivity: () => {},
+            controlBreakActivity: () => {},
             focusDurationSeconds: DEFAULT_FOCUS,
             breakDurationSeconds: DEFAULT_BREAK,
             totalRounds: DEFAULT_ROUNDS,
@@ -228,12 +237,13 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
                 accumulator = 0;
                 return {
                     currentPhase: 'break',
+                    breakActivity: state.breakActivityOwner ? { id: `${Date.now()}-${Math.random().toString(36).slice(2)}`, ownerId: state.breakActivityOwner, status: 'waiting' } : null,
                     remainingSeconds: state.breakDurationSeconds,
-                    isRunning: state.autoStartBreak,
+                    isRunning: state.breakActivityOwner ? false : state.autoStartBreak,
                     consecutiveCompletedFocus: state.consecutiveCompletedFocus + 1,
                     lastEndEvent: makeEndEvent(state, 'break', triggeredBy),
                     presenceAutomationState: triggeredBy === 'timer'
-                        && !state.autoStartBreak
+                        && !state.autoStartBreak && !state.breakActivityOwner
                         ? 'breakResumeEligible'
                         : 'none',
                 };
@@ -244,6 +254,7 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
                 if (nextRound > state.totalRounds) {
                     return {
                         currentPhase: 'completed',
+                        breakActivity: null,
                         isRunning: false,
                         remainingSeconds: 0,
                         lastEndEvent: makeEndEvent(state, 'completed', triggeredBy),
@@ -253,6 +264,7 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
                 return {
                     currentRound: nextRound,
                     currentPhase: 'focus',
+                    breakActivity: null,
                     remainingSeconds: state.focusDurationSeconds,
                     isRunning: false,
                     lastEndEvent: makeEndEvent(state, 'focus', triggeredBy),
@@ -265,6 +277,31 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
         }
 
         return {
+            breakActivityOwner: null,
+            breakActivity: null,
+            configureBreakActivity: (ownerId) => {
+                const state = get();
+                if (state.breakActivity && state.breakActivity.ownerId !== ownerId) {
+                    get().controlBreakActivity(state.breakActivity.id, 'skip');
+                }
+                set({ breakActivityOwner: ownerId });
+            },
+            controlBreakActivity: (id, action) => {
+                const state = get();
+                const activity = state.breakActivity;
+                if (state.currentPhase !== 'break' || !activity || activity.id !== id) return;
+                if (action === 'finish' || action === 'skip') {
+                    if (state.remainingSeconds === 0) set(advancePhase(state, 'timer'));
+                    else set({ breakActivity: null, isRunning: true, presenceAutomationState: 'none' });
+                } else if (action === 'resume-ready') {
+                    if (activity.status === 'resetting') set({ breakActivity: { ...activity, status: 'running' }, isRunning: true });
+                } else {
+                    const status = activity.status === 'waiting' ? 'running'
+                        : activity.status === 'paused' ? 'resetting' : 'paused';
+                    if (activity.status === 'waiting') accumulator = 0;
+                    set({ breakActivity: { ...activity, status }, isRunning: status === 'running', presenceAutomationState: 'none' });
+                }
+            },
             focusDurationSeconds: DEFAULT_FOCUS,
             breakDurationSeconds: DEFAULT_BREAK,
             totalRounds: DEFAULT_ROUNDS,
@@ -287,6 +324,10 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
 
             start: () => {
                 const state = get();
+                if (activityOwnsBreak(state.breakActivity)) {
+                    if (state.breakActivity?.status === 'waiting' || state.breakActivity?.status === 'paused') get().controlBreakActivity(state.breakActivity.id, 'toggle');
+                    return;
+                }
                 const autoPinReset =
                     state.isPinned && state.pinSource === 'focusEndAuto'
                         ? { isPinned: false, pinSource: null as PomodoroPinSource }
@@ -321,10 +362,12 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
                     ...(state.currentPhase === 'focus' ? autoPinReset : {}),
                 });
             },
-            pause: () => set({
-                isRunning: false,
-                presenceAutomationState: 'manualPaused',
-            }),
+            pause: () => {
+                if (activityOwnsBreak(get().breakActivity)) {
+                    const activity = get().breakActivity!;
+                    if (activity.status === 'running' || activity.status === 'resetting') get().controlBreakActivity(activity.id, 'toggle');
+                } else set({ isRunning: false, presenceAutomationState: 'manualPaused' });
+            },
             skip: () => {
                 const state = get();
                 if (state.currentPhase === 'completed' || (!state.isRunning && state.currentPhase !== 'break')) return;
@@ -335,6 +378,7 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
                 accumulator = 0;
                 const { focusDurationSeconds } = get();
                 set({
+                    breakActivity: null,
                     isRunning: false,
                     currentRound: 1,
                     currentPhase: 'focus',
@@ -394,6 +438,7 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
             },
             pauseBreakFromPresence: () => {
                 const state = get();
+                if (activityOwnsBreak(state.breakActivity)) return false;
                 if (
                     state.currentPhase !== 'break'
                     || !state.isRunning
@@ -408,6 +453,7 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
             },
             resumeBreakFromPresence: () => {
                 const state = get();
+                if (activityOwnsBreak(state.breakActivity)) return false;
                 if (state.currentPhase !== 'break') return false;
                 if (state.presenceAutomationState === 'breakPresentOverride') {
                     set({ presenceAutomationState: 'none' });
@@ -469,6 +515,7 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
                 if (resetProgress) {
                     accumulator = 0;
                     set({
+                        breakActivity: null,
                         isRunning: false,
                         currentRound: 1,
                         currentPhase: 'focus',
@@ -489,6 +536,7 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
             },
             tick: (deltaSeconds) => {
                 const state = get();
+                if (!Number.isFinite(deltaSeconds) || deltaSeconds <= 0) return;
                 if (!state.isRunning || state.currentPhase === 'completed') return;
                 accumulator += deltaSeconds;
 
@@ -503,7 +551,8 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
                 }
 
                 accumulator = 0;
-                set({ ...advancePhase(current, 'timer') });
+                if (activityOwnsBreak(current.breakActivity)) set({ remainingSeconds: 0 });
+                else set({ ...advancePhase(current, 'timer') });
             },
         };
     });
@@ -511,7 +560,8 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
 
 function detectIsSettingsWindow(): boolean {
     if (typeof window === 'undefined') return false;
-    return new URLSearchParams(window.location.search).get('window') === 'settings';
+    const label = new URLSearchParams(window.location.search).get('window');
+    return label === 'settings';
 }
 
 export const usePomodoroStore: PomodoroStore = createPomodoroStore({
