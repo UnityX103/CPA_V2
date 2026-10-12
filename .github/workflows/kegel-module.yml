@@ -1,0 +1,86 @@
+name: Kegel module release
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: '已有主应用 Release（补充模块附件，不重建主应用）'
+        required: true
+        default: 'v0.2.9'
+        type: string
+      module_version:
+        description: '独立模块版本'
+        required: true
+        default: '1.0.0'
+        type: string
+      publish:
+        description: '签名并补充缺失附件，关闭时只验证构建'
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: release
+  cancel-in-progress: false
+jobs:
+  tests:
+    uses: ./.github/workflows/ci.yml
+  package:
+    needs: tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: app
+    env:
+      RELEASE_TAG: ${{ inputs.release_tag }}
+      MODULE_VERSION: ${{ inputs.module_version }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - name: Verify trusted source and published host ABI
+        env:
+          PUBLISH: ${{ inputs.publish }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node --input-type=module <<'JS'
+          import {readFile} from 'node:fs/promises';
+          import {execFileSync} from 'node:child_process';
+          import {assertKegelReleaseTarget} from './scripts/kegel-cloud-release.mjs';
+          const tag=process.env.RELEASE_TAG;
+          if(!/^v\d+\.\d+\.\d+$/.test(tag) || !/^[0-9A-Za-z][0-9A-Za-z.+-]{0,63}$/.test(process.env.MODULE_VERSION)) throw Error('Invalid version input');
+          if(tag!=='v'+JSON.parse(await readFile('package.json')).version) throw Error('Host version/tag mismatch');
+          if(process.env.PUBLISH==='true' && process.env.GITHUB_REF!=='refs/heads/main') throw Error('Publish from main only');
+          execFileSync('git',['diff','--exit-code',tag,'HEAD','--','feature-packs/kegel/module-contract.json','src-tauri/src/extension_packs/web_pack.rs','src-tauri/src/kegel_module.rs','src-tauri/src/kegel_window','src-tauri/capabilities/kegel-module.json'],{stdio:'inherit'});
+          for(const suffix of ['tags/'+tag,'latest']) {
+            const r=await fetch('https://api.github.com/repos/UnityX103/CPA_V2/releases/'+suffix,{headers:{authorization:'Bearer '+process.env.GH_TOKEN}});
+            if(!r.ok) throw Error('Release preflight HTTP '+r.status);
+            const release=await r.json(); assertKegelReleaseTarget(release,release,tag);
+          }
+          JS
+      - run: npm ci
+      - name: Test module package contract
+        run: python3 -m unittest discover -s feature-packs/kegel/tests
+      - name: Build independent webview feature
+        run: node node_modules/vite/bin/vite.js build --config feature-packs/kegel/vite.config.ts
+      - name: Package three-target feature and exact-tag index
+        run: python3 feature-packs/kegel/build_pack.py --version "$MODULE_VERSION" --release-base-url "https://github.com/UnityX103/CPA_V2/releases/download/$RELEASE_TAG"
+      - name: Sign and verify provider-specific indexes
+        if: inputs.publish
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: node scripts/kegel-cloud-release.mjs prepare tmp/kegel-module/package "$RELEASE_TAG"
+      - name: Supplement missing public module assets and verify downloads
+        if: inputs.publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/kegel-cloud-release.mjs publish tmp/kegel-module/package "$RELEASE_TAG"

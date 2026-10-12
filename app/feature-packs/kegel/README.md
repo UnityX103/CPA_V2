@@ -28,6 +28,14 @@ SHA256；包声明所有支持的平台和固定主机 ABI。
 主程序只接受已签名索引和校验通过的文件，不加载远程设置 JavaScript。
 打包脚本不签名、不发布，也不改变已有应用或模块版本。
 
+GitHub Actions 的 **Kegel module release** 独立构建本目录，通过已发布主应用 tag 核对
+主机 ABI、原生适配器和能力声明，用已有 updater 密钥签署 `kegel-module-index.json` 及预签名 CNB 变体。
+模块逻辑可独立更新；需要改变主机适配器时，必须先发布相应主应用。
+首次模块版本沿用本目录约定的 `1.0.0`。手动运行默认仅验证，明确设置 `publish=true` 后，
+只补充当前公开 Release 的缺失附件；相同哈希的已有文件跳过，不覆盖主应用安装包或不同内容。
+模块 ZIP 先上传，客户端可见的签名索引最后上传。CNB 镜像必须使用更新后的索引处理脚本，
+验证 CNB 变体后提供 CNB 首选下载地址与 GitHub 同版本回退。
+
 本机测试安装包可以在编译时提供 `CPA_KEGEL_LOCAL_PACKAGE_PATH`、
 `CPA_KEGEL_LOCAL_PACKAGE_SHA256` 和 `CPA_KEGEL_LOCAL_MANIFEST_SHA256`。
 此构建仅安装对应固定哈希的本地包；普通发行构建不设置这些变量，仍须签名索引。

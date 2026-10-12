@@ -6429,8 +6429,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "app_package_devdependencies_tauri_apps_cli",
-      "community": 231,
-      "community_name": "@tauri-apps/cli",
+      "community": 40,
+      "community_name": "devDependencies",
       "norm_label": "@tauri-apps/cli"
     },
     {
@@ -6440,8 +6440,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "tauri_apps_cli",
-      "community": 231,
-      "community_name": "@tauri-apps/cli",
+      "community": 40,
+      "community_name": "devDependencies",
       "norm_label": "@tauri-apps/cli"
     },
     {
@@ -6605,8 +6605,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "app_package_devdependencies_jsdom",
-      "community": 40,
-      "community_name": "devDependencies",
+      "community": 222,
+      "community_name": "jsdom",
       "norm_label": "jsdom"
     },
     {
@@ -6616,8 +6616,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "jsdom",
-      "community": 40,
-      "community_name": "devDependencies",
+      "community": 222,
+      "community_name": "jsdom",
       "norm_label": "jsdom"
     },
     {
@@ -6957,6 +6957,134 @@
       "norm_label": "download()"
     },
     {
+      "label": "kegel-cloud-release.mjs",
+      "file_type": "code",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "app_scripts_kegel_cloud_release",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "kegel-cloud-release.mjs"
+    },
+    {
+      "label": "appRoot",
+      "file_type": "code",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L12",
+      "_origin": "ast",
+      "id": "app_scripts_kegel_cloud_release_approot",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "approot"
+    },
+    {
+      "label": "planMissingKegelAssets()",
+      "file_type": "code",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L14",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "app_scripts_kegel_cloud_release_planmissingkegelassets",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "planmissingkegelassets()"
+    },
+    {
+      "label": "assertKegelReleaseTarget()",
+      "file_type": "code",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L27",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "app_scripts_kegel_cloud_release_assertkegelreleasetarget",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "assertkegelreleasetarget()"
+    },
+    {
+      "label": "packageInfo()",
+      "file_type": "code",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L32",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "app_scripts_kegel_cloud_release_packageinfo",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "packageinfo()"
+    },
+    {
+      "label": "publicKey()",
+      "file_type": "code",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L49",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "app_scripts_kegel_cloud_release_publickey",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "publickey()"
+    },
+    {
+      "label": "prepare()",
+      "file_type": "code",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L53",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "app_scripts_kegel_cloud_release_prepare",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "prepare()"
+    },
+    {
+      "label": "githubApi()",
+      "file_type": "code",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L68",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "app_scripts_kegel_cloud_release_githubapi",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "githubapi()"
+    },
+    {
+      "label": "publish()",
+      "file_type": "code",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L78",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "app_scripts_kegel_cloud_release_publish",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "publish()"
+    },
+    {
+      "label": "kegel-release.test.mjs",
+      "file_type": "code",
+      "source_file": "app/scripts/kegel-release.test.mjs",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "app_scripts_kegel_release_test",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "kegel-release.test.mjs"
+    },
+    {
+      "label": "index",
+      "file_type": "code",
+      "source_file": "app/scripts/kegel-release.test.mjs",
+      "source_location": "L8",
+      "_origin": "ast",
+      "id": "app_scripts_kegel_release_test_index",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "index"
+    },
+    {
       "label": "mirror-github-release.mjs",
       "file_type": "code",
       "source_file": "app/scripts/mirror-github-release.mjs",
@@ -7006,7 +7134,7 @@
       "label": "publicCnbText()",
       "file_type": "code",
       "source_file": "app/scripts/mirror-github-release.mjs",
-      "source_location": "L30",
+      "source_location": "L31",
       "_callable": true,
       "_origin": "ast",
       "id": "app_scripts_mirror_github_release_publiccnbtext",
@@ -7018,7 +7146,7 @@
       "label": "importTag()",
       "file_type": "code",
       "source_file": "app/scripts/mirror-github-release.mjs",
-      "source_location": "L35",
+      "source_location": "L36",
       "_callable": true,
       "_origin": "ast",
       "id": "app_scripts_mirror_github_release_importtag",
@@ -7030,7 +7158,7 @@
       "label": "uploadVerified()",
       "file_type": "code",
       "source_file": "app/scripts/mirror-github-release.mjs",
-      "source_location": "L56",
+      "source_location": "L57",
       "_callable": true,
       "_origin": "ast",
       "id": "app_scripts_mirror_github_release_uploadverified",
@@ -7042,7 +7170,7 @@
       "label": "latestRelease()",
       "file_type": "code",
       "source_file": "app/scripts/mirror-github-release.mjs",
-      "source_location": "L63",
+      "source_location": "L64",
       "_callable": true,
       "_origin": "ast",
       "id": "app_scripts_mirror_github_release_latestrelease",
@@ -7054,7 +7182,7 @@
       "label": "mirrorLatest()",
       "file_type": "code",
       "source_file": "app/scripts/mirror-github-release.mjs",
-      "source_location": "L75",
+      "source_location": "L76",
       "_callable": true,
       "_origin": "ast",
       "id": "app_scripts_mirror_github_release_mirrorlatest",
@@ -7077,7 +7205,7 @@
       "label": "DEFAULT_CNB_REPO",
       "file_type": "code",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L5",
+      "source_location": "L6",
       "_origin": "ast",
       "id": "app_scripts_prepare_cnb_release_default_cnb_repo",
       "community": 46,
@@ -7088,7 +7216,7 @@
       "label": "assertSafeRepo()",
       "file_type": "code",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L7",
+      "source_location": "L8",
       "_callable": true,
       "_origin": "ast",
       "id": "app_scripts_prepare_cnb_release_assertsaferepo",
@@ -7100,7 +7228,7 @@
       "label": "assertSafeTag()",
       "file_type": "code",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L13",
+      "source_location": "L14",
       "_callable": true,
       "_origin": "ast",
       "id": "app_scripts_prepare_cnb_release_assertsafetag",
@@ -7112,7 +7240,7 @@
       "label": "assetNameFromUrl()",
       "file_type": "code",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L19",
+      "source_location": "L20",
       "_callable": true,
       "_origin": "ast",
       "id": "app_scripts_prepare_cnb_release_assetnamefromurl",
@@ -7124,7 +7252,7 @@
       "label": "releaseTagFromUrl()",
       "file_type": "code",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L28",
+      "source_location": "L29",
       "_callable": true,
       "_origin": "ast",
       "id": "app_scripts_prepare_cnb_release_releasetagfromurl",
@@ -7136,7 +7264,7 @@
       "label": "cnbTaggedAssetUrl()",
       "file_type": "code",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L37",
+      "source_location": "L38",
       "_callable": true,
       "_origin": "ast",
       "id": "app_scripts_prepare_cnb_release_cnbtaggedasseturl",
@@ -7148,7 +7276,7 @@
       "label": "cnbLatestAssetUrl()",
       "file_type": "code",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L46",
+      "source_location": "L47",
       "_callable": true,
       "_origin": "ast",
       "id": "app_scripts_prepare_cnb_release_cnblatestasseturl",
@@ -7160,7 +7288,7 @@
       "label": "transformUpdaterManifest()",
       "file_type": "code",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L54",
+      "source_location": "L55",
       "_callable": true,
       "_origin": "ast",
       "id": "app_scripts_prepare_cnb_release_transformupdatermanifest",
@@ -7172,7 +7300,7 @@
       "label": "transformReleaseArtifact()",
       "file_type": "code",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L78",
+      "source_location": "L79",
       "_callable": true,
       "_origin": "ast",
       "id": "app_scripts_prepare_cnb_release_transformreleaseartifact",
@@ -7184,7 +7312,7 @@
       "label": "transformModuleIndex()",
       "file_type": "code",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L92",
+      "source_location": "L93",
       "_callable": true,
       "_origin": "ast",
       "id": "app_scripts_prepare_cnb_release_transformmoduleindex",
@@ -7196,7 +7324,7 @@
       "label": "transformCockroachModuleIndex()",
       "file_type": "code",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L124",
+      "source_location": "L125",
       "_callable": true,
       "_origin": "ast",
       "id": "app_scripts_prepare_cnb_release_transformcockroachmoduleindex",
@@ -7205,10 +7333,22 @@
       "norm_label": "transformcockroachmoduleindex()"
     },
     {
+      "label": "transformSignedModuleIndex()",
+      "file_type": "code",
+      "source_file": "app/scripts/prepare-cnb-release.mjs",
+      "source_location": "L153",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "app_scripts_prepare_cnb_release_transformsignedmoduleindex",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "transformsignedmoduleindex()"
+    },
+    {
       "label": "prepareCnbRelease()",
       "file_type": "code",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L152",
+      "source_location": "L173",
       "_callable": true,
       "_origin": "ast",
       "id": "app_scripts_prepare_cnb_release_preparecnbrelease",
@@ -7220,7 +7360,7 @@
       "label": "parseArgs()",
       "file_type": "code",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L194",
+      "source_location": "L215",
       "_callable": true,
       "_origin": "ast",
       "id": "app_scripts_prepare_cnb_release_parseargs",
@@ -7723,10 +7863,34 @@
       "norm_label": "index_names"
     },
     {
-      "label": "safeAssetName()",
+      "label": "extensionIndexNamesForRelease()",
       "file_type": "code",
       "source_file": "app/scripts/release-integrity.mjs",
       "source_location": "L7",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "app_scripts_release_integrity_extensionindexnamesforrelease",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "extensionindexnamesforrelease()"
+    },
+    {
+      "label": "assertExtensionIndexAssets()",
+      "file_type": "code",
+      "source_file": "app/scripts/release-integrity.mjs",
+      "source_location": "L12",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "app_scripts_release_integrity_assertextensionindexassets",
+      "community": 46,
+      "community_name": "mirror-github-release.mjs",
+      "norm_label": "assertextensionindexassets()"
+    },
+    {
+      "label": "safeAssetName()",
+      "file_type": "code",
+      "source_file": "app/scripts/release-integrity.mjs",
+      "source_location": "L21",
       "_callable": true,
       "_origin": "ast",
       "id": "app_scripts_release_integrity_safeassetname",
@@ -7738,7 +7902,7 @@
       "label": "githubAsset()",
       "file_type": "code",
       "source_file": "app/scripts/release-integrity.mjs",
-      "source_location": "L11",
+      "source_location": "L25",
       "_callable": true,
       "_origin": "ast",
       "id": "app_scripts_release_integrity_githubasset",
@@ -7750,7 +7914,7 @@
       "label": "hashes()",
       "file_type": "code",
       "source_file": "app/scripts/release-integrity.mjs",
-      "source_location": "L17",
+      "source_location": "L31",
       "_callable": true,
       "_origin": "ast",
       "id": "app_scripts_release_integrity_hashes",
@@ -7762,7 +7926,7 @@
       "label": "verifySignature()",
       "file_type": "code",
       "source_file": "app/scripts/release-integrity.mjs",
-      "source_location": "L24",
+      "source_location": "L38",
       "_callable": true,
       "_origin": "ast",
       "id": "app_scripts_release_integrity_verifysignature",
@@ -7774,7 +7938,7 @@
       "label": "moduleComponents()",
       "file_type": "code",
       "source_file": "app/scripts/release-integrity.mjs",
-      "source_location": "L45",
+      "source_location": "L59",
       "_callable": true,
       "_origin": "ast",
       "id": "app_scripts_release_integrity_modulecomponents",
@@ -7786,7 +7950,7 @@
       "label": "assertUpdater()",
       "file_type": "code",
       "source_file": "app/scripts/release-integrity.mjs",
-      "source_location": "L55",
+      "source_location": "L69",
       "_callable": true,
       "_origin": "ast",
       "id": "app_scripts_release_integrity_assertupdater",
@@ -20387,8 +20551,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_app_test",
-      "community": 61,
-      "community_name": "app/src/App.tsx",
+      "community": 13,
+      "community_name": "settings.ts",
       "norm_label": "app.test.tsx"
     },
     {
@@ -20398,8 +20562,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "app_src_app_test_mocks",
-      "community": 61,
-      "community_name": "app/src/App.tsx",
+      "community": 13,
+      "community_name": "settings.ts",
       "norm_label": "mocks"
     },
     {
@@ -20409,7 +20573,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_app",
-      "community": 61,
+      "community": 3,
       "community_name": "app/src/App.tsx",
       "norm_label": "app/src/app.tsx"
     },
@@ -20422,7 +20586,7 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_app_startuparchivesource",
-      "community": 61,
+      "community": 3,
       "community_name": "app/src/App.tsx",
       "norm_label": "startuparchivesource"
     },
@@ -20434,7 +20598,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_app_clampstartupscale",
-      "community": 61,
+      "community": 3,
       "community_name": "app/src/App.tsx",
       "norm_label": "clampstartupscale()"
     },
@@ -20446,7 +20610,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_app_buildstartupsettingssnapshot",
-      "community": 61,
+      "community": 3,
       "community_name": "app/src/App.tsx",
       "norm_label": "buildstartupsettingssnapshot()"
     },
@@ -20458,7 +20622,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_app_getstartupsettingsstate",
-      "community": 61,
+      "community": 3,
       "community_name": "app/src/App.tsx",
       "norm_label": "getstartupsettingsstate()"
     },
@@ -20470,7 +20634,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_app_userpreferencestores",
-      "community": 61,
+      "community": 3,
       "community_name": "app/src/App.tsx",
       "norm_label": "userpreferencestores()"
     },
@@ -20482,7 +20646,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_app_waitfornetworkstartupresult",
-      "community": 61,
+      "community": 3,
       "community_name": "app/src/App.tsx",
       "norm_label": "waitfornetworkstartupresult()"
     },
@@ -20494,7 +20658,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_app_waitforaccountrestoreattempt",
-      "community": 61,
+      "community": 3,
       "community_name": "app/src/App.tsx",
       "norm_label": "waitforaccountrestoreattempt()"
     },
@@ -20506,7 +20670,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_app_app",
-      "community": 61,
+      "community": 3,
       "community_name": "app/src/App.tsx",
       "norm_label": "app()"
     },
@@ -20517,8 +20681,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_devalignapp",
-      "community": 236,
-      "community_name": "DevAlignApp.tsx",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "devalignapp.tsx"
     },
     {
@@ -20530,8 +20694,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_devalignapp_target",
-      "community": 236,
-      "community_name": "DevAlignApp.tsx",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "target"
     },
     {
@@ -20541,8 +20705,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "app_src_devalignapp_mock_player",
-      "community": 236,
-      "community_name": "DevAlignApp.tsx",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "mock_player"
     },
     {
@@ -20552,8 +20716,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "app_src_devalignapp_targets",
-      "community": 236,
-      "community_name": "DevAlignApp.tsx",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "targets"
     },
     {
@@ -20565,8 +20729,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_devalignapp_mode",
-      "community": 236,
-      "community_name": "DevAlignApp.tsx",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "mode"
     },
     {
@@ -20577,8 +20741,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_devalignapp_initialtargetid",
-      "community": 236,
-      "community_name": "DevAlignApp.tsx",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "initialtargetid()"
     },
     {
@@ -20589,8 +20753,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_devalignapp_initialmode",
-      "community": 236,
-      "community_name": "DevAlignApp.tsx",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "initialmode()"
     },
     {
@@ -20601,8 +20765,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_devalignapp_devalignapp",
-      "community": 236,
-      "community_name": "DevAlignApp.tsx",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "devalignapp()"
     },
     {
@@ -20614,8 +20778,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_devalignapp_paneprops",
-      "community": 236,
-      "community_name": "DevAlignApp.tsx",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "paneprops"
     },
     {
@@ -20626,8 +20790,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_devalignapp_paneframe",
-      "community": 236,
-      "community_name": "DevAlignApp.tsx",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "paneframe()"
     },
     {
@@ -20671,8 +20835,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_remoteplayercardapp_test",
-      "community": 160,
-      "community_name": "useNetworkStore",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "remoteplayercardapp.test.tsx"
     },
     {
@@ -20682,8 +20846,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "app_src_remoteplayercardapp_test_onmovedmock_savepositionmock_usebridgeclientmock",
-      "community": 160,
-      "community_name": "useNetworkStore",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "{\n    onmovedmock,\n    savepositionmock,\n    usebridgeclientmock,\n}"
     },
     {
@@ -20693,8 +20857,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_remoteplayercardapp",
-      "community": 160,
-      "community_name": "useNetworkStore",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "remoteplayercardapp.tsx"
     },
     {
@@ -20705,8 +20869,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_remoteplayercardapp_routeplayerid",
-      "community": 160,
-      "community_name": "useNetworkStore",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "routeplayerid()"
     },
     {
@@ -20717,8 +20881,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_remoteplayercardapp_remoteplayercardapp",
-      "community": 160,
-      "community_name": "useNetworkStore",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "remoteplayercardapp()"
     },
     {
@@ -20773,8 +20937,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_videoplayerapp_test",
-      "community": 237,
-      "community_name": "app/src/main.tsx",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "videoplayerapp.test.tsx"
     },
     {
@@ -20784,8 +20948,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "app_src_videoplayerapp_test_close",
-      "community": 237,
-      "community_name": "app/src/main.tsx",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "close"
     },
     {
@@ -20795,8 +20959,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_videoplayerapp",
-      "community": 237,
-      "community_name": "app/src/main.tsx",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "videoplayerapp.tsx"
     },
     {
@@ -20807,8 +20971,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_videoplayerapp_closeplayerwindow",
-      "community": 237,
-      "community_name": "app/src/main.tsx",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "closeplayerwindow()"
     },
     {
@@ -20819,8 +20983,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_videoplayerapp_videoplayerapp",
-      "community": 237,
-      "community_name": "app/src/main.tsx",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "videoplayerapp()"
     },
     {
@@ -21067,7 +21231,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_activeapp_useactiveapplistener",
-      "community": 61,
+      "community": 3,
       "community_name": "app/src/App.tsx",
       "norm_label": "useactiveapplistener()"
     },
@@ -21320,7 +21484,7 @@
       "source_location": "L333",
       "_origin": "ast",
       "id": "app_src_domain_appupdate_useappupdatestore",
-      "community": 61,
+      "community": 3,
       "community_name": "app/src/App.tsx",
       "norm_label": "useappupdatestore"
     },
@@ -21450,7 +21614,7 @@
       "_origin": "ast",
       "id": "app_src_domain_audioplayback_test",
       "community": 24,
-      "community_name": "pomodoroSounds.ts",
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "audioplayback.test.ts"
     },
     {
@@ -21461,7 +21625,7 @@
       "_origin": "ast",
       "id": "app_src_domain_audioplayback_test_invoke",
       "community": 24,
-      "community_name": "pomodoroSounds.ts",
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "invoke"
     },
     {
@@ -21472,7 +21636,7 @@
       "_origin": "ast",
       "id": "app_src_domain_audioplayback",
       "community": 24,
-      "community_name": "pomodoroSounds.ts",
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "audioplayback.ts"
     },
     {
@@ -21485,7 +21649,7 @@
       "_origin": "ast",
       "id": "app_src_domain_audioplayback_audiooutputdevice",
       "community": 24,
-      "community_name": "pomodoroSounds.ts",
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "audiooutputdevice"
     },
     {
@@ -21498,7 +21662,7 @@
       "_origin": "ast",
       "id": "app_src_domain_audioplayback_soundsource",
       "community": 24,
-      "community_name": "pomodoroSounds.ts",
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "soundsource"
     },
     {
@@ -21511,7 +21675,7 @@
       "_origin": "ast",
       "id": "app_src_domain_audioplayback_audioplaybackresult",
       "community": 24,
-      "community_name": "pomodoroSounds.ts",
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "audioplaybackresult"
     },
     {
@@ -21523,7 +21687,7 @@
       "_origin": "ast",
       "id": "app_src_domain_audioplayback_listaudiooutputdevices",
       "community": 24,
-      "community_name": "pomodoroSounds.ts",
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "listaudiooutputdevices()"
     },
     {
@@ -21535,7 +21699,7 @@
       "_origin": "ast",
       "id": "app_src_domain_audioplayback_playsound",
       "community": 24,
-      "community_name": "pomodoroSounds.ts",
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "playsound()"
     },
     {
@@ -21545,8 +21709,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_autostart_test",
-      "community": 61,
-      "community_name": "app/src/App.tsx",
+      "community": 13,
+      "community_name": "settings.ts",
       "norm_label": "autostart.test.ts"
     },
     {
@@ -21556,8 +21720,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "app_src_domain_autostart_test_plugin",
-      "community": 61,
-      "community_name": "app/src/App.tsx",
+      "community": 13,
+      "community_name": "settings.ts",
       "norm_label": "plugin"
     },
     {
@@ -21567,8 +21731,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_autostart",
-      "community": 61,
-      "community_name": "app/src/App.tsx",
+      "community": 13,
+      "community_name": "settings.ts",
       "norm_label": "autostart.ts"
     },
     {
@@ -21579,8 +21743,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_autostart_readautostartenabled",
-      "community": 61,
-      "community_name": "app/src/App.tsx",
+      "community": 13,
+      "community_name": "settings.ts",
       "norm_label": "readautostartenabled()"
     },
     {
@@ -21591,8 +21755,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_autostart_applyautostartenabled",
-      "community": 61,
-      "community_name": "app/src/App.tsx",
+      "community": 13,
+      "community_name": "settings.ts",
       "norm_label": "applyautostartenabled()"
     },
     {
@@ -21602,8 +21766,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_bindingkey_test",
-      "community": 25,
-      "community_name": "bindingKey.ts",
+      "community": 157,
+      "community_name": "host.ts",
       "norm_label": "bindingkey.test.ts"
     },
     {
@@ -21613,8 +21777,8 @@
       "source_location": "L197",
       "_origin": "ast",
       "id": "app_src_domain_bindingkey_test_listenmock_invokemock",
-      "community": 25,
-      "community_name": "bindingKey.ts",
+      "community": 157,
+      "community_name": "host.ts",
       "norm_label": "{ listenmock, invokemock }"
     },
     {
@@ -21663,8 +21827,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_bindingkey_mousebutton",
-      "community": 25,
-      "community_name": "bindingKey.ts",
+      "community": 24,
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "mousebutton"
     },
     {
@@ -21676,8 +21840,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_bindingkey_bindinginput",
-      "community": 25,
-      "community_name": "bindingKey.ts",
+      "community": 24,
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "bindinginput"
     },
     {
@@ -21728,8 +21892,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_bindingkey_bindingkeyentry",
-      "community": 157,
-      "community_name": "host.ts",
+      "community": 3,
+      "community_name": "app/src/App.tsx",
       "norm_label": "bindingkeyentry"
     },
     {
@@ -22039,8 +22203,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_breakactivity_breakactivityaction",
-      "community": 35,
-      "community_name": "kegel/src/App.tsx",
+      "community": 2,
+      "community_name": "pomodoro.ts",
       "norm_label": "breakactivityaction"
     },
     {
@@ -22110,8 +22274,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_breakactivity_activityownsbreak",
-      "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 2,
+      "community_name": "pomodoro.ts",
       "norm_label": "activityownsbreak()"
     },
     {
@@ -22179,7 +22343,7 @@
       "_origin": "ast",
       "id": "app_src_domain_breakreminder_test",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "breakreminder.test.ts"
     },
     {
@@ -22191,7 +22355,7 @@
       "_origin": "ast",
       "id": "app_src_domain_breakreminder_test_fixture",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "fixture()"
     },
     {
@@ -22201,8 +22365,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_breakreminder",
-      "community": 2,
-      "community_name": "presence.ts",
+      "community": 31,
+      "community_name": "usePomodoroStore",
       "norm_label": "breakreminder.ts"
     },
     {
@@ -22215,7 +22379,7 @@
       "_origin": "ast",
       "id": "app_src_domain_breakreminder_breakreminderlevel",
       "community": 31,
-      "community_name": "pomodoro.ts",
+      "community_name": "usePomodoroStore",
       "norm_label": "breakreminderlevel"
     },
     {
@@ -22226,7 +22390,7 @@
       "_origin": "ast",
       "id": "app_src_domain_breakreminder_break_reminder_scales",
       "community": 31,
-      "community_name": "pomodoro.ts",
+      "community_name": "usePomodoroStore",
       "norm_label": "break_reminder_scales"
     },
     {
@@ -22237,8 +22401,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_breakreminder_startbreakremindermonitor",
-      "community": 2,
-      "community_name": "presence.ts",
+      "community": 31,
+      "community_name": "usePomodoroStore",
       "norm_label": "startbreakremindermonitor()"
     },
     {
@@ -22249,8 +22413,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_breakreminder_usebreakreminderlevel",
-      "community": 2,
-      "community_name": "presence.ts",
+      "community": 31,
+      "community_name": "usePomodoroStore",
       "norm_label": "usebreakreminderlevel()"
     },
     {
@@ -22425,8 +22589,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_bridge_dispatch_dispatch",
-      "community": 13,
-      "community_name": "settings.ts",
+      "community": 157,
+      "community_name": "host.ts",
       "norm_label": "dispatch()"
     },
     {
@@ -22450,8 +22614,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_bridge_dispatch_dispatchconfirmed",
-      "community": 157,
-      "community_name": "host.ts",
+      "community": 2,
+      "community_name": "pomodoro.ts",
       "norm_label": "dispatchconfirmed()"
     },
     {
@@ -22947,7 +23111,7 @@
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountdata_test",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "cloudaccountdata.test.ts"
     },
     {
@@ -22958,7 +23122,7 @@
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountdata_test_stores",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "stores"
     },
     {
@@ -22969,7 +23133,7 @@
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountdata",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "cloudaccountdata.ts"
     },
     {
@@ -22995,7 +23159,7 @@
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountdata_pomodorostore",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "pomodorostore"
     },
     {
@@ -23008,7 +23172,7 @@
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountdata_settingsstore",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "settingsstore"
     },
     {
@@ -23021,7 +23185,7 @@
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountdata_appupdatestore",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "appupdatestore"
     },
     {
@@ -23034,7 +23198,7 @@
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountdata_networkstore",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "networkstore"
     },
     {
@@ -23047,7 +23211,7 @@
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountdata_bindingkeystore",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "bindingkeystore"
     },
     {
@@ -23060,7 +23224,7 @@
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountdata_cloudstores",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "cloudstores"
     },
     {
@@ -23072,7 +23236,7 @@
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountdata_buildcloudaccountdata",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "buildcloudaccountdata()"
     },
     {
@@ -23084,7 +23248,7 @@
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountdata_hydratecloudaccountdata",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "hydratecloudaccountdata()"
     },
     {
@@ -23096,7 +23260,7 @@
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountdata_mergecloudaccountdataconflict",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "mergecloudaccountdataconflict()"
     },
     {
@@ -23108,7 +23272,7 @@
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountdata_cloudaccountdatakey",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "cloudaccountdatakey()"
     },
     {
@@ -23120,7 +23284,7 @@
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountdata_clonebindingkey",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "clonebindingkey()"
     },
     {
@@ -23132,7 +23296,7 @@
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountdata_clonebindingkeyentry",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "clonebindingkeyentry()"
     },
     {
@@ -23143,7 +23307,7 @@
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountsync_test",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "cloudaccountsync.test.tsx"
     },
     {
@@ -23154,7 +23318,7 @@
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountsync_test_savelocal",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "savelocal"
     },
     {
@@ -23165,7 +23329,7 @@
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountsync",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "cloudaccountsync.ts"
     },
     {
@@ -23177,7 +23341,7 @@
       "_origin": "ast",
       "id": "app_src_domain_cloudaccountsync_usecloudaccountsync",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "usecloudaccountsync()"
     },
     {
@@ -23188,7 +23352,7 @@
       "_origin": "ast",
       "id": "app_src_domain_cockroachautomation",
       "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "cockroachInvasion/controller.ts",
       "norm_label": "cockroachautomation.ts"
     },
     {
@@ -23199,7 +23363,7 @@
       "_origin": "ast",
       "id": "app_src_domain_cockroachautomation_cockroach_rules_changed",
       "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "cockroachInvasion/controller.ts",
       "norm_label": "cockroach_rules_changed"
     },
     {
@@ -23210,7 +23374,7 @@
       "_origin": "ast",
       "id": "app_src_domain_cockroachautomation_cockroach_automation_result",
       "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "cockroachInvasion/controller.ts",
       "norm_label": "cockroach_automation_result"
     },
     {
@@ -23221,7 +23385,7 @@
       "_origin": "ast",
       "id": "app_src_domain_cockroachautomation_cockroach_actions",
       "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "cockroachInvasion/controller.ts",
       "norm_label": "cockroach_actions"
     },
     {
@@ -23234,7 +23398,7 @@
       "_origin": "ast",
       "id": "app_src_domain_cockroachautomation_cockroachaction",
       "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "cockroachInvasion/controller.ts",
       "norm_label": "cockroachaction"
     },
     {
@@ -23247,7 +23411,7 @@
       "_origin": "ast",
       "id": "app_src_domain_cockroachautomation_cockroachrule",
       "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "cockroachInvasion/controller.ts",
       "norm_label": "cockroachrule"
     },
     {
@@ -23259,7 +23423,7 @@
       "_origin": "ast",
       "id": "app_src_domain_cockroachautomation_readcockroachrules",
       "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "cockroachInvasion/controller.ts",
       "norm_label": "readcockroachrules()"
     },
     {
@@ -23271,7 +23435,7 @@
       "_origin": "ast",
       "id": "app_src_domain_cockroachautomation_savecockroachrules",
       "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "cockroachInvasion/controller.ts",
       "norm_label": "savecockroachrules()"
     },
     {
@@ -23283,7 +23447,7 @@
       "_origin": "ast",
       "id": "app_src_domain_cockroachautomation_executecockroachaction",
       "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "cockroachInvasion/controller.ts",
       "norm_label": "executecockroachaction()"
     },
     {
@@ -23425,8 +23589,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_extensionpacks_extensionpackid",
-      "community": 213,
-      "community_name": "breakActivityHost.ts",
+      "community": 17,
+      "community_name": "runtime.ts",
       "norm_label": "extensionpackid"
     },
     {
@@ -23464,8 +23628,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_extensionpacks_extensionsettingsrenderer",
-      "community": 134,
-      "community_name": "CockroachModulePanel.tsx",
+      "community": 61,
+      "community_name": "ExtensionSettingsOutlet.tsx",
       "norm_label": "extensionsettingsrenderer"
     },
     {
@@ -23503,8 +23667,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_extensionpacks_extensionruntimecontribution",
-      "community": 213,
-      "community_name": "breakActivityHost.ts",
+      "community": 17,
+      "community_name": "runtime.ts",
       "norm_label": "extensionruntimecontribution"
     },
     {
@@ -23555,8 +23719,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_extensionpacks_extensionpackprogress",
-      "community": 213,
-      "community_name": "breakActivityHost.ts",
+      "community": 7,
+      "community_name": "ExtensionPackManagerTab.tsx",
       "norm_label": "extensionpackprogress"
     },
     {
@@ -23592,8 +23756,8 @@
       "source_location": "L98",
       "_origin": "ast",
       "id": "app_src_domain_extensionpacks_extensionpackregistry",
-      "community": 65,
-      "community_name": "extensionPacks.ts",
+      "community": 7,
+      "community_name": "ExtensionPackManagerTab.tsx",
       "norm_label": "extensionpackregistry"
     },
     {
@@ -23603,8 +23767,8 @@
       "source_location": "L160",
       "_origin": "ast",
       "id": "app_src_domain_extensionpacks_extensionpackcatalog",
-      "community": 213,
-      "community_name": "breakActivityHost.ts",
+      "community": 17,
+      "community_name": "runtime.ts",
       "norm_label": "extensionpackcatalog"
     },
     {
@@ -23760,8 +23924,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_extensionpacks_useextensionpacksync",
-      "community": 237,
-      "community_name": "app/src/main.tsx",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "useextensionpacksync()"
     },
     {
@@ -23771,8 +23935,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_focuswindow_test",
-      "community": 7,
-      "community_name": "PomodoroEndActionLayer.tsx",
+      "community": 24,
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "focuswindow.test.ts"
     },
     {
@@ -23782,8 +23946,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "app_src_domain_focuswindow_test_invokemock",
-      "community": 7,
-      "community_name": "PomodoroEndActionLayer.tsx",
+      "community": 24,
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "{ invokemock }"
     },
     {
@@ -23793,8 +23957,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_focuswindow",
-      "community": 7,
-      "community_name": "PomodoroEndActionLayer.tsx",
+      "community": 24,
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "focuswindow.ts"
     },
     {
@@ -23806,8 +23970,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_focuswindow_focusableappwindowlabel",
-      "community": 7,
-      "community_name": "PomodoroEndActionLayer.tsx",
+      "community": 24,
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "focusableappwindowlabel"
     },
     {
@@ -23818,8 +23982,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_focuswindow_focusappwindow",
-      "community": 7,
-      "community_name": "PomodoroEndActionLayer.tsx",
+      "community": 24,
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "focusappwindow()"
     },
     {
@@ -23830,7 +23994,7 @@
       "_origin": "ast",
       "id": "app_src_domain_inputactivity_test",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "inputactivity.test.ts"
     },
     {
@@ -23842,7 +24006,7 @@
       "_origin": "ast",
       "id": "app_src_domain_inputactivity_test_fixture",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "fixture()"
     },
     {
@@ -23854,7 +24018,7 @@
       "_origin": "ast",
       "id": "app_src_domain_inputactivity_test_monitor",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "monitor()"
     },
     {
@@ -23865,7 +24029,7 @@
       "_origin": "ast",
       "id": "app_src_domain_inputactivity",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "inputactivity.ts"
     },
     {
@@ -23876,7 +24040,7 @@
       "_origin": "ast",
       "id": "app_src_domain_inputactivity_input_activity_poll_ms",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "input_activity_poll_ms"
     },
     {
@@ -23889,7 +24053,7 @@
       "_origin": "ast",
       "id": "app_src_domain_inputactivity_inputactivityruntime",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "inputactivityruntime"
     },
     {
@@ -23900,7 +24064,7 @@
       "_origin": "ast",
       "id": "app_src_domain_inputactivity_defaultruntime",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "defaultruntime"
     },
     {
@@ -23912,7 +24076,7 @@
       "_origin": "ast",
       "id": "app_src_domain_inputactivity_startinputactivitymonitor",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "startinputactivitymonitor()"
     },
     {
@@ -23923,7 +24087,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_inputactivity_useinputactivitymonitor",
-      "community": 61,
+      "community": 3,
       "community_name": "app/src/App.tsx",
       "norm_label": "useinputactivitymonitor()"
     },
@@ -24047,8 +24211,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_network_test",
-      "community": 235,
-      "community_name": "network.test.ts",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "network.test.ts"
     },
     {
@@ -24058,8 +24222,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "app_src_domain_network_test_persistedsession",
-      "community": 235,
-      "community_name": "network.test.ts",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "persistedsession"
     },
     {
@@ -24072,7 +24236,7 @@
       "_origin": "ast",
       "id": "app_src_domain_network_test_fakewebsocket",
       "community": 235,
-      "community_name": "network.test.ts",
+      "community_name": "FakeWebSocket",
       "norm_label": "fakewebsocket"
     },
     {
@@ -24084,7 +24248,7 @@
       "_origin": "ast",
       "id": "app_src_domain_network_test_fakewebsocket_constructor",
       "community": 235,
-      "community_name": "network.test.ts",
+      "community_name": "FakeWebSocket",
       "norm_label": ".constructor()"
     },
     {
@@ -24096,7 +24260,7 @@
       "_origin": "ast",
       "id": "app_src_domain_network_test_fakewebsocket_send",
       "community": 235,
-      "community_name": "network.test.ts",
+      "community_name": "FakeWebSocket",
       "norm_label": ".send()"
     },
     {
@@ -24108,7 +24272,7 @@
       "_origin": "ast",
       "id": "app_src_domain_network_test_fakewebsocket_close",
       "community": 235,
-      "community_name": "network.test.ts",
+      "community_name": "FakeWebSocket",
       "norm_label": ".close()"
     },
     {
@@ -24119,8 +24283,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_network_test_latestsocket",
-      "community": 235,
-      "community_name": "network.test.ts",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "latestsocket()"
     },
     {
@@ -24131,8 +24295,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_network_test_sentmessages",
-      "community": 235,
-      "community_name": "network.test.ts",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "sentmessages()"
     },
     {
@@ -24143,8 +24307,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_network_test_makecloudsnapshot",
-      "community": 235,
-      "community_name": "network.test.ts",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "makecloudsnapshot()"
     },
     {
@@ -24176,8 +24340,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "app_src_domain_network_development_server_url",
-      "community": 235,
-      "community_name": "network.test.ts",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "development_server_url"
     },
     {
@@ -24187,8 +24351,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "app_src_domain_network_production_server_url",
-      "community": 235,
-      "community_name": "network.test.ts",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "production_server_url"
     },
     {
@@ -24199,8 +24363,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_network_defaultserverurl",
-      "community": 235,
-      "community_name": "network.test.ts",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "defaultserverurl()"
     },
     {
@@ -24251,8 +24415,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_network_remotestate",
-      "community": 17,
-      "community_name": "ui/PlayerCard.tsx",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "remotestate"
     },
     {
@@ -24264,8 +24428,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_network_remoteplayer",
-      "community": 17,
-      "community_name": "ui/PlayerCard.tsx",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "remoteplayer"
     },
     {
@@ -24330,7 +24494,7 @@
       "_origin": "ast",
       "id": "app_src_domain_network_networkstateshape",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "networkstateshape"
     },
     {
@@ -24342,8 +24506,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_network_networkactions",
-      "community": 157,
-      "community_name": "host.ts",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "networkactions"
     },
     {
@@ -24485,8 +24649,8 @@
       "source_location": "L552",
       "_origin": "ast",
       "id": "app_src_domain_network_usenetworkstore",
-      "community": 160,
-      "community_name": "useNetworkStore",
+      "community": 3,
+      "community_name": "app/src/App.tsx",
       "norm_label": "usenetworkstore"
     },
     {
@@ -24519,7 +24683,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_pomodoro",
-      "community": 31,
+      "community": 2,
       "community_name": "pomodoro.ts",
       "norm_label": "pomodoro.ts"
     },
@@ -24532,7 +24696,7 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodoro_pomodorophase",
-      "community": 31,
+      "community": 2,
       "community_name": "pomodoro.ts",
       "norm_label": "pomodorophase"
     },
@@ -24558,7 +24722,7 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodoro_pomodoroendactionsourcekind",
-      "community": 31,
+      "community": 2,
       "community_name": "pomodoro.ts",
       "norm_label": "pomodoroendactionsourcekind"
     },
@@ -24571,7 +24735,7 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodoro_pomodoropinsource",
-      "community": 31,
+      "community": 2,
       "community_name": "pomodoro.ts",
       "norm_label": "pomodoropinsource"
     },
@@ -24584,7 +24748,7 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodoro_presenceautomationstate",
-      "community": 31,
+      "community": 2,
       "community_name": "pomodoro.ts",
       "norm_label": "presenceautomationstate"
     },
@@ -24610,8 +24774,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodoro_pomodoroendevent",
-      "community": 7,
-      "community_name": "PomodoroEndActionLayer.tsx",
+      "community": 24,
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "pomodoroendevent"
     },
     {
@@ -24623,8 +24787,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodoro_pomodorostate",
-      "community": 31,
-      "community_name": "pomodoro.ts",
+      "community": 157,
+      "community_name": "host.ts",
       "norm_label": "pomodorostate"
     },
     {
@@ -24635,7 +24799,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodoro_presenceautomationcontextsignature",
-      "community": 31,
+      "community": 2,
       "community_name": "pomodoro.ts",
       "norm_label": "presenceautomationcontextsignature()"
     },
@@ -24648,7 +24812,7 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodoro_pomodoroactions",
-      "community": 31,
+      "community": 2,
       "community_name": "pomodoro.ts",
       "norm_label": "pomodoroactions"
     },
@@ -24659,7 +24823,7 @@
       "source_location": "L124",
       "_origin": "ast",
       "id": "app_src_domain_pomodoro_default_end_action_video",
-      "community": 31,
+      "community": 2,
       "community_name": "pomodoro.ts",
       "norm_label": "default_end_action_video"
     },
@@ -24673,7 +24837,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodoro_pomodorostore",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "pomodorostore"
     },
     {
@@ -24684,8 +24848,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodoro_createpomodorostore",
-      "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 2,
+      "community_name": "pomodoro.ts",
       "norm_label": "createpomodorostore()"
     },
     {
@@ -24696,7 +24860,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodoro_detectissettingswindow",
-      "community": 31,
+      "community": 2,
       "community_name": "pomodoro.ts",
       "norm_label": "detectissettingswindow()"
     },
@@ -24707,8 +24871,8 @@
       "source_location": "L567",
       "_origin": "ast",
       "id": "app_src_domain_pomodoro_usepomodorostore",
-      "community": 3,
-      "community_name": "userPreferences.ts",
+      "community": 31,
+      "community_name": "usePomodoroStore",
       "norm_label": "usepomodorostore"
     },
     {
@@ -24720,7 +24884,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodoro_formatmmss",
       "community": 31,
-      "community_name": "pomodoro.ts",
+      "community_name": "usePomodoroStore",
       "norm_label": "formatmmss()"
     },
     {
@@ -24730,8 +24894,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_pomodorobroadcast_test",
-      "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 2,
+      "community_name": "pomodoro.ts",
       "norm_label": "pomodorobroadcast.test.ts"
     },
     {
@@ -24741,8 +24905,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_pomodorobroadcast",
-      "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 2,
+      "community_name": "pomodoro.ts",
       "norm_label": "pomodorobroadcast.ts"
     },
     {
@@ -24752,8 +24916,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "app_src_domain_pomodorobroadcast_pomodoro_broadcast_version",
-      "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 2,
+      "community_name": "pomodoro.ts",
       "norm_label": "pomodoro_broadcast_version"
     },
     {
@@ -24763,8 +24927,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "app_src_domain_pomodorobroadcast_pomodoro_broadcast_event",
-      "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 2,
+      "community_name": "pomodoro.ts",
       "norm_label": "pomodoro_broadcast_event"
     },
     {
@@ -24774,8 +24938,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "app_src_domain_pomodorobroadcast_pomodoro_broadcast_snapshot_request_event",
-      "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 2,
+      "community_name": "pomodoro.ts",
       "norm_label": "pomodoro_broadcast_snapshot_request_event"
     },
     {
@@ -24787,8 +24951,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodorobroadcast_pomodorobroadcasttype",
-      "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 2,
+      "community_name": "pomodoro.ts",
       "norm_label": "pomodorobroadcasttype"
     },
     {
@@ -24800,8 +24964,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodorobroadcast_pomodorobroadcastreason",
-      "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 2,
+      "community_name": "pomodoro.ts",
       "norm_label": "pomodorobroadcastreason"
     },
     {
@@ -24813,8 +24977,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodorobroadcast_pomodorobroadcastevent",
-      "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 2,
+      "community_name": "pomodoro.ts",
       "norm_label": "pomodorobroadcastevent"
     },
     {
@@ -24826,8 +24990,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodorobroadcast_pomodorobroadcast",
-      "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 2,
+      "community_name": "pomodoro.ts",
       "norm_label": "pomodorobroadcast"
     },
     {
@@ -24838,8 +25002,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodorobroadcast_reasonfor",
-      "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 2,
+      "community_name": "pomodoro.ts",
       "norm_label": "reasonfor()"
     },
     {
@@ -24850,8 +25014,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodorobroadcast_eventtypefor",
-      "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 2,
+      "community_name": "pomodoro.ts",
       "norm_label": "eventtypefor()"
     },
     {
@@ -24862,8 +25026,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodorobroadcast_createpomodorobroadcast",
-      "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 2,
+      "community_name": "pomodoro.ts",
       "norm_label": "createpomodorobroadcast()"
     },
     {
@@ -24874,7 +25038,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodorobroadcast_usepomodorobroadcastsource",
-      "community": 61,
+      "community": 3,
       "community_name": "app/src/App.tsx",
       "norm_label": "usepomodorobroadcastsource()"
     },
@@ -24995,8 +25159,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_pomodoroevents_test",
-      "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 2,
+      "community_name": "pomodoro.ts",
       "norm_label": "pomodoroevents.test.ts"
     },
     {
@@ -25007,8 +25171,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodoroevents_test_fixture",
-      "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 2,
+      "community_name": "pomodoro.ts",
       "norm_label": "fixture()"
     },
     {
@@ -25018,8 +25182,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_pomodoroevents",
-      "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 2,
+      "community_name": "pomodoro.ts",
       "norm_label": "pomodoroevents.ts"
     },
     {
@@ -25030,7 +25194,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodoroevents_pomodoro_rule_events",
       "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "cockroachInvasion/controller.ts",
       "norm_label": "pomodoro_rule_events"
     },
     {
@@ -25042,8 +25206,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodoroevents_pomodororuleevent",
-      "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 2,
+      "community_name": "pomodoro.ts",
       "norm_label": "pomodororuleevent"
     },
     {
@@ -25054,8 +25218,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodoroevents_createpomodoroeventdetector",
-      "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 2,
+      "community_name": "pomodoro.ts",
       "norm_label": "createpomodoroeventdetector()"
     },
     {
@@ -25066,7 +25230,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodorosounds_test",
       "community": 24,
-      "community_name": "pomodoroSounds.ts",
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "pomodorosounds.test.ts"
     },
     {
@@ -25077,7 +25241,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodorosounds",
       "community": 24,
-      "community_name": "pomodoroSounds.ts",
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "pomodorosounds.ts"
     },
     {
@@ -25090,7 +25254,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodorosounds_pomodorosoundphase",
       "community": 24,
-      "community_name": "pomodoroSounds.ts",
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "pomodorosoundphase"
     },
     {
@@ -25103,7 +25267,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodorosounds_pomodorosoundsourcekind",
       "community": 24,
-      "community_name": "pomodoroSounds.ts",
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "pomodorosoundsourcekind"
     },
     {
@@ -25116,7 +25280,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodorosounds_pomodorosoundselection",
       "community": 24,
-      "community_name": "pomodoroSounds.ts",
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "pomodorosoundselection"
     },
     {
@@ -25128,8 +25292,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodorosounds_pomodoroendsounds",
-      "community": 31,
-      "community_name": "pomodoro.ts",
+      "community": 157,
+      "community_name": "host.ts",
       "norm_label": "pomodoroendsounds"
     },
     {
@@ -25142,7 +25306,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodorosounds_builtinpomodorosound",
       "community": 24,
-      "community_name": "pomodoroSounds.ts",
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "builtinpomodorosound"
     },
     {
@@ -25153,7 +25317,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodorosounds_focus_end_sounds",
       "community": 24,
-      "community_name": "pomodoroSounds.ts",
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "focus_end_sounds"
     },
     {
@@ -25164,7 +25328,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodorosounds_break_end_sounds",
       "community": 24,
-      "community_name": "pomodoroSounds.ts",
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "break_end_sounds"
     },
     {
@@ -25175,7 +25339,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodorosounds_default_pomodoro_end_sounds",
       "community": 24,
-      "community_name": "pomodoroSounds.ts",
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "default_pomodoro_end_sounds"
     },
     {
@@ -25187,7 +25351,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodorosounds_clonepomodoroendsounds",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "clonepomodoroendsounds()"
     },
     {
@@ -25198,7 +25362,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodorosounds_samepomodoroendsounds",
-      "community": 85,
+      "community": 24,
       "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "samepomodoroendsounds()"
     },
@@ -25211,7 +25375,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodorosounds_soundsforphase",
       "community": 24,
-      "community_name": "pomodoroSounds.ts",
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "soundsforphase()"
     },
     {
@@ -25223,7 +25387,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodorosounds_builtinsoundforselection",
       "community": 24,
-      "community_name": "pomodoroSounds.ts",
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "builtinsoundforselection()"
     },
     {
@@ -25235,7 +25399,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodorosounds_normalizepomodorosoundselection",
       "community": 24,
-      "community_name": "pomodoroSounds.ts",
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "normalizepomodorosoundselection()"
     },
     {
@@ -25248,7 +25412,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodorosounds_pomodorosoundplaybackdeps",
       "community": 24,
-      "community_name": "pomodoroSounds.ts",
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "pomodorosoundplaybackdeps"
     },
     {
@@ -25259,7 +25423,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodorosounds_defaultplaybackdeps",
       "community": 24,
-      "community_name": "pomodoroSounds.ts",
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "defaultplaybackdeps"
     },
     {
@@ -25271,7 +25435,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodorosounds_playaudiosource",
       "community": 24,
-      "community_name": "pomodoroSounds.ts",
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "playaudiosource()"
     },
     {
@@ -25283,7 +25447,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodorosounds_playpomodorosound",
       "community": 24,
-      "community_name": "pomodoroSounds.ts",
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "playpomodorosound()"
     },
     {
@@ -25295,7 +25459,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodorosounds_playpomodoroendsound",
       "community": 24,
-      "community_name": "pomodoroSounds.ts",
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "playpomodoroendsound()"
     },
     {
@@ -25306,7 +25470,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodorosounds_samesoundselection",
-      "community": 85,
+      "community": 24,
       "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "samesoundselection()"
     },
@@ -25319,7 +25483,7 @@
       "_origin": "ast",
       "id": "app_src_domain_pomodorosounds_isobject",
       "community": 24,
-      "community_name": "pomodoroSounds.ts",
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "isobject()"
     },
     {
@@ -25401,8 +25565,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_pomodorovideowindow_openpomodorovideowindow",
-      "community": 7,
-      "community_name": "PomodoroEndActionLayer.tsx",
+      "community": 24,
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "openpomodorovideowindow()"
     },
     {
@@ -25507,7 +25671,7 @@
       "_origin": "ast",
       "id": "app_src_domain_presence_test",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "presence.test.ts"
     },
     {
@@ -25518,7 +25682,7 @@
       "_origin": "ast",
       "id": "app_src_domain_presence",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "presence.ts"
     },
     {
@@ -25528,8 +25692,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "app_src_domain_presence_input_activity_recent_ms",
-      "community": 2,
-      "community_name": "presence.ts",
+      "community": 31,
+      "community_name": "usePomodoroStore",
       "norm_label": "input_activity_recent_ms"
     },
     {
@@ -25542,7 +25706,7 @@
       "_origin": "ast",
       "id": "app_src_domain_presence_inputactivityavailability",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "inputactivityavailability"
     },
     {
@@ -25554,8 +25718,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_presence_confirmedpresence",
-      "community": 157,
-      "community_name": "host.ts",
+      "community": 2,
+      "community_name": "pomodoro.ts",
       "norm_label": "confirmedpresence"
     },
     {
@@ -25568,7 +25732,7 @@
       "_origin": "ast",
       "id": "app_src_domain_presence_presencenotice",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "presencenotice"
     },
     {
@@ -25581,7 +25745,7 @@
       "_origin": "ast",
       "id": "app_src_domain_presence_presencestate",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "presencestate"
     },
     {
@@ -25594,7 +25758,7 @@
       "_origin": "ast",
       "id": "app_src_domain_presence_presenceactions",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "presenceactions"
     },
     {
@@ -25607,7 +25771,7 @@
       "_origin": "ast",
       "id": "app_src_domain_presence_presencestore",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "presencestore"
     },
     {
@@ -25619,7 +25783,7 @@
       "_origin": "ast",
       "id": "app_src_domain_presence_notice",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "notice()"
     },
     {
@@ -25631,7 +25795,7 @@
       "_origin": "ast",
       "id": "app_src_domain_presence_emptyevidence",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "emptyevidence()"
     },
     {
@@ -25643,7 +25807,7 @@
       "_origin": "ast",
       "id": "app_src_domain_presence_createpresencestore",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "createpresencestore()"
     },
     {
@@ -25654,7 +25818,7 @@
       "_origin": "ast",
       "id": "app_src_domain_presence_usepresencestore",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "usepresencestore"
     },
     {
@@ -25666,7 +25830,7 @@
       "_origin": "ast",
       "id": "app_src_domain_presence_inputpresence",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "inputpresence()"
     },
     {
@@ -25678,7 +25842,7 @@
       "_origin": "ast",
       "id": "app_src_domain_presence_applyinputactivitysample",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "applyinputactivitysample()"
     },
     {
@@ -25690,7 +25854,7 @@
       "_origin": "ast",
       "id": "app_src_domain_presence_applycombinedpresence",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "applycombinedpresence()"
     },
     {
@@ -25701,7 +25865,7 @@
       "_origin": "ast",
       "id": "app_src_domain_presencepersistence_test",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "presencepersistence.test.ts"
     },
     {
@@ -25712,7 +25876,7 @@
       "_origin": "ast",
       "id": "app_src_domain_presencepersistence_test_storedata",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "storedata"
     },
     {
@@ -25723,7 +25887,7 @@
       "_origin": "ast",
       "id": "app_src_domain_presencepersistence_test_save",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "save"
     },
     {
@@ -25734,7 +25898,7 @@
       "_origin": "ast",
       "id": "app_src_domain_presencepersistence",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "presencepersistence.ts"
     },
     {
@@ -25747,7 +25911,7 @@
       "_origin": "ast",
       "id": "app_src_domain_presencepersistence_restdeskremindermode",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "restdeskremindermode"
     },
     {
@@ -25760,7 +25924,7 @@
       "_origin": "ast",
       "id": "app_src_domain_presencepersistence_presencepreferences",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "presencepreferences"
     },
     {
@@ -25771,7 +25935,7 @@
       "_origin": "ast",
       "id": "app_src_domain_presencepersistence_default_presence_preferences",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "default_presence_preferences"
     },
     {
@@ -25783,7 +25947,7 @@
       "_origin": "ast",
       "id": "app_src_domain_presencepersistence_normalizepresencepreferences",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "normalizepresencepreferences()"
     },
     {
@@ -25795,7 +25959,7 @@
       "_origin": "ast",
       "id": "app_src_domain_presencepersistence_openstore",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "openstore()"
     },
     {
@@ -25807,7 +25971,7 @@
       "_origin": "ast",
       "id": "app_src_domain_presencepersistence_loadpresencepreferences",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "loadpresencepreferences()"
     },
     {
@@ -25819,7 +25983,7 @@
       "_origin": "ast",
       "id": "app_src_domain_presencepersistence_savepresencepreferences",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "savepresencepreferences()"
     },
     {
@@ -25829,8 +25993,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_presencesettingsbridge_test",
-      "community": 2,
-      "community_name": "presence.ts",
+      "community": 157,
+      "community_name": "host.ts",
       "norm_label": "presencesettingsbridge.test.ts"
     },
     {
@@ -25840,8 +26004,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "app_src_domain_presencesettingsbridge_test_dispatch",
-      "community": 2,
-      "community_name": "presence.ts",
+      "community": 157,
+      "community_name": "host.ts",
       "norm_label": "dispatch"
     },
     {
@@ -25851,8 +26015,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "app_src_domain_presencesettingsbridge_test_dispatchconfirmed",
-      "community": 2,
-      "community_name": "presence.ts",
+      "community": 157,
+      "community_name": "host.ts",
       "norm_label": "dispatchconfirmed"
     },
     {
@@ -25862,8 +26026,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_remoteplayercardpositions_test",
-      "community": 233,
-      "community_name": "remotePlayerCardPositions.ts",
+      "community": 38,
+      "community_name": "remotePlayerWindows.ts",
       "norm_label": "remoteplayercardpositions.test.ts"
     },
     {
@@ -25873,8 +26037,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "app_src_domain_remoteplayercardpositions_test_store",
-      "community": 233,
-      "community_name": "remotePlayerCardPositions.ts",
+      "community": 38,
+      "community_name": "remotePlayerWindows.ts",
       "norm_label": "store"
     },
     {
@@ -25884,8 +26048,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_remoteplayercardpositions",
-      "community": 233,
-      "community_name": "remotePlayerCardPositions.ts",
+      "community": 38,
+      "community_name": "remotePlayerWindows.ts",
       "norm_label": "remoteplayercardpositions.ts"
     },
     {
@@ -25897,8 +26061,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_remoteplayercardpositions_remoteplayercardposition",
-      "community": 233,
-      "community_name": "remotePlayerCardPositions.ts",
+      "community": 38,
+      "community_name": "remotePlayerWindows.ts",
       "norm_label": "remoteplayercardposition"
     },
     {
@@ -25910,8 +26074,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_remoteplayercardpositions_remoteplayercardpositions",
-      "community": 233,
-      "community_name": "remotePlayerCardPositions.ts",
+      "community": 38,
+      "community_name": "remotePlayerWindows.ts",
       "norm_label": "remoteplayercardpositions"
     },
     {
@@ -25923,8 +26087,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_remoteplayercardpositions_persistedremoteplayercardpositionsv1",
-      "community": 233,
-      "community_name": "remotePlayerCardPositions.ts",
+      "community": 38,
+      "community_name": "remotePlayerWindows.ts",
       "norm_label": "persistedremoteplayercardpositionsv1"
     },
     {
@@ -25934,8 +26098,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "app_src_domain_remoteplayercardpositions_savequeue",
-      "community": 233,
-      "community_name": "remotePlayerCardPositions.ts",
+      "community": 38,
+      "community_name": "remotePlayerWindows.ts",
       "norm_label": "savequeue"
     },
     {
@@ -25946,8 +26110,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_remoteplayercardpositions_isremoteplayercardposition",
-      "community": 233,
-      "community_name": "remotePlayerCardPositions.ts",
+      "community": 38,
+      "community_name": "remotePlayerWindows.ts",
       "norm_label": "isremoteplayercardposition()"
     },
     {
@@ -25958,8 +26122,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_remoteplayercardpositions_normalizepositions",
-      "community": 233,
-      "community_name": "remotePlayerCardPositions.ts",
+      "community": 38,
+      "community_name": "remotePlayerWindows.ts",
       "norm_label": "normalizepositions()"
     },
     {
@@ -25970,8 +26134,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_remoteplayercardpositions_openstore",
-      "community": 233,
-      "community_name": "remotePlayerCardPositions.ts",
+      "community": 38,
+      "community_name": "remotePlayerWindows.ts",
       "norm_label": "openstore()"
     },
     {
@@ -25982,8 +26146,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_remoteplayercardpositions_loadremoteplayercardpositions",
-      "community": 233,
-      "community_name": "remotePlayerCardPositions.ts",
+      "community": 38,
+      "community_name": "remotePlayerWindows.ts",
       "norm_label": "loadremoteplayercardpositions()"
     },
     {
@@ -25994,8 +26158,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_remoteplayercardpositions_saveremoteplayercardposition",
-      "community": 160,
-      "community_name": "useNetworkStore",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "saveremoteplayercardposition()"
     },
     {
@@ -26006,8 +26170,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_remoteplayercardpositions_saveremoteplayercardpositionnow",
-      "community": 233,
-      "community_name": "remotePlayerCardPositions.ts",
+      "community": 38,
+      "community_name": "remotePlayerWindows.ts",
       "norm_label": "saveremoteplayercardpositionnow()"
     },
     {
@@ -26052,8 +26216,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_remoteplayerwindows_test",
-      "community": 239,
-      "community_name": "remotePlayerWindows.test.ts",
+      "community": 38,
+      "community_name": "remotePlayerWindows.ts",
       "norm_label": "remoteplayerwindows.test.ts"
     },
     {
@@ -26063,8 +26227,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "app_src_domain_remoteplayerwindows_test_constructormock_getbylabelmock_oncemock",
-      "community": 239,
-      "community_name": "remotePlayerWindows.test.ts",
+      "community": 38,
+      "community_name": "remotePlayerWindows.ts",
       "norm_label": "{ constructormock, getbylabelmock, oncemock }"
     },
     {
@@ -26074,8 +26238,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "app_src_domain_remoteplayerwindows_test_loadpositionsmock",
-      "community": 239,
-      "community_name": "remotePlayerWindows.test.ts",
+      "community": 38,
+      "community_name": "remotePlayerWindows.ts",
       "norm_label": "{ loadpositionsmock }"
     },
     {
@@ -26086,8 +26250,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_remoteplayerwindows_test_deferred",
-      "community": 239,
-      "community_name": "remotePlayerWindows.test.ts",
+      "community": 38,
+      "community_name": "remotePlayerWindows.ts",
       "norm_label": "deferred()"
     },
     {
@@ -26098,8 +26262,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_remoteplayerwindows_test_constructor",
-      "community": 239,
-      "community_name": "remotePlayerWindows.test.ts",
+      "community": 38,
+      "community_name": "remotePlayerWindows.ts",
       "norm_label": "constructor()"
     },
     {
@@ -26110,8 +26274,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_remoteplayerwindows_test_player",
-      "community": 239,
-      "community_name": "remotePlayerWindows.test.ts",
+      "community": 38,
+      "community_name": "remotePlayerWindows.ts",
       "norm_label": "player()"
     },
     {
@@ -26134,8 +26298,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_remoteplayerwindows_syncremoteplayerwindowsinput",
-      "community": 17,
-      "community_name": "ui/PlayerCard.tsx",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "syncremoteplayerwindowsinput"
     },
     {
@@ -26301,8 +26465,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_remoteplayerwindows_useremoteplayerwindowcontroller",
-      "community": 38,
-      "community_name": "remotePlayerWindows.ts",
+      "community": 3,
+      "community_name": "app/src/App.tsx",
       "norm_label": "useremoteplayerwindowcontroller()"
     },
     {
@@ -26513,8 +26677,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_settings_settingsstate",
-      "community": 3,
-      "community_name": "userPreferences.ts",
+      "community": 13,
+      "community_name": "settings.ts",
       "norm_label": "settingsstate"
     },
     {
@@ -26526,8 +26690,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_settings_persistedsettingssnapshot",
-      "community": 3,
-      "community_name": "userPreferences.ts",
+      "community": 13,
+      "community_name": "settings.ts",
       "norm_label": "persistedsettingssnapshot"
     },
     {
@@ -26811,7 +26975,7 @@
       "_origin": "ast",
       "id": "app_src_domain_soundfiles_test",
       "community": 24,
-      "community_name": "pomodoroSounds.ts",
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "soundfiles.test.ts"
     },
     {
@@ -26822,7 +26986,7 @@
       "_origin": "ast",
       "id": "app_src_domain_soundfiles_test_mocks",
       "community": 24,
-      "community_name": "pomodoroSounds.ts",
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "mocks"
     },
     {
@@ -26833,7 +26997,7 @@
       "_origin": "ast",
       "id": "app_src_domain_soundfiles",
       "community": 24,
-      "community_name": "pomodoroSounds.ts",
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "soundfiles.ts"
     },
     {
@@ -26846,7 +27010,7 @@
       "_origin": "ast",
       "id": "app_src_domain_soundfiles_customsoundvalidation",
       "community": 24,
-      "community_name": "pomodoroSounds.ts",
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "customsoundvalidation"
     },
     {
@@ -26858,7 +27022,7 @@
       "_origin": "ast",
       "id": "app_src_domain_soundfiles_pickcustommp3path",
       "community": 24,
-      "community_name": "pomodoroSounds.ts",
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "pickcustommp3path()"
     },
     {
@@ -26870,7 +27034,7 @@
       "_origin": "ast",
       "id": "app_src_domain_soundfiles_validatecustomsoundpath",
       "community": 24,
-      "community_name": "pomodoroSounds.ts",
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "validatecustomsoundpath()"
     },
     {
@@ -26882,7 +27046,7 @@
       "_origin": "ast",
       "id": "app_src_domain_soundfiles_customsoundsrc",
       "community": 24,
-      "community_name": "pomodoroSounds.ts",
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "customsoundsrc()"
     },
     {
@@ -26894,7 +27058,7 @@
       "_origin": "ast",
       "id": "app_src_domain_soundfiles_showcustomsoundmissingmessage",
       "community": 24,
-      "community_name": "pomodoroSounds.ts",
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "showcustomsoundmissingmessage()"
     },
     {
@@ -26974,7 +27138,7 @@
       "_origin": "ast",
       "id": "app_src_domain_userpreferences",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "userpreferences.ts"
     },
     {
@@ -26986,8 +27150,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_userpreferences_persistedbindingkeyentry",
-      "community": 25,
-      "community_name": "bindingKey.ts",
+      "community": 24,
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "persistedbindingkeyentry"
     },
     {
@@ -27013,7 +27177,7 @@
       "_origin": "ast",
       "id": "app_src_domain_userpreferences_store",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "store"
     },
     {
@@ -27025,8 +27189,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_userpreferences_pomodorostoreshape",
-      "community": 31,
-      "community_name": "pomodoro.ts",
+      "community": 157,
+      "community_name": "host.ts",
       "norm_label": "pomodorostoreshape"
     },
     {
@@ -27038,8 +27202,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_userpreferences_settingsstoreshape",
-      "community": 3,
-      "community_name": "userPreferences.ts",
+      "community": 13,
+      "community_name": "settings.ts",
       "norm_label": "settingsstoreshape"
     },
     {
@@ -27064,8 +27228,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_userpreferences_bindingkeystoreshape",
-      "community": 157,
-      "community_name": "host.ts",
+      "community": 3,
+      "community_name": "app/src/App.tsx",
       "norm_label": "bindingkeystoreshape"
     },
     {
@@ -27078,7 +27242,7 @@
       "_origin": "ast",
       "id": "app_src_domain_userpreferences_userpreferencesstores",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "userpreferencesstores"
     },
     {
@@ -27089,7 +27253,7 @@
       "_origin": "ast",
       "id": "app_src_domain_userpreferences_default_end_action_video",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "default_end_action_video"
     },
     {
@@ -27101,7 +27265,7 @@
       "_origin": "ast",
       "id": "app_src_domain_userpreferences_defaultuserpreferencessnapshot",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "defaultuserpreferencessnapshot()"
     },
     {
@@ -27113,7 +27277,7 @@
       "_origin": "ast",
       "id": "app_src_domain_userpreferences_builduserpreferencessnapshot",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "builduserpreferencessnapshot()"
     },
     {
@@ -27125,7 +27289,7 @@
       "_origin": "ast",
       "id": "app_src_domain_userpreferences_hydrateuserpreferencessnapshot",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "hydrateuserpreferencessnapshot()"
     },
     {
@@ -27136,7 +27300,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_userpreferences_userpreferenceskey",
-      "community": 61,
+      "community": 3,
       "community_name": "app/src/App.tsx",
       "norm_label": "userpreferenceskey()"
     },
@@ -27149,7 +27313,7 @@
       "_origin": "ast",
       "id": "app_src_domain_userpreferences_normalizeuserpreferencessnapshot",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "normalizeuserpreferencessnapshot()"
     },
     {
@@ -27161,7 +27325,7 @@
       "_origin": "ast",
       "id": "app_src_domain_userpreferences_persistedbindingentry",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "persistedbindingentry()"
     },
     {
@@ -27173,7 +27337,7 @@
       "_origin": "ast",
       "id": "app_src_domain_userpreferences_normalizepomodoro",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "normalizepomodoro()"
     },
     {
@@ -27185,7 +27349,7 @@
       "_origin": "ast",
       "id": "app_src_domain_userpreferences_normalizeendsounds",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "normalizeendsounds()"
     },
     {
@@ -27197,7 +27361,7 @@
       "_origin": "ast",
       "id": "app_src_domain_userpreferences_normalizeendactionvideo",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "normalizeendactionvideo()"
     },
     {
@@ -27209,7 +27373,7 @@
       "_origin": "ast",
       "id": "app_src_domain_userpreferences_normalizesettings",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "normalizesettings()"
     },
     {
@@ -27221,7 +27385,7 @@
       "_origin": "ast",
       "id": "app_src_domain_userpreferences_normalizeappupdate",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "normalizeappupdate()"
     },
     {
@@ -27233,7 +27397,7 @@
       "_origin": "ast",
       "id": "app_src_domain_userpreferences_normalizenetwork",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "normalizenetwork()"
     },
     {
@@ -27245,7 +27409,7 @@
       "_origin": "ast",
       "id": "app_src_domain_userpreferences_normalizebindingkey",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "normalizebindingkey()"
     },
     {
@@ -27257,7 +27421,7 @@
       "_origin": "ast",
       "id": "app_src_domain_userpreferences_normalizebindingentry",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "normalizebindingentry()"
     },
     {
@@ -27269,7 +27433,7 @@
       "_origin": "ast",
       "id": "app_src_domain_userpreferences_normalizeinput",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "normalizeinput()"
     },
     {
@@ -27281,7 +27445,7 @@
       "_origin": "ast",
       "id": "app_src_domain_userpreferences_normalizepositiveinteger",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "normalizepositiveinteger()"
     },
     {
@@ -27293,7 +27457,7 @@
       "_origin": "ast",
       "id": "app_src_domain_userpreferences_normalizenonnegativeinteger",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "normalizenonnegativeinteger()"
     },
     {
@@ -27305,7 +27469,7 @@
       "_origin": "ast",
       "id": "app_src_domain_userpreferences_isobject",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "isobject()"
     },
     {
@@ -27317,7 +27481,7 @@
       "_origin": "ast",
       "id": "app_src_domain_userpreferences_cloneinput",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "cloneinput()"
     },
     {
@@ -27328,7 +27492,7 @@
       "_origin": "ast",
       "id": "app_src_domain_userpreferencespersistence_test",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "userpreferencespersistence.test.ts"
     },
     {
@@ -27339,7 +27503,7 @@
       "_origin": "ast",
       "id": "app_src_domain_userpreferencespersistence_test_store",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "store"
     },
     {
@@ -27350,7 +27514,7 @@
       "_origin": "ast",
       "id": "app_src_domain_userpreferencespersistence",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "userpreferencespersistence.ts"
     },
     {
@@ -27363,7 +27527,7 @@
       "_origin": "ast",
       "id": "app_src_domain_userpreferencespersistence_persisteduserpreferencesv1",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "persisteduserpreferencesv1"
     },
     {
@@ -27375,7 +27539,7 @@
       "_origin": "ast",
       "id": "app_src_domain_userpreferencespersistence_openstore",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "openstore()"
     },
     {
@@ -27387,7 +27551,7 @@
       "_origin": "ast",
       "id": "app_src_domain_userpreferencespersistence_loadpersisteduserpreferences",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "loadpersisteduserpreferences()"
     },
     {
@@ -27399,7 +27563,7 @@
       "_origin": "ast",
       "id": "app_src_domain_userpreferencespersistence_savepersisteduserpreferences",
       "community": 3,
-      "community_name": "userPreferences.ts",
+      "community_name": "app/src/App.tsx",
       "norm_label": "savepersisteduserpreferences()"
     },
     {
@@ -27409,8 +27573,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_videoeditormodule_test",
-      "community": 65,
-      "community_name": "extensionPacks.ts",
+      "community": 160,
+      "community_name": "videoEditorModule.ts",
       "norm_label": "videoeditormodule.test.ts"
     },
     {
@@ -27420,8 +27584,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_src_domain_videoeditormodule_test_invoke",
-      "community": 65,
-      "community_name": "extensionPacks.ts",
+      "community": 160,
+      "community_name": "videoEditorModule.ts",
       "norm_label": "invoke"
     },
     {
@@ -27431,8 +27595,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_videoeditormodule",
-      "community": 65,
-      "community_name": "extensionPacks.ts",
+      "community": 160,
+      "community_name": "videoEditorModule.ts",
       "norm_label": "videoeditormodule.ts"
     },
     {
@@ -27444,8 +27608,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_domain_videoeditormodule_videoeditormodulestatus",
-      "community": 65,
-      "community_name": "extensionPacks.ts",
+      "community": 160,
+      "community_name": "videoEditorModule.ts",
       "norm_label": "videoeditormodulestatus"
     },
     {
@@ -27456,8 +27620,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_videoeditormodule_readvideoeditormodulestatus",
-      "community": 65,
-      "community_name": "extensionPacks.ts",
+      "community": 160,
+      "community_name": "videoEditorModule.ts",
       "norm_label": "readvideoeditormodulestatus()"
     },
     {
@@ -27468,8 +27632,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_videoeditormodule_launchvideoeditormodule",
-      "community": 65,
-      "community_name": "extensionPacks.ts",
+      "community": 160,
+      "community_name": "videoEditorModule.ts",
       "norm_label": "launchvideoeditormodule()"
     },
     {
@@ -27479,8 +27643,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_videofiles_test",
-      "community": 7,
-      "community_name": "PomodoroEndActionLayer.tsx",
+      "community": 24,
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "videofiles.test.ts"
     },
     {
@@ -27490,8 +27654,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "app_src_domain_videofiles_test_mocks",
-      "community": 7,
-      "community_name": "PomodoroEndActionLayer.tsx",
+      "community": 24,
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "mocks"
     },
     {
@@ -27501,8 +27665,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_domain_videofiles",
-      "community": 7,
-      "community_name": "PomodoroEndActionLayer.tsx",
+      "community": 24,
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "videofiles.ts"
     },
     {
@@ -27526,8 +27690,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_videofiles_pickcustomwebmpath",
-      "community": 7,
-      "community_name": "PomodoroEndActionLayer.tsx",
+      "community": 24,
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "pickcustomwebmpath()"
     },
     {
@@ -27538,8 +27702,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_videofiles_validatecustomvideopath",
-      "community": 7,
-      "community_name": "PomodoroEndActionLayer.tsx",
+      "community": 24,
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "validatecustomvideopath()"
     },
     {
@@ -27550,8 +27714,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_videofiles_customvideosrc",
-      "community": 7,
-      "community_name": "PomodoroEndActionLayer.tsx",
+      "community": 24,
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "customvideosrc()"
     },
     {
@@ -27562,8 +27726,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_domain_videofiles_showcustomvideomissingmessage",
-      "community": 7,
-      "community_name": "PomodoroEndActionLayer.tsx",
+      "community": 24,
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "showcustomvideomissingmessage()"
     },
     {
@@ -27595,8 +27759,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_extensions_cockroachinvasion_controller_test",
-      "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 2,
+      "community_name": "pomodoro.ts",
       "norm_label": "controller.test.ts"
     },
     {
@@ -27608,7 +27772,7 @@
       "_origin": "ast",
       "id": "app_src_extensions_cockroachinvasion_controller_test_fixture",
       "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "cockroachInvasion/controller.ts",
       "norm_label": "fixture()"
     },
     {
@@ -27619,7 +27783,7 @@
       "_origin": "ast",
       "id": "app_src_extensions_cockroachinvasion_controller",
       "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "cockroachInvasion/controller.ts",
       "norm_label": "cockroachinvasion/controller.ts"
     },
     {
@@ -27632,7 +27796,7 @@
       "_origin": "ast",
       "id": "app_src_extensions_cockroachinvasion_controller_cockroachruleadapter",
       "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "cockroachInvasion/controller.ts",
       "norm_label": "cockroachruleadapter"
     },
     {
@@ -27643,7 +27807,7 @@
       "_origin": "ast",
       "id": "app_src_extensions_cockroachinvasion_controller_adapter",
       "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "cockroachInvasion/controller.ts",
       "norm_label": "adapter"
     },
     {
@@ -27655,7 +27819,7 @@
       "_origin": "ast",
       "id": "app_src_extensions_cockroachinvasion_controller_startcockroachmodulecontroller",
       "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "cockroachInvasion/controller.ts",
       "norm_label": "startcockroachmodulecontroller()"
     },
     {
@@ -27665,8 +27829,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_extensions_eventdrivenruntime_test",
-      "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 2,
+      "community_name": "pomodoro.ts",
       "norm_label": "eventdrivenruntime.test.ts"
     },
     {
@@ -27676,8 +27840,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_extensions_eventdrivenruntime",
-      "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 2,
+      "community_name": "pomodoro.ts",
       "norm_label": "eventdrivenruntime.ts"
     },
     {
@@ -27689,8 +27853,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_extensions_eventdrivenruntime_eventdrivenruntimeadapter",
-      "community": 213,
-      "community_name": "breakActivityHost.ts",
+      "community": 17,
+      "community_name": "runtime.ts",
       "norm_label": "eventdrivenruntimeadapter"
     },
     {
@@ -27700,8 +27864,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "app_src_extensions_eventdrivenruntime_defaultadapter",
-      "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 2,
+      "community_name": "pomodoro.ts",
       "norm_label": "defaultadapter"
     },
     {
@@ -27712,8 +27876,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_extensions_eventdrivenruntime_activationgatematches",
-      "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 2,
+      "community_name": "pomodoro.ts",
       "norm_label": "activationgatematches()"
     },
     {
@@ -27724,8 +27888,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_extensions_eventdrivenruntime_starteventdrivenruntime",
-      "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 2,
+      "community_name": "pomodoro.ts",
       "norm_label": "starteventdrivenruntime()"
     },
     {
@@ -27735,8 +27899,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_extensions_pomodorobroadcastclient",
-      "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 2,
+      "community_name": "pomodoro.ts",
       "norm_label": "pomodorobroadcastclient.ts"
     },
     {
@@ -27747,8 +27911,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_extensions_pomodorobroadcastclient_neutralsnapshot",
-      "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 2,
+      "community_name": "pomodoro.ts",
       "norm_label": "neutralsnapshot()"
     },
     {
@@ -27758,8 +27922,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "app_src_extensions_pomodorobroadcastclient_extensionpomodorobroadcast",
-      "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community": 2,
+      "community_name": "pomodoro.ts",
       "norm_label": "extensionpomodorobroadcast"
     },
     {
@@ -27769,8 +27933,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_extensions_runtime",
-      "community": 213,
-      "community_name": "breakActivityHost.ts",
+      "community": 17,
+      "community_name": "runtime.ts",
       "norm_label": "runtime.ts"
     },
     {
@@ -27782,8 +27946,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_extensions_runtime_extensionruntimemodule",
-      "community": 213,
-      "community_name": "breakActivityHost.ts",
+      "community": 17,
+      "community_name": "runtime.ts",
       "norm_label": "extensionruntimemodule"
     },
     {
@@ -27795,8 +27959,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_extensions_runtime_activeruntimeentry",
-      "community": 213,
-      "community_name": "breakActivityHost.ts",
+      "community": 17,
+      "community_name": "runtime.ts",
       "norm_label": "activeruntimeentry"
     },
     {
@@ -27806,8 +27970,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "app_src_extensions_runtime_runtime_loaders",
-      "community": 213,
-      "community_name": "breakActivityHost.ts",
+      "community": 17,
+      "community_name": "runtime.ts",
       "norm_label": "runtime_loaders"
     },
     {
@@ -27818,7 +27982,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_extensions_runtime_useextensionruntimecontributions",
-      "community": 61,
+      "community": 3,
       "community_name": "app/src/App.tsx",
       "norm_label": "useextensionruntimecontributions()"
     },
@@ -27917,8 +28081,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_main",
-      "community": 237,
-      "community_name": "app/src/main.tsx",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "app/src/main.tsx"
     },
     {
@@ -27928,8 +28092,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "app_src_main_which",
-      "community": 237,
-      "community_name": "app/src/main.tsx",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "which"
     },
     {
@@ -27940,8 +28104,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_main_windowroot",
-      "community": 237,
-      "community_name": "app/src/main.tsx",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "windowroot()"
     },
     {
@@ -28041,7 +28205,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_ui_appupdatepreview",
-      "community": 85,
+      "community": 24,
       "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "appupdatepreview.tsx"
     },
@@ -28053,7 +28217,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_appupdatepreview_appupdatepreview",
-      "community": 85,
+      "community": 24,
       "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "appupdatepreview()"
     },
@@ -28064,7 +28228,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_ui_appupdatereadynotice_test",
-      "community": 61,
+      "community": 3,
       "community_name": "app/src/App.tsx",
       "norm_label": "appupdatereadynotice.test.tsx"
     },
@@ -28075,7 +28239,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_ui_appupdatereadynotice",
-      "community": 61,
+      "community": 3,
       "community_name": "app/src/App.tsx",
       "norm_label": "appupdatereadynotice.tsx"
     },
@@ -28087,7 +28251,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_appupdatereadynotice_titletext",
-      "community": 61,
+      "community": 3,
       "community_name": "app/src/App.tsx",
       "norm_label": "titletext()"
     },
@@ -28099,7 +28263,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_appupdatereadynotice_appupdatereadynotice",
-      "community": 61,
+      "community": 3,
       "community_name": "app/src/App.tsx",
       "norm_label": "appupdatereadynotice()"
     },
@@ -28111,7 +28275,7 @@
       "_origin": "ast",
       "id": "app_src_ui_cockroachautomationrules_test",
       "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "cockroachInvasion/controller.ts",
       "norm_label": "cockroachautomationrules.test.tsx"
     },
     {
@@ -28122,7 +28286,7 @@
       "_origin": "ast",
       "id": "app_src_ui_cockroachautomationrules_test_invoke",
       "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "cockroachInvasion/controller.ts",
       "norm_label": "invoke"
     },
     {
@@ -28133,7 +28297,7 @@
       "_origin": "ast",
       "id": "app_src_ui_cockroachautomationrules",
       "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "cockroachInvasion/controller.ts",
       "norm_label": "cockroachautomationrules.tsx"
     },
     {
@@ -28145,7 +28309,7 @@
       "_origin": "ast",
       "id": "app_src_ui_cockroachautomationrules_cockroachautomationrules",
       "community": 26,
-      "community_name": "pomodoroBroadcast.ts",
+      "community_name": "cockroachInvasion/controller.ts",
       "norm_label": "cockroachautomationrules()"
     },
     {
@@ -28258,8 +28422,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_ui_extensionpackmanagertab_test",
-      "community": 213,
-      "community_name": "breakActivityHost.ts",
+      "community": 7,
+      "community_name": "ExtensionPackManagerTab.tsx",
       "norm_label": "extensionpackmanagertab.test.tsx"
     },
     {
@@ -28269,8 +28433,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "app_src_ui_extensionpackmanagertab_test_invoke",
-      "community": 213,
-      "community_name": "breakActivityHost.ts",
+      "community": 7,
+      "community_name": "ExtensionPackManagerTab.tsx",
       "norm_label": "invoke"
     },
     {
@@ -28280,8 +28444,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "app_src_ui_extensionpackmanagertab_test_listeners",
-      "community": 213,
-      "community_name": "breakActivityHost.ts",
+      "community": 7,
+      "community_name": "ExtensionPackManagerTab.tsx",
       "norm_label": "listeners"
     },
     {
@@ -28292,8 +28456,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_extensionpackmanagertab_test_status",
-      "community": 213,
-      "community_name": "breakActivityHost.ts",
+      "community": 7,
+      "community_name": "ExtensionPackManagerTab.tsx",
       "norm_label": "status()"
     },
     {
@@ -28303,8 +28467,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_ui_extensionpackmanagertab",
-      "community": 213,
-      "community_name": "breakActivityHost.ts",
+      "community": 7,
+      "community_name": "ExtensionPackManagerTab.tsx",
       "norm_label": "extensionpackmanagertab.tsx"
     },
     {
@@ -28314,8 +28478,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "app_src_ui_extensionpackmanagertab_feature_packs",
-      "community": 213,
-      "community_name": "breakActivityHost.ts",
+      "community": 7,
+      "community_name": "ExtensionPackManagerTab.tsx",
       "norm_label": "feature_packs"
     },
     {
@@ -28325,8 +28489,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "app_src_ui_extensionpackmanagertab_common_packs",
-      "community": 213,
-      "community_name": "breakActivityHost.ts",
+      "community": 7,
+      "community_name": "ExtensionPackManagerTab.tsx",
       "norm_label": "common_packs"
     },
     {
@@ -28337,8 +28501,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_extensionpackmanagertab_extensionpackmanagertab",
-      "community": 213,
-      "community_name": "breakActivityHost.ts",
+      "community": 7,
+      "community_name": "ExtensionPackManagerTab.tsx",
       "norm_label": "extensionpackmanagertab()"
     },
     {
@@ -28348,8 +28512,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_ui_extensionsettingsoutlet",
-      "community": 134,
-      "community_name": "CockroachModulePanel.tsx",
+      "community": 61,
+      "community_name": "ExtensionSettingsOutlet.tsx",
       "norm_label": "extensionsettingsoutlet.tsx"
     },
     {
@@ -28359,8 +28523,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "app_src_ui_extensionsettingsoutlet_settings_renderers",
-      "community": 134,
-      "community_name": "CockroachModulePanel.tsx",
+      "community": 61,
+      "community_name": "ExtensionSettingsOutlet.tsx",
       "norm_label": "settings_renderers"
     },
     {
@@ -28371,8 +28535,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_extensionsettingsoutlet_extensionsettingsoutlet",
-      "community": 134,
-      "community_name": "CockroachModulePanel.tsx",
+      "community": 61,
+      "community_name": "ExtensionSettingsOutlet.tsx",
       "norm_label": "extensionsettingsoutlet()"
     },
     {
@@ -28382,8 +28546,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_ui_inputbindingbadge",
-      "community": 25,
-      "community_name": "bindingKey.ts",
+      "community": 24,
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "inputbindingbadge.tsx"
     },
     {
@@ -28395,8 +28559,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_ui_inputbindingbadge_inputbindingbadgeprops",
-      "community": 25,
-      "community_name": "bindingKey.ts",
+      "community": 24,
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "inputbindingbadgeprops"
     },
     {
@@ -28406,8 +28570,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "app_src_ui_inputbindingbadge_mouse_label_to_button",
-      "community": 25,
-      "community_name": "bindingKey.ts",
+      "community": 24,
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "mouse_label_to_button"
     },
     {
@@ -28418,8 +28582,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_inputbindingbadge_inputfromremotelabel",
-      "community": 25,
-      "community_name": "bindingKey.ts",
+      "community": 24,
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "inputfromremotelabel()"
     },
     {
@@ -28430,8 +28594,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_inputbindingbadge_inputbindingbadge",
-      "community": 25,
-      "community_name": "bindingKey.ts",
+      "community": 24,
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "inputbindingbadge()"
     },
     {
@@ -28442,8 +28606,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_inputbindingbadge_mousebuttonicon",
-      "community": 25,
-      "community_name": "bindingKey.ts",
+      "community": 24,
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "mousebuttonicon()"
     },
     {
@@ -28569,8 +28733,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_ui_petsettingstab",
-      "community": 134,
-      "community_name": "CockroachModulePanel.tsx",
+      "community": 61,
+      "community_name": "ExtensionSettingsOutlet.tsx",
       "norm_label": "petsettingstab.tsx"
     },
     {
@@ -28581,8 +28745,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_petsettingstab_petsettingstab",
-      "community": 134,
-      "community_name": "CockroachModulePanel.tsx",
+      "community": 61,
+      "community_name": "ExtensionSettingsOutlet.tsx",
       "norm_label": "petsettingstab()"
     },
     {
@@ -28592,8 +28756,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_ui_playercard_test",
-      "community": 17,
-      "community_name": "ui/PlayerCard.tsx",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "playercard.test.tsx"
     },
     {
@@ -28603,8 +28767,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "app_src_ui_playercard_test_startdraggingmock",
-      "community": 17,
-      "community_name": "ui/PlayerCard.tsx",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "{ startdraggingmock }"
     },
     {
@@ -28615,8 +28779,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_playercard_test_state",
-      "community": 17,
-      "community_name": "ui/PlayerCard.tsx",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "state()"
     },
     {
@@ -28627,8 +28791,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_playercard_test_player",
-      "community": 17,
-      "community_name": "ui/PlayerCard.tsx",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "player()"
     },
     {
@@ -28638,8 +28802,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_ui_playercard",
-      "community": 17,
-      "community_name": "ui/PlayerCard.tsx",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "ui/playercard.tsx"
     },
     {
@@ -28651,8 +28815,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_ui_playercard_playercardprops",
-      "community": 17,
-      "community_name": "ui/PlayerCard.tsx",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "playercardprops"
     },
     {
@@ -28664,8 +28828,8 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_ui_playercard_phasebadge",
-      "community": 17,
-      "community_name": "ui/PlayerCard.tsx",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "phasebadge"
     },
     {
@@ -28676,8 +28840,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_playercard_derivebadge",
-      "community": 17,
-      "community_name": "ui/PlayerCard.tsx",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "derivebadge()"
     },
     {
@@ -28688,8 +28852,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_playercard_playercard",
-      "community": 17,
-      "community_name": "ui/PlayerCard.tsx",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "playercard()"
     },
     {
@@ -28700,8 +28864,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_playercard_appwindowicon",
-      "community": 17,
-      "community_name": "ui/PlayerCard.tsx",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "appwindowicon()"
     },
     {
@@ -28712,8 +28876,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_playercard_pinicon",
-      "community": 17,
-      "community_name": "ui/PlayerCard.tsx",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "pinicon()"
     },
     {
@@ -28724,7 +28888,7 @@
       "_origin": "ast",
       "id": "app_src_ui_pomodorodock_test",
       "community": 31,
-      "community_name": "pomodoro.ts",
+      "community_name": "usePomodoroStore",
       "norm_label": "pomodorodock.test.tsx"
     },
     {
@@ -28735,7 +28899,7 @@
       "_origin": "ast",
       "id": "app_src_ui_pomodorodock_test_hover_view",
       "community": 31,
-      "community_name": "pomodoro.ts",
+      "community_name": "usePomodoroStore",
       "norm_label": "{ hover, view }"
     },
     {
@@ -28745,8 +28909,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_ui_pomodoroendactionlayer_test",
-      "community": 7,
-      "community_name": "PomodoroEndActionLayer.tsx",
+      "community": 24,
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "pomodoroendactionlayer.test.tsx"
     },
     {
@@ -28756,8 +28920,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "app_src_ui_pomodoroendactionlayer_test_focusappwindow",
-      "community": 7,
-      "community_name": "PomodoroEndActionLayer.tsx",
+      "community": 24,
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "focusappwindow"
     },
     {
@@ -28767,8 +28931,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_src_ui_pomodoroendactionlayer_test_resolvepomodoroendaction",
-      "community": 7,
-      "community_name": "PomodoroEndActionLayer.tsx",
+      "community": 24,
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "resolvepomodoroendaction"
     },
     {
@@ -28778,8 +28942,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "app_src_ui_pomodoroendactionlayer_test_openpomodorovideowindow",
-      "community": 7,
-      "community_name": "PomodoroEndActionLayer.tsx",
+      "community": 24,
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "openpomodorovideowindow"
     },
     {
@@ -28789,8 +28953,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "app_src_ui_pomodoroendactionlayer_test_playpomodoroendsound",
-      "community": 7,
-      "community_name": "PomodoroEndActionLayer.tsx",
+      "community": 24,
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "playpomodoroendsound"
     },
     {
@@ -28801,8 +28965,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_pomodoroendactionlayer_test_endevent",
-      "community": 7,
-      "community_name": "PomodoroEndActionLayer.tsx",
+      "community": 24,
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "endevent()"
     },
     {
@@ -28812,8 +28976,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_ui_pomodoroendactionlayer",
-      "community": 7,
-      "community_name": "PomodoroEndActionLayer.tsx",
+      "community": 24,
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "pomodoroendactionlayer.tsx"
     },
     {
@@ -28824,8 +28988,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_pomodoroendactionlayer_popuptitle",
-      "community": 7,
-      "community_name": "PomodoroEndActionLayer.tsx",
+      "community": 24,
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "popuptitle()"
     },
     {
@@ -28836,8 +29000,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_pomodoroendactionlayer_pomodoroendactionlayer",
-      "community": 7,
-      "community_name": "PomodoroEndActionLayer.tsx",
+      "community": 24,
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "pomodoroendactionlayer()"
     },
     {
@@ -28848,7 +29012,7 @@
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_test",
       "community": 31,
-      "community_name": "pomodoro.ts",
+      "community_name": "usePomodoroStore",
       "norm_label": "pomodoropanel.test.tsx"
     },
     {
@@ -28859,7 +29023,7 @@
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_test_startdragging_invokemock",
       "community": 31,
-      "community_name": "pomodoro.ts",
+      "community_name": "usePomodoroStore",
       "norm_label": "{ startdragging, invokemock }"
     },
     {
@@ -28871,7 +29035,7 @@
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_test_resetpomodoro",
       "community": 31,
-      "community_name": "pomodoro.ts",
+      "community_name": "usePomodoroStore",
       "norm_label": "resetpomodoro()"
     },
     {
@@ -28883,7 +29047,7 @@
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_test_resetpresence",
       "community": 31,
-      "community_name": "pomodoro.ts",
+      "community_name": "usePomodoroStore",
       "norm_label": "resetpresence()"
     },
     {
@@ -28895,7 +29059,7 @@
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_test_pincalls",
       "community": 31,
-      "community_name": "pomodoro.ts",
+      "community_name": "usePomodoroStore",
       "norm_label": "pincalls()"
     },
     {
@@ -28906,7 +29070,7 @@
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel",
       "community": 31,
-      "community_name": "pomodoro.ts",
+      "community_name": "usePomodoroStore",
       "norm_label": "ui/pomodoropanel.tsx"
     },
     {
@@ -28919,7 +29083,7 @@
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_clockstate",
       "community": 31,
-      "community_name": "pomodoro.ts",
+      "community_name": "usePomodoroStore",
       "norm_label": "clockstate"
     },
     {
@@ -28931,7 +29095,7 @@
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_clockstateof",
       "community": 31,
-      "community_name": "pomodoro.ts",
+      "community_name": "usePomodoroStore",
       "norm_label": "clockstateof()"
     },
     {
@@ -28943,7 +29107,7 @@
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_phaselabel",
       "community": 31,
-      "community_name": "pomodoro.ts",
+      "community_name": "usePomodoroStore",
       "norm_label": "phaselabel()"
     },
     {
@@ -28955,7 +29119,7 @@
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_pomodoropanel",
       "community": 31,
-      "community_name": "pomodoro.ts",
+      "community_name": "usePomodoroStore",
       "norm_label": "pomodoropanel()"
     },
     {
@@ -28967,7 +29131,7 @@
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_confirmedpresencestatus",
       "community": 31,
-      "community_name": "pomodoro.ts",
+      "community_name": "usePomodoroStore",
       "norm_label": "confirmedpresencestatus()"
     },
     {
@@ -28980,7 +29144,7 @@
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_clockringprops",
       "community": 31,
-      "community_name": "pomodoro.ts",
+      "community_name": "usePomodoroStore",
       "norm_label": "clockringprops"
     },
     {
@@ -28992,7 +29156,7 @@
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_clockring",
       "community": 31,
-      "community_name": "pomodoro.ts",
+      "community_name": "usePomodoroStore",
       "norm_label": "clockring()"
     },
     {
@@ -29004,7 +29168,7 @@
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_settingsicon",
       "community": 31,
-      "community_name": "pomodoro.ts",
+      "community_name": "usePomodoroStore",
       "norm_label": "settingsicon()"
     },
     {
@@ -29016,7 +29180,7 @@
       "_origin": "ast",
       "id": "app_src_ui_pomodoropanel_pinicon",
       "community": 31,
-      "community_name": "pomodoro.ts",
+      "community_name": "usePomodoroStore",
       "norm_label": "pinicon()"
     },
     {
@@ -29027,7 +29191,7 @@
       "_origin": "ast",
       "id": "app_src_ui_presencenotice",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "presencenotice.tsx"
     },
     {
@@ -29039,7 +29203,7 @@
       "_origin": "ast",
       "id": "app_src_ui_presencenotice_presencenotice",
       "community": 2,
-      "community_name": "presence.ts",
+      "community_name": "pomodoro.ts",
       "norm_label": "presencenotice()"
     },
     {
@@ -29049,8 +29213,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_ui_remoteroster",
-      "community": 160,
-      "community_name": "useNetworkStore",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "remoteroster.tsx"
     },
     {
@@ -29061,8 +29225,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_remoteroster_remoteroster",
-      "community": 160,
-      "community_name": "useNetworkStore",
+      "community": 16,
+      "community_name": "network.ts",
       "norm_label": "remoteroster()"
     },
     {
@@ -29072,8 +29236,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_ui_settingshelp",
-      "community": 134,
-      "community_name": "CockroachModulePanel.tsx",
+      "community": 7,
+      "community_name": "ExtensionPackManagerTab.tsx",
       "norm_label": "settingshelp.tsx"
     },
     {
@@ -29084,8 +29248,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_settingshelp_settingshelp",
-      "community": 134,
-      "community_name": "CockroachModulePanel.tsx",
+      "community": 7,
+      "community_name": "ExtensionPackManagerTab.tsx",
       "norm_label": "settingshelp()"
     },
     {
@@ -29150,8 +29314,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_test",
-      "community": 65,
-      "community_name": "extensionPacks.ts",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "settingspanel.test.tsx"
     },
     {
@@ -29161,8 +29325,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_test_invoke",
-      "community": 65,
-      "community_name": "extensionPacks.ts",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "invoke"
     },
     {
@@ -29172,8 +29336,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_test_listen",
-      "community": 65,
-      "community_name": "extensionPacks.ts",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "listen"
     },
     {
@@ -29183,8 +29347,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_test_open",
-      "community": 65,
-      "community_name": "extensionPacks.ts",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "open"
     },
     {
@@ -29194,8 +29358,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_test_message",
-      "community": 65,
-      "community_name": "extensionPacks.ts",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "message"
     },
     {
@@ -29206,8 +29370,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_test_packstatus",
-      "community": 65,
-      "community_name": "extensionPacks.ts",
+      "community": 23,
+      "community_name": "useSettingsStore",
       "norm_label": "packstatus()"
     },
     {
@@ -29217,7 +29381,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_ui_settingspanel",
-      "community": 85,
+      "community": 24,
       "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "ui/settingspanel.tsx"
     },
@@ -29228,7 +29392,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_core_tabs",
-      "community": 85,
+      "community": 24,
       "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "core_tabs"
     },
@@ -29241,7 +29405,7 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_ordinaryapplystate",
-      "community": 85,
+      "community": 24,
       "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "ordinaryapplystate"
     },
@@ -29252,7 +29416,7 @@
       "source_location": "L73",
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_empty_apply_state",
-      "community": 85,
+      "community": 24,
       "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "empty_apply_state"
     },
@@ -29264,7 +29428,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_iskeycounterhealth",
-      "community": 85,
+      "community": 24,
       "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "iskeycounterhealth()"
     },
@@ -29276,7 +29440,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_inputforpointerbutton",
-      "community": 85,
+      "community": 24,
       "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "inputforpointerbutton()"
     },
@@ -29300,7 +29464,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_settingsapplyrow",
-      "community": 85,
+      "community": 24,
       "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "settingsapplyrow()"
     },
@@ -29312,7 +29476,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_pomodorotab",
-      "community": 85,
+      "community": 24,
       "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "pomodorotab()"
     },
@@ -29324,7 +29488,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_soundsettingscard",
-      "community": 85,
+      "community": 24,
       "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "soundsettingscard()"
     },
@@ -29336,7 +29500,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_sameendactionvideo",
-      "community": 85,
+      "community": 24,
       "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "sameendactionvideo()"
     },
@@ -29348,7 +29512,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_filenamefrompath",
-      "community": 85,
+      "community": 24,
       "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "filenamefrompath()"
     },
@@ -29360,7 +29524,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_confirmedpresencetext",
-      "community": 85,
+      "community": 24,
       "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "confirmedpresencetext()"
     },
@@ -29372,7 +29536,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_accounterrortext",
-      "community": 85,
+      "community": 24,
       "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "accounterrortext()"
     },
@@ -29384,7 +29548,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_cloudsyncstatustext",
-      "community": 85,
+      "community": 24,
       "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "cloudsyncstatustext()"
     },
@@ -29396,7 +29560,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_onlinetab",
-      "community": 85,
+      "community": 24,
       "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "onlinetab()"
     },
@@ -29408,7 +29572,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_phasetotext",
-      "community": 85,
+      "community": 24,
       "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "phasetotext()"
     },
@@ -29420,7 +29584,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_globaltab",
-      "community": 85,
+      "community": 24,
       "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "globaltab()"
     },
@@ -29433,7 +29597,7 @@
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_audiosettingscard",
       "community": 24,
-      "community_name": "pomodoroSounds.ts",
+      "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "audiosettingscard()"
     },
     {
@@ -29444,7 +29608,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_appupdatesettingsrow",
-      "community": 85,
+      "community": 24,
       "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "appupdatesettingsrow()"
     },
@@ -29456,7 +29620,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_appupdatestatustext",
-      "community": 85,
+      "community": 24,
       "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "appupdatestatustext()"
     },
@@ -29469,7 +29633,7 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_toggleprops",
-      "community": 85,
+      "community": 24,
       "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "toggleprops"
     },
@@ -29481,7 +29645,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_toggle",
-      "community": 85,
+      "community": 24,
       "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "toggle()"
     },
@@ -29494,7 +29658,7 @@
       "_callable_class": true,
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_sliderprops",
-      "community": 85,
+      "community": 24,
       "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "sliderprops"
     },
@@ -29506,7 +29670,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_slider",
-      "community": 85,
+      "community": 24,
       "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "slider()"
     },
@@ -29518,7 +29682,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_closeicon",
-      "community": 85,
+      "community": 24,
       "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "closeicon()"
     },
@@ -29530,7 +29694,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_foldericon",
-      "community": 85,
+      "community": 24,
       "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "foldericon()"
     },
@@ -29542,7 +29706,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_playicon",
-      "community": 85,
+      "community": 24,
       "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "playicon()"
     },
@@ -29554,7 +29718,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_plusicon",
-      "community": 85,
+      "community": 24,
       "community_name": "ui/SettingsPanel.tsx",
       "norm_label": "plusicon()"
     },
@@ -29566,7 +29730,7 @@
       "_origin": "ast",
       "id": "app_src_ui_textinput_test",
       "community": 85,
-      "community_name": "ui/SettingsPanel.tsx",
+      "community_name": "TextInput.tsx",
       "norm_label": "textinput.test.tsx"
     },
     {
@@ -29578,7 +29742,7 @@
       "_origin": "ast",
       "id": "app_src_ui_textinput_test_numberfield",
       "community": 85,
-      "community_name": "ui/SettingsPanel.tsx",
+      "community_name": "TextInput.tsx",
       "norm_label": "numberfield()"
     },
     {
@@ -29589,7 +29753,7 @@
       "_origin": "ast",
       "id": "app_src_ui_textinput",
       "community": 85,
-      "community_name": "ui/SettingsPanel.tsx",
+      "community_name": "TextInput.tsx",
       "norm_label": "textinput.tsx"
     },
     {
@@ -29601,7 +29765,7 @@
       "_origin": "ast",
       "id": "app_src_ui_textinput_textinput",
       "community": 85,
-      "community_name": "ui/SettingsPanel.tsx",
+      "community_name": "TextInput.tsx",
       "norm_label": "textinput()"
     },
     {
@@ -29614,7 +29778,7 @@
       "_origin": "ast",
       "id": "app_src_ui_textinput_numberinputprops",
       "community": 85,
-      "community_name": "ui/SettingsPanel.tsx",
+      "community_name": "TextInput.tsx",
       "norm_label": "numberinputprops"
     },
     {
@@ -29626,7 +29790,7 @@
       "_origin": "ast",
       "id": "app_src_ui_textinput_numberinput",
       "community": 85,
-      "community_name": "ui/SettingsPanel.tsx",
+      "community_name": "TextInput.tsx",
       "norm_label": "numberinput()"
     },
     {
@@ -29637,7 +29801,7 @@
       "_origin": "ast",
       "id": "app_src_ui_usedocknoticesuspension_test",
       "community": 31,
-      "community_name": "pomodoro.ts",
+      "community_name": "usePomodoroStore",
       "norm_label": "usedocknoticesuspension.test.tsx"
     },
     {
@@ -29648,7 +29812,7 @@
       "_origin": "ast",
       "id": "app_src_ui_usedocknoticesuspension",
       "community": 31,
-      "community_name": "pomodoro.ts",
+      "community_name": "usePomodoroStore",
       "norm_label": "usedocknoticesuspension.ts"
     },
     {
@@ -29660,7 +29824,7 @@
       "_origin": "ast",
       "id": "app_src_ui_usedocknoticesuspension_isvisible",
       "community": 31,
-      "community_name": "pomodoro.ts",
+      "community_name": "usePomodoroStore",
       "norm_label": "isvisible()"
     },
     {
@@ -29672,7 +29836,7 @@
       "_origin": "ast",
       "id": "app_src_ui_usedocknoticesuspension_hasfullwindownotice",
       "community": 31,
-      "community_name": "pomodoro.ts",
+      "community_name": "usePomodoroStore",
       "norm_label": "hasfullwindownotice()"
     },
     {
@@ -29684,7 +29848,7 @@
       "_origin": "ast",
       "id": "app_src_ui_usedocknoticesuspension_usedocknoticesuspension",
       "community": 31,
-      "community_name": "pomodoro.ts",
+      "community_name": "usePomodoroStore",
       "norm_label": "usedocknoticesuspension()"
     },
     {
@@ -29695,7 +29859,7 @@
       "_origin": "ast",
       "id": "app_src_ui_usepomodorodocking_test",
       "community": 31,
-      "community_name": "pomodoro.ts",
+      "community_name": "usePomodoroStore",
       "norm_label": "usepomodorodocking.test.tsx"
     },
     {
@@ -29706,7 +29870,7 @@
       "_origin": "ast",
       "id": "app_src_ui_usepomodorodocking_test_invoke",
       "community": 31,
-      "community_name": "pomodoro.ts",
+      "community_name": "usePomodoroStore",
       "norm_label": "{ invoke }"
     },
     {
@@ -29717,7 +29881,7 @@
       "_origin": "ast",
       "id": "app_src_ui_usepomodorodocking",
       "community": 31,
-      "community_name": "pomodoro.ts",
+      "community_name": "usePomodoroStore",
       "norm_label": "usepomodorodocking.ts"
     },
     {
@@ -29730,7 +29894,7 @@
       "_origin": "ast",
       "id": "app_src_ui_usepomodorodocking_dockview",
       "community": 31,
-      "community_name": "pomodoro.ts",
+      "community_name": "usePomodoroStore",
       "norm_label": "dockview"
     },
     {
@@ -29741,7 +29905,7 @@
       "_origin": "ast",
       "id": "app_src_ui_usepomodorodocking_full",
       "community": 31,
-      "community_name": "pomodoro.ts",
+      "community_name": "usePomodoroStore",
       "norm_label": "full"
     },
     {
@@ -29753,7 +29917,7 @@
       "_origin": "ast",
       "id": "app_src_ui_usepomodorodocking_usepomodorodocking",
       "community": 31,
-      "community_name": "pomodoro.ts",
+      "community_name": "usePomodoroStore",
       "norm_label": "usepomodorodocking()"
     },
     {
@@ -34336,7 +34500,7 @@
       "label": "\u6545\u969c\u4e0e\u6210\u672c",
       "file_type": "document",
       "source_file": "docs/deployment/cloud-release.md",
-      "source_location": "L48",
+      "source_location": "L49",
       "_origin": "ast",
       "id": "docs_deployment_cloud_release_\u6545\u969c\u4e0e\u6210\u672c",
       "community": 159,
@@ -34347,7 +34511,7 @@
       "label": "\u672c\u5730\u9a8c\u8bc1",
       "file_type": "document",
       "source_file": "docs/deployment/cloud-release.md",
-      "source_location": "L56",
+      "source_location": "L57",
       "_origin": "ast",
       "id": "docs_deployment_cloud_release_\u672c\u5730\u9a8c\u8bc1",
       "community": 159,
@@ -56405,19 +56569,7 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_cloud_release",
-      "target": "app_scripts_prepare_cnb_release_transformcockroachmoduleindex",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "app/scripts/cloud-release.mjs",
-      "source_location": "L5",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "app_scripts_cloud_release",
-      "target": "app_scripts_prepare_cnb_release_transformmoduleindex",
+      "target": "app_scripts_prepare_cnb_release_transformsignedmoduleindex",
       "confidence_score": 1.0
     },
     {
@@ -56454,6 +56606,18 @@
       "_origin": "ast",
       "source": "app_scripts_cloud_release",
       "target": "app_scripts_release_integrity",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/cloud-release.mjs",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_cloud_release",
+      "target": "app_scripts_release_integrity_assertextensionindexassets",
       "confidence_score": 1.0
     },
     {
@@ -56755,6 +56919,18 @@
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_cloud_release",
+      "target": "app_scripts_github_public",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "app/scripts/mirror-github-release.mjs",
       "source_location": "L9",
       "weight": 1.0,
@@ -56780,7 +56956,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/mirror-github-release.mjs",
-      "source_location": "L64",
+      "source_location": "L65",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_mirror_github_release_latestrelease",
@@ -56815,6 +56991,30 @@
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_cloud_release",
+      "target": "app_scripts_github_public_download",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L102",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_cloud_release_publish",
+      "target": "app_scripts_github_public_download",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "app/scripts/mirror-github-release.mjs",
       "source_location": "L9",
       "weight": 1.0,
@@ -56829,11 +57029,494 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "app/scripts/mirror-github-release.mjs",
-      "source_location": "L99",
+      "source_location": "L100",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_mirror_github_release_mirrorlatest",
       "target": "app_scripts_github_public_download"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_cloud_release",
+      "target": "app_scripts_kegel_cloud_release_approot",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L27",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_cloud_release",
+      "target": "app_scripts_kegel_cloud_release_assertkegelreleasetarget",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L68",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_cloud_release",
+      "target": "app_scripts_kegel_cloud_release_githubapi",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L32",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_cloud_release",
+      "target": "app_scripts_kegel_cloud_release_packageinfo",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L14",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_cloud_release",
+      "target": "app_scripts_kegel_cloud_release_planmissingkegelassets",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L53",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_cloud_release",
+      "target": "app_scripts_kegel_cloud_release_prepare",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L49",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_cloud_release",
+      "target": "app_scripts_kegel_cloud_release_publickey",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L78",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_cloud_release",
+      "target": "app_scripts_kegel_cloud_release_publish",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_cloud_release",
+      "target": "app_scripts_prepare_cnb_release",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_cloud_release",
+      "target": "app_scripts_prepare_cnb_release_cnbtaggedasseturl",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_cloud_release",
+      "target": "app_scripts_prepare_cnb_release_default_cnb_repo",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_cloud_release",
+      "target": "app_scripts_prepare_cnb_release_transformsignedmoduleindex",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_cloud_release",
+      "target": "app_scripts_release_integrity",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_cloud_release",
+      "target": "app_scripts_release_integrity_github_repo",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_cloud_release",
+      "target": "app_scripts_release_integrity_hashes",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_cloud_release",
+      "target": "app_scripts_release_integrity_verifysignature",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-release.test.mjs",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_release_test",
+      "target": "app_scripts_kegel_cloud_release",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L106",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_cloud_release_publish",
+      "target": "app_scripts_kegel_cloud_release_planmissingkegelassets",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-release.test.mjs",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_release_test",
+      "target": "app_scripts_kegel_cloud_release_planmissingkegelassets",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L82",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_cloud_release_publish",
+      "target": "app_scripts_kegel_cloud_release_assertkegelreleasetarget",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-release.test.mjs",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_release_test",
+      "target": "app_scripts_kegel_cloud_release_assertkegelreleasetarget",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L35",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_cloud_release_packageinfo",
+      "target": "app_scripts_prepare_cnb_release_transformsignedmoduleindex",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L43",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_cloud_release_packageinfo",
+      "target": "app_scripts_release_integrity_hashes",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L55",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_cloud_release_prepare",
+      "target": "app_scripts_kegel_cloud_release_packageinfo",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L80",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_cloud_release_publish",
+      "target": "app_scripts_kegel_cloud_release_packageinfo",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L63",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_cloud_release_prepare",
+      "target": "app_scripts_kegel_cloud_release_publickey",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L86",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_cloud_release_publish",
+      "target": "app_scripts_kegel_cloud_release_publickey",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L56",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_cloud_release_prepare",
+      "target": "app_scripts_prepare_cnb_release_cnbtaggedasseturl",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L59",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_cloud_release_prepare",
+      "target": "app_scripts_prepare_cnb_release_transformsignedmoduleindex",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L63",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_cloud_release_prepare",
+      "target": "app_scripts_release_integrity_verifysignature",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L81",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_cloud_release_publish",
+      "target": "app_scripts_kegel_cloud_release_githubapi",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L84",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_cloud_release_publish",
+      "target": "app_scripts_prepare_cnb_release_transformsignedmoduleindex",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L91",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_cloud_release_publish",
+      "target": "app_scripts_release_integrity_hashes",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-cloud-release.mjs",
+      "source_location": "L87",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_cloud_release_publish",
+      "target": "app_scripts_release_integrity_verifysignature",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-release.test.mjs",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_release_test",
+      "target": "app_scripts_kegel_release_test_index",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-release.test.mjs",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_release_test",
+      "target": "app_scripts_mirror_github_release",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-release.test.mjs",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_release_test",
+      "target": "app_scripts_mirror_github_release_validaterelease",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-release.test.mjs",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_release_test",
+      "target": "app_scripts_prepare_cnb_release",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-release.test.mjs",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_release_test",
+      "target": "app_scripts_prepare_cnb_release_transformsignedmoduleindex",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-release.test.mjs",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_release_test",
+      "target": "app_scripts_release_integrity",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/kegel-release.test.mjs",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_kegel_release_test",
+      "target": "app_scripts_release_integrity_assertextensionindexassets",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -56850,7 +57533,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/mirror-github-release.mjs",
-      "source_location": "L35",
+      "source_location": "L36",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_mirror_github_release",
@@ -56861,7 +57544,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/mirror-github-release.mjs",
-      "source_location": "L63",
+      "source_location": "L64",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_mirror_github_release",
@@ -56872,7 +57555,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/mirror-github-release.mjs",
-      "source_location": "L75",
+      "source_location": "L76",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_mirror_github_release",
@@ -56883,7 +57566,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/mirror-github-release.mjs",
-      "source_location": "L30",
+      "source_location": "L31",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_mirror_github_release",
@@ -56905,7 +57588,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/mirror-github-release.mjs",
-      "source_location": "L56",
+      "source_location": "L57",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_mirror_github_release",
@@ -56968,19 +57651,7 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_mirror_github_release",
-      "target": "app_scripts_prepare_cnb_release_transformcockroachmoduleindex",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "app/scripts/mirror-github-release.mjs",
-      "source_location": "L11",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "app_scripts_mirror_github_release",
-      "target": "app_scripts_prepare_cnb_release_transformmoduleindex",
+      "target": "app_scripts_prepare_cnb_release_transformsignedmoduleindex",
       "confidence_score": 1.0
     },
     {
@@ -57016,7 +57687,31 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_mirror_github_release",
+      "target": "app_scripts_release_integrity_assertextensionindexassets",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release",
       "target": "app_scripts_release_integrity_assertupdater",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release",
+      "target": "app_scripts_release_integrity_extensionindexnamesforrelease",
       "confidence_score": 1.0
     },
     {
@@ -57053,18 +57748,6 @@
       "_origin": "ast",
       "source": "app_scripts_mirror_github_release",
       "target": "app_scripts_release_integrity_hashes",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "app/scripts/mirror-github-release.mjs",
-      "source_location": "L10",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "app_scripts_mirror_github_release",
-      "target": "app_scripts_release_integrity_index_names",
       "confidence_score": 1.0
     },
     {
@@ -57192,7 +57875,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/mirror-github-release.mjs",
-      "source_location": "L43",
+      "source_location": "L44",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_mirror_github_release_importtag",
@@ -57204,7 +57887,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/mirror-github-release.mjs",
-      "source_location": "L78",
+      "source_location": "L79",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_mirror_github_release_mirrorlatest",
@@ -57216,12 +57899,36 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/mirror-github-release.mjs",
-      "source_location": "L72",
+      "source_location": "L73",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_mirror_github_release_latestrelease",
       "target": "app_scripts_mirror_github_release_validaterelease",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L29",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release_validaterelease",
+      "target": "app_scripts_release_integrity_assertextensionindexassets"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L29",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release_validaterelease",
+      "target": "app_scripts_release_integrity_extensionindexnamesforrelease"
     },
     {
       "relation": "calls",
@@ -57252,7 +57959,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/mirror-github-release.mjs",
-      "source_location": "L79",
+      "source_location": "L80",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_mirror_github_release_mirrorlatest",
@@ -57264,7 +57971,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/mirror-github-release.mjs",
-      "source_location": "L31",
+      "source_location": "L32",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_mirror_github_release_publiccnbtext",
@@ -57300,7 +58007,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/mirror-github-release.mjs",
-      "source_location": "L57",
+      "source_location": "L58",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_mirror_github_release_uploadverified",
@@ -57312,7 +58019,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/mirror-github-release.mjs",
-      "source_location": "L58",
+      "source_location": "L59",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_mirror_github_release_uploadverified",
@@ -57324,7 +58031,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/mirror-github-release.mjs",
-      "source_location": "L60",
+      "source_location": "L61",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_mirror_github_release_uploadverified",
@@ -57336,7 +58043,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/mirror-github-release.mjs",
-      "source_location": "L59",
+      "source_location": "L60",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_mirror_github_release_uploadverified",
@@ -57348,12 +58055,24 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/mirror-github-release.mjs",
-      "source_location": "L77",
+      "source_location": "L78",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_mirror_github_release_mirrorlatest",
       "target": "app_scripts_mirror_github_release_latestrelease",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L115",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release_mirrorlatest",
+      "target": "app_scripts_prepare_cnb_release_transformsignedmoduleindex"
     },
     {
       "relation": "calls",
@@ -57373,7 +58092,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "app/scripts/mirror-github-release.mjs",
-      "source_location": "L102",
+      "source_location": "L103",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_mirror_github_release_mirrorlatest",
@@ -57385,7 +58104,19 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "app/scripts/mirror-github-release.mjs",
-      "source_location": "L104",
+      "source_location": "L110",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_mirror_github_release_mirrorlatest",
+      "target": "app_scripts_release_integrity_extensionindexnamesforrelease"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/scripts/mirror-github-release.mjs",
+      "source_location": "L105",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_mirror_github_release_mirrorlatest",
@@ -57397,7 +58128,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "app/scripts/mirror-github-release.mjs",
-      "source_location": "L113",
+      "source_location": "L114",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_mirror_github_release_mirrorlatest",
@@ -57409,7 +58140,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "app/scripts/mirror-github-release.mjs",
-      "source_location": "L106",
+      "source_location": "L107",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_mirror_github_release_mirrorlatest",
@@ -57467,7 +58198,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L7",
+      "source_location": "L8",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_prepare_cnb_release",
@@ -57478,7 +58209,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L13",
+      "source_location": "L14",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_prepare_cnb_release",
@@ -57489,7 +58220,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L19",
+      "source_location": "L20",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_prepare_cnb_release",
@@ -57500,7 +58231,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L46",
+      "source_location": "L47",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_prepare_cnb_release",
@@ -57511,7 +58242,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L37",
+      "source_location": "L38",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_prepare_cnb_release",
@@ -57522,7 +58253,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L5",
+      "source_location": "L6",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_prepare_cnb_release",
@@ -57533,7 +58264,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L194",
+      "source_location": "L215",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_prepare_cnb_release",
@@ -57544,7 +58275,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L152",
+      "source_location": "L173",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_prepare_cnb_release",
@@ -57555,7 +58286,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L28",
+      "source_location": "L29",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_prepare_cnb_release",
@@ -57566,7 +58297,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L124",
+      "source_location": "L125",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_prepare_cnb_release",
@@ -57577,7 +58308,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L92",
+      "source_location": "L93",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_prepare_cnb_release",
@@ -57588,7 +58319,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L78",
+      "source_location": "L79",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_prepare_cnb_release",
@@ -57599,11 +58330,46 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L54",
+      "source_location": "L153",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_prepare_cnb_release",
+      "target": "app_scripts_prepare_cnb_release_transformsignedmoduleindex",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/prepare-cnb-release.mjs",
+      "source_location": "L55",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_prepare_cnb_release",
       "target": "app_scripts_prepare_cnb_release_transformupdatermanifest",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/prepare-cnb-release.mjs",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_prepare_cnb_release",
+      "target": "app_scripts_release_integrity",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/prepare-cnb-release.mjs",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_prepare_cnb_release",
+      "target": "app_scripts_release_integrity_githubasset",
       "confidence_score": 1.0
     },
     {
@@ -57647,22 +58413,10 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L47",
+      "source_location": "L48",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_prepare_cnb_release_cnblatestasseturl",
-      "target": "app_scripts_prepare_cnb_release_assertsaferepo",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L38",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "app_scripts_prepare_cnb_release_cnbtaggedasseturl",
       "target": "app_scripts_prepare_cnb_release_assertsaferepo",
       "confidence_score": 1.0
     },
@@ -57675,6 +58429,18 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_prepare_cnb_release_cnbtaggedasseturl",
+      "target": "app_scripts_prepare_cnb_release_assertsaferepo",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/prepare-cnb-release.mjs",
+      "source_location": "L40",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_prepare_cnb_release_cnbtaggedasseturl",
       "target": "app_scripts_prepare_cnb_release_assertsafetag",
       "confidence_score": 1.0
     },
@@ -57683,7 +58449,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L33",
+      "source_location": "L34",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_prepare_cnb_release_releasetagfromurl",
@@ -57695,7 +58461,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L87",
+      "source_location": "L88",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_prepare_cnb_release_transformreleaseartifact",
@@ -57707,7 +58473,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L67",
+      "source_location": "L68",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_prepare_cnb_release_transformupdatermanifest",
@@ -57719,7 +58485,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L87",
+      "source_location": "L88",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_prepare_cnb_release_transformreleaseartifact",
@@ -57743,7 +58509,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L87",
+      "source_location": "L88",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_prepare_cnb_release_transformreleaseartifact",
@@ -57755,7 +58521,19 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L67",
+      "source_location": "L167",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_prepare_cnb_release_transformsignedmoduleindex",
+      "target": "app_scripts_prepare_cnb_release_cnbtaggedasseturl",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/prepare-cnb-release.mjs",
+      "source_location": "L68",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_prepare_cnb_release_transformupdatermanifest",
@@ -57779,7 +58557,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L176",
+      "source_location": "L197",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_prepare_cnb_release_preparecnbrelease",
@@ -57803,7 +58581,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L136",
+      "source_location": "L137",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_prepare_cnb_release_transformcockroachmoduleindex",
@@ -57815,7 +58593,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L100",
+      "source_location": "L101",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_prepare_cnb_release_transformmoduleindex",
@@ -57827,7 +58605,19 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L180",
+      "source_location": "L170",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_prepare_cnb_release_transformsignedmoduleindex",
+      "target": "app_scripts_prepare_cnb_release_transformreleaseartifact",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/prepare-cnb-release.mjs",
+      "source_location": "L201",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_prepare_cnb_release_preparecnbrelease",
@@ -57851,7 +58641,19 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/prepare-cnb-release.mjs",
-      "source_location": "L185",
+      "source_location": "L154",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_prepare_cnb_release_transformsignedmoduleindex",
+      "target": "app_scripts_prepare_cnb_release_transformmoduleindex",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/prepare-cnb-release.mjs",
+      "source_location": "L206",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_prepare_cnb_release_preparecnbrelease",
@@ -57869,6 +58671,30 @@
       "source": "app_scripts_prepare_cnb_release_test",
       "target": "app_scripts_prepare_cnb_release_transformcockroachmoduleindex",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/prepare-cnb-release.mjs",
+      "source_location": "L155",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_prepare_cnb_release_transformsignedmoduleindex",
+      "target": "app_scripts_prepare_cnb_release_transformcockroachmoduleindex",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/scripts/prepare-cnb-release.mjs",
+      "source_location": "L164",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_prepare_cnb_release_transformsignedmoduleindex",
+      "target": "app_scripts_release_integrity_githubasset"
     },
     {
       "relation": "contains",
@@ -58714,11 +59540,33 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/release-integrity.mjs",
-      "source_location": "L55",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_release_integrity",
+      "target": "app_scripts_release_integrity_assertextensionindexassets",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/release-integrity.mjs",
+      "source_location": "L69",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_release_integrity",
       "target": "app_scripts_release_integrity_assertupdater",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/scripts/release-integrity.mjs",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_scripts_release_integrity",
+      "target": "app_scripts_release_integrity_extensionindexnamesforrelease",
       "confidence_score": 1.0
     },
     {
@@ -58736,7 +59584,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/release-integrity.mjs",
-      "source_location": "L11",
+      "source_location": "L25",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_release_integrity",
@@ -58747,7 +59595,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/release-integrity.mjs",
-      "source_location": "L17",
+      "source_location": "L31",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_release_integrity",
@@ -58769,7 +59617,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/release-integrity.mjs",
-      "source_location": "L45",
+      "source_location": "L59",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_release_integrity",
@@ -58780,7 +59628,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/release-integrity.mjs",
-      "source_location": "L7",
+      "source_location": "L21",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_release_integrity",
@@ -58791,7 +59639,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/release-integrity.mjs",
-      "source_location": "L24",
+      "source_location": "L38",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_release_integrity",
@@ -58803,7 +59651,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/release-integrity.mjs",
-      "source_location": "L15",
+      "source_location": "L29",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_release_integrity_githubasset",
@@ -58815,7 +59663,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/scripts/release-integrity.mjs",
-      "source_location": "L49",
+      "source_location": "L63",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_scripts_release_integrity_modulecomponents",
@@ -127027,7 +127875,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/deployment/cloud-release.md",
-      "source_location": "L48",
+      "source_location": "L49",
       "weight": 1.0,
       "_origin": "ast",
       "source": "docs_deployment_cloud_release_github_\u4e91\u7aef\u53d1\u5e03\u4e0e_cnb_\u4e0b\u8f7d\u955c\u50cf",
@@ -127049,7 +127897,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/deployment/cloud-release.md",
-      "source_location": "L56",
+      "source_location": "L57",
       "weight": 1.0,
       "_origin": "ast",
       "source": "docs_deployment_cloud_release_github_\u4e91\u7aef\u53d1\u5e03\u4e0e_cnb_\u4e0b\u8f7d\u955c\u50cf",
@@ -136367,5 +137215,5 @@
       "source_file": "docs/superpowers/plans/2026-05-21-temporary-focus-windows.md"
     }
   ],
-  "built_at_commit": "352297088a306d026250f3a97f5fd4ad5060d8c2"
+  "built_at_commit": "1b910d8658c5dcadbdc6f25b1a0b4fada953c850"
 }

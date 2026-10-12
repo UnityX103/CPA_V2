@@ -7,8 +7,8 @@ import { promisify } from 'node:util';
 import { isDeepStrictEqual } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { githubJson, download } from './github-public.mjs';
-import { GITHUB_REPO, INDEX_NAMES, safeAssetName, githubAsset, hashes, verifySignature, moduleComponents, assertUpdater } from './release-integrity.mjs';
-import { DEFAULT_CNB_REPO, cnbTaggedAssetUrl, transformUpdaterManifest, transformModuleIndex, transformCockroachModuleIndex } from './prepare-cnb-release.mjs';
+import { GITHUB_REPO, extensionIndexNamesForRelease, safeAssetName, githubAsset, hashes, verifySignature, moduleComponents, assertUpdater, assertExtensionIndexAssets } from './release-integrity.mjs';
+import { DEFAULT_CNB_REPO, cnbTaggedAssetUrl, transformUpdaterManifest, transformSignedModuleIndex } from './prepare-cnb-release.mjs';
 import { getRelease, ensureRelease, uploadAsset, verifyUploadedAsset, publishCnbRelease, orderedAssetPaths } from './sync-cnb-release.mjs';
 const exec = promisify(execFile);
 const RECEIPT = 'github-mirror-receipt.json';
@@ -26,6 +26,7 @@ export function validateRelease(release) {
         seen.add(asset.name);
     }
     if (!seen.has('latest.json')) throw new Error('Release has no updater manifest');
+    assertExtensionIndexAssets([...seen], { indexes: extensionIndexNamesForRelease(release.tag_name), requireVariants: false });
 }
 async function publicCnbText(repo, tag, name) {
     const response = await fetch(cnbTaggedAssetUrl(repo, tag, name), { signal: AbortSignal.timeout(60000) });
@@ -106,13 +107,12 @@ export async function mirrorLatest({ dryRun = false, repo = DEFAULT_CNB_REPO } =
             await verifySignature(join(stage, name), entry.signature, key);
         }
         const dependencies = new Map();
-        for (const name of INDEX_NAMES) {
+        for (const name of extensionIndexNamesForRelease(upstream.tag_name)) {
             const path = join(stage, name);
             const index = JSON.parse(await readFile(path));
             await verifySignature(path, await readFile(`${path}.sig`, 'utf8'), key);
             for (const component of moduleComponents(index)) dependencies.set(component.url, component);
-            const transform = name.startsWith('video-') ? transformModuleIndex : transformCockroachModuleIndex;
-            const expected = transform(index, { repo });
+            const expected = transformSignedModuleIndex(name, index, { repo });
             const variant = join(stage, name.replace('.json', '.cnb.json'));
             // Legacy releases have no pre-signed variant; reuse a verified existing CNB index only.
             if (!upstream.assets.some(a => a.name === name.replace('.json', '.cnb.json'))) {

@@ -2,8 +2,8 @@ import { cp, mkdir, readdir, readFile, writeFile, rm } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { prepareUpdaterRelease } from './prepare-updater-release.mjs';
-import { transformModuleIndex, transformCockroachModuleIndex, DEFAULT_CNB_REPO } from './prepare-cnb-release.mjs';
-import { INDEX_NAMES, assertUpdater, verifySignature } from './release-integrity.mjs';
+import { transformSignedModuleIndex, DEFAULT_CNB_REPO } from './prepare-cnb-release.mjs';
+import { INDEX_NAMES, assertUpdater, assertExtensionIndexAssets, verifySignature } from './release-integrity.mjs';
 import { githubJson, download } from './github-public.mjs';
 const appRoot = resolve(import.meta.dirname, '..');
 const config = JSON.parse(await readFile(join(appRoot, 'src-tauri/tauri.conf.json')));
@@ -53,6 +53,7 @@ if (command === 'stage') {
     await writeFile(join(output, 'latest.json'), JSON.stringify(latest, null, 2)+'\n');
     // Preserve the last published extension versions; do not rebuild their large runtimes.
     const previous = await githubJson('/repos/UnityX103/CPA_V2/releases/latest');
+    assertExtensionIndexAssets(previous.assets.map(asset => asset.name));
     for (const name of INDEX_NAMES) {
         for (const filename of [name, `${name}.sig`]) {
             const asset = previous.assets.find(a => a.name === filename);
@@ -61,9 +62,8 @@ if (command === 'stage') {
         }
         await verifySignature(join(output, name), await readFile(join(output, `${name}.sig`), 'utf8'), config.plugins.updater.pubkey);
         const index = JSON.parse(await readFile(join(output, name)));
-        const transform = name.startsWith('video-') ? transformModuleIndex : transformCockroachModuleIndex;
         const variant = join(output, name.replace('.json', '.cnb.json'));
-        await writeFile(variant, JSON.stringify(transform(index, { repo: DEFAULT_CNB_REPO }), null, 2)+'\n');
+        await writeFile(variant, JSON.stringify(transformSignedModuleIndex(name, index, { repo: DEFAULT_CNB_REPO }), null, 2)+'\n');
         execFileSync(join(appRoot, 'node_modules/.bin/tauri'), ['signer', 'sign', variant], { stdio: 'pipe' });
         await verifySignature(variant, await readFile(`${variant}.sig`, 'utf8'), config.plugins.updater.pubkey);
     }

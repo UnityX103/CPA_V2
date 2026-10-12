@@ -1810,8 +1810,8 @@
     "semantic_hash": "16b689eb0b370b10f8bf55ee05b5af58"
   },
   "app/scripts/prepare-cnb-release.mjs": {
-    "mtime": 1788309420.6243994,
-    "ast_hash": "a32b2371efbb28076ebf5e101729e72f",
+    "mtime": 1791815178.4973216,
+    "ast_hash": "d9eb4d38ac3a09cb284d503da560bd8d",
     "semantic_hash": ""
   },
   "app/scripts/prepare-cnb-release.test.mjs": {
@@ -2300,8 +2300,8 @@
     "semantic_hash": ""
   },
   "app/scripts/cloud-release.mjs": {
-    "mtime": 1789283525.3258655,
-    "ast_hash": "1841616a02257e0879240b11a12d86e8",
+    "mtime": 1791815178.4978433,
+    "ast_hash": "2fddbf57f599ae616fe4a3b051ffa97c",
     "semantic_hash": ""
   },
   "app/scripts/cloud-release.test.mjs": {
@@ -2315,13 +2315,13 @@
     "semantic_hash": ""
   },
   "app/scripts/mirror-github-release.mjs": {
-    "mtime": 1789263447.5640655,
-    "ast_hash": "8c650e136d7bf1921c17a6ecf22258cf",
+    "mtime": 1791815492.7076247,
+    "ast_hash": "b3e212e4e67dbabd8424ca71d322bc49",
     "semantic_hash": ""
   },
   "app/scripts/release-integrity.mjs": {
-    "mtime": 1789263447.5641954,
-    "ast_hash": "d027b90ba3a1353e65ae39fb0954c251",
+    "mtime": 1791815492.707381,
+    "ast_hash": "cf973e62967ee6e767e32999cb4e150d",
     "semantic_hash": ""
   },
   ".cnb.yml": {
@@ -2345,8 +2345,8 @@
     "semantic_hash": ""
   },
   "docs/deployment/cloud-release.md": {
-    "mtime": 1791811491.6564317,
-    "ast_hash": "6124421e09a5a958cd54ee30a5d6b762",
+    "mtime": 1791815659.8548443,
+    "ast_hash": "5fd7a50ef8f716bf05bf5fb3382bc9a0",
     "semantic_hash": ""
   },
   "docs/deployment/release-0.1.32.md": {
@@ -2630,8 +2630,8 @@
     "semantic_hash": ""
   },
   "app/feature-packs/kegel/README.md": {
-    "mtime": 1791810429.8480573,
-    "ast_hash": "f0bfce39dd3ac79a507215c5f32daf91",
+    "mtime": 1791815659.854595,
+    "ast_hash": "a2388eab30effbb1f1522c8b4ee67c15",
     "semantic_hash": ""
   },
   "app/feature-packs/kegel/index.html": {
@@ -2657,6 +2657,21 @@
   "docs/deployment/release-0.2.9.md": {
     "mtime": 1791813157.1078174,
     "ast_hash": "f6cde24e0d3a59369fc4d77d05acbc87",
+    "semantic_hash": ""
+  },
+  "app/scripts/kegel-cloud-release.mjs": {
+    "mtime": 1791815492.70798,
+    "ast_hash": "58126cc95ae5348ec4dfc78a1bf87faf",
+    "semantic_hash": ""
+  },
+  "app/scripts/kegel-release.test.mjs": {
+    "mtime": 1791815492.7083106,
+    "ast_hash": "97c27a35b1049a7a65dfa73e3b5e9e3b",
+    "semantic_hash": ""
+  },
+  ".github/workflows/kegel-module.yml": {
+    "mtime": 1791815659.8543718,
+    "ast_hash": "5d972e18e81e42b2d9638c60c6224ca8",
     "semantic_hash": ""
   }
 }

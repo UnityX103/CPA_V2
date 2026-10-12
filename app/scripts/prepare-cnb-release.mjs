@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { basename, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { githubAsset } from './release-integrity.mjs';
 
 export const DEFAULT_CNB_REPO = 'nanzhaigame-xpy/CPA_V2';
 
@@ -147,6 +148,26 @@ export function transformCockroachModuleIndex(index, options) {
         dependencies: transformReleaseArtifact(index.dependencies, 'cockroach dependencies', options),
         runtimes,
     };
+}
+
+export function transformSignedModuleIndex(name, index, options) {
+    if (name === 'video-editor-module-index.json') return transformModuleIndex(index, options);
+    if (name === 'cockroach-module-index.json') return transformCockroachModuleIndex(index, options);
+    if (name !== 'kegel-module-index.json') throw new Error('Unknown signed extension index');
+    const keys = ['schemaVersion', 'id', 'version', 'runtimeAbi', 'distribution', 'url', 'mirrors', 'size', 'sha256', 'manifestSha256'];
+    if (Object.keys(index).some(key => !keys.includes(key)) || index.schemaVersion !== 1
+        || index.id !== 'wellness.kegel' || index.runtimeAbi !== 'cpa-webview-break-activity-v1'
+        || index.distribution !== 'project-owned' || !/^[0-9A-Za-z][0-9A-Za-z.+-]{0,63}$/.test(index.version ?? '')
+        || !Number.isInteger(index.size) || index.size <= 0 || index.size > 16 * 1024 * 1024
+        || !/^[a-f0-9]{64}$/i.test(index.sha256 ?? '') || !/^[a-f0-9]{64}$/i.test(index.manifestSha256 ?? '')
+        || !Array.isArray(index.mirrors)) throw new Error('Invalid Kegel module index');
+    const artifact = githubAsset(index.url);
+    if (artifact.name !== `kegel-module-${index.version}.zip`) throw new Error('Kegel archive/version mismatch');
+    for (const mirror of index.mirrors) {
+        const expected = cnbTaggedAssetUrl(options.repo, artifact.tag, artifact.name);
+        if (mirror !== index.url && mirror !== expected) throw new Error('Unapproved Kegel package mirror');
+    }
+    return transformReleaseArtifact(index, 'Kegel webview feature', options);
 }
 
 export async function prepareCnbRelease({

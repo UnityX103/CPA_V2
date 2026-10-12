@@ -36,8 +36,9 @@ CNB 脚本仅用内置 CNB_TOKEN 写 CNB Release 和导入相应 Git tag，GitHu
 - 原生包：macOS 两个薄包，Windows x64 NSIS。不构建 Universal 或 Windows ARM64。
 - 当前 CI 沿用项目 ad-hoc macOS 签名，会验证资源封印与每个 Mach-O 的架构；这不等于 Apple Developer ID 签名与公证。当前工作流没有配置 Apple 公证。Windows 安装包仍使用 updater 签名，没有新增商业 Authenticode 签名。
 - updater latest.json 不单独签名；里面的安装包签名保持不变，CNB 只把下载 URL 改成 CNB 地址。
-- GitHub 发布时沿用上一版公开 Release 的两个已验证扩展索引，不重建扩展逻辑或大运行时；扩展版本升级仍按各模块打包流程产生新索引，当前主应用工作流不会自动发布未打包的扩展源码变更。
-- GitHub 同时生成并签署 `video-editor-module-index.cnb.json(.sig)` 和 `cockroach-module-index.cnb.json(.sig)`，供 CNB 下载。CNB 验证签名以及内容与上游索引的对应关系，再将其复制为客户端使用的标准索引名。CNB 不保存签名私钥。
+- GitHub 发布时沿用上一版公开 Release 的已验证扩展索引，不重建扩展逻辑或大运行时。0.2.9 起必须包含视频、蟑螂和凯格尔三套索引及签名；缺少任何一套会阻止后续主应用发布。扩展版本升级仍按各模块打包流程产生新索引，主应用工作流不会自动发布未打包的扩展源码变更。
+- GitHub 为三套索引生成并签署 `.cnb.json(.sig)` 变体，供 CNB 下载。CNB 验证签名以及内容与上游索引的对应关系，再将其复制为客户端使用的标准索引名。CNB 不保存签名私钥。0.2.8 及以前的镜像仍只要求原有两套索引，并保留历史 CNB 变体复用流程。
+- 凯格尔使用 `.github/workflows/kegel-module.yml` 独立发布：在 main 选择已有的当前主应用 Release 和模块版本，`publish=true` 才签名并补充缺失附件。核对主机 ABI、原生适配器和能力声明与该主应用 tag 一致，模块逻辑可独立更新；现有文件必须哈希相同，既有签名必须对同一索引有效，不能覆盖不同的公开内容。模块 ZIP 先上传、标准索引最后上传，再触发 CNB 镜像。已发布 0.2.9 客户端即可安装补齐后的模块，无需重建主应用。
 - 旧版本没有 `.cnb.json` 时，仅可复用已经存在且签名和内容均正确的 CNB 索引；否则明确报错，不输出无效签名。
 - 镜像复制 GitHub Latest 的所有附件，包括额外的预签名 CNB 索引；唯一有意不同的标准资源是 latest.json 和两套提供商专用索引。自动生成的 GitHub Source code ZIP/TAR 不属于 Release 附件，源提交和 tag 通过 Git 导入 CNB。
 - 最新索引引用的旧 tag 大文件也会补齐到对应 CNB tag，按大小和哈希跳过已有内容，不把它们复制到新的 app Release。

@@ -3,7 +3,21 @@ import { createReadStream } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 
 export const GITHUB_REPO = 'UnityX103/CPA_V2';
-export const INDEX_NAMES = ['video-editor-module-index.json', 'cockroach-module-index.json'];
+export const INDEX_NAMES = ['video-editor-module-index.json', 'cockroach-module-index.json', 'kegel-module-index.json'];
+export function extensionIndexNamesForRelease(tag) {
+    const [major, minor, patch] = tag.replace(/^v/, '').split('.').map(Number);
+    const kegelHost = major > 0 || minor > 2 || (minor === 2 && patch >= 9);
+    return kegelHost ? INDEX_NAMES : INDEX_NAMES.filter(name => name !== 'kegel-module-index.json');
+}
+export function assertExtensionIndexAssets(names, { indexes = INDEX_NAMES, requireVariants = true } = {}) {
+    for (const name of indexes) {
+        const requiredNames = [name, `${name}.sig`];
+        if (requireVariants) requiredNames.push(name.replace('.json', '.cnb.json'), name.replace('.json', '.cnb.json.sig'));
+        for (const required of requiredNames) {
+            if (!names.includes(required)) throw new Error(`Missing signed extension asset: ${required}`);
+        }
+    }
+}
 export function safeAssetName(name) {
     if (!/^[A-Za-z0-9][A-Za-z0-9._+-]*$/.test(name)) throw new Error('Unsafe asset name');
     return name;
