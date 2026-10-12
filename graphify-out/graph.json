@@ -29150,8 +29150,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_test",
-      "community": 221,
-      "community_name": "SettingsPanel.test.tsx",
+      "community": 65,
+      "community_name": "extensionPacks.ts",
       "norm_label": "settingspanel.test.tsx"
     },
     {
@@ -29161,8 +29161,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_test_invoke",
-      "community": 221,
-      "community_name": "SettingsPanel.test.tsx",
+      "community": 65,
+      "community_name": "extensionPacks.ts",
       "norm_label": "invoke"
     },
     {
@@ -29172,8 +29172,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_test_listen",
-      "community": 221,
-      "community_name": "SettingsPanel.test.tsx",
+      "community": 65,
+      "community_name": "extensionPacks.ts",
       "norm_label": "listen"
     },
     {
@@ -29183,8 +29183,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_test_open",
-      "community": 221,
-      "community_name": "SettingsPanel.test.tsx",
+      "community": 65,
+      "community_name": "extensionPacks.ts",
       "norm_label": "open"
     },
     {
@@ -29194,8 +29194,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_test_message",
-      "community": 221,
-      "community_name": "SettingsPanel.test.tsx",
+      "community": 65,
+      "community_name": "extensionPacks.ts",
       "norm_label": "message"
     },
     {
@@ -29206,8 +29206,8 @@
       "_callable": true,
       "_origin": "ast",
       "id": "app_src_ui_settingspanel_test_packstatus",
-      "community": 221,
-      "community_name": "SettingsPanel.test.tsx",
+      "community": 65,
+      "community_name": "extensionPacks.ts",
       "norm_label": "packstatus()"
     },
     {
@@ -34474,6 +34474,17 @@
       "community": 214,
       "community_name": "release-0.2.8.md",
       "norm_label": "release-0.2.8.md"
+    },
+    {
+      "label": "release-0.2.9.md",
+      "file_type": "document",
+      "source_file": "docs/deployment/release-0.2.9.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "docs_deployment_release_0_2_9",
+      "community": 221,
+      "community_name": "release-0.2.9.md",
+      "norm_label": "release-0.2.9.md"
     },
     {
       "label": "2026-08-31-sam2-birefnet-cross-platform-commercial-audit.md",
@@ -136356,5 +136367,5 @@
       "source_file": "docs/superpowers/plans/2026-05-21-temporary-focus-windows.md"
     }
   ],
-  "built_at_commit": "a7c317c945bdef4106603174455deb974e8575c1"
+  "built_at_commit": "352297088a306d026250f3a97f5fd4ad5060d8c2"
 }
