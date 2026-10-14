@@ -144,6 +144,9 @@
 .pomo-start-summary dt { font-size: 9px; line-height: 1.5; color: #8F7766; white-space: nowrap; }
 .pomo-start-summary dd { margin: 3px 0 0; font-size: 17px; line-height: 1.2; color: var(--text-brand-dark); }
 .pomo-start-summary dd span { margin-left: 2px; font-size: 9px; color: #8F7766; }
+.pomo-start-button { width: 154px; min-height: 44px; margin: 0; padding: 10px 16px; font-size: 16px; font-weight: 700; border-radius: 13px; box-shadow: 0 3px 8px #A5422829; cursor: pointer; }
+.pomo-start-button:hover { background: #B84D2E; }
+.pomo-start-button:focus-visible { outline: 3px solid #A54228; outline-offset: 3px; }
 
 /* Rest keeps the complete clock and its explicit skip action on screen. */
 .pomo-panel[data-break-reminder-level] { cursor: grab; }

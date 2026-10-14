@@ -34,6 +34,8 @@ export interface BridgeSnapshot {
         totalRounds: number;
         autoStartBreak: boolean;
         autoStartOnLaunch: boolean;
+
+        autoCenterAfterBreak: boolean;
         autoPinAfterFocus: boolean;
         endActionMode: PomodoroEndActionMode;
         playVideoOnBreakEnd: boolean;
@@ -82,6 +84,7 @@ export type DispatchPayload =
     | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'applySettings'; args: [number, number, number, boolean, boolean] }
     | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'setAutoPinAfterFocus'; args: [boolean] }
     | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'setAutoStartOnLaunch'; args: [boolean] }
+    | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'setAutoCenterAfterBreak'; args: [boolean] }
     | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'applyEndActionSettings'; args: [PomodoroEndActionMode, PomodoroEndActionVideo, boolean?] }
     | { v: typeof BRIDGE_VERSION; store: 'pomodoro';   action: 'applyEndSoundSettings'; args: [PomodoroEndSounds] }
     | { v: typeof BRIDGE_VERSION; store: 'presence';   action: 'applySettings'; args: [PresencePreferences] }

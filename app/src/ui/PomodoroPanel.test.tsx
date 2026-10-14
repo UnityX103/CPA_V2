@@ -26,6 +26,7 @@ vi.mock('@tauri-apps/api/window', () => ({
 }));
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: invokeMock }));
+vi.mock('@tauri-apps/api/event', () => ({ listen: vi.fn().mockResolvedValue(() => {}) }));
 
 function resetPomodoro() {
     usePomodoroStore.setState({
@@ -38,6 +39,7 @@ function resetPomodoro() {
         isRunning: false,
         isPinned: false,
         autoStartBreak: true,
+        autoCenterAfterBreak: true,
         consecutiveCompletedFocus: 0,
         presenceAutomationState: 'none',
         lastEndEvent: null,
@@ -71,7 +73,55 @@ beforeEach(() => {
 
 afterEach(() => {
     cleanup();
+    vi.useRealTimers();
     vi.unstubAllGlobals();
+});
+
+describe('PomodoroPanel startup reminder', () => {
+    it('shows launch attention even when the separate break-end reminder is disabled', () => {
+        usePomodoroStore.setState({ autoCenterAfterBreak: false });
+        render(<PomodoroPanel />);
+        expect(pinCalls().slice(-1)[0]).toEqual(['set_main_window_pinned', { onTop: true }]);
+        fireEvent.click(screen.getByRole('button', { name: '开始' }));
+        expect(pinCalls().slice(-1)[0]).toEqual(['set_main_window_pinned', { onTop: false }]);
+    });
+    it.each([false, true])('starts complete and pinned until the user starts, autoDock=%s', async (autoDock) => {
+        localStorage.setItem('pomo-auto-dock', String(autoDock));
+        vi.stubGlobal('__TAURI_INTERNALS__', {});
+        invokeMock.mockImplementation(async (command) => command === 'configure_pomodoro_docking'
+            ? { side: 'right', expanded: false, dragging: false } : undefined);
+        const { container } = render(<PomodoroPanel />);
+        await waitFor(() => expect(invokeMock).toHaveBeenCalledWith('configure_pomodoro_docking',
+            expect.objectContaining({ awaitingStart: true })));
+        expect(pinCalls().slice(-1)[0]).toEqual(['set_main_window_pinned', { onTop: true }]);
+        expect(container.querySelector('.pomo-dock')).toBeNull();
+        const start = screen.getByRole('button', { name: '开始' });
+        expect(start.classList.contains('pomo-start-button')).toBe(true);
+        fireEvent.click(start);
+        expect(usePomodoroStore.getState().isRunning).toBe(true);
+        await waitFor(() => expect(invokeMock).toHaveBeenLastCalledWith('configure_pomodoro_docking',
+            expect.objectContaining({ awaitingStart: false })));
+        expect(pinCalls().slice(-1)[0]).toEqual(['set_main_window_pinned', { onTop: autoDock }]);
+    });
+
+    it('waits for saved preferences before changing native pinning', () => {
+        const { rerender } = render(<PomodoroPanel preferencesReady={false} />);
+        expect(pinCalls()).toHaveLength(0);
+        rerender(<PomodoroPanel preferencesReady />);
+        expect(pinCalls().slice(-1)[0]).toEqual(['set_main_window_pinned', { onTop: true }]);
+    });
+
+    it('keeps launch attention for five seconds when automatic start is enabled', () => {
+        vi.useFakeTimers();
+        usePomodoroStore.setState({ isRunning: true });
+        render(<PomodoroPanel />);
+        expect(pinCalls().slice(-1)[0]).toEqual(['set_main_window_pinned', { onTop: true }]);
+        act(() => vi.advanceTimersByTime(4999));
+        expect(pinCalls().slice(-1)[0]).toEqual(['set_main_window_pinned', { onTop: true }]);
+        act(() => vi.advanceTimersByTime(1));
+        expect(pinCalls().slice(-1)[0]).toEqual(['set_main_window_pinned', { onTop: false }]);
+        expect(usePomodoroStore.getState().isRunning).toBe(true);
+    });
 });
 
 describe('PomodoroPanel drag', () => {
@@ -157,6 +207,42 @@ describe('PomodoroPanel scale root', () => {
 });
 
 describe('PomodoroPanel pause overlay', () => {
+    it('keeps the normal waiting behaviour without temporary pinning when the reminder is disabled', () => {
+        usePomodoroStore.setState({ autoCenterAfterBreak: false, currentPhase: 'break', isRunning: true, remainingSeconds: 1 });
+        render(<PomodoroPanel />);
+        act(() => usePomodoroStore.getState().tick(1));
+        expect(screen.getByRole('button', { name: '开始' })).toBeTruthy();
+        expect(screen.queryByText('休息结束，待开始')).toBeNull();
+        expect(pinCalls().slice(-1)[0]).toEqual(['set_main_window_pinned', { onTop: false }]);
+    });
+    it.each([false, true])('keeps the next start visible and temporarily pinned after a timed break, autoDock=%s', async (autoDock) => {
+        localStorage.setItem('pomo-auto-dock', String(autoDock));
+        usePomodoroStore.setState({ currentPhase: 'break', isRunning: true, remainingSeconds: 1 });
+        const { container } = render(<PomodoroPanel />);
+        act(() => usePomodoroStore.getState().tick(1));
+        expect(usePomodoroStore.getState()).toMatchObject({ currentPhase: 'focus', currentRound: 2, isRunning: false });
+        expect(screen.getByText('休息结束，待开始')).toBeTruthy();
+        expect(pinCalls().slice(-1)[0]).toEqual(['set_main_window_pinned', { onTop: true }]);
+        const start = screen.getByRole('button', { name: '开始专注' });
+        expect(start.classList.contains('pomo-start-button')).toBe(true);
+        expect(container.querySelector('.pomo-dock')).toBeNull();
+        await act(async () => fireEvent.pointerDown(start, { button: 0 }));
+        expect(startDragging).not.toHaveBeenCalled();
+        fireEvent.click(start);
+        expect(usePomodoroStore.getState()).toMatchObject({ currentPhase: 'focus', currentRound: 2, isRunning: true });
+        expect(screen.queryByRole('region', { name: '番茄钟待开始' })).toBeNull();
+        expect(pinCalls().slice(-1)[0]).toEqual(['set_main_window_pinned', { onTop: autoDock }]);
+    });
+
+    it('offers a visible start for a fresh sequence after the final break', () => {
+        usePomodoroStore.setState({ currentPhase: 'break', currentRound: 4, isRunning: true, remainingSeconds: 1 });
+        render(<PomodoroPanel />);
+        act(() => usePomodoroStore.getState().tick(1));
+        expect(usePomodoroStore.getState().currentPhase).toBe('completed');
+        fireEvent.click(screen.getByRole('button', { name: '开始新一轮' }));
+        expect(usePomodoroStore.getState()).toMatchObject({ currentPhase: 'focus', currentRound: 1, isRunning: true, remainingSeconds: 1500 });
+    });
+
     it('shows a manual pause before any elapsed time and keeps it paused when presence is confirmed', () => {
         usePomodoroStore.getState().pause();
         usePresenceStore.setState({ inputActivityEnabled: true, inputActivityAvailability: 'ready' });
@@ -326,6 +412,7 @@ describe('PomodoroPanel input activity status', () => {
 
 describe('PomodoroPanel HApJ0 pin behaviour', () => {
     it('syncs initial unpinned state and HApJ0 toggles to the main-window pin command', async () => {
+        usePomodoroStore.setState({ isRunning: true, remainingSeconds: 1490 });
         render(<PomodoroPanel />);
 
         await waitFor(() => {
@@ -367,7 +454,7 @@ describe('PomodoroPanel HApJ0 pin behaviour', () => {
         render(<PomodoroPanel />);
 
         await waitFor(() => {
-            expect(pinCalls()).toContainEqual(['set_main_window_pinned', { onTop: false }]);
+            expect(pinCalls()).toContainEqual(['set_main_window_pinned', { onTop: true }]);
         });
 
         const invokedCommands = invokeMock.mock.calls.map(([cmd]) => String(cmd));

@@ -100,6 +100,7 @@ export function useCloudAccountSync(opts: { enabled?: boolean } = {}) {
                 s.totalRounds !== p.totalRounds ||
                 s.autoStartBreak !== p.autoStartBreak ||
                 s.autoStartOnLaunch !== p.autoStartOnLaunch ||
+                s.autoCenterAfterBreak !== p.autoCenterAfterBreak ||
                 s.autoPinAfterFocus !== p.autoPinAfterFocus ||
                 s.endActionMode !== p.endActionMode ||
                 s.playVideoOnBreakEnd !== p.playVideoOnBreakEnd ||

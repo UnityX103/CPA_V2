@@ -7,7 +7,7 @@ import { BREAK_REMINDER_SCALES, type BreakReminderLevel } from '../domain/breakR
 
 export interface DockView { side: 'left' | 'right' | null; expanded: boolean; dragging: boolean; restScale?: number }
 const full: DockView = { side: null, expanded: false, dragging: false };
-export function usePomodoroDocking(autoDock: boolean, paused: boolean, phase = 'focus', enabled = true, restReminderLevel: BreakReminderLevel = 0) {
+export function usePomodoroDocking(autoDock: boolean, paused: boolean, phase = 'focus', enabled = true, restReminderLevel: BreakReminderLevel = 0, awaitingStart = false) {
     const suspended = useDockNoticeSuspension();
     const scale = useSettingsStore((state) => state.uiScale);
     const commands = useRef<Promise<unknown>>(Promise.resolve());
@@ -30,16 +30,16 @@ export function usePomodoroDocking(autoDock: boolean, paused: boolean, phase = '
         if (!('__TAURI_INTERNALS__' in window)) return;
         if (!enabled) return;
         let cancelled = false;
-        void enqueue<DockView>('configure_pomodoro_docking', { autoDock, paused, phase, scale, suspended, restReminderLevel })
+        void enqueue<DockView>('configure_pomodoro_docking', { autoDock, paused, phase, scale, suspended, restReminderLevel, awaitingStart })
             .then(value => { if (!cancelled) setView(value); })
             .catch(error => console.error('[docking] configure', error));
         return () => { cancelled = true; };
-    }, [autoDock, paused, phase, scale, enabled, suspended, restReminderLevel]);
+    }, [autoDock, paused, phase, scale, enabled, suspended, restReminderLevel, awaitingStart]);
     const hover = (hovered: boolean) => {
         if (!('__TAURI_INTERNALS__' in window)) return;
         void enqueue('hover_pomodoro_docking', { hovered })
             .catch(error => console.error('[docking] hover', error));
     };
-    return { ...view, side: phase === 'focus' ? view.side : null,
+    return { ...view, side: phase === 'focus' && !awaitingStart ? view.side : null,
         restScale: phase === 'break' ? (view.restScale ?? BREAK_REMINDER_SCALES[restReminderLevel]) : 1, hover };
 }

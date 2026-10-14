@@ -63,6 +63,7 @@ function makeCloudSnapshot(): CloudAccountData {
             totalRounds: 4,
             autoStartBreak: false,
             autoStartOnLaunch: false,
+            autoCenterAfterBreak: true,
             autoPinAfterFocus: true,
             endActionMode: 'topWindow',
             playVideoOnBreakEnd: false,

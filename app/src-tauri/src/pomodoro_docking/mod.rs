@@ -52,6 +52,7 @@ struct Inner {
     break_origin: Option<(f64, f64)>,
     rest_reminder_level: u8,
     rest_scale: f64,
+    awaiting_start: bool,
 }
 impl Default for Inner {
     fn default() -> Self {
@@ -70,6 +71,7 @@ impl Default for Inner {
             break_origin: None,
             rest_reminder_level: 0,
             rest_scale: 1.0,
+            awaiting_start: false,
         }
     }
 }
@@ -102,7 +104,7 @@ impl Inner {
         } else { self.view }
     }
     fn docking_allowed(&self) -> bool {
-        self.phase.as_deref().is_none_or(|phase| phase == "focus")
+        !self.awaiting_start && self.phase.as_deref().is_none_or(|phase| phase == "focus")
     }
     fn in_break(&self) -> bool {
         self.phase.as_deref() == Some("break")
@@ -111,7 +113,7 @@ impl Inner {
         self.notice_generation = self.notice_generation.wrapping_add(1);
     }
     fn focus_notice_token(&self, focused: bool) -> Option<u64> {
-        (self.phase.as_deref() == Some("focus") && !self.paused && !focused
+        (self.docking_allowed() && self.phase.as_deref() == Some("focus") && !self.paused && !focused
             && self.view.side.is_some() && self.keep_open_until_blur && !self.view.dragging && !self.suspended)
             .then_some(self.notice_generation)
     }
@@ -138,7 +140,7 @@ pub fn transient(app: &tauri::AppHandle) -> bool {
     state
         .inner
         .try_lock()
-        .map(|s| s.view.side.is_some() || s.view.dragging || s.suspended || s.in_break())
+        .map(|s| s.view.side.is_some() || s.view.dragging || s.suspended || s.in_break() || s.awaiting_start)
         .unwrap_or(true)
 }
 pub fn radius(width: f64, height: f64) -> Option<f64> {
@@ -323,6 +325,10 @@ pub fn resize_if_docked(app: &tauri::AppHandle, scale: f64) -> Result<bool, Stri
     let state = app.state::<Docking>();
     let mut s = state.inner.lock().map_err(|e| e.to_string())?;
     s.scale = scale;
+    if s.awaiting_start {
+        place_awaiting_start(&window(app)?, &mut s)?;
+        return Ok(true);
+    }
     if s.in_break() {
         place_break(&window(app)?, &mut s, false)?;
         return Ok(true);
@@ -343,6 +349,7 @@ pub async fn configure_pomodoro_docking(
     scale: f64,
     suspended: bool,
     rest_reminder_level: Option<u8>,
+    awaiting_start: Option<bool>,
 ) -> Result<Snapshot, String> {
     tauri::async_runtime::spawn_blocking(move || {
         let w = window(&app)?;
@@ -358,23 +365,32 @@ pub async fn configure_pomodoro_docking(
         let was_break = s.in_break();
         let reminder_level = rest_reminder_level.unwrap_or(0);
         if reminder_level > 3 { return Err("invalid break reminder level".into()); }
+        let was_awaiting_start = s.awaiting_start;
+        s.awaiting_start = awaiting_start.unwrap_or(false);
+        let awaiting_start_changed = was_awaiting_start != s.awaiting_start;
+        if awaiting_start_changed { s.gain_focus(); }
         let reminder_changed = s.rest_reminder_level != reminder_level;
         s.rest_reminder_level = reminder_level;
         s.scale = scale;
         let phase_changed = s.update_phase(phase);
         let pause_changed = s.paused != paused;
-        let changed = pause_changed || phase_changed || scale_changed;
+        let changed = pause_changed || phase_changed || scale_changed || awaiting_start_changed;
         s.auto_dock = auto_dock;
         s.update_pause(paused);
         if !s.restored {
             s.restored = true;
             restore(&app, &w, &mut s)?;
         }
+        if s.awaiting_start && !was_awaiting_start && !was_break && s.break_origin.is_none() {
+            // Launch attention is transient too: starting restores the user's normal position.
+            let p = w.outer_position().map_err(|e| e.to_string())?;
+            s.break_origin = Some((p.x as f64, p.y as f64));
+        }
         if s.in_break() && !was_break {
             let p = w.outer_position().map_err(|e| e.to_string())?;
             s.break_origin = Some((p.x as f64, p.y as f64));
         }
-        if was_break && !s.in_break() {
+        if (was_break || was_awaiting_start) && !s.in_break() && !s.awaiting_start {
             s.rest_scale = 1.0;
             if let Some((x, y)) = s.break_origin.take() {
                 let m = docking_monitor(&w, &s)?;
@@ -403,7 +419,7 @@ pub async fn configure_pomodoro_docking(
                 }
             }
         }
-        if !s.auto_dock && s.view.side.is_some() && !s.view.dragging && !s.in_break() {
+        if !s.auto_dock && s.view.side.is_some() && !s.view.dragging && !s.in_break() && !s.awaiting_start {
             let side = s.view.side.unwrap();
             let p = w.outer_position().map_err(|e| e.to_string())?;
             let m = w
@@ -425,7 +441,9 @@ pub async fn configure_pomodoro_docking(
             geometry(&w, &s, x, p.y as f64)?;
             save(&app, &w, &s)?;
         }
-        if s.in_break() && (!was_break || changed || reminder_changed || suspension_changed) && !s.view.dragging {
+        if s.awaiting_start && (changed || suspension_changed) && !s.view.dragging {
+            place_awaiting_start(&w, &mut s)?;
+        } else if s.in_break() && (!was_break || changed || reminder_changed || suspension_changed) && !s.view.dragging {
             place_break(&w, &mut s, reminder_changed && reminder_level > 0)?;
         } else if (changed || suspension_changed) && s.view.side.is_some() && !s.view.dragging && s.docking_allowed() {
             snap(&w, &mut s, false)?;
@@ -453,6 +471,21 @@ fn break_origin(left: f64, top: f64, width: f64, height: f64, zoom: f64, level: 
     let x = left + (width - 215.0 * zoom) / 2.0;
     let y = if level == 0 { top + height - 187.0 * zoom - 24.0 } else { top + 24.0 };
     (x, y)
+}
+fn awaiting_start_origin(left: f64, top: f64, width: f64, height: f64, zoom: f64) -> (f64, f64) {
+    (left + (width - (215.0 * zoom).ceil()) / 2.0,
+        top + (height - (187.0 * zoom).ceil()) / 2.0)
+}
+fn place_awaiting_start(w: &tauri::WebviewWindow, s: &mut Inner) -> Result<(), String> {
+    let m = docking_monitor(w, s)?;
+    let r = m.work_area();
+    s.rest_scale = 1.0;
+    let (x, y) = awaiting_start_origin(r.position.x as f64, r.position.y as f64,
+        r.size.width as f64, r.size.height as f64, m.scale_factor() * s.scale);
+    w.unminimize().map_err(|e| e.to_string())?;
+    w.show().map_err(|e| e.to_string())?;
+    // Keep the full panel and its buttons in the normal native hit region on both platforms.
+    geometry(w, s, x, y)
 }
 fn place_break(w: &tauri::WebviewWindow, s: &mut Inner, animate: bool) -> Result<(), String> {
     let m = docking_monitor(w, s)?;
@@ -661,7 +694,7 @@ fn saved_path(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
     Ok(dir.join("pomodoro-docking.json"))
 }
 fn save(app: &tauri::AppHandle, w: &tauri::WebviewWindow, s: &Inner) -> Result<(), String> {
-    if s.suspended || s.in_break() { return Ok(()); }
+    if s.suspended || s.in_break() || s.awaiting_start { return Ok(()); }
     let m = docking_monitor(w, s)?;
     let r = m.work_area();
     let p = w.outer_position().map_err(|e| e.to_string())?;
@@ -839,6 +872,64 @@ mod phase_notice_tests {
         s.update_phase("break".into());
         assert!(s.view.side.is_none());
         assert!(!s.keep_open_until_blur);
+    }
+}
+
+#[cfg(test)]
+mod awaiting_start_tests {
+    use super::*;
+    #[test]
+    fn first_launch_attention_stays_complete_until_start() {
+        let mut s = Inner::default();
+        s.auto_dock = true;
+        s.view.side = Some(Side::Right);
+        s.awaiting_start = true;
+        assert!(!s.update_phase("focus".into()));
+        s.lose_focus();
+        assert!(s.displayed_view().side.is_none());
+        assert!(s.focus_notice_token(false).is_none());
+        assert!(!s.docking_allowed());
+        s.awaiting_start = false;
+        assert_eq!(s.displayed_view().side, Some(Side::Right));
+    }
+    #[test]
+    fn waiting_after_break_stays_complete_after_blur_on_both_edges() {
+        for side in [Side::Left, Side::Right] {
+            let mut s = Inner::default();
+            s.auto_dock = true;
+            s.view.side = Some(side);
+            s.update_phase("break".into());
+            s.awaiting_start = true;
+            s.update_phase("focus".into());
+            s.lose_focus();
+            assert!(!s.docking_allowed());
+            assert!(s.displayed_view().side.is_none());
+            assert!(s.focus_notice_token(false).is_none());
+            assert_eq!(s.view.side, Some(side));
+            s.awaiting_start = false;
+            assert!(s.docking_allowed());
+            assert_eq!(s.displayed_view().side, Some(side));
+        }
+    }
+    #[test]
+    fn waiting_invalidates_an_existing_collapse_timer() {
+        let mut s = Inner::default();
+        s.view.side = Some(Side::Right);
+        s.update_phase("break".into());
+        s.update_phase("focus".into());
+        let token = s.focus_notice_token(false).unwrap();
+        s.awaiting_start = true;
+        assert!(!s.expire_focus_notice(token, false));
+    }
+    #[test]
+    fn next_start_is_centered_on_scaled_and_negative_monitors() {
+        for (left, top) in [(0.0, 0.0), (-1920.0, -1080.0), (1920.0, 300.0)] {
+            for zoom in [1.0, 1.5, 2.4] {
+                let (x, y) = awaiting_start_origin(left, top, 1920.0, 1080.0, zoom);
+                assert_eq!(x + (215.0 * zoom).ceil() / 2.0, left + 960.0);
+                assert_eq!(y + (187.0 * zoom).ceil() / 2.0, top + 540.0);
+            }
+        }
     }
 }
 

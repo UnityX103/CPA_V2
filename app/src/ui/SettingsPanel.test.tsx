@@ -71,6 +71,7 @@ beforeEach(() => {
         totalRounds: 4,
         autoStartBreak: false,
         autoStartOnLaunch: false,
+        autoCenterAfterBreak: true,
         autoPinAfterFocus: true,
         endActionMode: 'playVideo',
         playVideoOnBreakEnd: false,
@@ -456,6 +457,20 @@ describe('SettingsPanel', () => {
         fireEvent.click(toggle);
         fireEvent.click(screen.getByRole('button', { name: '应用' }));
         expect(usePomodoroStore.getState().autoStartOnLaunch).toBe(false);
+    });
+
+    it('defaults the centered break reminder to on and applies toggling without resetting the timer', () => {
+        usePomodoroStore.setState({ isRunning: true, remainingSeconds: 42 });
+        render(<SettingsPanel />);
+        const toggle = screen.getByRole('button', { name: '休息结束后居中提醒' });
+        expect(toggle.getAttribute('aria-pressed')).toBe('true');
+        fireEvent.click(toggle);
+        expect(usePomodoroStore.getState().autoCenterAfterBreak).toBe(true);
+        fireEvent.click(screen.getByRole('button', { name: '应用' }));
+        expect(usePomodoroStore.getState()).toMatchObject({ autoCenterAfterBreak: false, isRunning: true, remainingSeconds: 42 });
+        fireEvent.click(toggle);
+        fireEvent.click(screen.getByRole('button', { name: '应用' }));
+        expect(usePomodoroStore.getState().autoCenterAfterBreak).toBe(true);
     });
 
     it('shows focus-end video prompt settings with bundled and custom sources', () => {

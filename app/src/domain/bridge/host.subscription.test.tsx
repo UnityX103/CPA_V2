@@ -19,6 +19,12 @@ afterEach(() => { cleanup(); usePomodoroStore.setState(initial); });
 function Host() { useBridgeHost(); return null; }
 
 describe('retained pomodoro settings subscription', () => {
+    it('pushes the centered reminder change to the open settings window', async () => {
+        render(<Host />);
+        act(() => usePomodoroStore.getState().setAutoCenterAfterBreak(false));
+        await waitFor(() => expect(emit).toHaveBeenCalledWith(EVT_STATE,
+            expect.objectContaining({ pomodoro: expect.objectContaining({ autoCenterAfterBreak: false }) })));
+    });
     it('pushes automatic start and break-end video changes to an open settings window', async () => {
         render(<Host />);
         act(() => usePomodoroStore.getState().setAutoStartOnLaunch(true));

@@ -213,6 +213,7 @@ function PomodoroTab({ onApplyStateChange }: {
     const [totalRounds, setTotalRounds] = useState(pomo.totalRounds);
     const [autoStartBreak, setAutoStartBreak] = useState(pomo.autoStartBreak);
     const [autoStartOnLaunch, setAutoStartOnLaunch] = useState(pomo.autoStartOnLaunch);
+    const [autoCenterAfterBreak, setAutoCenterAfterBreak] = useState(pomo.autoCenterAfterBreak);
     const [autoPinAfterFocus, setAutoPinAfterFocus] = useState(pomo.autoPinAfterFocus);
     const [endActionMode, setEndActionMode] = useState<PomodoroEndActionMode>(pomo.endActionMode);
     const [playVideoOnBreakEnd, setPlayVideoOnBreakEnd] = useState(pomo.playVideoOnBreakEnd);
@@ -233,6 +234,7 @@ function PomodoroTab({ onApplyStateChange }: {
         totalRounds: pomo.totalRounds,
         autoStartBreak: pomo.autoStartBreak,
         autoStartOnLaunch: pomo.autoStartOnLaunch,
+        autoCenterAfterBreak: pomo.autoCenterAfterBreak,
         autoPinAfterFocus: pomo.autoPinAfterFocus,
         endActionMode: pomo.endActionMode,
         playVideoOnBreakEnd: pomo.playVideoOnBreakEnd,
@@ -246,6 +248,7 @@ function PomodoroTab({ onApplyStateChange }: {
     useEffect(() => {
         const previous = committedRef.current;
         const launchDraftDirty = autoStartOnLaunch !== previous.autoStartOnLaunch;
+        const centerDraftDirty = autoCenterAfterBreak !== previous.autoCenterAfterBreak;
         const durationDraftDirty =
             focusMin * 60 !== previous.focusDurationSeconds ||
             breakMin * 60 !== previous.breakDurationSeconds ||
@@ -263,6 +266,9 @@ function PomodoroTab({ onApplyStateChange }: {
             || restDeskReminderMode !== previous.restDeskReminderMode;
         if (!launchDraftDirty) {
             setAutoStartOnLaunch(pomo.autoStartOnLaunch);
+        }
+        if (!centerDraftDirty) {
+            setAutoCenterAfterBreak(pomo.autoCenterAfterBreak);
         }
         if (!durationDraftDirty) {
             setFocusMin(Math.round(pomo.focusDurationSeconds / 60));
@@ -299,6 +305,7 @@ function PomodoroTab({ onApplyStateChange }: {
             totalRounds: pomo.totalRounds,
             autoStartBreak: pomo.autoStartBreak,
             autoStartOnLaunch: pomo.autoStartOnLaunch,
+            autoCenterAfterBreak: pomo.autoCenterAfterBreak,
             autoPinAfterFocus: pomo.autoPinAfterFocus,
             endActionMode: pomo.endActionMode,
             playVideoOnBreakEnd: pomo.playVideoOnBreakEnd,
@@ -314,6 +321,7 @@ function PomodoroTab({ onApplyStateChange }: {
         pomo.totalRounds,
         pomo.autoStartBreak,
         pomo.autoStartOnLaunch,
+        pomo.autoCenterAfterBreak,
         pomo.autoPinAfterFocus,
         pomo.endActionMode,
         pomo.playVideoOnBreakEnd,
@@ -334,6 +342,7 @@ function PomodoroTab({ onApplyStateChange }: {
         totalRounds,
         autoStartBreak,
         autoStartOnLaunch,
+        autoCenterAfterBreak,
         autoPinAfterFocus,
         endActionMode,
         playVideoOnBreakEnd,
@@ -350,6 +359,7 @@ function PomodoroTab({ onApplyStateChange }: {
         totalRounds !== pomo.totalRounds ||
         autoStartBreak !== pomo.autoStartBreak ||
         autoStartOnLaunch !== pomo.autoStartOnLaunch ||
+        autoCenterAfterBreak !== pomo.autoCenterAfterBreak ||
         autoPinAfterFocus !== pomo.autoPinAfterFocus ||
         endActionMode !== pomo.endActionMode ||
         playVideoOnBreakEnd !== pomo.playVideoOnBreakEnd ||
@@ -396,6 +406,9 @@ function PomodoroTab({ onApplyStateChange }: {
         if (autoStartOnLaunch !== pomo.autoStartOnLaunch) {
             pomo.setAutoStartOnLaunch(autoStartOnLaunch);
         }
+        if (autoCenterAfterBreak !== pomo.autoCenterAfterBreak) {
+            pomo.setAutoCenterAfterBreak(autoCenterAfterBreak);
+        }
         if (endActionChanged) {
             void Promise.resolve(pomo.applyEndActionSettings(endActionMode, endActionVideo, playVideoOnBreakEnd))
                 .catch((error) => {
@@ -427,6 +440,7 @@ function PomodoroTab({ onApplyStateChange }: {
         totalRounds,
         autoStartBreak,
         autoStartOnLaunch,
+        autoCenterAfterBreak,
         autoPinAfterFocus,
         endActionMode,
         playVideoOnBreakEnd,
@@ -625,6 +639,15 @@ function PomodoroTab({ onApplyStateChange }: {
                                 checked={autoPinAfterFocus}
                                 onChange={setAutoPinAfterFocus}
                                 ariaLabel="专注结束后自动置顶"
+                            />
+                        </div>
+
+                        <div className="card pomo-row">
+                            <span className="pomo-row-label">休息结束后居中提醒</span>
+                            <Toggle
+                                checked={autoCenterAfterBreak}
+                                onChange={setAutoCenterAfterBreak}
+                                ariaLabel="休息结束后居中提醒"
                             />
                         </div>
 

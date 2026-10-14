@@ -34,6 +34,8 @@ export interface UserPreferencesSnapshot {
         totalRounds: number;
         autoStartBreak: boolean;
         autoStartOnLaunch: boolean;
+
+        autoCenterAfterBreak: boolean;
         autoPinAfterFocus: boolean;
         endActionMode: PomodoroEndActionMode;
         playVideoOnBreakEnd: boolean;
@@ -71,6 +73,7 @@ interface PomodoroStoreShape extends PomodoroState {
     ) => void;
     setAutoPinAfterFocus: (enabled: boolean) => void;
     setAutoStartOnLaunch: (enabled: boolean) => void;
+    setAutoCenterAfterBreak: (enabled: boolean) => void;
     applyEndActionSettings: (
         mode: PomodoroEndActionMode,
         video: PomodoroEndActionVideo,
@@ -119,6 +122,8 @@ export function defaultUserPreferencesSnapshot(): UserPreferencesSnapshot {
             totalRounds: DEFAULT_TOTAL_ROUNDS,
             autoStartBreak: false,
             autoStartOnLaunch: false,
+
+            autoCenterAfterBreak: true,
             autoPinAfterFocus: true,
             endActionMode: DEFAULT_END_ACTION_MODE,
             playVideoOnBreakEnd: false,
@@ -160,6 +165,8 @@ export function buildUserPreferencesSnapshot(stores: UserPreferencesStores): Use
             totalRounds: pomodoro.totalRounds,
             autoStartBreak: pomodoro.autoStartBreak,
             autoStartOnLaunch: pomodoro.autoStartOnLaunch,
+
+            autoCenterAfterBreak: pomodoro.autoCenterAfterBreak,
             autoPinAfterFocus: pomodoro.autoPinAfterFocus,
             endActionMode: pomodoro.endActionMode,
             playVideoOnBreakEnd: pomodoro.playVideoOnBreakEnd,
@@ -200,6 +207,7 @@ export function hydrateUserPreferencesSnapshot({ stores, snapshot, resetProgress
     );
     stores.pomodoro.getState().setAutoPinAfterFocus(snapshot.pomodoro.autoPinAfterFocus);
     stores.pomodoro.getState().setAutoStartOnLaunch(snapshot.pomodoro.autoStartOnLaunch);
+    stores.pomodoro.getState().setAutoCenterAfterBreak(snapshot.pomodoro.autoCenterAfterBreak ?? true);
     void stores.pomodoro.getState().applyEndActionSettings(
         snapshot.pomodoro.endActionMode,
         { ...snapshot.pomodoro.endActionVideo },
@@ -277,6 +285,7 @@ function normalizePomodoro(
         totalRounds: normalizePositiveInteger(value.totalRounds, fallback.totalRounds),
         autoStartBreak: typeof value.autoStartBreak === 'boolean' ? value.autoStartBreak : fallback.autoStartBreak,
         autoStartOnLaunch: value.autoStartOnLaunch === true,
+        autoCenterAfterBreak: typeof value.autoCenterAfterBreak === 'boolean' ? value.autoCenterAfterBreak : true,
         autoPinAfterFocus: typeof value.autoPinAfterFocus === 'boolean'
             ? value.autoPinAfterFocus
             : fallback.autoPinAfterFocus,
