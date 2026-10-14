@@ -35,13 +35,29 @@ it('waits for restored preferences and configures the dock with the saved scale'
     act(() => useSettingsStore.setState({ uiScale: 2.4 }));
     rerender({ ready: true });
     await waitFor(() => expect(invoke).toHaveBeenCalledWith('configure_pomodoro_docking', {
-        autoDock: true, paused: false, phase: 'focus', scale: 2.4, suspended: false, restReminderLevel: 0,
+        autoDock: true, paused: false, phase: 'focus', scale: 2.4, suspended: false, restReminderLevel: 0, awaitingStart: false,
     }));
     act(() => useSettingsStore.setState({ uiScale: 1.5 }));
     await waitFor(() => expect(invoke).toHaveBeenLastCalledWith('configure_pomodoro_docking', {
-        autoDock: true, paused: false, phase: 'focus', scale: 1.5, suspended: false, restReminderLevel: 0,
+        autoDock: true, paused: false, phase: 'focus', scale: 1.5, suspended: false, restReminderLevel: 0, awaitingStart: false,
     }));
     act(() => useSettingsStore.setState({ uiScale: previousScale }));
+});
+
+it('keeps the next focus complete while waiting after break, then restores docking when started', async () => {
+    vi.stubGlobal('__TAURI_INTERNALS__', {});
+    invoke.mockResolvedValue({ side: 'right', expanded: false, dragging: false });
+    const { result, rerender } = renderHook(({ awaiting }) => usePomodoroDocking(true, false, 'focus', true, 0, awaiting), {
+        initialProps: { awaiting: false },
+    });
+    await waitFor(() => expect(result.current.side).toBe('right'));
+    rerender({ awaiting: true });
+    expect(result.current.side).toBeNull();
+    await waitFor(() => expect(invoke).toHaveBeenLastCalledWith('configure_pomodoro_docking', expect.objectContaining({ awaitingStart: true })));
+    expect(result.current.side).toBeNull();
+    rerender({ awaiting: false });
+    await waitFor(() => expect(invoke).toHaveBeenLastCalledWith('configure_pomodoro_docking', expect.objectContaining({ awaitingStart: false })));
+    expect(result.current.side).toBe('right');
 });
 
 it('immediately displays the complete break panel even while a stale native strip response is pending', async () => {

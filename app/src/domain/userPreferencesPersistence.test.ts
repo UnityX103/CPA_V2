@@ -19,6 +19,19 @@ beforeEach(() => {
 });
 
 describe('user preferences persistence', () => {
+    it.each([true, false])('persists and reloads the centered break reminder=%s', async (enabled) => {
+        const snapshot = defaultUserPreferencesSnapshot();
+        snapshot.pomodoro.autoCenterAfterBreak = enabled;
+        await savePersistedUserPreferences(snapshot);
+        store.get.mockResolvedValue(store.set.mock.calls[0][1]);
+        expect((await loadPersistedUserPreferences())?.pomodoro.autoCenterAfterBreak).toBe(enabled);
+    });
+
+    it.each([undefined, null, 'false', 0])('enables the centered reminder for missing or invalid legacy settings (%s)', (value) => {
+        const snapshot = defaultUserPreferencesSnapshot();
+        const legacy = { ...snapshot, pomodoro: { ...snapshot.pomodoro, autoCenterAfterBreak: value } };
+        expect(normalizeUserPreferencesSnapshot(legacy)?.pomodoro.autoCenterAfterBreak).toBe(true);
+    });
     it.each([true, false])('persists and reloads automatic start=%s', async (enabled) => {
         const snapshot = defaultUserPreferencesSnapshot();
         snapshot.pomodoro.autoStartOnLaunch = enabled;

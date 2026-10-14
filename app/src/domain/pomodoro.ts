@@ -50,6 +50,8 @@ export interface PomodoroState {
     pinSource: PomodoroPinSource;
     autoStartBreak: boolean;
     autoStartOnLaunch: boolean;
+
+    autoCenterAfterBreak: boolean;
     autoPinAfterFocus: boolean;
     consecutiveCompletedFocus: number;
     endActionMode: PomodoroEndActionMode;
@@ -101,6 +103,7 @@ export interface PomodoroActions {
     setPinnedFromFocusEnd: () => void;
     setAutoPinAfterFocus: (enabled: boolean) => void;
     setAutoStartOnLaunch: (enabled: boolean) => void;
+    setAutoCenterAfterBreak: (enabled: boolean) => void;
     applySettings: (
         focusSeconds: number,
         breakSeconds: number,
@@ -147,6 +150,8 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
             pinSource: null,
             autoStartBreak: false,
             autoStartOnLaunch: false,
+
+            autoCenterAfterBreak: true,
             autoPinAfterFocus: true,
             consecutiveCompletedFocus: 0,
             endActionMode: DEFAULT_END_ACTION_MODE,
@@ -173,6 +178,14 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
                     v: BRIDGE_VERSION,
                     store: 'pomodoro',
                     action: 'setAutoStartOnLaunch',
+                    args: [enabled],
+                });
+            },
+            setAutoCenterAfterBreak: (enabled) => {
+                void dispatch({
+                    v: BRIDGE_VERSION,
+                    store: 'pomodoro',
+                    action: 'setAutoCenterAfterBreak',
                     args: [enabled],
                 });
             },
@@ -313,6 +326,8 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
             pinSource: null,
             autoStartBreak: false,
             autoStartOnLaunch: false,
+
+            autoCenterAfterBreak: true,
             autoPinAfterFocus: true,
             consecutiveCompletedFocus: 0,
             endActionMode: DEFAULT_END_ACTION_MODE,
@@ -500,6 +515,7 @@ export function createPomodoroStore(opts: { isSettingsWindow: boolean }): Pomodo
             },
             setAutoPinAfterFocus: (autoPinAfterFocus) => set({ autoPinAfterFocus }),
             setAutoStartOnLaunch: (autoStartOnLaunch) => set({ autoStartOnLaunch }),
+            setAutoCenterAfterBreak: (autoCenterAfterBreak) => set({ autoCenterAfterBreak }),
             applySettings: (focusSeconds, breakSeconds, totalRounds, resetProgress, autoStartBreak) => {
                 const state = get();
                 set({

@@ -106,6 +106,8 @@ export function buildSnapshot(opts: BuildSnapshotOptions = {}): BridgeSnapshot {
             totalRounds: p.totalRounds,
             autoStartBreak: p.autoStartBreak,
             autoStartOnLaunch: p.autoStartOnLaunch,
+
+            autoCenterAfterBreak: p.autoCenterAfterBreak,
             autoPinAfterFocus: p.autoPinAfterFocus,
             endActionMode: p.endActionMode,
             playVideoOnBreakEnd: p.playVideoOnBreakEnd,
@@ -177,6 +179,9 @@ export async function applyDispatch(payload: DispatchPayload): Promise<void> {
             }
             if (payload.action === 'setAutoStartOnLaunch') {
                 usePomodoroStore.getState().setAutoStartOnLaunch(...payload.args);
+            }
+            if (payload.action === 'setAutoCenterAfterBreak') {
+                usePomodoroStore.getState().setAutoCenterAfterBreak(...payload.args);
             }
             if (payload.action === 'applyEndActionSettings') {
                 await usePomodoroStore.getState().applyEndActionSettings(...payload.args);
@@ -306,6 +311,8 @@ export function pomoSig(s: {
     totalRounds: number;
     autoStartBreak: boolean;
     autoStartOnLaunch: boolean;
+
+    autoCenterAfterBreak: boolean;
     autoPinAfterFocus: boolean;
     endActionMode: string;
     playVideoOnBreakEnd: boolean;
@@ -318,6 +325,7 @@ export function pomoSig(s: {
         s.totalRounds,
         s.autoStartBreak,
         s.autoStartOnLaunch,
+        s.autoCenterAfterBreak,
         s.autoPinAfterFocus,
         s.endActionMode,
         s.playVideoOnBreakEnd,
@@ -454,7 +462,7 @@ export function useBridgeHost(): void {
             usePomodoroStore.subscribe((s, previous) => {
                 if (s.focusDurationSeconds === previous.focusDurationSeconds && s.breakDurationSeconds === previous.breakDurationSeconds
                     && s.totalRounds === previous.totalRounds && s.autoStartBreak === previous.autoStartBreak
-                    && s.autoStartOnLaunch === previous.autoStartOnLaunch && s.playVideoOnBreakEnd === previous.playVideoOnBreakEnd
+                    && s.autoStartOnLaunch === previous.autoStartOnLaunch && s.autoCenterAfterBreak === previous.autoCenterAfterBreak && s.playVideoOnBreakEnd === previous.playVideoOnBreakEnd
                     && s.autoPinAfterFocus === previous.autoPinAfterFocus && s.endActionMode === previous.endActionMode
                     && s.endActionVideo === previous.endActionVideo && s.endSounds === previous.endSounds) return;
                 const sig = pomoSig(s);

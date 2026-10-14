@@ -31,6 +31,9 @@ export function PomodoroPanel({ preferencesReady = true }: { preferencesReady?: 
     const [pausedDuringSession, setPausedDuringSession] = useState(false);
     const [autoDock, setAutoDock] = useState(() => localStorage.getItem('pomo-auto-dock') === 'true');
     const [touchActions, setTouchActions] = useState(false);
+    const [startupReminder, setStartupReminder] = useState(() => state.currentPhase === 'focus'
+        && state.currentRound === 1 && state.remainingSeconds === state.focusDurationSeconds
+        && state.lastEndEvent === null && state.presenceAutomationState !== 'manualPaused');
     const isBreak = state.currentPhase === 'break';
     const reminderLevel = useBreakReminderLevel(preferencesReady);
 
@@ -60,13 +63,6 @@ export function PomodoroPanel({ preferencesReady = true }: { preferencesReady?: 
         return () => window.clearInterval(interval);
     }, []);
 
-    useEffect(() => {
-        void invoke('set_main_window_pinned', { onTop: isBreak || state.isPinned || autoDock })
-            .catch((error) => {
-                console.error('[pin] set_main_window_pinned failed', error);
-            });
-    }, [state.isPinned, autoDock, isBreak]);
-
     const totalSeconds =
         state.currentPhase === 'break'
             ? state.breakDurationSeconds
@@ -88,9 +84,34 @@ export function PomodoroPanel({ preferencesReady = true }: { preferencesReady?: 
     const showPauseOverlay = !isBreak && !state.isRunning && state.currentPhase !== 'completed'
         && (state.presenceAutomationState === 'manualPaused'
             || pausedDuringSession || state.remainingSeconds < totalSeconds || automaticPause);
-    const showStartOverlay = !isBreak && !state.isRunning && !showPauseOverlay && state.currentPhase !== 'completed';
-    const docking = usePomodoroDocking(autoDock, showPauseOverlay, state.currentPhase, preferencesReady, reminderLevel);
+    const showStartOverlay = !isBreak && !state.isRunning && !showPauseOverlay;
+    const awaitingStartAfterBreak = state.autoCenterAfterBreak && showStartOverlay && state.lastEndEvent?.fromPhase === 'break'
+        && state.lastEndEvent.toPhase === state.currentPhase;
+    const showStartupReminder = startupReminder && state.currentPhase === 'focus' && !showPauseOverlay;
+    const centerReminder = showStartupReminder || awaitingStartAfterBreak;
+    const docking = usePomodoroDocking(autoDock, showPauseOverlay, state.currentPhase, preferencesReady, reminderLevel, centerReminder);
     const windowMode = autoDock ? '停靠' : state.isPinned ? '置顶' : '取消置顶';
+
+    useEffect(() => {
+        if (!preferencesReady || !startupReminder) return;
+        if (state.currentPhase !== 'focus' || showPauseOverlay) {
+            setStartupReminder(false);
+            return;
+        }
+        // Automatic start still gets a visible launch reminder before normal docking resumes.
+        if (state.isRunning) {
+            const timeout = window.setTimeout(() => setStartupReminder(false), 5000);
+            return () => window.clearTimeout(timeout);
+        }
+    }, [preferencesReady, startupReminder, state.isRunning, state.currentPhase, showPauseOverlay]);
+
+    useEffect(() => {
+        if (!preferencesReady) return;
+        void invoke('set_main_window_pinned', { onTop: isBreak || centerReminder || state.isPinned || autoDock })
+            .catch((error) => {
+                console.error('[pin] set_main_window_pinned failed', error);
+            });
+    }, [preferencesReady, state.isPinned, autoDock, isBreak, centerReminder]);
 
     useEffect(() => {
         if (showPauseOverlay && !automaticPause && document.activeElement === startRef.current) {
@@ -99,6 +120,7 @@ export function PomodoroPanel({ preferencesReady = true }: { preferencesReady?: 
     }, [showPauseOverlay, automaticPause]);
 
     const onStartClick = () => {
+        setStartupReminder(false);
         const s = usePomodoroStore.getState();
         if (s.isRunning) s.pause(); else s.start();
     };
@@ -234,16 +256,17 @@ export function PomodoroPanel({ preferencesReady = true }: { preferencesReady?: 
             </button>
             {showStartOverlay && (
                 <div className="pomo-pause-overlay pomo-start-overlay" role="region" aria-label="番茄钟待开始">
-                    <div className="pomo-pause-title">待开始</div>
+                    <div className="pomo-pause-title">{awaitingStartAfterBreak ? '休息结束，待开始' : '待开始'}</div>
                     <dl className="pomo-start-summary">
                         <div><dt>专注轮次</dt><dd>{state.totalRounds}<span>次</span></dd></div>
                         <div><dt>每次专注</dt><dd>{state.focusDurationSeconds / 60}<span>分钟</span></dd></div>
                         <div><dt>每次休息</dt><dd>{state.breakDurationSeconds / 60}<span>分钟</span></dd></div>
                     </dl>
-                    <button className="btn pomo-resume" onClick={() => {
+                    <button className="btn pomo-resume pomo-start-button" ref={startRef} onClick={() => {
+                        setStartupReminder(false);
                         setTouchActions(false);
                         usePomodoroStore.getState().start();
-                    }}>开始</button>
+                    }}>{state.currentPhase === 'completed' ? '开始新一轮' : awaitingStartAfterBreak ? '开始专注' : '开始'}</button>
                 </div>
             )}
             {showPauseOverlay && (

@@ -25,6 +25,7 @@ beforeEach(() => {
         totalRounds: 4,
         autoStartBreak: false,
         autoStartOnLaunch: false,
+        autoCenterAfterBreak: true,
         autoPinAfterFocus: true,
         endActionMode: 'topWindow',
         playVideoOnBreakEnd: false,
@@ -38,6 +39,11 @@ beforeEach(() => {
 });
 
 describe('bridge host', () => {
+    it('dispatches and mirrors the centered break reminder from the settings window', async () => {
+        await applyDispatch({ v: BRIDGE_VERSION, store: 'pomodoro', action: 'setAutoCenterAfterBreak', args: [false] });
+        expect(usePomodoroStore.getState().autoCenterAfterBreak).toBe(false);
+        expect(buildSnapshot().pomodoro.autoCenterAfterBreak).toBe(false);
+    });
     it('dispatches and mirrors automatic start', async () => {
         await applyDispatch({
             v: BRIDGE_VERSION,
