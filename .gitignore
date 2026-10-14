@@ -34,3 +34,6 @@ Server/node_modules/
 
 # Local isolated implementation worktrees
 .worktrees/
+
+# Local rebuildable Graphify index
+/graphify-out/
