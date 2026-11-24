@@ -96,7 +96,7 @@ impl Inner {
         self.paused = paused;
     }
     fn expanded_for_hover(&self, hovered: bool) -> bool {
-        hovered || self.paused || self.keep_open_until_blur
+        hovered || self.keep_open_until_blur
     }
     fn displayed_view(&self) -> Snapshot {
         if self.suspended || !self.docking_allowed() {
@@ -104,7 +104,21 @@ impl Inner {
         } else { self.view }
     }
     fn docking_allowed(&self) -> bool {
+        !self.paused && self.in_docking_phase()
+    }
+    fn in_docking_phase(&self) -> bool {
         !self.awaiting_start && self.phase.as_deref().is_none_or(|phase| phase == "focus")
+    }
+    fn auto_docking_allowed(&self) -> bool {
+        self.auto_dock && !self.suspended && self.docking_allowed()
+    }
+    fn frame_size(&self) -> (f64, f64) {
+        let view = self.displayed_view();
+        if view.side.is_some() {
+            (dock_frame_width(view.expanded), 156.0)
+        } else {
+            (215.0, 187.0)
+        }
     }
     fn in_break(&self) -> bool {
         self.phase.as_deref() == Some("break")
@@ -113,7 +127,7 @@ impl Inner {
         self.notice_generation = self.notice_generation.wrapping_add(1);
     }
     fn focus_notice_token(&self, focused: bool) -> Option<u64> {
-        (self.docking_allowed() && self.phase.as_deref() == Some("focus") && !self.paused && !focused
+        (self.docking_allowed() && self.phase.as_deref() == Some("focus") && !focused
             && self.view.side.is_some() && self.keep_open_until_blur && !self.view.dragging && !self.suspended)
             .then_some(self.notice_generation)
     }
@@ -195,11 +209,7 @@ fn geometry(w: &tauri::WebviewWindow, s: &Inner, x: f64, y: f64) -> Result<(), S
         w.scale_factor().map_err(|e| e.to_string())?
     };
     let zoom = dpi * s.scale * s.rest_scale;
-    let (width, height) = if s.view.side.is_some() && !s.suspended && s.docking_allowed() {
-        (dock_frame_width(s.view.expanded), 156.0)
-    } else {
-        (215.0, 187.0)
-    };
+    let (width, height) = s.frame_size();
     w.set_min_size(Some(PhysicalSize::new(
         (22.0 * zoom) as u32,
         (156.0 * zoom) as u32,
@@ -270,17 +280,14 @@ fn snap(w: &tauri::WebviewWindow, s: &mut Inner, nearest: bool) -> Result<(), St
     if nearest {
         s.view.side = Some(nearest_side(p.x as f64, size.width as f64, left, right));
     }
+    let Some(side) = s.view.side else { return Ok(()); };
     s.view.expanded = s.expanded_for_hover(false);
     let zoom = m.scale_factor() * s.scale;
-    let width = (if s.suspended { 215.0 } else { dock_frame_width(s.view.expanded) } * zoom).ceil();
-    let x = if s.view.side == Some(Side::Left) {
-        left
-    } else {
-        right - width
-    };
+    let (width, height) = s.frame_size();
+    let x = dock_origin(side, left, right, (width * zoom).ceil());
     let y = (p.y as f64).clamp(
         r.position.y as f64,
-        (r.position.y as f64 + r.size.height as f64 - if s.suspended { 187.0 } else { 156.0 } * zoom).max(r.position.y as f64),
+        (r.position.y as f64 + r.size.height as f64 - (height * zoom).ceil()).max(r.position.y as f64),
     );
     geometry(w, s, x, y)
 }
@@ -396,13 +403,11 @@ pub async fn configure_pomodoro_docking(
                 let m = docking_monitor(&w, &s)?;
                 let r = m.work_area();
                 let z = m.scale_factor() * s.scale;
-                let docked = s.docking_allowed() && s.view.side.is_some() && !s.suspended;
-                let width = if docked { 56.0 } else { 215.0 } * z;
-                let height = if docked { 156.0 } else { 187.0 } * z;
+                let (width, height) = s.frame_size();
                 let left = r.position.x as f64;
                 let top = r.position.y as f64;
-                geometry(&w, &s, x.clamp(left, (left + r.size.width as f64 - width).max(left)),
-                    y.clamp(top, (top + r.size.height as f64 - height).max(top)))?;
+                geometry(&w, &s, x.clamp(left, (left + r.size.width as f64 - width * z).max(left)),
+                    y.clamp(top, (top + r.size.height as f64 - height * z).max(top)))?;
             }
         }
         let suspension_changed = s.suspended != suspended;
@@ -415,7 +420,7 @@ pub async fn configure_pomodoro_docking(
             s.suspended = suspended;
             if !suspended {
                 if let Some((x, y)) = s.suspended_origin.take() {
-                    if s.auto_dock && s.view.side.is_some() { geometry(&w, &s, x, y)?; }
+                    if s.auto_docking_allowed() && s.view.side.is_some() { geometry(&w, &s, x, y)?; }
                 }
             }
         }
@@ -445,7 +450,9 @@ pub async fn configure_pomodoro_docking(
             place_awaiting_start(&w, &mut s)?;
         } else if s.in_break() && (!was_break || changed || reminder_changed || suspension_changed) && !s.view.dragging {
             place_break(&w, &mut s, reminder_changed && reminder_level > 0)?;
-        } else if (changed || suspension_changed) && s.view.side.is_some() && !s.view.dragging && s.docking_allowed() {
+        } else if (changed || suspension_changed) && s.view.side.is_some() && s.in_docking_phase()
+            && (!s.view.dragging || (pause_changed && s.paused)) {
+            // Keep the original edge across pause and resize immediately, even mid-drag.
             snap(&w, &mut s, false)?;
         } else if phase_changed && !s.docking_allowed() && !s.in_break() {
             let p = w.outer_position().map_err(|e| e.to_string())?;
@@ -551,21 +558,20 @@ pub async fn drag_pomodoro_window(app: tauri::AppHandle) -> Result<(), String> {
     tauri::async_runtime::spawn_blocking(move || {
         let w = window(&app)?;
         let state = app.state::<Docking>();
-        let suspended = {
-            let s = state.inner.lock().map_err(|e| e.to_string())?;
-            s.suspended || !s.docking_allowed()
-        };
-        if suspended { return w.start_dragging().map_err(|e| e.to_string()); }
         let (start, anchor_x, anchor_y) = {
             let mut s = state.inner.lock().map_err(|e| e.to_string())?;
             if s.view.dragging {
                 return Ok(());
             }
+            if s.suspended || !s.in_docking_phase() {
+                drop(s);
+                return w.start_dragging().map_err(|e| e.to_string());
+            }
             let c = w.cursor_position().map_err(|e| e.to_string())?;
             let p = w.outer_position().map_err(|e| e.to_string())?;
             let size = w.outer_size().map_err(|e| e.to_string())?;
             let z = w.scale_factor().map_err(|e| e.to_string())? * s.scale;
-            let ax = if s.view.side == Some(Side::Right) {
+            let ax = if s.displayed_view().side == Some(Side::Right) {
                 215.0 * z - (size.width as f64 - (c.x - p.x as f64))
             } else {
                 c.x - p.x as f64
@@ -594,22 +600,27 @@ pub async fn drag_pomodoro_window(app: tauri::AppHandle) -> Result<(), String> {
                 s.keep_open_until_blur = false;
                 s.monitor_origin = Some((m.position().x, m.position().y));
                 let z = w.scale_factor().map_err(|e| e.to_string())? * s.scale;
-                let x = c.x - anchor_x * z;
-                let y = c.y - anchor_y * z;
+                let mut x = c.x - anchor_x * z;
+                let mut y = c.y - anchor_y * z;
+                let left = r.position.x as f64;
+                let top = r.position.y as f64;
+                let right = left + r.size.width as f64;
                 s.view.side = drag_side_enabled(
-                    s.auto_dock,
+                    s.auto_docking_allowed(),
                     x,
                     215.0 * z,
-                    r.position.x as f64,
-                    (r.position.x as f64) + r.size.width as f64,
+                    left,
+                    right,
                     16.0 * z,
                 );
                 s.view.expanded = s.view.side.is_some();
-                let x = match s.view.side {
-                    Some(Side::Left) => r.position.x as f64,
-                    Some(Side::Right) => r.position.x as f64 + r.size.width as f64 - 56.0 * z,
-                    None => x,
-                };
+                let (width, height) = s.frame_size();
+                if let Some(side) = s.view.side {
+                    x = dock_origin(side, left, right, (width * z).ceil());
+                } else if s.paused {
+                    x = x.clamp(left, (right - (width * z).ceil()).max(left));
+                    y = y.clamp(top, (top + r.size.height as f64 - (height * z).ceil()).max(top));
+                }
                 geometry(&w, &s, x, y)?;
                 drop(s);
                 std::thread::sleep(std::time::Duration::from_millis(16));
@@ -649,7 +660,7 @@ pub fn install(app: &tauri::AppHandle) {
                         return;
                     };
                     s.lose_focus();
-                    if s.auto_dock && !s.view.dragging && !s.suspended && s.docking_allowed() {
+                    if s.auto_docking_allowed() && !s.view.dragging {
                         if let Ok(w) = window(&app) {
                             if let Err(e) = snap(&w, &mut s, true).and_then(|()| save(&app, &w, &s))
                             {
@@ -694,7 +705,9 @@ fn saved_path(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
     Ok(dir.join("pomodoro-docking.json"))
 }
 fn save(app: &tauri::AppHandle, w: &tauri::WebviewWindow, s: &Inner) -> Result<(), String> {
-    if s.suspended || s.in_break() || s.awaiting_start { return Ok(()); }
+    if s.suspended || s.in_break() || s.awaiting_start || (s.paused && s.view.side.is_some()) {
+        return Ok(());
+    }
     let m = docking_monitor(w, s)?;
     let r = m.work_area();
     let p = w.outer_position().map_err(|e| e.to_string())?;
@@ -726,7 +739,8 @@ fn restore(app: &tauri::AppHandle, w: &tauri::WebviewWindow, s: &mut Inner) -> R
     let Ok(saved) = serde_json::from_slice::<SavedDock>(&raw) else {
         return Ok(());
     };
-    if saved.side.is_none() || !saved.y_fraction.is_finite() {
+    let Some(side) = saved.side else { return Ok(()); };
+    if !saved.y_fraction.is_finite() {
         return Ok(());
     }
     let m = w
@@ -736,17 +750,15 @@ fn restore(app: &tauri::AppHandle, w: &tauri::WebviewWindow, s: &mut Inner) -> R
         .ok_or("monitor unavailable")?;
     let r = m.work_area();
     s.monitor_origin = Some((m.position().x, m.position().y));
-    s.view.side = saved.side;
+    s.view.side = Some(side);
     s.view.expanded = s.expanded_for_hover(false);
-    let z = w.scale_factor().map_err(|e| e.to_string())? * s.scale;
-    let width = dock_frame_width(s.paused) * z;
-    let x = if saved.side == Some(Side::Left) {
-        r.position.x as f64
-    } else {
-        r.position.x as f64 + r.size.width as f64 - width
-    };
-    let y = r.position.y as f64
-        + saved.y_fraction.clamp(0.0, 1.0) * (r.size.height as f64 - 156.0 * z).max(0.0);
+    let z = m.scale_factor() * s.scale;
+    let (width, height) = s.frame_size();
+    let left = r.position.x as f64;
+    let top = r.position.y as f64;
+    let x = dock_origin(side, left, left + r.size.width as f64, (width * z).ceil());
+    let offset_y = saved.y_fraction.clamp(0.0, 1.0) * (r.size.height as f64 - 156.0 * z).max(0.0);
+    let y = top + offset_y.min((r.size.height as f64 - (height * z).ceil()).max(0.0));
     geometry(w, s, x, y)
 }
 
@@ -836,14 +848,58 @@ mod resume_focus_tests {
         assert!(!s.expanded_for_hover(false));
     }
     #[test]
-    fn ordinary_hover_still_collapses_on_leave_and_pause_stays_open() {
+    fn ordinary_hover_still_collapses_on_leave() {
         let mut s = Inner::default();
         s.view.side = Some(Side::Left);
         assert!(s.expanded_for_hover(true));
         assert!(!s.expanded_for_hover(false));
+    }
+}
+
+#[cfg(test)]
+mod pause_docking_tests {
+    use super::*;
+
+    #[test]
+    fn pause_keeps_the_full_panel_and_blocks_blur_and_edge_drag_until_resume() {
+        let mut s = Inner::default();
+        s.auto_dock = true;
+        s.update_phase("focus".into());
         s.update_pause(true);
         s.lose_focus();
-        assert!(s.expanded_for_hover(false));
+        assert!(!s.auto_docking_allowed());
+        assert_eq!(s.frame_size(), (215.0, 187.0));
+        assert_eq!(s.displayed_view().side, None);
+        for x in [0.0, 785.0] {
+            assert_eq!(drag_side_enabled(s.auto_docking_allowed(), x, 215.0, 0.0, 1000.0, 16.0), None);
+        }
+
+        s.update_pause(false);
+        assert!(s.auto_docking_allowed());
+        for (x, side) in [(0.0, Side::Left), (785.0, Side::Right)] {
+            assert_eq!(drag_side_enabled(s.auto_docking_allowed(), x, 215.0, 0.0, 1000.0, 16.0), Some(side));
+        }
+    }
+
+    #[test]
+    fn pause_after_docking_uses_full_geometry_inside_either_edge() {
+        for (side, full_x, dock_x) in [(Side::Left, 0.0, 0.0), (Side::Right, 785.0, 944.0)] {
+            let mut s = Inner::default();
+            s.auto_dock = true;
+            s.update_phase("focus".into());
+            s.view.side = Some(side);
+            s.update_pause(true);
+            s.lose_focus();
+            assert_eq!(s.displayed_view().side, None);
+            assert_eq!(s.frame_size(), (215.0, 187.0));
+            assert_eq!(dock_origin(side, 0.0, 1000.0, s.frame_size().0), full_x);
+
+            s.update_pause(false);
+            assert_eq!(s.displayed_view().side, Some(side));
+            assert_eq!(s.frame_size(), (56.0, 156.0));
+            assert_eq!(dock_origin(side, 0.0, 1000.0, s.frame_size().0), dock_x);
+            assert!(s.expanded_for_hover(false));
+        }
     }
 }
 

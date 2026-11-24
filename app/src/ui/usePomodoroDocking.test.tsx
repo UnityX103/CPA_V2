@@ -1,6 +1,7 @@
 import { act, renderHook, waitFor, cleanup } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
-import { usePomodoroDocking } from './usePomodoroDocking';
+import { listen } from '@tauri-apps/api/event';
+import { usePomodoroDocking, type DockView } from './usePomodoroDocking';
 const { invoke } = vi.hoisted(() => ({ invoke: vi.fn() }));
 vi.mock('@tauri-apps/api/core', () => ({ invoke }));
 vi.mock('@tauri-apps/api/event', () => ({ listen: vi.fn().mockResolvedValue(() => {}) }));
@@ -72,4 +73,29 @@ it('immediately displays the complete break panel even while a stale native stri
     await waitFor(() => expect(invoke).toHaveBeenCalledWith('configure_pomodoro_docking', expect.objectContaining({ phase: 'break', restReminderLevel: 3 })));
     expect(result.current.side).toBeNull();
     expect(result.current.restScale).toBe(1.7);
+});
+
+it('keeps a late dock event hidden while the native pause command is pending', async () => {
+    vi.stubGlobal('__TAURI_INTERNALS__', {});
+    const docked: DockView = { side: 'right', expanded: false, dragging: false };
+    const full: DockView = { ...docked, side: null };
+    let finishPause!: (view: DockView) => void;
+    invoke.mockImplementation((_command, args) => args.paused
+        ? new Promise<DockView>(resolve => { finishPause = resolve; }) : Promise.resolve(docked));
+    const { result, rerender } = renderHook(({ paused }) => usePomodoroDocking(true, paused), {
+        initialProps: { paused: false },
+    });
+    await waitFor(() => expect(result.current.side).toBe('right'));
+    rerender({ paused: true });
+    expect(result.current.side).toBeNull();
+    await waitFor(() => expect(finishPause).toBeDefined());
+
+    const onDockEvent = vi.mocked(listen).mock.lastCall![1];
+    act(() => onDockEvent({ event: 'pomodoro-docking', id: 0, payload: docked }));
+    expect(result.current.side).toBeNull();
+    await act(async () => finishPause(full));
+    expect(result.current.side).toBeNull();
+
+    rerender({ paused: false });
+    await waitFor(() => expect(result.current.side).toBe('right'));
 });

@@ -40,6 +40,6 @@ export function usePomodoroDocking(autoDock: boolean, paused: boolean, phase = '
         void enqueue('hover_pomodoro_docking', { hovered })
             .catch(error => console.error('[docking] hover', error));
     };
-    return { ...view, side: phase === 'focus' && !awaitingStart ? view.side : null,
+    return { ...view, side: phase === 'focus' && !awaitingStart && !paused ? view.side : null,
         restScale: phase === 'break' ? (view.restScale ?? BREAK_REMINDER_SCALES[restReminderLevel]) : 1, hover };
 }

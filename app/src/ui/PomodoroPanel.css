@@ -170,10 +170,8 @@
 .pomo-dock { --dock-paper: #FFF8F2; --dock-stroke: #E8C4A8; --dock-track: #FFD9C5; --dock-accent: #D45F3D; --dock-button: #ED8145; position: relative; width: 22px; height: 156px; background: var(--dock-paper); border: 1px solid var(--dock-stroke); border-radius: 11px; font-family: var(--font-cn); overflow: hidden; cursor: grab; touch-action: none; }
 .pomo-dock[data-expanded] { width: 56px; }
 .pomo-dock[data-phase="break"] { --dock-paper: #F1F8F0; --dock-stroke: #C8DDC8; --dock-track: #BFE3C7; --dock-accent: #3D8A58; --dock-button: #67A878; }
-.pomo-dock[data-paused] { --dock-paper: #FFF8ED; --dock-stroke: #E8C4A8; --dock-button: #D15F3D; }
 .pomo-dock-bar { position: absolute; left: 6px; top: 8px; bottom: 8px; width: 8px; border-radius: 5px; overflow: hidden; background: var(--dock-track); }
 .pomo-dock-bar>div { position: absolute; left: 0; right: 0; bottom: 0; border-radius: 5px; background: var(--dock-accent); }
-.pomo-dock[data-paused] .pomo-dock-bar>div { opacity: .45; }
 .pomo-dock-info { position: absolute; left: 22px; right: 5px; top: 8px; bottom: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; visibility: hidden; }
 .pomo-dock[data-expanded] .pomo-dock-info { visibility: visible; }
 .pomo-dock[data-side="right"] .pomo-dock-bar { left: auto; right: 6px; }
@@ -181,7 +179,6 @@
 .pomo-dock-time-zone { position: relative; min-width: 28px; height: 82px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
 .pomo-dock-label { writing-mode: vertical-rl; text-orientation: upright; white-space: nowrap; font-size: 17px; line-height: 20px; color: #594535; }
 .pomo-dock-label[data-time] { text-orientation: sideways; font-size: 21px; line-height: 26px; }
-.pomo-dock[data-paused] .pomo-dock-label { color: #A66E1F; }
 .pomo-dock-action { position: absolute; inset: 0; border-radius: 12px; background: var(--dock-button); color: white; writing-mode: vertical-rl; text-orientation: upright; padding: 6px; font-size: 14px; opacity: 0; pointer-events: none; }
 .pomo-dock-time-zone:is(:hover,:has(:focus-visible)) .pomo-dock-action { opacity: 1; pointer-events: auto; }
 .pomo-dock-time-zone:is(:hover,:has(:focus-visible)) .pomo-dock-label { visibility: hidden; }

@@ -91,6 +91,7 @@ export function PomodoroPanel({ preferencesReady = true }: { preferencesReady?: 
     const centerReminder = showStartupReminder || awaitingStartAfterBreak;
     const docking = usePomodoroDocking(autoDock, showPauseOverlay, state.currentPhase, preferencesReady, reminderLevel, centerReminder);
     const windowMode = autoDock ? '停靠' : state.isPinned ? '置顶' : '取消置顶';
+    const dockToggleBlocked = showPauseOverlay && state.isPinned && !autoDock;
 
     useEffect(() => {
         if (!preferencesReady || !startupReminder) return;
@@ -141,10 +142,10 @@ export function PomodoroPanel({ preferencesReady = true }: { preferencesReady?: 
     };
 
     if (docking.side) {
-        const label = showPauseOverlay ? '已暂停' : showStartOverlay ? '待开始'
+        const label = showStartOverlay ? '待开始'
             : state.currentPhase === 'completed' ? '已完成' : formatMmSs(state.remainingSeconds);
         return <div className="pomo-dock-frame"><div className="pomo-dock" data-side={docking.side}
-            data-phase={state.currentPhase} data-paused={showPauseOverlay || undefined}
+            data-phase={state.currentPhase}
             data-expanded={docking.expanded || undefined}
             onPointerDown={onPanelPointerDown}
             onPointerEnter={() => docking.hover(true)}
@@ -166,7 +167,7 @@ export function PomodoroPanel({ preferencesReady = true }: { preferencesReady?: 
                         </> : label}
                     </span>
                     <button className="pomo-dock-action" onClick={onStartClick}>
-                        {state.isRunning ? '暂停' : showPauseOverlay ? '恢复' : '开始'}
+                        {state.isRunning ? '暂停' : '开始'}
                     </button>
                 </div>
                 <button className="pomo-dock-settings" aria-label="设置" onClick={() => { void invoke('open_settings_window'); }}><SettingsIcon /></button>
@@ -248,9 +249,9 @@ export function PomodoroPanel({ preferencesReady = true }: { preferencesReady?: 
             <button
                 className={`pomo-pin ${state.isPinned ? 'is-pinned' : ''} ${autoDock ? 'is-docking' : ''}`}
                 onClick={onTogglePin}
-                disabled={isBreak}
+                disabled={isBreak || dockToggleBlocked}
                 aria-label="置顶"
-                title={isBreak ? '休息期间保持完整显示并置顶' : `${windowMode}；点击切换为${autoDock ? '取消置顶' : state.isPinned ? '停靠' : '置顶'}`}
+                title={isBreak ? '休息期间保持完整显示并置顶' : dockToggleBlocked ? '恢复计时后可停靠' : `${windowMode}；点击切换为${autoDock ? '取消置顶' : state.isPinned ? '停靠' : '置顶'}`}
             >
                 <PinIcon active={state.isPinned} />
             </button>

@@ -298,6 +298,24 @@ describe('PomodoroPanel pause overlay', () => {
         expect(usePomodoroStore.getState().remainingSeconds).toBe(1499);
     });
 
+    it('blocks switching from pinned to docked until the timer resumes', () => {
+        usePomodoroStore.setState({ isRunning: true, remainingSeconds: 1490 });
+        usePomodoroStore.getState().setPinned(true);
+        render(<PomodoroPanel />);
+
+        fireEvent.click(screen.getByRole('button', { name: '暂停' }));
+        const pin = screen.getByRole<HTMLButtonElement>('button', { name: '置顶' });
+        expect(pin.disabled).toBe(true);
+        fireEvent.click(pin);
+        expect(localStorage.getItem('pomo-auto-dock')).toBeNull();
+        expect(screen.getByRole('region', { name: '番茄钟已暂停' })).toBeTruthy();
+
+        fireEvent.click(screen.getByRole('button', { name: '恢复' }));
+        expect(pin.disabled).toBe(false);
+        fireEvent.click(pin);
+        expect(localStorage.getItem('pomo-auto-dock')).toBe('true');
+    });
+
     it.each(['focus'] as const)('simplifies automatic %s pause without changing automatic recovery', (phase) => {
         usePomodoroStore.setState({ currentPhase: phase, isRunning: true, remainingSeconds: phase === 'focus' ? 1500 : 300 });
         usePresenceStore.setState({ inputActivityEnabled: true, inputActivityAvailability: 'ready', confirmedPresence: phase === 'focus' ? 'absent' : 'present', lastSuccessfulAt: 1000 });
