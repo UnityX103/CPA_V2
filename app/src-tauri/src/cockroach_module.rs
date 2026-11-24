@@ -1082,6 +1082,14 @@ fn module_public_key() -> Result<PublicKey, String> {
 }
 
 fn verify_index_signature(document: &[u8], encoded_signature: &[u8]) -> Result<(), String> {
+    verify_index_signature_with_key(document, encoded_signature, &module_public_key()?)
+}
+
+fn verify_index_signature_with_key(
+    document: &[u8],
+    encoded_signature: &[u8],
+    public_key: &PublicKey,
+) -> Result<(), String> {
     use base64::Engine;
 
     let encoded_text = std::str::from_utf8(encoded_signature)
@@ -1091,7 +1099,6 @@ fn verify_index_signature(document: &[u8], encoded_signature: &[u8]) -> Result<(
         .map_err(|error| format!("模块索引签名 Base64 无效：{error}"))?;
     let signature_text = std::str::from_utf8(&decoded_signature)
         .map_err(|error| format!("模块索引签名文本无效：{error}"))?;
-    let public_key = module_public_key()?;
     let signature = Signature::decode(signature_text)
         .map_err(|error| format!("无法读取模块索引签名：{error}"))?;
     public_key
@@ -2378,7 +2385,7 @@ mod tests {
         validate_index_url, validate_layered_component_directory, validate_layered_index,
         validate_manifest, validate_package_url, validate_release_version,
         validate_runtime_contribution, validate_settings, validate_sha256_text,
-        verify_index_signature, write_upstream_config, CockroachModuleSettings,
+        verify_index_signature_with_key, write_upstream_config, CockroachModuleSettings,
         CockroachModuleState, ComponentPackage, InstalledArtifact, InstalledComponentPointer,
         LayeredComponentKind, LayeredInstalledPointer, ModuleIndexDocument, ModuleManifest,
         ModulePackage, MODULE_ID, MODULE_SCHEMA_VERSION,
@@ -2907,11 +2914,20 @@ mod tests {
 
     #[test]
     fn accepts_the_base64_wrapped_signature_emitted_by_tauri_signer() {
-        let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../release-updates-arm64/stable/0.1.11/app-aarch64.tar.gz");
-        let document = std::fs::read(&fixture).expect("read signed updater fixture");
-        let signature = std::fs::read(fixture.with_extension("gz.sig"))
-            .expect("read updater signature fixture");
-        verify_index_signature(&document, &signature).expect("verify updater-format signature");
+        // A dedicated test key keeps this regression independent of release binaries.
+        let fixture: serde_json::Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/updater-signature.json"
+        ))
+        .expect("read signed updater fixture");
+        let public_key = minisign_verify::PublicKey::decode(
+            fixture["publicKey"].as_str().expect("fixture public key"),
+        )
+        .expect("decode fixture public key");
+        let document = fixture["document"].as_str().expect("fixture document").as_bytes();
+        let signature = fixture["signature"].as_str().expect("fixture signature").as_bytes();
+        verify_index_signature_with_key(document, signature, &public_key)
+            .expect("verify updater-format signature");
+        assert!(verify_index_signature_with_key(b"tampered", signature, &public_key).is_err());
+        assert!(verify_index_signature_with_key(document, b"invalid base64!", &public_key).is_err());
     }
 }

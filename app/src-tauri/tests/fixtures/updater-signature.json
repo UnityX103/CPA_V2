@@ -1,0 +1,5 @@
+{
+  "document": "{\"version\":\"test\",\"purpose\":\"updater signature regression\"}\n",
+  "publicKey": "untrusted comment: test public key\nRWRDUEEtdGVzdKFtQawjUdUnVlRJIvarhXP2Q/p+3yJ1ARUgdaCtmMP0\n",
+  "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZQpSVVJEVUVFdGRHVnpkRDNBTUZJZkhUOUQxcDI4SlNROWVCYkpnOTQ3ZmNlbU92aE82QWJMOUNHMzZzWStBdzdtYkFqcDZkeXpraVhwNWFKZHZ2emN3MHYvaGR4UjVndGthZ1U9CnRydXN0ZWQgY29tbWVudDogdGltZXN0YW1wOjAJZmlsZTp0ZXN0LWluZGV4Lmpzb24KUnYwOE10dkdCNWdXRFRZazhXOEdza3hGZzd4eDVxejJuZlNERzc1VXk5VTBqK05ZRG9zWkNkaXYvNVM2VHBkUUFyR0NGbklRS0psL3R4cXdiTm1qQUE9PQo="
+}
